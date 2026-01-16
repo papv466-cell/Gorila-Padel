@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
+import "leaflet/dist/leaflet.css";
+import AppErrorBoundary from "./components/UI/AppErrorBoundary.jsx";
 
 import "./styles/leaflet.css";
 import "./styles/app.css";
@@ -20,9 +22,9 @@ registerSW({
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <AppErrorBoundary>
       <App />
-    </BrowserRouter>
+    </AppErrorBoundary>
   </React.StrictMode>
 );
 registerSW({
