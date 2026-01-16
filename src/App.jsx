@@ -1,14 +1,10 @@
 // @refresh reset
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
 import ClassesPage from "./pages/ClassesPage";
-import AuthPage from "./pages/AuthPage";
 import SplashPage from "./pages/SplashPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -16,6 +12,9 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 export default function App() {
   const location = useLocation();
@@ -55,12 +54,13 @@ export default function App() {
     };
   }, []);
 
-  const isAuthRoute = useMemo(
-    () => location.pathname === "/login" || location.pathname === "/registro",
-    [location.pathname]
-  );
+  // ✅ rutas auth reales
+  const isAuthRoute = useMemo(() => {
+    const p = location.pathname;
+    return p === "/login" || p === "/register" || p === "/forgot-password" || p === "/reset-password";
+  }, [location.pathname]);
 
-  // 3) Si estás logueada y estás en login/registro, te saco al mapa (sin romper hooks)
+  // 3) Si estás logueada y estás en login/registro, te saco al mapa
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
@@ -73,6 +73,9 @@ export default function App() {
 
   return (
     <div className="appShell">
+      {/* ✅ PWA prompt fuera de Routes */}
+      <PWAInstallPrompt />
+
       {!isAuthRoute ? <Navbar /> : null}
 
       <main className="appMain">
@@ -84,19 +87,15 @@ export default function App() {
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/partidos" element={<MatchesPage />} />
           <Route path="/clases" element={<ClassesPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+
+          {/* auth */}
+          <Route path="/login" element={session ? <Navigate to="/mapa" replace /> : <LoginPage />} />
+          <Route path="/register" element={session ? <Navigate to="/mapa" replace /> : <RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <PWAInstallPrompt />
-  
-          {/* auth */}
-          <Route
-            path="/login"
-            element={session ? <Navigate to="/mapa" replace /> : <AuthPage mode="login" />}
-          />
-          
-          <Route path="/registro" element={<RegisterPage />} />
+
+          {/* compat: por si tienes links antiguos */}
+          <Route path="/registro" element={<Navigate to="/register" replace />} />
 
           {/* fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
