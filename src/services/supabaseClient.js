@@ -1,11 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!url || !anonKey) {
-  // Error claro en consola si falta .env
-  console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env");
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Esto hará que NO haya pantalla blanca y que veamos el motivo claro en consola
+  console.error("[ENV] Falta VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY");
+  console.error("[ENV] VITE_SUPABASE_URL =", supabaseUrl);
+  console.error("[ENV] VITE_SUPABASE_ANON_KEY existe =", !!supabaseAnonKey);
+  throw new Error("Faltan variables de entorno de Supabase en producción (Vercel).");
 }
 
-export const supabase = createClient(url, anonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
