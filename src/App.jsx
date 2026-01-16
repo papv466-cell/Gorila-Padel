@@ -5,6 +5,8 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
 import ClassesPage from "./pages/ClassesPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import SplashPage from "./pages/SplashPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
@@ -12,9 +14,6 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
-
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 
 export default function App() {
   const location = useLocation();
@@ -54,21 +53,24 @@ export default function App() {
     };
   }, []);
 
-  // ✅ rutas auth reales
-  const authShellRoutes = useMemo(() => {
-    return ["/login", "/register", "/registro", "/forgot-password", "/reset-password"];
-  }, []);
+  // Rutas "auth shell" (sin navbar)
+  const authShellRoutes = useMemo(
+    () => ["/login", "/register", "/registro", "/forgot-password", "/reset-password"],
+    []
+  );
 
   const isAuthShell = useMemo(
     () => authShellRoutes.includes(location.pathname),
     [authShellRoutes, location.pathname]
   );
 
+  // Solo login/registro deben redirigir si ya hay sesión
   const isLoginOrRegister = useMemo(
     () => ["/login", "/register", "/registro"].includes(location.pathname),
-    [location.pathname]  );
+    [location.pathname]
+  );
 
-  // 3) Si estás logueada y estás en login/registro, te saco al mapa
+  // ✅ Si estás logueada y estás en login/registro, te saco al mapa (pero NO en reset-password)
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
@@ -81,10 +83,7 @@ export default function App() {
 
   return (
     <div className="appShell">
-      {/* ✅ PWA prompt fuera de Routes */}
-      <PWAInstallPrompt />
-
-      {!isAuthRoute ? <Navbar /> : null}
+      {!isAuthShell ? <Navbar /> : null}
 
       <main className="appMain">
         <Routes>
@@ -97,13 +96,14 @@ export default function App() {
           <Route path="/clases" element={<ClassesPage />} />
 
           {/* auth */}
-          <Route path="/login" element={session ? <Navigate to="/mapa" replace /> : <LoginPage />} />
-          <Route path="/register" element={session ? <Navigate to="/mapa" replace /> : <RegisterPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* compat: por si tienes links antiguos */}
-          <Route path="/registro" element={<Navigate to="/register" replace />} />
+          {/* helper PWA (lo dejo como route para que no moleste) */}
+          <Route path="/pwa" element={<PWAInstallPrompt />} />
 
           {/* fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
