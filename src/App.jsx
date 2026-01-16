@@ -55,18 +55,26 @@ export default function App() {
   }, []);
 
   // ✅ rutas auth reales
-  const isAuthRoute = useMemo(() => {
-    const p = location.pathname;
-    return p === "/login" || p === "/register" || p === "/forgot-password" || p === "/reset-password";
-  }, [location.pathname]);
+  const authShellRoutes = useMemo(() => {
+    return ["/login", "/register", "/registro", "/forgot-password", "/reset-password"];
+  }, []);
+
+  const isAuthShell = useMemo(
+    () => authShellRoutes.includes(location.pathname),
+    [authShellRoutes, location.pathname]
+  );
+
+  const isLoginOrRegister = useMemo(
+    () => ["/login", "/register", "/registro"].includes(location.pathname),
+    [location.pathname]  );
 
   // 3) Si estás logueada y estás en login/registro, te saco al mapa
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
-    if (!isAuthRoute) return;
+    if (!isLoginOrRegister) return;
     navigate("/mapa", { replace: true });
-  }, [sessionReady, session, isAuthRoute, navigate]);
+  }, [sessionReady, session, isLoginOrRegister, navigate]);
 
   // 4) Render: Splash hasta que estén listas ambas cosas
   if (!splashDone || !sessionReady) return <SplashPage />;
