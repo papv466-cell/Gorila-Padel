@@ -8,6 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw.js",
 
       // ✅ ESTO es lo importante: fuerza a usar TU SW real
       injectManifest: {
@@ -32,3 +34,7 @@ export default defineConfig({
     }),
   ],
 });
+
+  
+ 
+ 
