@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       strategies: "injectManifest",
 
-      // 👇 CLAVE: decirle explícitamente cuál es tu SW fuente
+      // ✅ ESTA es la forma correcta de decirle qué SW fuente usar
       injectManifest: {
         swSrc: "src/sw.js",
         swDest: "sw.js",
@@ -27,11 +27,15 @@ export default defineConfig({
         start_url: "/",
         icons: [
           { src: "/logo.png", sizes: "192x192", type: "image/png" },
-          { src: "/logo.png", sizes: "512x512", type: "image/png" }
-        ]
+          { src: "/logo.png", sizes: "512x512", type: "image/png" },
+        ],
       },
 
-      devOptions: { enabled: true }
-    })
-  ]
+      // (opcional, pero no molesta)
+      devOptions: {
+        enabled: true,
+      },
+    }),
+  ],
 });
+
