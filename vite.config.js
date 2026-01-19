@@ -7,10 +7,18 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+
+      // 👇 CLAVE: decirle explícitamente cuál es tu SW fuente
+      injectManifest: {
+        swSrc: "src/sw.js",
+        swDest: "sw.js",
+      },
+
       includeAssets: ["logo.png"],
       manifest: {
-        name: "Global Padel",
-        short_name: "GlobalPadel",
+        name: "Gorila Padel",
+        short_name: "GorilaPadel",
         description: "Encuentra clubs, crea partidos y chatea",
         theme_color: "#0b0f14",
         background_color: "#0b0f14",
@@ -19,10 +27,11 @@ export default defineConfig({
         start_url: "/",
         icons: [
           { src: "/logo.png", sizes: "192x192", type: "image/png" },
-          { src: "/logo.png", sizes: "512x512", type: "image/png" },
-        ],
+          { src: "/logo.png", sizes: "512x512", type: "image/png" }
+        ]
       },
-    }),
-  ],
-  build: { sourcemap: true },
+
+      devOptions: { enabled: true }
+    })
+  ]
 });
