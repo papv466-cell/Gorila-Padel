@@ -1,3 +1,4 @@
+// GP_SW_MARK_2026_01_20
 /* eslint-disable no-restricted-globals */
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
 
