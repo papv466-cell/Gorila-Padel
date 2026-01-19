@@ -9,10 +9,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       strategies: "injectManifest",
 
-      // ✅ ESTA es la forma correcta de decirle qué SW fuente usar
+      // ✅ ESTO es lo importante: fuerza a usar TU SW real
       injectManifest: {
         swSrc: "src/sw.js",
-        swDest: "sw.js",
       },
 
       includeAssets: ["logo.png"],
@@ -30,12 +29,6 @@ export default defineConfig({
           { src: "/logo.png", sizes: "512x512", type: "image/png" },
         ],
       },
-
-      // (opcional, pero no molesta)
-      devOptions: {
-        enabled: true,
-      },
     }),
   ],
 });
-
