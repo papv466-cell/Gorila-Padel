@@ -10,20 +10,6 @@ import "./index.css";
 
 import AppErrorBoundary from "./components/UI/AppErrorBoundary.jsx";
 import { registerSW } from "virtual:pwa-register";
-import { supabase } from "./services/supabaseClient";
-
-// ✅ Esto permite que el Service Worker pida el token a la pestaña
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.addEventListener("message", async (event) => {
-    if (event.data?.type === "GP_GET_TOKEN") {
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token || null;
-
-      // Responder por el canal (MessageChannel)
-      event.ports?.[0]?.postMessage({ token });
-    }
-  });
-}
 
 registerSW({
   immediate: true,
