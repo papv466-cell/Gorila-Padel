@@ -327,15 +327,10 @@ export default function MatchesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authChecked, session]);
   
-  useEffect(() => {
-    if (!session) return;
-  
-    // intentamos activar push sin molestar demasiado
-    ensurePushSubscription().catch(() => {
-      // no hacemos alert aquí para no ser pesados
-      // luego si quieres lo mostramos en Perfil/Ajustes con un botón
-    });
-  }, [session]);
+  // useEffect(() => {
+//   if (!session) return;
+//   ensurePushSubscription().catch(() => {});
+// }, [session]);
 
   // Cargar partidos
   useEffect(() => {
@@ -595,42 +590,6 @@ export default function MatchesPage() {
   type="button"
   onClick={async () => {
     try {
-      const mod = await import("../services/push.js");
-      await mod.ensurePushSubscription();
-      alert("✅ Push activado y guardado en Supabase");
-    } catch (e) {
-      console.error("❌ PUSH ERROR:", e);
-      alert("❌ Error push: " + (e?.message || String(e)));
-    }
-  }}
-  style={{
-    position: "fixed",
-    right: 16,
-    bottom: 16,
-    zIndex: 999999,
-    padding: "12px 14px",
-    borderRadius: 999,
-    border: "1px solid rgba(0,0,0,0.15)",
-    background: "#fff",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-    cursor: "pointer",
-    fontWeight: 700,
-  }}
->
-  🔔 Activar Push
-</button>
-
-      <div style={{ padding: 12, background: "yellow", color: "black", fontSize: 20, fontWeight: 800 }}>
-  TEST: MatchesPage actualizado ✅
-</div>
-
-      <header className="topbar">
-        <h1 className="title">Partidos</h1>
-        <button
-  type="button"
-  onClick={async () => {
-    try {
-      const { ensurePushSubscription } = await import("../services/push");
       await ensurePushSubscription();
       alert("✅ Push activado y guardado en Supabase");
     } catch (e) {
@@ -654,6 +613,12 @@ export default function MatchesPage() {
 >
   🔔 Activar Push
 </button>
+      <div style={{ padding: 12, background: "yellow", color: "black", fontSize: 20, fontWeight: 800 }}>
+  TEST: MatchesPage actualizado ✅
+</div>
+
+      <header className="topbar">
+        <h1 className="title">Partidos</h1>
         <p className="subtitle">
           {status.loading ? "Cargando…" : status.error ? `Error: ${status.error}` : `Partidos: ${listForSelectedDay.length}`}
         </p>

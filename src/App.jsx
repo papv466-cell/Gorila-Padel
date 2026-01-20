@@ -66,18 +66,24 @@ export default function App() {
   }, [location.pathname]);
 
   // Solo login/registro deben redirigir si ya hay sesión
-  const isLoginOrRegister = useMemo(() => {
-    const p = location.pathname;
-    return p === "/login" || p === "/register" || p === "/registro";
-  }, [location.pathname]);
-
-  // ✅ Si estás logueada y estás en login/registro, te saco al mapa (pero NO en reset-password)
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
-    if (!isLoginOrRegister) return;
-    navigate("/mapa", { replace: true });
-  }, [sessionReady, session, isLoginOrRegister, navigate]);
+  
+    // Si estás en cualquier ruta de auth, te mando al mapa
+    const p = location.pathname;
+    const inAuth =
+      p.startsWith("/login") ||
+      p.startsWith("/register") ||
+      p.startsWith("/registro") ||
+      p.startsWith("/forgot-password") ||
+      p.startsWith("/reset-password");
+  
+    if (inAuth) {
+      navigate("/mapa", { replace: true });
+    }
+  }, [sessionReady, session, location.pathname, navigate]);
+  
 
   if (!splashDone || !sessionReady) return <SplashPage />;
 
@@ -86,7 +92,7 @@ export default function App() {
       {!isAuthShell ? <Navbar /> : null}
 
       <main className="appMain">
-        <PWAInstallPrompt />
+      {!isAuthShell ? <PWAInstallPrompt /> : null}
 
         <Routes>
           <Route path="/" element={<Navigate to={session ? "/mapa" : "/login"} replace />} />

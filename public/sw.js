@@ -1,4 +1,5 @@
-/* public/sw.js */
+/* GP_SW_MARK_2026_01_20 */
+
 self.__GP_SW_MARK = "GP_SW_MARK_2026_01_20";
 console.log("✅ GP SW activo:", self.__GP_SW_MARK);
 
@@ -10,10 +11,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "Global Padel", body: "Nuevo mensaje" };
+    data = { title: "Gorila Pádel", body: "Nuevo mensaje", url: "/partidos" };
   }
 
-  const title = data.title || "Global Padel";
+  const title = data.title || "Gorila Pádel";
   const body = data.body || "Tienes una notificación";
   const url = data.url || "/partidos";
 
@@ -23,6 +24,8 @@ self.addEventListener("push", (event) => {
       icon: "/logo.png",
       badge: "/logo.png",
       data: { url },
+      tag: data.tag || "gp-chat",
+      renotify: true,
     })
   );
 });
@@ -33,11 +36,18 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
-      const allClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
       for (const client of allClients) {
         if ("focus" in client) {
-          client.navigate(url);
-          return client.focus();
+          try {
+            await client.focus();
+            if ("navigate" in client) client.navigate(url);
+            return;
+          } catch {}
         }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);

@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const returnTo = location.state && location.state.from ? location.state.from : "/mapa";
+  // Ruta de retorno
+  const returnTo = useMemo(() => {
+    return location.state && location.state.from ? location.state.from : "/mapa";
+  }, [location.state]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,12 +18,17 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // si ya hay sesión, fuera
-    supabase.auth.getSession().then(({ data }) => {
+    // Si ya hay sesión, fuera
+    let alive = true;
+    supabase.auth.getSession().then(({ data, error: sessErr }) => {
+      if (!alive) return;
+      if (sessErr) console.warn("[login] getSession error:", sessErr);
       if (data?.session) navigate(returnTo, { replace: true });
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      alive = false;
+    };
+  }, [navigate, returnTo]);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -37,15 +44,30 @@ export default function LoginPage() {
 
     try {
       setBusy(true);
-      const { error: err } = await supabase.auth.signInWithPassword({
+
+      const { data, error: err } = await supabase.auth.signInWithPassword({
         email: em,
         password: pw,
       });
-      if (err) throw err;
+
+      if (err) {
+        console.error("[login] signInWithPassword error:", err);
+        throw err;
+      }
+
+      // Seguridad extra: si por lo que sea no hay sesión, avisar
+      if (!data?.session) {
+        console.warn("[login] No session returned after signIn (raro).");
+      }
 
       navigate(returnTo, { replace: true });
     } catch (e2) {
-      setError(e2?.message ?? "No se pudo iniciar sesión");
+      // Mensaje más útil
+      const msg =
+        e2?.message ||
+        e2?.error_description ||
+        "No se pudo iniciar sesión. Revisa email/contraseña.";
+      setError(msg);
     } finally {
       setBusy(false);
     }
@@ -54,8 +76,7 @@ export default function LoginPage() {
   return (
     <div className="authWrapper">
       <div className="authCard">
-      <img src="/logo.png" alt="Global Padel" className="authLogo" />
-
+        <img src="/logo.png" alt="Global Padel" className="authLogo" />
 
         <h1 className="authTitle">Entrar</h1>
         <p className="authSub">Accede para unirte a partidos, crear y chatear.</p>
@@ -90,12 +111,12 @@ export default function LoginPage() {
           <button className="authBtn" type="submit" disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
           </button>
-          <div style={{ marginTop: 10, textAlign: "center" }}>
-  <Link className="authLink" to="/forgot-password">
-    ¿Olvidaste tu contraseña?
-  </Link>
-</div>
 
+          <div style={{ marginTop: 10, textAlign: "center" }}>
+            <Link className="authLink" to="/forgot-password">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
         </form>
 
         <div className="authFooter">
@@ -107,8 +128,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-  <div style={{ marginTop: 10, fontSize: 13 }}>
-  <Link className="authLink" to="/forgot-password">¿Olvidaste tu contraseña?</Link>
-</div>
-
 }
