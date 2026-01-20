@@ -530,35 +530,7 @@ export default function MatchesPage() {
             <button type="button" className="btn ghost" onClick={clearClubFilter}>
               Ver todos
             </button>
-                  {/* 🔔 BOTÓN PUSH SIEMPRE VISIBLE */}
-      <button
-        type="button"
-        onClick={async () => {
-          try {
-            const mod = await import("../services/push.js");
-            await mod.ensurePushSubscription();
-            alert("✅ Push activado y guardado en Supabase");
-          } catch (e) {
-            console.error("❌ PUSH ERROR:", e);
-            alert("❌ Error push: " + (e?.message || String(e)));
-          }
-        }}
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          zIndex: 999999,
-          padding: "12px 14px",
-          borderRadius: 999,
-          border: "1px solid rgba(0,0,0,0.15)",
-          background: "#fff",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-          cursor: "pointer",
-          fontWeight: 700,
-        }}
-      >
-        🔔 Activar Push
-      </button>
+                 
 
           </div>
         ) : null}
@@ -631,6 +603,35 @@ export default function MatchesPage() {
             Crear partido
           </button>
         </div>
+         {/* 🔔 BOTÓN PUSH SIEMPRE VISIBLE */}
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            const mod = await import("../services/push.js");
+            await mod.ensurePushSubscription();
+            alert("✅ Push activado y guardado en Supabase");
+          } catch (e) {
+            console.error("❌ PUSH ERROR:", e);
+            alert("❌ Error push: " + (e?.message || String(e)));
+          }
+        }}
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: 16,
+          zIndex: 999999,
+          padding: "12px 14px",
+          borderRadius: 999,
+          border: "1px solid rgba(0,0,0,0.15)",
+          background: "#fff",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          cursor: "pointer",
+          fontWeight: 700,
+        }}
+      >
+        🔔 Activar Push
+      </button>
       </header>
 
       <div style={{ padding: 16 }}>
