@@ -1,3 +1,4 @@
+// src/pages/MatchesPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchProfilesByIds } from "../services/profilesPublic";
 import {
@@ -10,11 +11,12 @@ import {
   fetchPendingRequests,
   fetchMatchMessages,
   sendMatchMessage,
-  fetchLastMessageAtForMatchIds,
   approveRequest,
   rejectRequest,
   deleteMatch,
+  fetchLatestChatTimes, // ✅ NUEVO
 } from "../services/matches";
+import { ensurePushSubscription } from "../services/push";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -59,6 +61,7 @@ export default function MatchesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const openChatParam = searchParams.get("openChat") || "";
 
   const todayISO = toDateInputValue(new Date());
 
@@ -80,7 +83,9 @@ export default function MatchesPage() {
   const [chatItems, setChatItems] = useState([]); // mensajes
   const [chatStatus, setChatStatus] = useState({ loading: false, error: null });
   const [chatText, setChatText] = useState("");
-  const [lastMsgAtByMatch, setLastMsgAtByMatch] = useState({});
+
+  // ✅ NUEVO: ultimo mensaje por partido (ms)
+  const [latestChatTsByMatch, setLatestChatTsByMatch] = useState({});
 
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -152,9 +157,7 @@ export default function MatchesPage() {
   const clubSuggestions = useMemo(() => {
     const q = clubQuery.trim().toLowerCase();
     if (!q) return [];
-    return clubsSheet
-      .filter((c) => c.name.toLowerCase().includes(q))
-      .slice(0, 8);
+    return clubsSheet.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8);
   }, [clubQuery, clubsSheet]);
 
   function pickClub(c) {
@@ -183,9 +186,13 @@ export default function MatchesPage() {
       const msgs = await fetchMatchMessages(matchId, { limit: 120 });
       setChatItems(msgs);
       setChatStatus({ loading: false, error: null });
-      
-      // ✅ marcar como leído al abrir (después de cargar)
-      setChatLastRead(matchId, Date.now());
+
+      // ✅ marcar leído (último mensaje)
+      const last = msgs?.[msgs.length - 1];
+      if (last?.created_at) {
+        const ts = new Date(last.created_at).getTime();
+        if (Number.isFinite(ts)) setChatLastRead(matchId, ts);
+      }
 
       setTimeout(() => {
         const el = document.getElementById("chatBottom");
@@ -203,8 +210,14 @@ export default function MatchesPage() {
     try {
       const msgs = await fetchMatchMessages(chatOpenFor, { limit: 120 });
       setChatItems(msgs);
-      setChatLastRead(chatOpenFor, Date.now());
       setChatStatus({ loading: false, error: null });
+
+      // ✅ marcar leído al refrescar también
+      const last = msgs?.[msgs.length - 1];
+      if (last?.created_at) {
+        const ts = new Date(last.created_at).getTime();
+        if (Number.isFinite(ts)) setChatLastRead(chatOpenFor, ts);
+      }
     } catch (e) {
       setChatStatus({ loading: false, error: e?.message ?? "Error refrescando chat" });
     }
@@ -235,17 +248,6 @@ export default function MatchesPage() {
 
       const ids = data.map((m) => m.id);
 
-      if (ids.length > 0) {
-        try {
-          const last = await fetchLastMessageAtForMatchIds(ids);
-          setLastMsgAtByMatch(last);
-        } catch {
-          setLastMsgAtByMatch({});
-        }
-      } else {
-        setLastMsgAtByMatch({});
-      }      
-
       if (session && ids.length > 0) {
         const mine = await fetchMyRequestsForMatchIds(ids);
         setMyReqStatus(mine);
@@ -255,6 +257,18 @@ export default function MatchesPage() {
       } else {
         setMyReqStatus({});
         setApprovedCounts({});
+      }
+
+      // ✅ NUEVO: últimos mensajes por partido para badges
+      if (ids.length > 0) {
+        try {
+          const latest = await fetchLatestChatTimes(ids);
+          setLatestChatTsByMatch(latest);
+        } catch {
+          setLatestChatTsByMatch({});
+        }
+      } else {
+        setLatestChatTsByMatch({});
       }
 
       setStatus({ loading: false, error: null });
@@ -297,11 +311,63 @@ export default function MatchesPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!openChatParam) return;
+    if (!authChecked) return;
+  
+    // si no hay sesión -> login
+    if (!session) return goLogin();
+  
+    // abrir chat
+    openChat(openChatParam);
+  
+    // opcional: limpiar el parámetro para que no lo vuelva a abrir
+    // (así no se reabre si refrescas)
+    navigate("/partidos", { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openChatParam, authChecked, session]);
+  
+  useEffect(() => {
+    if (!session) return;
+  
+    // intentamos activar push sin molestar demasiado
+    ensurePushSubscription().catch(() => {
+      // no hacemos alert aquí para no ser pesados
+      // luego si quieres lo mostramos en Perfil/Ajustes con un botón
+    });
+  }, [session]);
+
   // Cargar partidos
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, refreshParam]);
+
+  // ✅ NUEVO: polling suave para actualizar badges (cada 15s)
+  useEffect(() => {
+    if (!session) return;
+    if (!items.length) return;
+
+    let alive = true;
+
+    async function tick() {
+      try {
+        const ids = items.map((m) => m.id);
+        const latest = await fetchLatestChatTimes(ids);
+        if (alive) setLatestChatTsByMatch(latest);
+      } catch {
+        // silencioso
+      }
+    }
+
+    tick();
+    const t = setInterval(tick, 15000);
+
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [session, items]);
 
   // Lista filtrada por club (si aplica)
   const list = useMemo(() => {
@@ -338,6 +404,17 @@ export default function MatchesPage() {
       return toDateInputValue(d) === selectedDay;
     });
   }, [list, isClubFilter, selectedDay]);
+
+  // ✅ NUEVO: unread por partido (true/false)
+  const unreadByMatch = useMemo(() => {
+    const out = {};
+    for (const m of listForSelectedDay) {
+      const lastRead = getChatLastRead(m.id);
+      const latest = Number(latestChatTsByMatch[m.id] ?? 0);
+      out[m.id] = latest > lastRead;
+    }
+    return out;
+  }, [listForSelectedDay, latestChatTsByMatch]);
 
   // create=1 -> abre modal o login
   useEffect(() => {
@@ -514,9 +591,40 @@ export default function MatchesPage() {
 
   return (
     <div className="page">
+      <div style={{ padding: 12, background: "yellow", color: "black", fontSize: 20, fontWeight: 800 }}>
+  TEST: MatchesPage actualizado ✅
+</div>
+
       <header className="topbar">
         <h1 className="title">Partidos</h1>
-
+        <button
+  type="button"
+  onClick={async () => {
+    try {
+      const { ensurePushSubscription } = await import("../services/push");
+      await ensurePushSubscription();
+      alert("✅ Push activado y guardado en Supabase");
+    } catch (e) {
+      console.error("❌ PUSH ERROR:", e);
+      alert("❌ Error push: " + (e?.message || String(e)));
+    }
+  }}
+  style={{
+    position: "fixed",
+    right: 16,
+    bottom: 16,
+    zIndex: 999999,
+    padding: "12px 14px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.15)",
+    background: "#fff",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+    cursor: "pointer",
+    fontWeight: 700,
+  }}
+>
+  🔔 Activar Push
+</button>
         <p className="subtitle">
           {status.loading ? "Cargando…" : status.error ? `Error: ${status.error}` : `Partidos: ${listForSelectedDay.length}`}
         </p>
@@ -602,7 +710,40 @@ export default function MatchesPage() {
             Crear partido
           </button>
         </div>
+        <div style={{ marginTop: 10 }}>
+  <button
+    type="button"
+    className="btn ghost"
+    onClick={async () => {
+      try {
+        await ensurePushSubscription();
+        alert("✅ Push activado y guardado en Supabase");
+      } catch (e) {
+        console.error("❌ PUSH ERROR:", e);
+        alert("❌ Error push: " + (e?.message || String(e)));
+      }
+    }}
+  >
+    Activar Push (prueba)
+  </button>
+</div>
       </header>
+      <button
+  type="button"
+  className="btn"
+  onClick={async () => {
+    try {
+      await ensurePushSubscription();
+      alert("✅ Push guardado en Supabase");
+    } catch (e) {
+      console.error(e);
+      alert("❌ Error: " + (e?.message || String(e)));
+    }
+  }}
+>
+  Guardar Push (solo prueba)
+</button>
+
 
       <div style={{ padding: 16 }}>
         {listForSelectedDay.length === 0 && !status.loading && !status.error ? (
@@ -617,10 +758,6 @@ export default function MatchesPage() {
             const approved = Number(approvedCounts[m.id] ?? 0);
             const occupied = Math.min(4, reserved + approved);
             const left = Math.max(0, 4 - occupied);
-            const lastRead = getChatLastRead(m.id);
-            const lastMsgAtISO = lastMsgAtByMatch[m.id];
-            const lastMsgAtMs = lastMsgAtISO ? new Date(lastMsgAtISO).getTime() : 0;
-            const hasNewChat = lastMsgAtMs > lastRead;
 
             const startMs = new Date(m.start_at).getTime();
             const nowMs = Date.now();
@@ -687,32 +824,30 @@ export default function MatchesPage() {
 
                     {/* ✅ Chat: creadora o pending/approved */}
                     {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
-                      <button
-                        type="button"
-                        className="btn ghost"
-                        onClick={() => openChat(m.id)}
-                        style={{ position: "relative" }}
-                      >
+                      <button type="button" className="btn ghost" onClick={() => openChat(m.id)}>
                         Chat
-                        {hasNewChat ? (
+                        {unreadByMatch[m.id] ? (
                           <span
-                            style={{
-                              marginLeft: 8,
-                              display: "inline-block",
-                              minWidth: 18,
-                              height: 18,
-                              lineHeight: "18px",
-                              borderRadius: 999,
-                              padding: "0 6px",
-                              fontSize: 11,
-                              fontWeight: 800,
-                              background: "#111827",
-                              color: "#fff",
-                            }}
-                            title="Tienes mensajes nuevos"
-                          >
-                            ●
-                          </span>
+                          style={{
+                            marginLeft: 6,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            minWidth: 18,
+                            height: 18,
+                            padding: "0 6px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            lineHeight: "18px",
+                            border: "1px solid rgba(0,0,0,0.18)",
+                            background: "rgba(220,38,38,0.12)",
+                          }}
+                          title="Tienes mensajes nuevos"
+                        >
+                          1
+                        </span>
+                        
                         ) : null}
                       </button>
                     ) : null}
@@ -840,9 +975,7 @@ export default function MatchesPage() {
                     </div>
                   ) : null}
 
-                  {clubsStatus.error ? (
-                    <div style={{ marginTop: 6, fontSize: 12, color: "crimson" }}>{clubsStatus.error}</div>
-                  ) : null}
+                  {clubsStatus.error ? <div style={{ marginTop: 6, fontSize: 12, color: "crimson" }}>{clubsStatus.error}</div> : null}
                 </label>
 
                 <label style={{ fontSize: 12 }}>
@@ -1003,7 +1136,7 @@ export default function MatchesPage() {
         </div>
       ) : null}
 
-      {/* ✅ MODAL CHAT (UNA SOLA VEZ, FUERA DE LISTAS) */}
+      {/* ✅ MODAL CHAT (UNA SOLA VEZ) */}
       {chatOpenFor ? (
         <div
           role="dialog"
@@ -1018,10 +1151,7 @@ export default function MatchesPage() {
             padding: 16,
             zIndex: 9999,
           }}
-          onClick={() => {
-            setChatLastRead(chatOpenFor, Date.now());
-            setChatOpenFor(null);
-          }}
+          onClick={() => setChatOpenFor(null)}
         >
           <div
             style={{

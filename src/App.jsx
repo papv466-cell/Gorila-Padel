@@ -54,21 +54,22 @@ export default function App() {
   }, []);
 
   // Rutas "auth shell" (sin navbar)
-  const authShellRoutes = useMemo(
-    () => ["/login", "/register", "/registro", "/forgot-password", "/reset-password"],
-    []
-  );
-
-  const isAuthShell = useMemo(
-    () => authShellRoutes.includes(location.pathname),
-    [authShellRoutes, location.pathname]
-  );
+  const isAuthShell = useMemo(() => {
+    const p = location.pathname;
+    return (
+      p.startsWith("/login") ||
+      p.startsWith("/register") ||
+      p.startsWith("/registro") ||
+      p.startsWith("/forgot-password") ||
+      p.startsWith("/reset-password")
+    );
+  }, [location.pathname]);
 
   // Solo login/registro deben redirigir si ya hay sesión
-  const isLoginOrRegister = useMemo(
-    () => ["/login", "/register", "/registro"].includes(location.pathname),
-    [location.pathname]
-  );
+  const isLoginOrRegister = useMemo(() => {
+    const p = location.pathname;
+    return p === "/login" || p === "/register" || p === "/registro";
+  }, [location.pathname]);
 
   // ✅ Si estás logueada y estás en login/registro, te saco al mapa (pero NO en reset-password)
   useEffect(() => {
@@ -78,7 +79,6 @@ export default function App() {
     navigate("/mapa", { replace: true });
   }, [sessionReady, session, isLoginOrRegister, navigate]);
 
-  // 4) Render: Splash hasta que estén listas ambas cosas
   if (!splashDone || !sessionReady) return <SplashPage />;
 
   return (
@@ -86,26 +86,23 @@ export default function App() {
       {!isAuthShell ? <Navbar /> : null}
 
       <main className="appMain">
+        <PWAInstallPrompt />
+
         <Routes>
-          {/* raíz */}
           <Route path="/" element={<Navigate to={session ? "/mapa" : "/login"} replace />} />
 
-          {/* app */}
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/partidos" element={<MatchesPage />} />
           <Route path="/clases" element={<ClassesPage />} />
 
-          {/* auth */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* helper PWA (lo dejo como route para que no moleste) */}
           <Route path="/pwa" element={<PWAInstallPrompt />} />
 
-          {/* fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

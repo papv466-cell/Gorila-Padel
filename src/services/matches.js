@@ -1,27 +1,16 @@
 // src/services/matches.js
 import { supabase } from "./supabaseClient";
+import { ensurePushSubscription } from "../services/push";
 
-/**
- * matches table expected fields:
- * - id (uuid)
- * - club_id (text)
- * - club_name (text)
- * - start_at (timestamptz)
- * - duration_min (int)
- * - level (text)
- * - created_by_user (uuid)
- * - reserved_spots (int) // "ya somos…" (1..3)
- * - spots_total (int) // default 4
- */
+useEffect(() => {
+  if (!session) return;
 
-/**
- * match_requests table expected fields:
- * - id (uuid)
- * - match_id (uuid)
- * - user_id (uuid)
- * - status (text) // pending | approved | rejected
- * - created_at
- */
+  // intentamos activar push sin molestar demasiado
+  ensurePushSubscription().catch(() => {
+    // no hacemos alert aquí para no ser pesados
+    // luego si quieres lo mostramos en Perfil/Ajustes con un botón
+  });
+}, [session]);
 
 function nowISO() {
   return new Date().toISOString();
@@ -40,6 +29,31 @@ export async function fetchMatches({ limit = 500 } = {}) {
 
   if (error) throw error;
   return data ?? [];
+}
+
+// ------------------------------
+// ÚLTIMO MENSAJE POR PARTIDO (para badge)
+// Devuelve: { [matchId]: timestamp_ms }
+// ------------------------------
+export async function fetchLatestChatTimes(matchIds = []) {
+  if (!matchIds.length) return {};
+
+  const { data, error } = await supabase
+    .from("match_messages")
+    .select("match_id, created_at")
+    .in("match_id", matchIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  const out = {};
+  for (const row of data ?? []) {
+    const id = row.match_id;
+    if (out[id]) continue; // ya tenemos el mas reciente de ese match
+    const ts = new Date(row.created_at).getTime();
+    out[id] = Number.isFinite(ts) ? ts : 0;
+  }
+  return out;
 }
 
 // ------------------------------
@@ -111,7 +125,6 @@ export async function cancelMyJoin(matchId) {
   if (sessErr) throw sessErr;
   if (!session?.user) throw new Error("No hay sesión activa.");
 
-  // ✅ borramos y confirmamos
   const { data, error } = await supabase
     .from("match_requests")
     .delete()
@@ -122,7 +135,6 @@ export async function cancelMyJoin(matchId) {
   if (error) throw error;
 
   if (!data || data.length === 0) {
-    // aquí ya sabemos que NO había request tuya
     throw new Error("No tienes una solicitud en este partido. Si eres la creadora, elimínalo.");
   }
 
@@ -214,14 +226,13 @@ export async function rejectRequest({ requestId }) {
 }
 
 // ------------------------------
-// POPUP MAPA: preview de partidos para un club
-// (solo futuros)
+// POPUP MAPA: preview de partidos para un club (solo futuros)
 // ------------------------------
 export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
   let q = supabase
     .from("matches")
     .select("id, club_id, club_name, start_at, duration_min, level")
-    .gte("start_at", nowISO()) // ✅ solo futuros
+    .gte("start_at", nowISO())
     .order("start_at", { ascending: true })
     .limit(limit);
 
@@ -232,6 +243,7 @@ export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }
   if (error) throw error;
   return data ?? [];
 }
+
 // ------------------------------
 // ELIMINAR PARTIDO (solo creador por RLS)
 // ------------------------------
@@ -247,20 +259,12 @@ export async function deleteMatch(matchId) {
   if (!session?.user) throw new Error("No hay sesión activa.");
 
   const { error } = await supabase.from("matches").delete().eq("id", matchId);
-
   if (error) throw error;
 }
 
 // ------------------------------
 // CHAT: mensajes de un partido
-// match_messages expected fields:
-// - id (uuid)
-// - match_id (uuid)
-// - user_id (uuid)
-// - message (text)
-// - created_at (timestamptz)
 // ------------------------------
-
 export async function fetchMatchMessages(matchId, { limit = 120 } = {}) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -289,6 +293,7 @@ export async function sendMatchMessage({ matchId, message } = {}) {
   if (sessErr) throw sessErr;
   if (!session?.user) throw new Error("No hay sesión activa.");
 
+  // 1) Guardar el mensaje
   const { data, error } = await supabase
     .from("match_messages")
     .insert({
@@ -300,26 +305,49 @@ export async function sendMatchMessage({ matchId, message } = {}) {
     .single();
 
   if (error) throw error;
+
+  // 2) Sacar participantes del partido (menos yo)
+  // ⚠️ Necesitamos saber cómo se llama tu tabla de participantes:
+  // - match_participants (recomendado)
+  // - o match_requests con status=approved
+  //
+  // Vamos a probar primero con match_requests approved (porque ya la usas en la app)
+  const { data: approvedUsers, error: apprErr } = await supabase
+    .from("match_requests")
+    .select("user_id")
+    .eq("match_id", matchId)
+    .eq("status", "approved");
+
+  if (apprErr) {
+    // si falla, no rompemos el chat
+    return data;
+  }
+
+  const targetUserIds = (approvedUsers ?? [])
+    .map((r) => r.user_id)
+    .filter((uid) => uid && uid !== session.user.id);
+
+  if (targetUserIds.length === 0) return data;
+
+  // 3) Buscar endpoints de esos usuarios
+  const { data: subs, error: subsErr } = await supabase
+    .from("push_subscriptions")
+    .select("endpoint")
+    .in("user_id", targetUserIds);
+
+  if (subsErr || !subs?.length) return data;
+
+  // 4) Mandar push (TOC TOC) a cada endpoint
+  for (const s of subs) {
+    if (!s?.endpoint) continue;
+
+    supabase.functions
+      .invoke("push-chat", {
+        body: { endpoint: s.endpoint },
+      })
+      .catch(() => {});
+  }
+
   return data;
 }
-// ------------------------------
-// ÚLTIMO MENSAJE POR PARTIDO (para badge)
-// Devuelve: { [matchId]: created_at_iso }
-// ------------------------------
-export async function fetchLastMessageAtForMatchIds(matchIds = []) {
-  if (!matchIds.length) return {};
 
-  const { data, error } = await supabase
-    .from("match_messages")
-    .select("match_id, created_at")
-    .in("match_id", matchIds)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
-  const out = {};
-  for (const row of data ?? []) {
-    if (!out[row.match_id]) out[row.match_id] = row.created_at; // nos quedamos con el primero
-  }
-  return out;
-}

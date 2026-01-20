@@ -16,9 +16,15 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    navigate("/login", { replace: true });
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // aseguramos UI limpia aunque el SW/cache haga cosas raras
+      navigate("/login", { replace: true });
+      window.location.reload(); 
+    }
   }
+
 
   return (
     <header className="navbar">
