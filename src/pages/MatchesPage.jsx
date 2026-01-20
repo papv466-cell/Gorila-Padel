@@ -514,7 +514,32 @@ export default function MatchesPage() {
 
   return (
     <div className="page">
-          <button
+      <header className="topbar">
+        <h1 className="title">Partidos</h1>
+
+        <p className="subtitle">
+          {status.loading ? "Cargando…" : status.error ? `Error: ${status.error}` : `Partidos: ${listForSelectedDay.length}`}
+        </p>
+
+        {isClubFilter ? (
+          <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ fontSize: 12, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 999, background: "#fff" }}>
+              Club: <strong>{clubNameParam || clubIdParam}</strong>
+            </div>
+
+            <button type="button" className="btn ghost" onClick={clearClubFilter}>
+              Ver todos
+            </button>
+          </div>
+        ) : null}
+
+        {isClubFilter ? (
+          <div className="dayPicker">
+            <div className="dayPickerTop">
+              <div className="dayPickerMeta">
+                Día seleccionado: <strong>{selectedDay}</strong>
+              </div>
+              <button
       type="button"
       onClick={async () => {
         try {
@@ -542,32 +567,6 @@ export default function MatchesPage() {
     >
       🔔 Activar Push
     </button>
-
-      <header className="topbar">
-        <h1 className="title">Partidos</h1>
-
-        <p className="subtitle">
-          {status.loading ? "Cargando…" : status.error ? `Error: ${status.error}` : `Partidos: ${listForSelectedDay.length}`}
-        </p>
-
-        {isClubFilter ? (
-          <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ fontSize: 12, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 999, background: "#fff" }}>
-              Club: <strong>{clubNameParam || clubIdParam}</strong>
-            </div>
-
-            <button type="button" className="btn ghost" onClick={clearClubFilter}>
-              Ver todos
-            </button>
-          </div>
-        ) : null}
-
-        {isClubFilter ? (
-          <div className="dayPicker">
-            <div className="dayPickerTop">
-              <div className="dayPickerMeta">
-                Día seleccionado: <strong>{selectedDay}</strong>
-              </div>
 
               <label style={{ fontSize: 12 }}>
                 Cambiar día
