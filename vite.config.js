@@ -10,6 +10,15 @@ export default defineConfig({
       srcDir: "src",
       filename: "sw.js",
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw.js",
+
+      // ✅ ESTO es lo importante: fuerza a usar TU SW real
+      injectManifest: {
+        swSrc: "src/sw.js",
+      },
+
       includeAssets: ["logo.png"],
 
       // 👇 IMPORTANTE: esto es lo de injectManifest (NO workbox)
@@ -36,3 +45,7 @@ export default defineConfig({
     }),
   ],
 });
+
+  
+ 
+ 

@@ -638,6 +638,8 @@ export default function MatchesPage() {
             <button type="button" className="btn ghost" onClick={clearClubFilter}>
               Ver todos
             </button>
+                 
+
           </div>
         ) : null}
 
@@ -647,7 +649,6 @@ export default function MatchesPage() {
               <div className="dayPickerMeta">
                 Día seleccionado: <strong>{selectedDay}</strong>
               </div>
-
               <label style={{ fontSize: 12 }}>
                 Cambiar día
                 <input
@@ -710,23 +711,6 @@ export default function MatchesPage() {
             Crear partido
           </button>
         </div>
-        <div style={{ marginTop: 10 }}>
-  <button
-    type="button"
-    className="btn ghost"
-    onClick={async () => {
-      try {
-        await ensurePushSubscription();
-        alert("✅ Push activado y guardado en Supabase");
-      } catch (e) {
-        console.error("❌ PUSH ERROR:", e);
-        alert("❌ Error push: " + (e?.message || String(e)));
-      }
-    }}
-  >
-    Activar Push (prueba)
-  </button>
-</div>
       </header>
       <button
   type="button"
