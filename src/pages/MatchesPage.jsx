@@ -1149,6 +1149,29 @@ export default function MatchesPage() {
         </div>
       ) : null}
 
+<button
+  type="button"
+  onClick={async () => {
+    try {
+      const mod = await import("../services/push.js");
+      await mod.ensurePushSubscription();
+      alert("✅ Push activado y guardado en Supabase");
+    } catch (e) {
+      console.error("❌ PUSH ERROR:", e);
+      alert("❌ Error push: " + (e?.message || String(e)));
+    }
+  }}
+  style={{
+    position: "fixed",
+    right: 16,
+    bottom: 16,
+    padding: "10px 14px",
+    borderRadius: 999,
+  }}
+>
+  🔔 Activar Push
+</button>
+
       {/* ✅ MODAL CHAT (UNA SOLA VEZ) */}
       {chatOpenFor ? (
         <div
