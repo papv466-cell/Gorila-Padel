@@ -221,7 +221,7 @@ export async function rejectRequest({ requestId }) {
 // ------------------------------
 export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
   let q = supabase
-    .from("match_join_requests")
+    .from("matches")
     .select("id, club_id, club_name, start_at, duration_min, level")
     .gte("start_at", nowISO())
     .order("start_at", { ascending: true })
@@ -247,9 +247,14 @@ export async function deleteMatch(matchId) {
   const session = sessData?.session;
   if (!session?.user) throw new Error("No hay sesión activa.");
 
-  const { error } = await supabase.from("match_join_requests").delete().eq("id", matchId);
+  const { error } = await supabase
+    .from("matches")
+    .delete()
+    .eq("id", matchId);
+
   if (error) throw error;
 }
+
 
 // ------------------------------
 // CHAT: mensajes
