@@ -172,14 +172,20 @@ export default function MatchesPage() {
   ========================= */
   const filteredList = useMemo(() => {
     let list = items;
+  
+    // filtro por club si viene desde el mapa
     if (clubIdParam) list = list.filter((m) => m.club_id === clubIdParam);
     if (clubNameParam) list = list.filter((m) => m.club_name === clubNameParam);
-
+  
+    // ✅ SOLO filtramos por día si hay filtro de club
+    if (!isClubFilter) return list;
+  
     return list.filter((m) => {
       const d = toDateInputValue(new Date(m.start_at));
       return d === selectedDay;
     });
-  }, [items, clubIdParam, clubNameParam, selectedDay]);
+  }, [items, clubIdParam, clubNameParam, selectedDay, isClubFilter]);
+  
 
   const myList = useMemo(() => {
     if (!session) return [];
@@ -287,7 +293,14 @@ export default function MatchesPage() {
                 </button>
               )}
 
-              <button className="btn" onClick={() => (session ? setOpenCreate(true) : goLogin())}>
+              <button
+                className="btn"
+                onClickCapture={() => {
+                  alert("CLICK OK ✅");
+                  if (session) setOpenCreate(true);
+                  else goLogin();
+                }}
+              >
                 Crear partido
               </button>
             </div>
@@ -295,17 +308,17 @@ export default function MatchesPage() {
 
           {/* TABS */}
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button className={`btn ${viewMode === "explore" ? "" : "ghost"}`} onClick={() => setViewMode("explore")}>
+          <button className={`btn ${viewMode === "explore" ? "" : "ghost"}`} onClickCapture={() => setViewMode("explore")}>
               Explorar
             </button>
             <button
               className={`btn ${viewMode === "mine" ? "" : "ghost"}`}
               disabled={!session}
-              onClick={() => setViewMode("mine")}
+              onClickCapture={() => setViewMode("mine")}
             >
               Mis partidos
             </button>
-          </div>
+              </div>
 
           {/* LIST */}
           <ul style={{ listStyle: "none", padding: 0 }}>
@@ -332,7 +345,7 @@ export default function MatchesPage() {
                       {session && !isCreator && !myStatus && left > 0 && (
                         <button
                         className="btn"
-                        onClick={async () => {
+                        onClickCapture={async () => {
                           try {
                             await requestJoin(m.id);
                             await reload();
@@ -345,6 +358,7 @@ export default function MatchesPage() {
                         Unirme
                       </button>
                       
+                      
                       )}
 
                       {isCreator ? (
@@ -352,11 +366,48 @@ export default function MatchesPage() {
                           Solicitudes
                         </button>
                       ) : null}
+                        {openCreate ? (
+                          <div
+                            onClick={() => setOpenCreate(false)}
+                            style={{
+                              position: "fixed",
+                              inset: 0,
+                              background: "rgba(0,0,0,0.35)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 16,
+                              zIndex: 9999,
+                            }}
+                          >
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: "min(520px, 100%)",
+                                background: "#fff",
+                                borderRadius: 12,
+                                padding: 14,
+                                border: "1px solid rgba(0,0,0,0.12)",
+                              }}
+                            >
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                                <h2 style={{ margin: 0, fontSize: 16 }}>Crear partido</h2>
+                                <button type="button" className="btn ghost" onClick={() => setOpenCreate(false)}>
+                                  Cerrar
+                                </button>
+                              </div>
+
+                              <div style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
+                                (Esto es la ventana. Si la ves, el botón ya funciona.)
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
 
                       {session && (isCreator || myStatus) && (
-                        <button className="btn ghost" onClick={() => openChat(m.id)}>
-                          Chat
-                        </button>
+                        <button className="btn ghost" onClickCapture={() => openChat(m.id)}>
+                        Chat
+                      </button>
                       )}
                     </div>
                   </div>
@@ -420,7 +471,7 @@ export default function MatchesPage() {
       <button
         type="button"
         className="btn"
-        onClick={() => handleApprove(r.id)}
+        onClickCapture={() => handleApprove(r.id)}
       >
         Aprobar
       </button>
@@ -447,6 +498,44 @@ export default function MatchesPage() {
         <div className="modal">
           <div className="modalCard">
             <h3>Chat del partido</h3>
+
+            {openCreate ? (
+  <div
+    onClick={() => setOpenCreate(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16,
+      zIndex: 9999,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "min(520px, 100%)",
+        background: "#fff",
+        borderRadius: 12,
+        padding: 14,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <h2 style={{ margin: 0, fontSize: 16 }}>Crear partido</h2>
+        <button type="button" className="btn ghost" onClick={() => setOpenCreate(false)}>
+          Cerrar
+        </button>
+      </div>
+
+      <div style={{ marginTop: 12, fontSize: 13, opacity: 0.8 }}>
+        (Ahora mismo esto es solo para confirmar que se abre. Luego metemos aquí tu formulario.)
+      </div>
+    </div>
+  </div>
+) : null}
+
 
             <div className="chatBox">
               {chatItems.map((m) => (

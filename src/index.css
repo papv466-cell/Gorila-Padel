@@ -431,3 +431,40 @@ img { max-width: 100%; height: auto; }
     min-height: 280px;
   }
 }
+.devBanner{
+  background: #f6ff3b;
+  color: #111;
+  padding: 10px 14px;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.pageWrap{
+  flex: 1;
+  min-height: 0;
+  padding: 18px 16px 28px;
+}
+
+.container{
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.pageHeader{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 10px 0 14px;
+}
+
+.pageTitle{
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.pageMeta{
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: .75;
+}
