@@ -91,7 +91,7 @@ export async function requestJoin(matchId) {
   if (!session?.user) throw new Error("No hay sesión activa.");
 
   const payload = { match_id: matchId, user_id: session.user.id, status: "pending" };
-  const { error } = await supabase.from("match_requests").insert(payload);
+  const { error } = await supabase.from("match_join_requests").insert(payload);
   if (error) throw error;
   return true;
 }
@@ -105,7 +105,7 @@ export async function cancelMyJoin(matchId) {
   if (!session?.user) throw new Error("No hay sesión activa.");
 
   const { error } = await supabase
-    .from("match_requests")
+    .from("match_join_requests")
     .delete()
     .eq("match_id", matchId)
     .eq("user_id", session.user.id);
@@ -127,15 +127,15 @@ export async function fetchMyRequestsForMatchIds(matchIds = []) {
   if (!session?.user) return {};
 
   const { data, error } = await supabase
-    .from("match_requests")
-    .select("*")
+    .from("match_join_requests")
+    .select("match_id, status")
     .in("match_id", matchIds)
     .eq("user_id", session.user.id);
 
   if (error) throw error;
 
   const out = {};
-  for (const r of data ?? []) out[r.match_id] = r;
+  for (const r of data ?? []) out[r.match_id] = r.status; // 👈 devuelve "pending/approved/rejected"
   return out;
 }
 
@@ -146,7 +146,7 @@ export async function fetchApprovedCounts(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
   const { data, error } = await supabase
-    .from("match_requests")
+    .from("match_join_requests")
     .select("match_id, status")
     .in("match_id", matchIds);
 
@@ -167,7 +167,7 @@ export async function fetchPendingRequests(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
   const { data, error } = await supabase
-    .from("match_requests")
+    .from("match_join_requests")
     .select("*")
     .eq("match_id", matchId)
     .eq("status", "pending")
@@ -178,23 +178,50 @@ export async function fetchPendingRequests(matchId) {
 }
 
 export async function approveRequest({ requestId }) {
-  if (!requestId) throw new Error("Falta requestId");
-  const { error } = await supabase.from("match_requests").update({ status: "approved" }).eq("id", requestId);
+  const { data: sessData } = await supabase.auth.getSession();
+  const uid = sessData?.session?.user?.id;
+
+  const { data, error } = await supabase
+    .from("match_join_requests")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: uid,
+    })
+    .eq("id", requestId)
+    .select("id,status,match_id,user_id")
+    .single();
+
   if (error) throw error;
+  return data;
 }
 
 export async function rejectRequest({ requestId }) {
-  if (!requestId) throw new Error("Falta requestId");
-  const { error } = await supabase.from("match_requests").update({ status: "rejected" }).eq("id", requestId);
+  const { data: sessData } = await supabase.auth.getSession();
+  const uid = sessData?.session?.user?.id;
+
+  const { data, error } = await supabase
+    .from("match_join_requests")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: uid,
+    })
+    .eq("id", requestId)
+    .select("id,status,match_id,user_id")
+    .single();
+
   if (error) throw error;
+  return data;
 }
+
 
 // ------------------------------
 // PREVIEW PARTIDOS POR CLUB (solo futuros)
 // ------------------------------
 export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
   let q = supabase
-    .from("matches")
+    .from("match_join_requests")
     .select("id, club_id, club_name, start_at, duration_min, level")
     .gte("start_at", nowISO())
     .order("start_at", { ascending: true })
@@ -220,7 +247,7 @@ export async function deleteMatch(matchId) {
   const session = sessData?.session;
   if (!session?.user) throw new Error("No hay sesión activa.");
 
-  const { error } = await supabase.from("matches").delete().eq("id", matchId);
+  const { error } = await supabase.from("match_join_requests").delete().eq("id", matchId);
   if (error) throw error;
 }
 
@@ -267,25 +294,40 @@ export async function sendMatchMessage({ matchId, message } = {}) {
 
   if (error) throw error;
 
-  // 2) Disparar push desde backend (una llamada)
-  // (el backend decide receptores, consulta sus subs con service role)
-  try {
-    const res = await fetch("/api/push-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    // 2) Disparar push desde backend
+    async function postPushChat(payload) {
+      const res = await fetch("/api/push-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+  
+      const text = await res.text();
+  
+      if (!res.ok) {
+        console.error("[push] /api/push-chat failed:", res.status, text);
+        throw new Error(text || `push failed ${res.status}`);
+      }
+  
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    }
+  
+    // ✅ AQUÍ estaba el fallo: faltaba LLAMARLO
+    try {
+      await postPushChat({
+        type: "chat",
         matchId,
-        senderId: session.user.id,
-        textPreview: text.slice(0, 140),
-      }),
-    });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) console.warn("[push] /api/push-chat error:", res.status, json);
-    else console.log("[push] /api/push-chat ok:", json);
-  } catch (e) {
-    console.warn("[push] /api/push-chat fallo (red):", e);
-  }
-
-  return data;
+        messageId: data.id,
+      });
+    } catch (e) {
+      // no rompemos el chat si falla el push, solo lo logueamos
+      console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
+    }
+  
+    return data;
+  
 }
