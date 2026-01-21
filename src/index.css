@@ -1,446 +1,282 @@
 /* =========================
-   Global Padel — index.css (LIMPIO REAL)
+   Global Padel — index.css (LIMPIO)
    ========================= */
-  
-  /* Reset */
-  *, *::before, *::after{ box-sizing: border-box; }
-  
-  html, body, #root { height: 100%; margin: 0;}
-  body { margin: 0; }
-  
 
-  /* Links */
-  a{ color: inherit; text-decoration: none; }
-  a:hover{ text-decoration: underline; }
-  
-  /* Regla general OK (pero Leaflet necesita excepción) */
-  img { max-width: 100%; height: auto; }
-  
-  /* =========================
-     App shell
-     ========================= */
-  .appShell{
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .appMain{
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .page{
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* =========================
-     Navbar
-     ========================= */
-  .navbar{
-    height: 56px;
-    padding: 0 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    background: #0b0f14;
-    color: #fff;
-  }
-  
-  .navLeft{ display:flex; gap:10px; min-width:0; }
-  .navLogo{ width:34px; height:34px; object-fit:contain; border-radius:10px; }
-  .navBrand{ font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  
-  .navTabs{ display:flex; gap:8px; }
-  
-  .navLink{
-    padding: 7px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.12);
-    color: rgba(255,255,255,0.92);
-    font-size: 13px;
-  }
-  .navLink:hover{ background: rgba(255,255,255,0.06); }
-  .navLink.active{
-    background: rgba(255,255,255,0.12);
-    border-color: rgba(255,255,255,0.18);
-  }
-  
-  .navRight{ display:flex; align-items:center; gap:8px; }
-  
-  @media (max-width: 520px){
-    .navBrand{ display:none; }
-  }
-  
-  /* =========================
-     Botones
-     ========================= */
-  .btn{
-    padding: 10px 12px;
-    border: 1px solid rgba(0,0,0,0.14);
-    border-radius: 12px;
-    background: #fff;
-    cursor: pointer;
-    font: inherit;
-    font-weight: 600;
-  }
-  .btn:hover{ background:#f9fafb; }
-  .btn:disabled{ opacity:.6; cursor:not-allowed; }
-  .btn.ghost{ background: transparent; border-style: dashed; }
-  
-  /* =========================
-     Layout mapa (sidebar + mapa)
-     ========================= */
-  .layout{
-    flex: 1;
-    min-height: 0;
-    display: flex;
-  }
-  
-  .sidebar{
-    width: 420px;
-    flex: 0 0 420px;
-    min-height: 0;
-    overflow: auto;
-    background: #fff;
-    border-right: 1px solid rgba(0,0,0,0.06);
-  }
-  
-  .mapArea{
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-  }
-  
-  .mapShell{
-    height: 100%;
-    width: 100%;
-    min-height: 0;
-  }
-  
-  /* Leaflet */
-  .leaflet-container{
-    height: 100% !important;
-    width: 100% !important;
-  }
-  
-  /* 🔒 CRÍTICO: no rompas tiles con img{max-width:100%} */
-  .leaflet-container img{
-    max-width: none !important;
-  }
-  
-  /* Popup */
-  .leaflet-popup-content{
-    max-height: 260px;
-    overflow: auto;
-    margin: 12px 14px;
-    min-width: 220px;
-  }
-  .leaflet-popup-content-wrapper{ border-radius: 12px; }
-  
-  /* Sidebar list: sin bullets */
-  .sidebar ul, .sidebar ol{
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-  }
-  .sidebar li{ list-style: none; }
-  .sidebar button{ font: inherit; }
-  
-  /* Inputs/select consistentes en sidebar */
-  .sidebar input, .sidebar select{
-    border-radius: 12px;
-    border: 1px solid rgba(0,0,0,0.14);
-    padding: 10px 12px;
-    font: inherit;
-    background: #fff;
-  }
-  
-  /* Móvil */
-  @media (max-width: 768px){
-    .layout{ flex-direction: column; gap: 10px; }
-    .sidebar{
-      width: 100%;
-      flex: 0 0 auto;
-      max-height: 38vh;
-      border-right: none;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    .mapShell{
-      height: 52vh;
-      min-height: 280px;
-    }
-  }
-  
-  /* =========================
-     Anti-hero: por si alguien metió un overlay
-     ========================= */
-  .page::before, .page::after,
-  .appMain::before, .appMain::after,
-  .layout::before, .layout::after{
-    content: none !important;
-    display: none !important;
-  }
-  .page, .appMain, .layout{
-    background-image: none !important;
-  }
+/* Reset base */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
 
 body {
-  display: block !important;
-  place-items: unset !important;
-}
-/* =========================
-   CLUB LIST — PRO LOOK
-   ========================= */
-
-   .clubList {
-    padding: 14px;
-  }
-  
-  .clubListHeader {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .clubListHeader strong {
-    font-size: 14px;
-  }
-  
-  .clubListHint {
-    font-size: 12px;
-    opacity: 0.7;
-  }
-  
-  .clubListItems {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    gap: 10px;
-  }
-  
-  .clubListRow {
-    display: grid;
-    grid-template-columns: 1fr 44px;
-    gap: 10px;
-    align-items: stretch;
-  }
-  
-  .clubCard {
-    width: 100%;
-    text-align: left;
-    padding: 12px 12px;
-    border-radius: 14px;
-    border: 1px solid rgba(0,0,0,0.10);
-    background: #fff;
-    cursor: pointer;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
-    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-  }
-  
-  .clubCard:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.08);
-    border-color: rgba(0,0,0,0.16);
-  }
-  
-  .clubCard:active {
-    transform: translateY(0);
-    box-shadow: 0 10px 22px rgba(0,0,0,0.07);
-  }
-  
-  .clubCardTop {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    align-items: baseline;
-  }
-  
-  .clubName {
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-  
-  .clubDistance {
-    font-size: 12px;
-    opacity: 0.75;
-    white-space: nowrap;
-  }
-  
-  .clubCity {
-    margin-top: 4px;
-    font-size: 12px;
-    opacity: 0.78;
-  }
-  
-  /* Botón favorito */
-  .clubFavBtn {
-    width: 44px;
-    border-radius: 14px;
-    border: 1px solid rgba(0,0,0,0.10);
-    background: #fff;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    display: grid;
-    place-items: center;
-    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
-  }
-  
-  .clubFavBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 14px 30px rgba(0,0,0,0.08);
-    border-color: rgba(0,0,0,0.16);
-  }
-  
-  .clubFavBtn.isFav {
-    border-color: rgba(0,0,0,0.22);
-    background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01));
-  }
-  /* Sidebar más usable en desktop */
-.sidebar {
-  width: 420px !important;
-  flex: 0 0 420px !important;
-}
-
-@media (min-width: 1400px) {
-  .sidebar {
-    width: 460px !important;
-    flex: 0 0 460px !important;
-  }
-}
-/* ✅ Login: siempre centrado y con card */
-.authWrapper{
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 22px;
-  background: radial-gradient(
-      1200px 700px at 50% 30%,
-      rgba(255,255,255,0.08),
-      transparent 60%
-    ),
-    #0b0f14;
-}
-
-.authCard{
-  width: min(420px, 92vw);
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
-  display: grid;
-  gap: 16px;
-}
-
-.authLogo{
-  width: 96px;
-  height: 96px;
-  object-fit: contain;
-  margin: 0 auto 6px;
-  border-radius: 22px;
-  background: rgba(17,24,39,0.04);
-  padding: 14px;
-}
-
-.authTitle{
   margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  text-align: center;
+  display: block; /* mata cualquier layout raro del template */
+  background: #fff;
   color: #111827;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
 }
 
-.authSub{
-  margin: -6px 0 6px;
-  font-size: 13px;
-  text-align: center;
-  opacity: 0.75;
-  color: rgba(17,24,39,0.75);
+/* Links */
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Regla global OK */
+img { max-width: 100%; height: auto; }
+
+/* =========================
+   App shell
+   ========================= */
+.appShell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.authForm{ display: grid; gap: 10px; }
-
-.authLabel{
-  font-size: 12px;
-  display: grid;
-  gap: 6px;
-  color: #111827;
+.appMain {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.authInput{
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.14);
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.authBtn{
-  margin-top: 6px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.14);
+/* =========================
+   Navbar
+   ========================= */
+.navbar {
+  height: 56px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   background: #0b0f14;
   color: #fff;
-  font-weight: 800;
-  cursor: pointer;
 }
 
-.authError{
-  font-size: 12px;
-  color: crimson;
-  background: rgba(220,38,38,0.08);
-  border: 1px solid rgba(220,38,38,0.18);
-  padding: 10px 12px;
-  border-radius: 12px;
-}
+.navLeft { display: flex; gap: 10px; min-width: 0; align-items: center; }
+.navLogo { width: 34px; height: 34px; object-fit: contain; border-radius: 10px; }
+.navBrand { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.authFooter{
-  text-align: center;
+.navTabs { display: flex; gap: 8px; }
+.navLink {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.92);
   font-size: 13px;
-  opacity: 0.85;
+}
+.navLink:hover { background: rgba(255,255,255,0.06); }
+.navLink.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+}
+.navRight { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 520px){
+  .navBrand { display: none; }
 }
 
-.authLink{
-  font-weight: 800;
-}
 /* =========================
-   AUTH — HARD OVERRIDES (FINAL)
-   pega al FINAL del index.css
+   Botones
+   ========================= */
+.btn {
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+.btn:hover { background: #f9fafb; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn.ghost { background: transparent; border-style: dashed; }
+
+/* =========================
+   Layout mapa (sidebar + mapa)
+   ========================= */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.sidebar {
+  width: 420px;
+  flex: 0 0 420px;
+  min-height: 0;
+  overflow: auto;
+  background: #fff;
+  border-right: 1px solid rgba(0,0,0,0.06);
+}
+
+.mapArea {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mapShell {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+}
+
+/* =========================
+   Leaflet — FIX DEFINITIVO (tiles a cuadros)
    ========================= */
 
-/* mata el layout del template Vite si se cuela */
-#root{
+/* Leaflet necesita que sus imgs NO tengan max-width:100% */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg {
   max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: initial !important;
+  max-height: none !important;
 }
 
-/* el template a veces pone body centrado */
-body{
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Forzar tamaño tile (evita “mosaico raro”) */
+.leaflet-container img.leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Popups */
+.leaflet-popup-content {
+  max-height: 260px;
+  overflow: auto;
+  margin: 12px 14px;
+  min-width: 220px;
+}
+.leaflet-popup-content-wrapper { border-radius: 12px; }
+
+/* =========================
+   Sidebar list
+   ========================= */
+.sidebar ul, .sidebar ol {
+  list-style: none;
+  padding-left: 0;
   margin: 0;
-  display: block !important;
+}
+.sidebar li { list-style: none; }
+.sidebar button { font: inherit; }
+
+/* Inputs / selects dentro sidebar */
+.sidebar input, .sidebar select {
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
 }
 
-/* auth siempre centrado y legible */
-.authWrapper{
+/* =========================
+   ClubList — look pro
+   ========================= */
+.clubList { padding: 14px; }
+
+.clubListHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.clubListHint { font-size: 12px; opacity: .7; }
+
+.clubListItems {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clubListRow {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.clubCard {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+.clubCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.16);
+}
+
+.clubCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.clubName {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clubDistance { font-size: 12px; opacity: .75; white-space: nowrap; }
+.clubCity { margin-top: 4px; font-size: 12px; opacity: .78; }
+
+.clubFavBtn {
+  width: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.clubFavBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.16);
+}
+.clubFavBtn.isFav {
+  border-color: rgba(0,0,0,0.22);
+  background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01));
+}
+
+/* =========================
+   Auth (Login/Register) — evita logo gigante
+   ========================= */
+.authWrapper {
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -453,7 +289,7 @@ body{
     #0b0f14;
 }
 
-.authCard{
+.authCard {
   width: min(420px, 92vw);
   background: #fff;
   border-radius: 16px;
@@ -463,8 +299,7 @@ body{
   gap: 16px;
 }
 
-/* ✅ esto es lo que evita el “logo gigante” pase lo que pase */
-.authLogo{
+.authLogo {
   width: 96px !important;
   height: 96px !important;
   max-width: 96px !important;
@@ -477,7 +312,7 @@ body{
   padding: 14px;
 }
 
-.authTitle{
+.authTitle {
   margin: 0;
   font-size: 20px;
   font-weight: 800;
@@ -485,7 +320,7 @@ body{
   color: #111827;
 }
 
-.authSub{
+.authSub {
   margin: -6px 0 6px;
   font-size: 13px;
   text-align: center;
@@ -493,16 +328,16 @@ body{
   color: rgba(17,24,39,0.75);
 }
 
-.authForm{ display: grid; gap: 10px; }
+.authForm { display: grid; gap: 10px; }
 
-.authLabel{
+.authLabel {
   font-size: 12px;
   display: grid;
   gap: 6px;
   color: #111827;
 }
 
-.authInput{
+.authInput {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
@@ -510,7 +345,7 @@ body{
   font: inherit;
 }
 
-.authBtn{
+.authBtn {
   margin-top: 6px;
   padding: 10px 12px;
   border-radius: 12px;
@@ -521,94 +356,78 @@ body{
   cursor: pointer;
 }
 
-.authBtn:disabled{ opacity: .7; cursor: not-allowed; }
-/* =========================
-   SPLASH (FORZADO) — evita “logo gigante feo”
-   ========================= */
-   .splash{
-    position: fixed;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background: #0b0f14;
-    color: #fff;
-    z-index: 999999;
-    text-align: center;
-    padding: 24px;
-  }
-  
-  .splashInner{
-    display: grid;
-    gap: 10px;
-    justify-items: center;
-    animation: gpSplashIn 500ms ease-out both;
-  }
-  
-  .splashLogoImg{
-    width: 120px !important;
-    height: 120px !important;
-    max-width: none !important;
-    object-fit: contain;
-    border-radius: 22px;
-    background: rgba(255,255,255,0.08);
-    padding: 16px;
-    border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-  }
-  
-  .splashTitle{
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: .2px;
-  }
-  
-  .splashSub{
-    font-size: 13px;
-    opacity: .82;
-  }
-  
-  @keyframes gpSplashIn{
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  /* =========================
-   LEAFLET — FIX DEFINITIVO TILES
-   (pegar AL FINAL del index.css)
-   ========================= */
-
-/* Tu regla global img { max-width:100% } rompe Leaflet. */
-.leaflet-container img,
-.leaflet-container canvas,
-.leaflet-container svg {
-  max-width: none !important;
-  max-height: none !important;
+.authError {
+  font-size: 12px;
+  color: crimson;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.18);
+  padding: 10px 12px;
+  border-radius: 12px;
 }
 
-/* A veces el problema es aún más específico: tiles */
-.leaflet-container img.leaflet-tile {
-  max-width: none !important;
-  max-height: none !important;
-  width: 256px !important;
-  height: 256px !important;
+.authFooter { text-align: center; font-size: 13px; opacity: 0.85; }
+.authLink { font-weight: 800; }
+
+/* =========================
+   Splash (React) — bonito y estable
+   ========================= */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0b0f14;
+  color: #fff;
+  z-index: 999999;
+  text-align: center;
+  padding: 24px;
+}
+
+.splashInner {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  animation: gpSplashIn 500ms ease-out both;
+}
+
+.splashLogoImg {
+  width: 120px !important;
+  height: 120px !important;
+  object-fit: contain;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.08);
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
+
+.splashTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.splashSub { font-size: 13px; opacity: .82; }
+
+@keyframes gpSplashIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================
-   LEAFLET — FIX DEFINITIVO TILES
+   Móvil: mapa arriba, lista abajo
    ========================= */
-
-  /* Leaflet tiles FIX (DEFINITIVO) */
-.leaflet-container img,
-.leaflet-container canvas,
-.leaflet-container svg {
-  max-width: none !important;
-  max-height: none !important;
+@media (max-width: 768px){
+  .layout { flex-direction: column; gap: 10px; }
+  .sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    max-height: 38vh;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .mapShell {
+    height: 52vh;
+    min-height: 280px;
+  }
 }
-
-.leaflet-container img.leaflet-tile {
-  width: 256px !important;
-  height: 256px !important;
-  max-width: none !important;
-  max-height: none !important;
-}
-
-   

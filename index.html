@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>1111111 Padel</title>
+    <title>Global Padel</title>
 
     <meta name="theme-color" content="#0b0f14" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -14,8 +14,8 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" href="/logo.png" />
 
+    <!-- BOOT SPLASH: solo antes de React -->
     <style>
-      /* Boot splash: SOLO mientras carga JS/CSS */
       #boot-splash{
         position: fixed;
         inset: 0;
@@ -38,8 +38,15 @@
         border: 1px solid rgba(255,255,255,0.14);
         box-shadow: 0 18px 60px rgba(0,0,0,0.45);
       }
-      #boot-splash .boot-title{ font-weight: 800; font-size: 20px; letter-spacing: .2px; }
-      #boot-splash .boot-sub{ font-size: 13px; opacity: .8; }
+      #boot-splash .boot-title{
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: .2px;
+      }
+      #boot-splash .boot-sub{
+        font-size: 13px;
+        opacity: .82;
+      }
     </style>
   </head>
 
@@ -50,6 +57,7 @@
       <div class="boot-sub">Cargando…</div>
     </div>
 
+    <!-- SOLO UNO -->
     <div id="root"></div>
 
     <script type="module" src="/src/main.jsx"></script>
