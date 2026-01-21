@@ -5,9 +5,11 @@
 /* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* ===== FIX SCROLL: la página NO scrollea, scrollea la sidebar ===== */
 html, body, #root {
   height: 100%;
   margin: 0;
+  overflow: hidden; /* clave: evita scroll del body */
 }
 
 body {
@@ -28,40 +30,33 @@ img { max-width: 100%; height: auto; }
 /* =========================
    App shell
    ========================= */
-.appShell {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+   .appShell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
 
-.appMain {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
+  .appMain {
+    flex: 1 1 auto;
+    min-height: 0; /* clave */
+    display: flex;
+    flex-direction: column;
+  }
 
-.page {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
+  .page {
+    flex: 1 1 auto;
+    min-height: 0; /* clave */
+    display: flex;
+    flex-direction: column;
+  }
 
 /* =========================
    Navbar
    ========================= */
-.navbar {
-  height: 56px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: #0b0f14;
-  color: #fff;
-}
+   .navbar {
+    flex: 0 0 56px; /* fija la altura del navbar */
+  }
 
 .navLeft { display: flex; gap: 10px; min-width: 0; align-items: center; }
 .navLogo { width: 34px; height: 34px; object-fit: contain; border-radius: 10px; }
@@ -102,33 +97,29 @@ img { max-width: 100%; height: auto; }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
 .btn.ghost { background: transparent; border-style: dashed; }
 
-/* =========================
-   Layout mapa (sidebar + mapa)
-   ========================= */
+/* layout ocupa toda la altura disponible */
 .layout {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 0; /* clave */
   display: flex;
 }
 
+/* sidebar scrollea de forma independiente */
 .sidebar {
-  width: 420px;
-  flex: 0 0 420px;
-  min-height: 0;
-  overflow: auto;
-  background: #fff;
-  border-right: 1px solid rgba(0,0,0,0.06);
+  min-height: 0; /* clave */
+  overflow: auto; /* scroll aquí */
+  overscroll-behavior: contain; /* evita que el scroll “salte” al body */
+  -webkit-overflow-scrolling: touch;
 }
 
+/* mapa NO debe forzar altura con vh */
 .mapArea {
-  flex: 1;
-  min-width: 0;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .mapShell {
   height: 100%;
-  width: 100%;
   min-height: 0;
 }
 
@@ -429,5 +420,47 @@ img { max-width: 100%; height: auto; }
   .mapShell {
     height: 52vh;
     min-height: 280px;
+  }
+}
+/* ===== Desktop: mapa y lista a altura completa (sin scroll global) ===== */
+@media (min-width: 769px) {
+  .sidebar {
+    width: 420px;
+    flex: 0 0 420px;
+  }
+
+  .mapShell,
+  .leaflet-container {
+    height: 100% !important;
+  }
+}
+
+/* ===== Móvil: mapa arriba, lista abajo con scroll propio ===== */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .mapArea {
+    order: 1;
+  }
+
+  .sidebar {
+    order: 2;
+    width: 100%;
+    flex: 1 1 auto;
+    max-height: 42vh; /* lista más usable */
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    border-radius: 14px;
+  }
+
+  .mapShell {
+    height: 48vh !important; /* mapa menos gigante */
+    min-height: 240px;
+    border-radius: 14px;
+    overflow: hidden;
   }
 }
