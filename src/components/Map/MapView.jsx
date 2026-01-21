@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-le
 import { useNavigate } from "react-router-dom";
 import MapController from "./MapController";
 import ClubMatchesPreview from "../Matches/ClubMatchesPreview";
+import { useLocation } from "react-router-dom";
 
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -21,6 +22,9 @@ function googleMapsUrl({ lat, lng, label }) {
   const q = label ? `${lat},${lng} (${label})` : `${lat},${lng}`;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
+
+const location = useLocation();
+const isMapPage = location.pathname === "/mapa";
 
 function MapFix({ depsKey }) {
   const map = useMap();
@@ -175,8 +179,10 @@ export default function MapView({
                       type="button"
                       className="btn"
                       onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                        if (isMapPage) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }                        
                         closePopup(clubId);
                         navigate(
                           `/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(
