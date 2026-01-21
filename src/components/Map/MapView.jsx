@@ -23,9 +23,6 @@ function googleMapsUrl({ lat, lng, label }) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
 
-const location = useLocation();
-const isMapPage = location.pathname === "/mapa";
-
 function MapFix({ depsKey }) {
   const map = useMap();
 
@@ -69,6 +66,8 @@ export default function MapView({
   homeRequestId,
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMapPage = location.pathname === "/mapa";
   const markerRefs = useRef(new Map());
 
   // Zoom responsive (móvil un poco más alejado)
@@ -180,14 +179,11 @@ export default function MapView({
                       className="btn"
                       onClick={(e) => {
                         if (isMapPage) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }                        
+                          e.stopPropagation(); // 👈 SOLO esto
+                        }
                         closePopup(clubId);
                         navigate(
-                          `/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(
-                            clubName
-                          )}`
+                          `/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`
                         );
                       }}
                     >
