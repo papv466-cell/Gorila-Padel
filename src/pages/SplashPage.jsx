@@ -1,10 +1,41 @@
 export default function SplashPage() {
   return (
-    <div className="splash">
-      <div className="splashInner">
-        <img src="/logo.png" alt="Global Padel" className="splashLogoImg" />
-        <div className="splashTitle">Global Padel</div>
-        <div className="splashSub">Encuentra clubs · crea partidos · únete</div>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
+        background: "#0b0f14",
+        color: "#fff",
+        zIndex: 999999,
+        textAlign: "center",
+        padding: 24,
+      }}
+      aria-label="Cargando Global Padel"
+    >
+      <div style={{ display: "grid", gap: 10, justifyItems: "center" }}>
+        <img
+          src="/logo.png"
+          alt="Global Padel"
+          style={{
+            width: 120,
+            height: 120,
+            objectFit: "contain",
+            borderRadius: 22,
+            background: "rgba(255,255,255,0.08)",
+            padding: 16,
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
+            display: "block",
+          }}
+        />
+        <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.2 }}>
+          Global Padel
+        </div>
+        <div style={{ fontSize: 13, opacity: 0.82 }}>
+          Encuentra clubs · crea partidos · únete
+        </div>
       </div>
     </div>
   );

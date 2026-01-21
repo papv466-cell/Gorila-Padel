@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { useNavigate } from "react-router-dom";
 import MapController from "./MapController";
 import ClubMatchesPreview from "../Matches/ClubMatchesPreview";
@@ -22,6 +22,41 @@ function googleMapsUrl({ lat, lng, label }) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
 
+function MapFix({ depsKey }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const doFix = () => {
+      try {
+        map.invalidateSize();
+      } catch {}
+    };
+
+    // Al montar y cuando cambie depsKey (zoom/cambios layout)
+    doFix();
+
+    // Reintentos por si el layout tarda (navbar/splash/listas)
+    const t1 = setTimeout(doFix, 150);
+    const t2 = setTimeout(doFix, 600);
+    const t3 = setTimeout(doFix, 1200);
+
+    // Al redimensionar ventana
+    const onResize = () => doFix();
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [map, depsKey]);
+
+  return null;
+}
+
 export default function MapView({
   clubs = [],
   focusedClub,
@@ -32,7 +67,7 @@ export default function MapView({
   const navigate = useNavigate();
   const markerRefs = useRef(new Map());
 
-  // ✅ Zoom responsive (móvil un poco más alejado)
+  // Zoom responsive (móvil un poco más alejado)
   const [baseZoom, setBaseZoom] = useState(() => (window.innerWidth <= 768 ? 5 : 6));
 
   useEffect(() => {
@@ -58,14 +93,18 @@ export default function MapView({
     marker?.closePopup?.();
   }
 
+  // depsKey: cualquier cambio que pueda afectar a tamaño/layout del mapa
+  const depsKey = `${baseZoom}-${focusedClub?.id || ""}`;
+
   return (
     <div className="mapShell">
       <MapContainer
         center={[40.4168, -3.7038]}
         zoom={baseZoom}
         style={{ height: "100%", width: "100%" }}
-        whenReady={(e) => setTimeout(() => e.target.invalidateSize(), 0)}
       >
+        <MapFix depsKey={depsKey} />
+
         <MapController
           focusedClub={focusedClub}
           userLocation={userLocation}
@@ -140,7 +179,9 @@ export default function MapView({
                         e.stopPropagation();
                         closePopup(clubId);
                         navigate(
-                          `/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`
+                          `/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(
+                            clubName
+                          )}`
                         );
                       }}
                     >
@@ -155,7 +196,9 @@ export default function MapView({
                         e.stopPropagation();
                         closePopup(clubId);
                         navigate(
-                          `/partidos?create=1&clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`
+                          `/partidos?create=1&clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(
+                            clubName
+                          )}`
                         );
                       }}
                     >
@@ -170,7 +213,9 @@ export default function MapView({
                         e.stopPropagation();
                         closePopup(clubId);
                         navigate(
-                          `/clases?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`
+                          `/clases?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(
+                            clubName
+                          )}`
                         );
                       }}
                     >

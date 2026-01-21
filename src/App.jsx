@@ -1,4 +1,3 @@
-// @refresh reset
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
@@ -22,17 +21,15 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
 
-  // Splash mínimo 4.5s SIEMPRE al arrancar
+  // ✅ Splash SIEMPRE 4.5s al arrancar
   const [splashDone, setSplashDone] = useState(false);
-
-  // 1) Timer splash
   useEffect(() => {
     setSplashDone(false);
     const t = setTimeout(() => setSplashDone(true), 4500);
     return () => clearTimeout(t);
   }, []);
 
-  // 2) Sesión
+  // ✅ Sesión
   useEffect(() => {
     let alive = true;
 
@@ -53,7 +50,6 @@ export default function App() {
     };
   }, []);
 
-  // Rutas "auth shell" (sin navbar)
   const isAuthShell = useMemo(() => {
     const p = location.pathname;
     return (
@@ -65,12 +61,11 @@ export default function App() {
     );
   }, [location.pathname]);
 
-  // Solo login/registro deben redirigir si ya hay sesión
+  // ✅ Si hay sesión y estás en auth → al mapa
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
-  
-    // Si estás en cualquier ruta de auth, te mando al mapa
+
     const p = location.pathname;
     const inAuth =
       p.startsWith("/login") ||
@@ -78,13 +73,11 @@ export default function App() {
       p.startsWith("/registro") ||
       p.startsWith("/forgot-password") ||
       p.startsWith("/reset-password");
-  
-    if (inAuth) {
-      navigate("/mapa", { replace: true });
-    }
-  }, [sessionReady, session, location.pathname, navigate]);
-  
 
+    if (inAuth) navigate("/mapa", { replace: true });
+  }, [sessionReady, session, location.pathname, navigate]);
+
+  // ✅ Mientras: SOLO splash (nada más)
   if (!splashDone || !sessionReady) return <SplashPage />;
 
   return (
@@ -92,7 +85,7 @@ export default function App() {
       {!isAuthShell ? <Navbar /> : null}
 
       <main className="appMain">
-      {!isAuthShell ? <PWAInstallPrompt /> : null}
+        {!isAuthShell ? <PWAInstallPrompt /> : null}
 
         <Routes>
           <Route path="/" element={<Navigate to={session ? "/mapa" : "/login"} replace />} />
@@ -106,8 +99,6 @@ export default function App() {
           <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-          <Route path="/pwa" element={<PWAInstallPrompt />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

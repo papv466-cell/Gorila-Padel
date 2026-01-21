@@ -327,11 +327,7 @@ export default function MatchesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authChecked, session]);
   
-  // useEffect(() => {
-//   if (!session) return;
-//   ensurePushSubscription().catch(() => {});
-// }, [session]);
-
+  
   // Cargar partidos
   useEffect(() => {
     reload();

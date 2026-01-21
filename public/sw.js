@@ -1,11 +1,15 @@
-/* GP_SW_MARK_2026_01_20 */
+/* GP_SW_MARK_2026_01_21 */
 
-self.__GP_SW_MARK = "GP_SW_MARK_2026_01_20";
+self.__GP_SW_MARK = "GP_SW_MARK_2026_01_21";
 console.log("✅ GP SW activo:", self.__GP_SW_MARK);
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+/** PUSH */
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -30,6 +34,7 @@ self.addEventListener("push", (event) => {
   );
 });
 
+/** CLICK en NOTIFICACIÓN (aquí va lo de focus/navigate) */
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification?.data?.url || "/partidos";
@@ -42,15 +47,27 @@ self.addEventListener("notificationclick", (event) => {
       });
 
       for (const client of allClients) {
-        if ("focus" in client) {
-          try {
-            await client.focus();
-            if ("navigate" in client) client.navigate(url);
+        // si ya hay una pestaña abierta, la enfocamos y navegamos
+        try {
+          if ("focus" in client) await client.focus();
+          if ("navigate" in client) {
+            await client.navigate(url);
             return;
-          } catch {}
-        }
+          }
+        } catch {}
       }
+
+      // si no hay pestaña, abrimos una nueva
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })()
   );
+});
+
+/** FETCH: solo arregla la navegación SPA */
+self.addEventListener("fetch", (event) => {
+  // Para rutas tipo /mapa /login /partidos (SPA)
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch("/index.html", { cache: "no-store" }));
+    return;
+  }  
 });

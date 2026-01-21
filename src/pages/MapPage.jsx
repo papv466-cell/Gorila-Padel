@@ -21,7 +21,7 @@ function haversineKm(a, b) {
   const dLng = toRad(b.lng - a.lng);
 
   const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
+  const lat2 = toRad(a.lat);
 
   const x =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -40,7 +40,6 @@ function normalizeClub(raw, idx) {
   const name = String(raw?.name ?? raw?.club ?? raw?.nombre ?? "Club").trim();
   const city = String(raw?.city ?? raw?.ciudad ?? "").trim();
 
-  // lat/lng pueden venir como lat/lng o latitude/longitude
   const lat =
     toNum(raw?.lat) ??
     toNum(raw?.latitude) ??
@@ -57,15 +56,12 @@ function normalizeClub(raw, idx) {
     toNum(raw?.LNG) ??
     null;
 
-  // id puede venir vacío: lo generamos estable
-  const baseId =
-    raw?.id ?? raw?.clubId ?? raw?.club_id ?? raw?.ID ?? raw?.Id ?? null;
+  const baseId = raw?.id ?? raw?.clubId ?? raw?.club_id ?? raw?.ID ?? raw?.Id ?? null;
 
   const id =
-    (baseId != null && String(baseId).trim() !== ""
+    baseId != null && String(baseId).trim() !== ""
       ? String(baseId).trim()
-      : `${name}-${lat ?? "x"}-${lng ?? "y"}-${idx}`
-    );
+      : `${name}-${lat ?? "x"}-${lng ?? "y"}-${idx}`;
 
   return {
     ...raw,
@@ -78,7 +74,6 @@ function normalizeClub(raw, idx) {
 }
 
 export default function MapPage() {
-  // --- state ---
   const [clubs, setClubs] = useState([]);
   const [status, setStatus] = useState({ loading: true, error: null });
 
@@ -127,7 +122,6 @@ export default function MapPage() {
     }
   });
 
-  // --- effects ---
   useEffect(() => {
     let cancelled = false;
 
@@ -138,19 +132,18 @@ export default function MapPage() {
         const raw = await fetchClubsFromGoogleSheet({ sheetId: SHEET_ID, gid: GID });
         const arr = Array.isArray(raw) ? raw : [];
 
-        // ✅ normalizamos SIEMPRE
         const normalized = arr
           .map((c, i) => normalizeClub(c, i))
-          // ✅ sólo clubs con coords válidas
           .filter((c) => c.lat != null && c.lng != null);
 
         if (!cancelled) {
           setClubs(normalized);
           setStatus({
             loading: false,
-            error: normalized.length === 0
-              ? "No llegaron clubs con lat/lng válidos desde la Sheet."
-              : null,
+            error:
+              normalized.length === 0
+                ? "No llegaron clubs con lat/lng válidos desde la Sheet."
+                : null,
           });
         }
       } catch (e) {
@@ -183,7 +176,15 @@ export default function MapPage() {
     localStorage.setItem("gp:favoritesOnly", favoritesOnly ? "1" : "0");
   }, [favoritesOnly]);
 
-  // --- actions ---
+  useEffect(() => {
+    if (favoritesOnly && favoriteIds.size === 0) {
+      setFavoritesOnly(false);
+      try {
+        localStorage.setItem("gp:favoritesOnly", "0");
+      } catch {}
+    }
+  }, [favoritesOnly, favoriteIds]);
+
   async function handleUseMyLocation() {
     try {
       setLocStatus({ loading: true, error: null });
@@ -234,6 +235,13 @@ export default function MapPage() {
     }
   }
 
+  function handlePickSearchResult(result) {
+    setFocusedClub(null);
+    setUserLocation(null);
+    setSearchLocation(result);
+    setSearchResults([]);
+  }
+
   function handleClearSearch() {
     setSearchLocation(null);
     setSearchResults([]);
@@ -262,15 +270,9 @@ export default function MapPage() {
     });
   }
 
-  // --- derived data ---
   const cities = Array.from(
-    new Set(
-      clubs
-        .map((c) => (c.city ?? "").trim())
-        .filter((c) => c.length > 0)
-    )
+    new Set(clubs.map((c) => (c.city ?? "").trim()).filter((c) => c.length > 0))
   ).sort((a, b) => a.localeCompare(b, "es"));
-  
 
   const clubsByCity = cityFilter
     ? clubs.filter((c) => String(c.city ?? "").trim() === cityFilter)
@@ -279,142 +281,115 @@ export default function MapPage() {
   const clubsByNearMe = (() => {
     if (!nearMeOnly) return clubsByCity;
     if (!userLocation) return clubsByCity;
-
     const origin = { lat: userLocation.lat, lng: userLocation.lng };
-    return clubsByCity.filter((c) =>
-      haversineKm(origin, { lat: c.lat, lng: c.lng }) <= NEAR_ME_KM
-    );
+    return clubsByCity.filter((c) => haversineKm(origin, { lat: c.lat, lng: c.lng }) <= NEAR_ME_KM);
   })();
 
   const clubsFilteredFinal =
-  favoritesOnly && favoriteIds.size > 0
-    ? clubsByNearMe.filter((c) => favoriteIds.has(String(c.id)))
-    : clubsByNearMe;
-
-    useEffect(() => {
-      // Si no hay favoritos, no tiene sentido mantener "solo favoritos" activo
-      if (favoritesOnly && favoriteIds.size === 0) {
-        setFavoritesOnly(false);
-        try {
-          localStorage.setItem("gp:favoritesOnly", "0");
-        } catch {}
-      }
-    }, [favoritesOnly, favoriteIds]);
-    
+    favoritesOnly && favoriteIds.size > 0
+      ? clubsByNearMe.filter((c) => favoriteIds.has(String(c.id)))
+      : clubsByNearMe;
 
   const clubsForList = (() => {
     if (!userLocation) return clubsFilteredFinal;
-
     const origin = { lat: userLocation.lat, lng: userLocation.lng };
-
     return clubsFilteredFinal
-      .map((c) => ({
-        ...c,
-        distanceKm: haversineKm(origin, { lat: c.lat, lng: c.lng }),
-      }))
+      .map((c) => ({ ...c, distanceKm: haversineKm(origin, { lat: c.lat, lng: c.lng }) }))
       .sort((a, b) => a.distanceKm - b.distanceKm);
   })();
 
-  function handlePickSearchResult(result) {
-    setFocusedClub(null);
-    setUserLocation(null);
-    setSearchLocation(result);
-    setSearchResults([]);
-  }
-
-  // --- UI ---
   return (
     <div className="page">
-      <header className="topbar">
-        <h1 className="title">Global Padel</h1>
-
-        <p className="subtitle">
-          {status.loading
-            ? "Cargando clubs…"
-            : status.error
-              ? `Error: ${status.error}`
-              : `Clubs cargados: ${clubs.length}`}
-        </p>
-
-        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <button type="button" onClick={handleUseMyLocation} disabled={locStatus.loading} className="btn">
-            {locStatus.loading ? "Pidiendo ubicación…" : "Usar mi ubicación"}
-          </button>
-
-          <button type="button" onClick={handleGoHome} className="btn">
-            Volver a España
-          </button>
-
-          {locStatus.error ? <span style={{ fontSize: 12, color: "crimson" }}>{locStatus.error}</span> : null}
-        </div>
-
-        <SearchBox
-          onSearch={handleSearchPlace}
-          onPickResult={handlePickSearchResult}
-          onClearResults={handleClearSearchResults}
-          loading={searchStatus.loading}
-          error={searchStatus.error}
-          results={searchResults}
-        />
-
-        <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, opacity: 0.8 }}>Ciudad:</label>
-
-          <select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            style={{ padding: "6px 10px", border: "1px solid #ddd", borderRadius: 6, background: "#fff" }}
-          >
-            <option value="">Todas</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-
-          <span style={{ fontSize: 12, opacity: 0.75 }}>
-            {clubsFilteredFinal.length} de {clubs.length}
-          </span>
-        </div>
-
-        <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
-            <input
-              type="checkbox"
-              checked={nearMeOnly}
-              onChange={(e) => setNearMeOnly(e.target.checked)}
-              disabled={!userLocation}
-            />
-            Solo cerca de mí ({NEAR_ME_KM} km)
-          </label>
-
-          {!userLocation ? <span style={{ fontSize: 12, opacity: 0.7 }}>Actívalo tras “Usar mi ubicación”</span> : null}
-        </div>
-
-        <div style={{ marginTop: 10, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
-            <input
-              type="checkbox"
-              checked={favoritesOnly}
-              onChange={(e) => setFavoritesOnly(e.target.checked)}
-              disabled={favoriteIds.size === 0}
-            />
-            Solo favoritos
-          </label>
-
-          {favoriteIds.size === 0 ? <span style={{ fontSize: 12, opacity: 0.7 }}>Marca alguno ⭐</span> : null}
-        </div>
-
-        {searchLocation ? (
-          <button type="button" onClick={handleClearSearch} className="btn ghost" style={{ marginTop: 8 }}>
-            Limpiar búsqueda
-          </button>
-        ) : null}
-      </header>
-
       <div className="layout">
+        {/* ✅ Sidebar = CONTROLES + LISTA */}
         <aside className="sidebar">
+          <div style={{ padding: 12, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>
+              {status.loading
+                ? "Cargando clubs…"
+                : status.error
+                  ? `Error: ${status.error}`
+                  : `Clubs cargados: ${clubs.length}`}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button type="button" onClick={handleUseMyLocation} disabled={locStatus.loading} className="btn">
+                {locStatus.loading ? "Pidiendo ubicación…" : "Usar mi ubicación"}
+              </button>
+
+              <button type="button" onClick={handleGoHome} className="btn">
+                Volver a España
+              </button>
+            </div>
+
+            {locStatus.error ? (
+              <div style={{ marginTop: 8, fontSize: 12, color: "crimson" }}>{locStatus.error}</div>
+            ) : null}
+
+            <div style={{ marginTop: 12 }}>
+              <SearchBox
+                onSearch={handleSearchPlace}
+                onPickResult={handlePickSearchResult}
+                onClearResults={handleClearSearchResults}
+                loading={searchStatus.loading}
+                error={searchStatus.error}
+                results={searchResults}
+              />
+              {searchLocation ? (
+                <button type="button" onClick={handleClearSearch} className="btn ghost" style={{ marginTop: 8 }}>
+                  Limpiar búsqueda
+                </button>
+              ) : null}
+            </div>
+
+            <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <label style={{ fontSize: 12, opacity: 0.8 }}>Ciudad:</label>
+
+              <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
+                <option value="">Todas</option>
+                {cities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+
+              <span style={{ fontSize: 12, opacity: 0.75 }}>
+                {clubsFilteredFinal.length} de {clubs.length}
+              </span>
+            </div>
+
+            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={nearMeOnly}
+                  onChange={(e) => setNearMeOnly(e.target.checked)}
+                  disabled={!userLocation}
+                />
+                Solo cerca de mí ({NEAR_ME_KM} km)
+              </label>
+
+              {!userLocation ? (
+                <div style={{ fontSize: 12, opacity: 0.7 }}>Actívalo tras “Usar mi ubicación”</div>
+              ) : null}
+
+              <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={favoritesOnly}
+                  onChange={(e) => setFavoritesOnly(e.target.checked)}
+                  disabled={favoriteIds.size === 0}
+                />
+                Solo favoritos
+              </label>
+
+              {favoriteIds.size === 0 ? (
+                <div style={{ fontSize: 12, opacity: 0.7 }}>Marca alguno ⭐</div>
+              ) : null}
+            </div>
+          </div>
+
           <ClubList
             clubs={clubsForList}
             userLocation={userLocation}
@@ -424,6 +399,7 @@ export default function MapPage() {
           />
         </aside>
 
+        {/* ✅ Map */}
         <main className="mapArea">
           <MapView
             clubs={clubsFilteredFinal}

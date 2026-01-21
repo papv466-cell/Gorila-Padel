@@ -6,7 +6,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ruta de retorno
   const returnTo = useMemo(() => {
     return location.state && location.state.from ? location.state.from : "/mapa";
   }, [location.state]);
@@ -18,7 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Si ya hay sesión, fuera
     let alive = true;
     supabase.auth.getSession().then(({ data, error: sessErr }) => {
       if (!alive) return;
@@ -50,19 +48,14 @@ export default function LoginPage() {
         password: pw,
       });
 
-      if (err) {
-        console.error("[login] signInWithPassword error:", err);
-        throw err;
-      }
+      if (err) throw err;
 
-      // Seguridad extra: si por lo que sea no hay sesión, avisar
       if (!data?.session) {
         console.warn("[login] No session returned after signIn (raro).");
       }
 
       navigate(returnTo, { replace: true });
     } catch (e2) {
-      // Mensaje más útil
       const msg =
         e2?.message ||
         e2?.error_description ||
@@ -76,7 +69,12 @@ export default function LoginPage() {
   return (
     <div className="authWrapper">
       <div className="authCard">
-        <img src="/logo.png" alt="Global Padel" className="authLogo" />
+        <img
+          src="/logo.png"
+          alt="Global Padel"
+          className="authLogo"
+          draggable="false"
+        />
 
         <h1 className="authTitle">Entrar</h1>
         <p className="authSub">Accede para unirte a partidos, crear y chatear.</p>
@@ -91,6 +89,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               autoComplete="email"
+              inputMode="email"
             />
           </label>
 
@@ -112,7 +111,7 @@ export default function LoginPage() {
             {busy ? "Entrando…" : "Entrar"}
           </button>
 
-          <div style={{ marginTop: 10, textAlign: "center" }}>
+          <div className="authActions">
             <Link className="authLink" to="/forgot-password">
               ¿Olvidaste tu contraseña?
             </Link>
