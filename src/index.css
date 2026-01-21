@@ -54,9 +54,18 @@ img { max-width: 100%; height: auto; }
 /* =========================
    Navbar
    ========================= */
-   .navbar {
-    flex: 0 0 56px; /* fija la altura del navbar */
-  }
+.navbar {
+  height: 56px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: #0b0f14;
+  color: #fff;
+  flex: 0 0 56px; /* fija la altura del navbar */
+}
 
 .navLeft { display: flex; gap: 10px; min-width: 0; align-items: center; }
 .navLogo { width: 34px; height: 34px; object-fit: contain; border-radius: 10px; }
@@ -420,47 +429,5 @@ img { max-width: 100%; height: auto; }
   .mapShell {
     height: 52vh;
     min-height: 280px;
-  }
-}
-/* ===== Desktop: mapa y lista a altura completa (sin scroll global) ===== */
-@media (min-width: 769px) {
-  .sidebar {
-    width: 420px;
-    flex: 0 0 420px;
-  }
-
-  .mapShell,
-  .leaflet-container {
-    height: 100% !important;
-  }
-}
-
-/* ===== Móvil: mapa arriba, lista abajo con scroll propio ===== */
-@media (max-width: 768px) {
-  .layout {
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px;
-  }
-
-  .mapArea {
-    order: 1;
-  }
-
-  .sidebar {
-    order: 2;
-    width: 100%;
-    flex: 1 1 auto;
-    max-height: 42vh; /* lista más usable */
-    border-right: none;
-    border-top: 1px solid rgba(0,0,0,0.06);
-    border-radius: 14px;
-  }
-
-  .mapShell {
-    height: 48vh !important; /* mapa menos gigante */
-    min-height: 240px;
-    border-radius: 14px;
-    overflow: hidden;
   }
 }
