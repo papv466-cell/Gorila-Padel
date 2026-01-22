@@ -173,8 +173,13 @@ new URLSearchParams(window.location.search).get("openChat") ||
   async function openChat(matchId) {
     if (!session) return goLogin();
     setChatOpenFor(matchId);
+  
     const msgs = await fetchMatchMessages(matchId, { limit: 120 });
-    setChatItems(msgs);
+  
+    // ✅ Normaliza: soporta array directo o {data: array}
+    const list = Array.isArray(msgs) ? msgs : Array.isArray(msgs?.data) ? msgs.data : [];
+  
+    setChatItems(list);
   }
 
   async function handleSendChat() {
@@ -758,12 +763,29 @@ new URLSearchParams(window.location.search).get("openChat") ||
             </div>
 
             <div className="gpChatBox">
-              {chatItems.map((m) => (
-                <div key={m.id} className="gpChatMsg">
-                  {m.message}
-                </div>
-              ))}
-            </div>
+  {chatItems.length === 0 ? (
+    <div style={{ opacity: 0.6, fontSize: 13 }}>Aún no hay mensajes.</div>
+  ) : (
+    chatItems.map((m) => {
+      const mine = session?.user?.id && m.user_id === session.user.id;
+      return (
+        <div
+          key={m.id}
+          className="gpChatMsg"
+          style={{
+            alignSelf: mine ? "flex-end" : "flex-start",
+            maxWidth: "85%",
+          }}
+        >
+          <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{m.message}</div>
+          <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6, textAlign: mine ? "right" : "left" }}>
+            {m.created_at ? new Date(m.created_at).toLocaleString("es-ES") : ""}
+          </div>
+        </div>
+      );
+    })
+  )}
+</div>
 
             <textarea
               className="gpTextarea"
