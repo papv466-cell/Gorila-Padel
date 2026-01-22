@@ -50,6 +50,8 @@ export default function MatchesPage() {
   const clubNameParam = searchParams.get("clubName") || "";
   const createParam = searchParams.get("create") === "1";
   const isClubFilter = !!clubIdParam || !!clubNameParam;
+  const showPushButton = import.meta.env.DEV || new URLSearchParams(window.location.search).get("push") === "1";
+
 
   /* Session */
   const [session, setSession] = useState(null);
@@ -304,11 +306,23 @@ export default function MatchesPage() {
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {import.meta.env.DEV && (
-                <button className="btn ghost" onClick={ensurePushSubscription}>
-                  🔔 Push (DEV)
-                </button>
-              )}
+            {showPushButton ? (
+  <button
+    type="button"
+    className="btn ghost"
+    onClick={async () => {
+      try {
+        await ensurePushSubscription();
+        alert("✅ Push activado");
+      } catch (e) {
+        console.error(e);
+        alert("❌ Error push: " + (e?.message || String(e)));
+      }
+    }}
+  >
+    🔔 Activar Push
+  </button>
+) : null}
 
               <button
                 className="btn"
