@@ -27,13 +27,7 @@ function toDateInputValue(d = new Date()) {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
-function addMinutesToISO(iso, minutes) {
-  const d = new Date(iso);
-  d.setMinutes(d.getMinutes() + minutes);
-  return d.toISOString();
-}
 function combineDateTimeToISO(dateStr, timeStr) {
-  // dateStr: YYYY-MM-DD, timeStr: HH:mm
   const [hh, mm] = String(timeStr || "19:00").split(":").map((x) => Number(x));
   const d = new Date(`${dateStr}T00:00:00`);
   d.setHours(Number.isFinite(hh) ? hh : 19, Number.isFinite(mm) ? mm : 0, 0, 0);
@@ -46,15 +40,25 @@ export default function MatchesPage() {
   const [searchParams] = useSearchParams();
 
   const todayISO = toDateInputValue(new Date());
+
   const clubIdParam = searchParams.get("clubId") || "";
   const clubNameParam = searchParams.get("clubName") || "";
   const createParam = searchParams.get("create") === "1";
   const isClubFilter = !!clubIdParam || !!clubNameParam;
-  const showPushButton = import.meta.env.DEV || new URLSearchParams(window.location.search).get("push") === "1";
 
+  // ✅ openChat se lee SIEMPRE desde location.search (estable)
+  const openChatParam = useMemo(() => {
+    return new URLSearchParams(location.search).get("openChat") || "";
+  }, [location.search]);
+
+  const showPushButton =
+    import.meta.env.DEV || new URLSearchParams(location.search).get("push") === "1";
+
+  const debug = new URLSearchParams(location.search).get("debug") === "1";
 
   /* Session */
   const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   /* Data */
   const [items, setItems] = useState([]);
@@ -106,9 +110,24 @@ export default function MatchesPage() {
 
   /* session */
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s ?? null));
-    return () => sub.subscription.unsubscribe();
+    let alive = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      setSession(data.session ?? null);
+      setAuthReady(true);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!alive) return;
+      setSession(s ?? null);
+      setAuthReady(true);
+    });
+
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   /* load clubs sheet once (for suggestions) */
@@ -143,14 +162,55 @@ export default function MatchesPage() {
   }
 
   useEffect(() => {
+    if (!authReady) return;
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [authReady, session]);
+
+  /* Chat */
+  async function openChat(matchId) {
+    if (!session) return goLogin();
+    setChatOpenFor(matchId);
+    const msgs = await fetchMatchMessages(matchId, { limit: 120 });
+    setChatItems(msgs);
+  }
+
+  async function handleSendChat() {
+    if (!chatOpenFor) return;
+    await sendMatchMessage({ matchId: chatOpenFor, message: chatText });
+    setChatText("");
+    await openChat(chatOpenFor);
+  }
+
+  /* ✅ AUTO-OPEN CHAT DESDE NOTIFICACIÓN (UNA SOLA VEZ, SIN DUPLICADOS) */
+  useEffect(() => {
+    if (!openChatParam) return;
+    if (!authReady) return;
+
+    if (!session) {
+      goLogin(); // mantiene el "from" con ?openChat=...
+      return;
+    }
+
+    // pequeño delay para asegurar que la UI ya está montada
+    const t = setTimeout(() => {
+      openChat(openChatParam);
+    }, 200);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openChatParam, authReady, session]);
 
   /* auto-open create if coming from map */
   useEffect(() => {
     if (!createParam) return;
-    if (!session) return; // si no hay sesión, al clicar ya se gestiona
+    if (!authReady) return;
+
+    if (!session) {
+      goLogin();
+      return;
+    }
+
     setOpenCreate(true);
     setForm((prev) => ({
       ...prev,
@@ -159,7 +219,8 @@ export default function MatchesPage() {
       date: prev.date || todayISO,
     }));
     setClubQuery(clubNameParam || "");
-  }, [createParam, clubIdParam, clubNameParam, session, todayISO]);
+    setShowClubSuggest(false);
+  }, [createParam, clubIdParam, clubNameParam, authReady, session, todayISO]);
 
   /* list */
   const filteredList = useMemo(() => {
@@ -168,7 +229,6 @@ export default function MatchesPage() {
     if (clubIdParam) list = list.filter((m) => m.club_id === clubIdParam);
     if (clubNameParam) list = list.filter((m) => m.club_name === clubNameParam);
 
-    // si vienes desde mapa con club, filtramos por día. Si no, mostramos todo.
     if (!isClubFilter) return list;
 
     return list.filter((m) => {
@@ -186,20 +246,6 @@ export default function MatchesPage() {
   }, [filteredList, myReqStatus, session]);
 
   const visibleList = viewMode === "mine" ? myList : filteredList;
-
-  /* Chat */
-  async function openChat(matchId) {
-    if (!session) return goLogin();
-    setChatOpenFor(matchId);
-    const msgs = await fetchMatchMessages(matchId, { limit: 120 });
-    setChatItems(msgs);
-  }
-  async function handleSendChat() {
-    if (!chatOpenFor) return;
-    await sendMatchMessage({ matchId: chatOpenFor, message: chatText });
-    setChatText("");
-    await openChat(chatOpenFor);
-  }
 
   /* Requests modal */
   async function openRequests(matchId) {
@@ -272,7 +318,8 @@ export default function MatchesPage() {
       const startAtISO = combineDateTimeToISO(form.date, form.time);
 
       if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista (para evitar errores).");
+      if (!String(form.clubId || "").trim())
+        throw new Error("Selecciona el club de la lista (para evitar errores).");
 
       await createMatch({
         clubId: form.clubId,
@@ -296,36 +343,58 @@ export default function MatchesPage() {
 
   return (
     <div className="page">
-      {/* ✅ BOTÓN PUSH (PROD/INCOGNITO) solo si URL tiene ?push=1 */}
-{new URLSearchParams(window.location.search).get("push") === "1" ? (
-  <button
-    type="button"
-    onClick={async () => {
-      try {
-        await ensurePushSubscription();
-        alert("✅ Push activado");
-      } catch (e) {
-        console.error(e);
-        alert("❌ Error push: " + (e?.message || String(e)));
-      }
-    }}
-    style={{
-      position: "fixed",
-      right: 16,
-      bottom: 16,
-      zIndex: 999999,
-      padding: "12px 14px",
-      borderRadius: 999,
-      border: "1px solid rgba(0,0,0,0.15)",
-      background: "#fff",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-      cursor: "pointer",
-      fontWeight: 700,
-    }}
-  >
-    🔔 Activar Push
-  </button>
-) : null}
+      {/* DEBUG SOLO SI ?debug=1 */}
+      {debug ? (
+        <div
+          style={{
+            position: "fixed",
+            top: 10,
+            left: 10,
+            zIndex: 999999,
+            background: "#fff",
+            border: "2px solid #000",
+            padding: "8px 10px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 800,
+          }}
+        >
+          openChatParam: {openChatParam || "(vacío)"} <br />
+          authReady: {String(authReady)} <br />
+          session: {session ? "SI" : "NO"}
+        </div>
+      ) : null}
+
+      {/* ✅ BOTÓN PUSH (solo si URL tiene ?push=1) */}
+      {new URLSearchParams(location.search).get("push") === "1" ? (
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await ensurePushSubscription();
+              alert("✅ Push activado");
+            } catch (e) {
+              console.error(e);
+              alert("❌ Error push: " + (e?.message || String(e)));
+            }
+          }}
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: 16,
+            zIndex: 999999,
+            padding: "12px 14px",
+            borderRadius: 999,
+            border: "1px solid rgba(0,0,0,0.15)",
+            background: "#fff",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          🔔 Activar Push
+        </button>
+      ) : null}
 
       <div className="pageWrap">
         <div className="container">
@@ -333,41 +402,44 @@ export default function MatchesPage() {
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Partidos</h1>
-              <div className="pageMeta">{status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}</div>
+              <div className="pageMeta">
+                {status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            {showPushButton ? (
-  <button
-    type="button"
-    className="btn ghost"
-    onClick={async () => {
-      try {
-        await ensurePushSubscription();
-        alert("✅ Push activado");
-      } catch (e) {
-        console.error(e);
-        alert("❌ Error push: " + (e?.message || String(e)));
-      }
-    }}
-  >
-    🔔 Activar Push
-  </button>
-) : null}
+              {showPushButton ? (
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={async () => {
+                    try {
+                      await ensurePushSubscription();
+                      alert("✅ Push activado");
+                    } catch (e) {
+                      console.error(e);
+                      alert("❌ Error push: " + (e?.message || String(e)));
+                    }
+                  }}
+                >
+                  🔔 Activar Push
+                </button>
+              ) : null}
 
               <button
                 className="btn"
                 onClick={() => {
                   if (!session) return goLogin();
                   setOpenCreate(true);
-                  // si vienes desde mapa con club, precargamos
+
                   if (clubIdParam || clubNameParam) {
                     setForm((prev) => ({
                       ...prev,
                       clubId: clubIdParam || prev.clubId,
                       clubName: clubNameParam || prev.clubName,
                     }));
-                    setClubQuery(clubNameParam || prevClubQuery(prev => prev));
+                    setClubQuery(clubNameParam || "");
+                    setShowClubSuggest(false);
                   }
                 }}
               >
@@ -378,10 +450,17 @@ export default function MatchesPage() {
 
           {/* TABS */}
           <div className="gpRow">
-            <button className={`btn ${viewMode === "explore" ? "" : "ghost"}`} onClick={() => setViewMode("explore")}>
+            <button
+              className={`btn ${viewMode === "explore" ? "" : "ghost"}`}
+              onClick={() => setViewMode("explore")}
+            >
               Explorar
             </button>
-            <button className={`btn ${viewMode === "mine" ? "" : "ghost"}`} disabled={!session} onClick={() => setViewMode("mine")}>
+            <button
+              className={`btn ${viewMode === "mine" ? "" : "ghost"}`}
+              disabled={!session}
+              onClick={() => setViewMode("mine")}
+            >
               Mis partidos
             </button>
           </div>
@@ -405,14 +484,14 @@ export default function MatchesPage() {
                         <div className="meta">
                           {new Date(m.start_at).toLocaleString("es-ES")} · {m.duration_min} min · Nivel {m.level}
                         </div>
-                        <div className="meta">Ocupadas {occupied}/4 · Huecos {left}</div>
+                        <div className="meta">
+                          Ocupadas {occupied}/4 · Huecos {left}
+                        </div>
 
                         {myStatus === "approved" ? <div className="gpBadge ok">✅ Estás dentro</div> : null}
                         {myStatus === "pending" ? <div className="gpBadge warn">⏳ Solicitud pendiente</div> : null}
                         {myStatus === "rejected" ? <div className="gpBadge bad">❌ Rechazado</div> : null}
                       </div>
-
-                      {latestChatTsByMatch[m.id] ? null : null}
                     </div>
 
                     <div className="gpActions">
@@ -461,7 +540,7 @@ export default function MatchesPage() {
                           className="btn"
                           onClick={async () => {
                             try {
-                              await cancelMyJoin(m.id); // por si existe row vieja
+                              await cancelMyJoin(m.id);
                               await requestJoin(m.id);
                               await reload();
                               alert("Solicitud enviada ✅");
@@ -516,7 +595,6 @@ export default function MatchesPage() {
                 onChange={(e) => {
                   setClubQuery(e.target.value);
                   setShowClubSuggest(true);
-                  // al cambiar texto manual, invalidamos clubId para obligar a elegir de la lista
                   setForm((prev) => ({ ...prev, clubName: e.target.value, clubId: "" }));
                 }}
                 onFocus={() => setShowClubSuggest(true)}
@@ -525,7 +603,12 @@ export default function MatchesPage() {
               {showClubSuggest && clubSuggestions.length > 0 ? (
                 <div className="gpSuggest">
                   {clubSuggestions.map((c) => (
-                    <button key={String(c.id)} className="gpSuggestItem" onClick={() => pickClub(c)} type="button">
+                    <button
+                      key={String(c.id)}
+                      className="gpSuggestItem"
+                      onClick={() => pickClub(c)}
+                      type="button"
+                    >
                       <strong>{c.name}</strong>
                       {c.city ? <span style={{ opacity: 0.7 }}> · {c.city}</span> : null}
                     </button>
@@ -536,22 +619,41 @@ export default function MatchesPage() {
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Fecha</label>
-                  <input className="gpInput" type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
+                  <input
+                    className="gpInput"
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="gpLabel">Hora</label>
-                  <input className="gpInput" type="time" value={form.time} onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))} />
+                  <input
+                    className="gpInput"
+                    type="time"
+                    value={form.time}
+                    onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))}
+                  />
                 </div>
               </div>
 
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Duración (min)</label>
-                  <input className="gpInput" type="number" value={form.durationMin} onChange={(e) => setForm((p) => ({ ...p, durationMin: e.target.value }))} />
+                  <input
+                    className="gpInput"
+                    type="number"
+                    value={form.durationMin}
+                    onChange={(e) => setForm((p) => ({ ...p, durationMin: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="gpLabel">Nivel</label>
-                  <select className="gpInput" value={form.level} onChange={(e) => setForm((p) => ({ ...p, level: e.target.value }))}>
+                  <select
+                    className="gpInput"
+                    value={form.level}
+                    onChange={(e) => setForm((p) => ({ ...p, level: e.target.value }))}
+                  >
                     <option value="bajo">Bajo</option>
                     <option value="medio">Medio</option>
                     <option value="alto">Alto</option>
@@ -562,7 +664,11 @@ export default function MatchesPage() {
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Ya somos</label>
-                  <select className="gpInput" value={form.alreadyPlayers} onChange={(e) => setForm((p) => ({ ...p, alreadyPlayers: e.target.value }))}>
+                  <select
+                    className="gpInput"
+                    value={form.alreadyPlayers}
+                    onChange={(e) => setForm((p) => ({ ...p, alreadyPlayers: e.target.value }))}
+                  >
                     <option value={1}>1</option>
                     <option value={2}>2</option>
                     <option value={3}>3</option>
@@ -570,7 +676,11 @@ export default function MatchesPage() {
                 </div>
                 <div>
                   <label className="gpLabel">Precio / jugador (opcional)</label>
-                  <input className="gpInput" value={form.pricePerPlayer} onChange={(e) => setForm((p) => ({ ...p, pricePerPlayer: e.target.value }))} />
+                  <input
+                    className="gpInput"
+                    value={form.pricePerPlayer}
+                    onChange={(e) => setForm((p) => ({ ...p, pricePerPlayer: e.target.value }))}
+                  />
                 </div>
               </div>
 
@@ -607,7 +717,9 @@ export default function MatchesPage() {
             {pendingBusy ? (
               <div style={{ marginTop: 12, fontSize: 13 }}>Cargando…</div>
             ) : pending.length === 0 ? (
-              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>No hay solicitudes pendientes.</div>
+              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
+                No hay solicitudes pendientes.
+              </div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
                 {pending.map((r) => (
@@ -651,7 +763,12 @@ export default function MatchesPage() {
               ))}
             </div>
 
-            <textarea className="gpTextarea" value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Escribe…" />
+            <textarea
+              className="gpTextarea"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Escribe…"
+            />
 
             <div className="gpRow" style={{ marginTop: 10 }}>
               <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>
@@ -663,9 +780,4 @@ export default function MatchesPage() {
       ) : null}
     </div>
   );
-}
-
-// helper para evitar warning del setClubQuery en click create
-function prevClubQuery(fn) {
-  return "";
 }
