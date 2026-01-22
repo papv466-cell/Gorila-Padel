@@ -1,4 +1,5 @@
 // public/sw.js
+
 self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => {
@@ -12,7 +13,7 @@ self.addEventListener("push", (event) => {
     data = event.data ? event.data.json() : {};
   } catch {}
 
-  const title = data.title || "Global Padel";
+  const title = data.title || "Gorila Pádel";
   const body = data.body || "Tienes una notificación";
   const url = data.url || "/partidos";
 
@@ -21,7 +22,11 @@ self.addEventListener("push", (event) => {
       body,
       icon: "/favicon.ico",
       badge: "/favicon.ico",
-      data: { url }, // guardamos el deep link
+      data: {
+        url,
+        type: data.type || null,
+        matchId: data.matchId || null,
+      },
     })
   );
 });
@@ -29,10 +34,8 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const data = event.notification.data || {};
+  const data = event.notification?.data || {};
   const targetPath = data.url || "/partidos";
-
-  // ✅ URL ABSOLUTA para que no se pierda el ?openChat=
   const targetUrl = new URL(targetPath, self.location.origin).toString();
 
   event.waitUntil(
@@ -42,20 +45,28 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true,
       });
 
-      // 1) si hay pestaña abierta, la enfocamos y navegamos al deep link
+      // ✅ Si ya hay una pestaña abierta: enfocamos y MANDAMOS MENSAJE (sin recarga, sin splash)
       for (const client of allClients) {
-        if ("focus" in client) {
-          await client.focus();
-          if ("navigate" in client) await client.navigate(targetUrl);
-          return;
+        try {
+          if ("focus" in client) await client.focus();
+
+          // Mandamos el deep link para que React Router navegue sin reload
+          if ("postMessage" in client) {
+            client.postMessage({
+              type: "NAVIGATE",
+              url: targetPath, // IMPORTANTE: path relativo con query ?openChat=
+            });
+            return;
+          }
+        } catch {
+          // seguimos intentando con otros clients
         }
       }
 
-      // 2) si no hay ninguna, abrimos nueva
+      // ✅ Si no hay pestaña abierta: abrimos nueva (aquí sí habrá splash porque es arranque real)
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);
       }
     })()
   );
 });
-

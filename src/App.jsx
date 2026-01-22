@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 
@@ -21,7 +22,7 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
 
-  // ✅ Splash SIEMPRE 4.5s al arrancar
+  // ✅ Splash SIEMPRE 4.5s al arrancar (pero si ya estamos dentro y llega push, NO recargamos gracias al SW message)
   const [splashDone, setSplashDone] = useState(false);
   useEffect(() => {
     setSplashDone(false);
@@ -49,6 +50,25 @@ export default function App() {
       sub?.subscription?.unsubscribe?.();
     };
   }, []);
+
+  // ✅ RECIBIR MENSAJES DEL SERVICE WORKER (click en notificación)
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const onMsg = (event) => {
+      const data = event?.data;
+      if (!data || data.type !== "NAVIGATE") return;
+
+      const url = String(data.url || "");
+      if (!url) return;
+
+      // Navegación SPA sin reload => sin splash
+      navigate(url, { replace: false });
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, [navigate]);
 
   const isAuthShell = useMemo(() => {
     const p = location.pathname;
