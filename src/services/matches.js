@@ -263,12 +263,12 @@ export async function deleteMatch(matchId) {
 // ------------------------------
 // CHAT: mensajes
 // ------------------------------
-export async function fetchMatchMessages(matchId, { limit = 120 } = {}) {
-  if (!matchId) throw new Error("Falta matchId");
+export async function fetchMatchMessages(matchId, opts = {}) {
+  const limit = opts?.limit ?? 120;
 
   const { data, error } = await supabase
     .from("match_messages")
-    .select("*")
+    .select("id, match_id, user_id, message, created_at")
     .eq("match_id", matchId)
     .order("created_at", { ascending: true })
     .limit(limit);
@@ -306,7 +306,7 @@ export async function sendMatchMessage({ matchId, message } = {}) {
     const res = await fetch("/api/push-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ messageId: data.id }), // ✅ solo messageId
     });
 
     const t = await res.text();
