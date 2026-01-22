@@ -296,6 +296,37 @@ export default function MatchesPage() {
 
   return (
     <div className="page">
+      {/* ✅ BOTÓN PUSH (PROD/INCOGNITO) solo si URL tiene ?push=1 */}
+{new URLSearchParams(window.location.search).get("push") === "1" ? (
+  <button
+    type="button"
+    onClick={async () => {
+      try {
+        await ensurePushSubscription();
+        alert("✅ Push activado");
+      } catch (e) {
+        console.error(e);
+        alert("❌ Error push: " + (e?.message || String(e)));
+      }
+    }}
+    style={{
+      position: "fixed",
+      right: 16,
+      bottom: 16,
+      zIndex: 999999,
+      padding: "12px 14px",
+      borderRadius: 999,
+      border: "1px solid rgba(0,0,0,0.15)",
+      background: "#fff",
+      boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+      cursor: "pointer",
+      fontWeight: 700,
+    }}
+  >
+    🔔 Activar Push
+  </button>
+) : null}
+
       <div className="pageWrap">
         <div className="container">
           {/* HEADER */}
