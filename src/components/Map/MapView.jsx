@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+// src/components/Map/MapView.jsx
+import { useEffect, useRef, useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { useNavigate, useLocation } from "react-router-dom";
 import MapController from "./MapController";
@@ -27,12 +28,26 @@ function MapFix({ depsKey }) {
 
   useEffect(() => {
     if (!map) return;
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 200);
-    const t2 = setTimeout(() => map.invalidateSize(), 600);
+
+    const doFix = () => {
+      try {
+        map.invalidateSize();
+      } catch {}
+    };
+
+    doFix();
+    const t1 = setTimeout(doFix, 150);
+    const t2 = setTimeout(doFix, 600);
+    const t3 = setTimeout(doFix, 1200);
+
+    const onResize = () => doFix();
+    window.addEventListener("resize", onResize);
+
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      clearTimeout(t3);
+      window.removeEventListener("resize", onResize);
     };
   }, [map, depsKey]);
 
@@ -47,13 +62,12 @@ export default function MapView({
   homeRequestId,
 }) {
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ AHORA SÍ, DENTRO
+  const location = useLocation();
   const isMapPage = location.pathname === "/mapa";
 
   const markerRefs = useRef(new Map());
-  const [baseZoom, setBaseZoom] = useState(() =>
-    window.innerWidth <= 768 ? 5 : 6
-  );
+
+  const [baseZoom, setBaseZoom] = useState(() => (window.innerWidth <= 768 ? 5 : 6));
 
   useEffect(() => {
     const onResize = () => setBaseZoom(window.innerWidth <= 768 ? 5 : 6);
@@ -65,20 +79,21 @@ export default function MapView({
     if (!focusedClub?.id) return;
     const t = setTimeout(() => {
       const marker = markerRefs.current.get(String(focusedClub.id));
-      marker?.openPopup?.();
-    }, 500);
+      if (marker) marker.openPopup();
+    }, 650);
     return () => clearTimeout(t);
   }, [focusedClub]);
 
-  const depsKey = `${baseZoom}-${focusedClub?.id || ""}`;
+  function closePopup(clubId) {
+    const marker = markerRefs.current.get(String(clubId));
+    marker?.closePopup?.();
+  }
+
+  const depsKey = useMemo(() => `${baseZoom}-${focusedClub?.id || ""}`, [baseZoom, focusedClub?.id]);
 
   return (
     <div className="mapShell">
-      <MapContainer
-        center={[40.4168, -3.7038]}
-        zoom={baseZoom}
-        style={{ height: "100%", width: "100%" }}
-      >
+      <MapContainer center={[40.4168, -3.7038]} zoom={baseZoom} style={{ height: "100%", width: "100%" }}>
         <MapFix depsKey={depsKey} />
 
         <MapController
@@ -88,13 +103,30 @@ export default function MapView({
           homeRequestId={homeRequestId}
         />
 
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        {searchLocation ? (
+          <Marker position={[Number(searchLocation.lat), Number(searchLocation.lng)]}>
+            <Popup>
+              <strong>Búsqueda</strong>
+              <div style={{ marginTop: 6, fontSize: 12 }}>{searchLocation.displayName}</div>
+            </Popup>
+          </Marker>
+        ) : null}
+
+        {userLocation ? (
+          <>
+            <Marker position={[Number(userLocation.lat), Number(userLocation.lng)]}>
+              <Popup>
+                <strong>Mi ubicación</strong>
+              </Popup>
+            </Marker>
+            <Circle center={[Number(userLocation.lat), Number(userLocation.lng)]} radius={userLocation.accuracy ?? 50} />
+          </>
+        ) : null}
 
         {clubs
-          .filter((c) => c?.lat && c?.lng && c?.id)
+          .filter((c) => c?.lat != null && c?.lng != null && c?.id != null)
           .map((club) => {
             const clubId = String(club.id);
             const clubName = String(club.name ?? "Club");
@@ -110,41 +142,55 @@ export default function MapView({
               >
                 <Popup>
                   <strong>{clubName}</strong>
+                  {club.city ? <div style={{ marginTop: 4, fontSize: 12 }}>{club.city}</div> : null}
 
                   <ClubMatchesPreview clubId={clubId} clubName={clubName} limit={2} />
 
-                  <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                  <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
                       type="button"
                       className="btn"
-                      onClick={() =>
-                        navigate(`/partidos?clubId=${clubId}&clubName=${clubName}`)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isMapPage) closePopup(clubId);
+                        navigate(`/partidos?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`);
+                      }}
                     >
-                      Ver partidos
+                      Ver partidos aquí
                     </button>
 
                     <button
                       type="button"
                       className="btn"
-                      onClick={() =>
-                        navigate(`/partidos?create=1&clubId=${clubId}&clubName=${clubName}`)
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isMapPage) closePopup(clubId);
+                        navigate(`/partidos?create=1&clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`);
+                      }}
                     >
-                      Crear partido
+                      Crear partido aquí
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isMapPage) closePopup(clubId);
+                        navigate(`/clases?clubId=${encodeURIComponent(clubId)}&clubName=${encodeURIComponent(clubName)}`);
+                      }}
+                    >
+                      Clases aquí
                     </button>
                   </div>
 
                   <div style={{ marginTop: 10 }}>
                     <a
-                      href={googleMapsUrl({
-                        lat: Number(club.lat),
-                        lng: Number(club.lng),
-                        label: clubName,
-                      })}
+                      href={googleMapsUrl({ lat: Number(club.lat), lng: Number(club.lng), label: clubName })}
                       target="_blank"
                       rel="noreferrer"
                       style={{ fontSize: 12 }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Abrir en Google Maps →
                     </a>

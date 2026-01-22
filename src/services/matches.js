@@ -5,9 +5,9 @@ function nowISO() {
   return new Date().toISOString();
 }
 
-// ==============================
-// 1) PARTIDOS
-// ==============================
+// ------------------------------
+// LISTAR PARTIDOS (solo futuros)
+// ------------------------------
 export async function fetchMatches({ limit = 500 } = {}) {
   const { data, error } = await supabase
     .from("matches")
@@ -20,6 +20,35 @@ export async function fetchMatches({ limit = 500 } = {}) {
   return data ?? [];
 }
 
+// ------------------------------
+// ÚLTIMO MENSAJE POR PARTIDO (badge)
+// Devuelve: { [matchId]: timestamp_ms }
+// ------------------------------
+export async function fetchLatestChatTimes(matchIds = []) {
+  if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from("match_messages")
+    .select("match_id, created_at")
+    .in("match_id", matchIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  const out = {};
+  for (const row of data ?? []) {
+    const id = row.match_id;
+    if (!id) continue;
+    if (out[id]) continue;
+    const ts = new Date(row.created_at).getTime();
+    out[id] = Number.isFinite(ts) ? ts : 0;
+  }
+  return out;
+}
+
+// ------------------------------
+// CREAR PARTIDO
+// ------------------------------
 export async function createMatch({
   clubId,
   clubName,
@@ -27,7 +56,7 @@ export async function createMatch({
   durationMin = 90,
   level = "medio",
   alreadyPlayers = 1,
-  pricePerPlayer = null, // opcional si tu tabla lo tiene
+  pricePerPlayer = null,
 } = {}) {
   const { data: sessData, error: sessErr } = await supabase.auth.getSession();
   if (sessErr) throw sessErr;
@@ -46,8 +75,8 @@ export async function createMatch({
     spots_total: 4,
   };
 
-  // solo si tu tabla matches tiene esta columna:
-  if (pricePerPlayer != null && pricePerPlayer !== "") {
+  // si tienes la columna price_per_player, lo metemos
+  if (pricePerPlayer != null && String(pricePerPlayer).trim() !== "") {
     payload.price_per_player = Number(pricePerPlayer);
   }
 
@@ -56,38 +85,9 @@ export async function createMatch({
   return data;
 }
 
-export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
-  let q = supabase
-    .from("matches")
-    .select("id, club_id, club_name, start_at, duration_min, level, reserved_spots, spots_total")
-    .gte("start_at", nowISO())
-    .order("start_at", { ascending: true })
-    .limit(limit);
-
-  if (clubId) q = q.eq("club_id", String(clubId));
-  else if (clubName) q = q.eq("club_name", String(clubName));
-
-  const { data, error } = await q;
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function deleteMatch(matchId) {
-  if (!matchId) throw new Error("Falta matchId");
-
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
-
-  const { error } = await supabase.from("matches").delete().eq("id", matchId);
-  if (error) throw error;
-}
-
-// ==============================
-// 2) JOIN REQUESTS (match_join_requests)
-// ==============================
+// ------------------------------
+// SOLICITAR UNIRSE
+// ------------------------------
 export async function requestJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -122,6 +122,10 @@ export async function cancelMyJoin(matchId) {
   return true;
 }
 
+// ------------------------------
+// MIS REQUESTS para matchIds
+// Devuelve: { [matchId]: "pending"|"approved"|"rejected" }
+// ------------------------------
 export async function fetchMyRequestsForMatchIds(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
@@ -140,10 +144,13 @@ export async function fetchMyRequestsForMatchIds(matchIds = []) {
   if (error) throw error;
 
   const out = {};
-  for (const r of data ?? []) out[r.match_id] = r.status; // "pending/approved/rejected"
+  for (const r of data ?? []) out[r.match_id] = r.status;
   return out;
 }
 
+// ------------------------------
+// CONTAR APROBADOS por matchId
+// ------------------------------
 export async function fetchApprovedCounts(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
@@ -162,6 +169,9 @@ export async function fetchApprovedCounts(matchIds = []) {
   return out;
 }
 
+// ------------------------------
+// PENDIENTES (solo creador por RLS)
+// ------------------------------
 export async function fetchPendingRequests(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -214,31 +224,45 @@ export async function rejectRequest({ requestId }) {
   return data;
 }
 
-// ==============================
-// 3) CHAT
-// ==============================
-export async function fetchLatestChatTimes(matchIds = []) {
-  if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
+// ------------------------------
+// PREVIEW PARTIDOS POR CLUB (solo futuros)
+// ------------------------------
+export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
+  let q = supabase
+    .from("matches")
+    .select("id, club_id, club_name, start_at, duration_min, level")
+    .gte("start_at", nowISO())
+    .order("start_at", { ascending: true })
+    .limit(limit);
 
-  const { data, error } = await supabase
-    .from("match_messages")
-    .select("match_id, created_at")
-    .in("match_id", matchIds)
-    .order("created_at", { ascending: false });
+  if (clubId) q = q.eq("club_id", String(clubId));
+  else if (clubName) q = q.eq("club_name", String(clubName));
 
+  const { data, error } = await q;
   if (error) throw error;
-
-  const out = {};
-  for (const row of data ?? []) {
-    const id = row.match_id;
-    if (!id) continue;
-    if (out[id]) continue;
-    const ts = new Date(row.created_at).getTime();
-    out[id] = Number.isFinite(ts) ? ts : 0;
-  }
-  return out;
+  return data ?? [];
 }
 
+// ------------------------------
+// ELIMINAR PARTIDO
+// ------------------------------
+export async function deleteMatch(matchId) {
+  if (!matchId) throw new Error("Falta matchId");
+
+  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
+  if (sessErr) throw sessErr;
+
+  const session = sessData?.session;
+  if (!session?.user) throw new Error("No hay sesión activa.");
+
+  const { error } = await supabase.from("matches").delete().eq("id", matchId);
+  if (error) throw error;
+  return true;
+}
+
+// ------------------------------
+// CHAT: mensajes
+// ------------------------------
 export async function fetchMatchMessages(matchId, { limit = 120 } = {}) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -253,6 +277,7 @@ export async function fetchMatchMessages(matchId, { limit = 120 } = {}) {
   return data ?? [];
 }
 
+// ✅ push desde backend (si falla NO rompe chat)
 export async function sendMatchMessage({ matchId, message } = {}) {
   if (!matchId) throw new Error("Falta matchId");
   const text = String(message ?? "").trim();
@@ -277,15 +302,26 @@ export async function sendMatchMessage({ matchId, message } = {}) {
 
   if (error) throw error;
 
-  // push opcional (si existe tu endpoint)
-  try {
-    await fetch("/api/push-chat", {
+  async function postPushChat(payload) {
+    const res = await fetch("/api/push-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "chat", matchId, messageId: data.id }),
+      body: JSON.stringify(payload),
     });
-  } catch {
-    // silencioso
+
+    const t = await res.text();
+    if (!res.ok) throw new Error(t || `push failed ${res.status}`);
+    try {
+      return JSON.parse(t);
+    } catch {
+      return t;
+    }
+  }
+
+  try {
+    await postPushChat({ type: "chat", matchId, messageId: data.id });
+  } catch (e) {
+    console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }
 
   return data;
