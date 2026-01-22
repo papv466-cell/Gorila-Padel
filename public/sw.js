@@ -1,43 +1,44 @@
-/* GP_SW_MARK_2026_01_21 */
+// public/sw.js
+// ✅ GP Service Worker
 
-self.__GP_SW_MARK = "GP_SW_MARK_2026_01_21";
-console.log("✅ GP SW activo:", self.__GP_SW_MARK);
-
-self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
+  console.log("✅ GP SW activo: GP_SW_MARK_2026_01_21");
 });
 
-/** PUSH */
+// Recibe push desde backend y muestra notificación
 self.addEventListener("push", (event) => {
-  let data = {};
   try {
-    data = event.data ? event.data.json() : {};
-  } catch {
-    data = { title: "Gorila Pádel", body: "Nuevo mensaje", url: "/partidos" };
-  }
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || "Global Padel";
+    const body = data.body || "Tienes una notificación";
+    const url = data.url || "/partidos"; // ✅ URL destino al click
 
-  const title = data.title || "Gorila Pádel";
-  const body = data.body || "Tienes una notificación";
-  const url = data.url || "/partidos";
-
-  event.waitUntil(
-    self.registration.showNotification(title, {
+    const options = {
       body,
-      icon: "/logo.png",
-      badge: "/logo.png",
-      data: { url },
-      tag: data.tag || "gp-chat",
-      renotify: true,
-    })
-  );
+      icon: "/favicon.ico",
+      badge: "/favicon.ico",
+      data: { url }, // ✅ aquí guardamos la URL para notificationclick
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (e) {
+    // fallback si viene texto plano
+    const title = "Global Padel";
+    const options = { body: "Tienes una notificación", data: { url: "/partidos" } };
+    event.waitUntil(self.registration.showNotification(title, options));
+  }
 });
 
-/** CLICK en NOTIFICACIÓN (aquí va lo de focus/navigate) */
+// ✅ Al pulsar la notificación: abrir esa URL (o enfocar pestaña)
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification?.data?.url || "/partidos";
+
+  const urlToOpen = event.notification?.data?.url || "/partidos";
 
   event.waitUntil(
     (async () => {
@@ -46,28 +47,20 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true,
       });
 
+      // Si ya hay una pestaña abierta, la enfocamos y la navegamos
       for (const client of allClients) {
-        // si ya hay una pestaña abierta, la enfocamos y navegamos
-        try {
-          if ("focus" in client) await client.focus();
-          if ("navigate" in client) {
-            await client.navigate(url);
-            return;
-          }
-        } catch {}
+        if ("focus" in client) {
+          await client.focus();
+          // Navega a la url destino (abre chat si lleva openChat)
+          client.navigate(urlToOpen);
+          return;
+        }
       }
 
-      // si no hay pestaña, abrimos una nueva
-      if (self.clients.openWindow) return self.clients.openWindow(url);
+      // Si no hay pestaña, abre nueva
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
+      }
     })()
   );
-});
-
-/** FETCH: solo arregla la navegación SPA */
-self.addEventListener("fetch", (event) => {
-  // Para rutas tipo /mapa /login /partidos (SPA)
-  if (event.request.mode === "navigate") {
-    event.respondWith(fetch("/index.html", { cache: "no-store" }));
-    return;
-  }  
 });
