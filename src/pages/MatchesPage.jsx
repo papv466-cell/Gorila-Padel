@@ -47,9 +47,11 @@ export default function MatchesPage() {
   const isClubFilter = !!clubIdParam || !!clubNameParam;
 
   // ✅ openChat se lee SIEMPRE desde location.search (estable)
-  const openChatParam = useMemo(() => {
-    return new URLSearchParams(location.search).get("openChat") || "";
-  }, [location.search]);
+  // ✅ openChat robusto: primero searchParams (react-router), luego fallback a window.location
+const openChatParam =
+searchParams.get("openChat") ||
+new URLSearchParams(window.location.search).get("openChat") ||
+"";  
 
   const showPushButton =
     import.meta.env.DEV || new URLSearchParams(location.search).get("push") === "1";

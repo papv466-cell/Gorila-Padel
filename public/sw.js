@@ -1,44 +1,39 @@
 // public/sw.js
-// ✅ GP Service Worker
-
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
-});
+self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
-  console.log("✅ GP SW activo: GP_SW_MARK_2026_01_21");
+  console.log("✅ GP SW activo");
 });
 
-// Recibe push desde backend y muestra notificación
 self.addEventListener("push", (event) => {
+  let data = {};
   try {
-    const data = event.data ? event.data.json() : {};
-    const title = data.title || "Global Padel";
-    const body = data.body || "Tienes una notificación";
-    const url = data.url || "/partidos"; // ✅ URL destino al click
+    data = event.data ? event.data.json() : {};
+  } catch {}
 
-    const options = {
+  const title = data.title || "Global Padel";
+  const body = data.body || "Tienes una notificación";
+  const url = data.url || "/partidos";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
       body,
       icon: "/favicon.ico",
       badge: "/favicon.ico",
-      data: { url }, // ✅ aquí guardamos la URL para notificationclick
-    };
-
-    event.waitUntil(self.registration.showNotification(title, options));
-  } catch (e) {
-    // fallback si viene texto plano
-    const title = "Global Padel";
-    const options = { body: "Tienes una notificación", data: { url: "/partidos" } };
-    event.waitUntil(self.registration.showNotification(title, options));
-  }
+      data: { url }, // guardamos el deep link
+    })
+  );
 });
 
-// ✅ Al pulsar la notificación: abrir esa URL (o enfocar pestaña)
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const urlToOpen = event.notification?.data?.url || "/partidos";
+  const data = event.notification.data || {};
+  const targetPath = data.url || "/partidos";
+
+  // ✅ URL ABSOLUTA para que no se pierda el ?openChat=
+  const targetUrl = new URL(targetPath, self.location.origin).toString();
 
   event.waitUntil(
     (async () => {
@@ -47,20 +42,20 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true,
       });
 
-      // Si ya hay una pestaña abierta, la enfocamos y la navegamos
+      // 1) si hay pestaña abierta, la enfocamos y navegamos al deep link
       for (const client of allClients) {
         if ("focus" in client) {
           await client.focus();
-          // Navega a la url destino (abre chat si lleva openChat)
-          client.navigate(urlToOpen);
+          if ("navigate" in client) await client.navigate(targetUrl);
           return;
         }
       }
 
-      // Si no hay pestaña, abre nueva
+      // 2) si no hay ninguna, abrimos nueva
       if (self.clients.openWindow) {
-        return self.clients.openWindow(urlToOpen);
+        return self.clients.openWindow(targetUrl);
       }
     })()
   );
 });
+
