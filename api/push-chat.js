@@ -1,69 +1,36 @@
 // api/push-chat.js
-export const config = { runtime: "nodejs" };
-
+import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
-function isUUID(v) {
-  return typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
-}
-
-function getEnv(...keys) {
-  for (const k of keys) {
-    const v = process.env[k];
-    if (v && String(v).trim()) return String(v).trim();
-  }
-  return "";
-}
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-  // ✅ Import robusto de web-push para evitar crash en Vercel
-  let webpush;
   try {
-    const mod = await import("web-push");
-    webpush = mod.default ?? mod; // funciona tanto si viene default como si viene namespace
-  } catch (e) {
-    return res
-      .status(500)
-      .send("web-push import failed: " + (e?.message || String(e)));
-  }
+    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  try {
-    const SUPABASE_URL = getEnv("SUPABASE_URL", "VITE_SUPABASE_URL");
-    const SERVICE_ROLE = getEnv(
-      "SUPABASE_SERVICE_ROLE_KEY",
-      "SUPABASE_SERVICE_ROLE",
-      "SERVICE_ROLE_KEY"
-    );
+    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SERVICE_ROLE =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE ||
+      process.env.SUPABASE_SERVICE_ROLE_SECRET;
 
-    // 👇 puedes tenerlas como VAPID_* o VITE_VAPID_*
-    const VAPID_PUBLIC = getEnv("VAPID_PUBLIC_KEY", "VITE_VAPID_PUBLIC_KEY");
-    const VAPID_PRIVATE = getEnv("VAPID_PRIVATE_KEY", "VITE_VAPID_PRIVATE_KEY");
+    const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
+    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
-    if (!SUPABASE_URL) return res.status(500).send("Missing SUPABASE_URL");
-    if (!SERVICE_ROLE) return res.status(500).send("Missing SUPABASE_SERVICE_ROLE_KEY");
-    if (!VAPID_PUBLIC) return res.status(500).send("Missing VAPID_PUBLIC_KEY");
-    if (!VAPID_PRIVATE) return res.status(500).send("Missing VAPID_PRIVATE_KEY");
-
-    // ✅ set vapid
-    try {
-      webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
-    } catch (e) {
-      return res.status(500).send("setVapidDetails failed: " + (e?.message || String(e)));
+    if (!SUPABASE_URL || !SERVICE_ROLE) {
+      return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    }
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+      return res.status(500).send("Missing VAPID public/private keys");
     }
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
-      auth: { persistSession: false },
-    });
+    webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const { matchId, messageId } = body || {};
+    const { messageId } = body || {};
+    if (!messageId) return res.status(400).send("Missing messageId");
 
-    if (!isUUID(matchId)) return res.status(400).send("Invalid matchId (uuid required)");
-    if (!isUUID(messageId)) return res.status(400).send("Invalid messageId (uuid required)");
-
-    // 1) mensaje
+    // 1) leer mensaje (y su match real)
     const { data: msg, error: msgErr } = await supabase
       .from("match_messages")
       .select("id, match_id, user_id, message, created_at")
@@ -72,7 +39,11 @@ export default async function handler(req, res) {
 
     if (msgErr || !msg) return res.status(500).send(msgErr?.message || "Message not found");
 
-    // 2) partido
+    // ✅ EL MATCHID REAL SIEMPRE SALE DEL MENSAJE
+    const matchId = msg.match_id;
+    if (!matchId) return res.status(500).send("Message has no match_id");
+
+    // 2) leer partido (para título y creador)
     const { data: match, error: matchErr } = await supabase
       .from("matches")
       .select("id, club_name, start_at, created_by_user")
@@ -81,7 +52,7 @@ export default async function handler(req, res) {
 
     if (matchErr || !match) return res.status(500).send(matchErr?.message || "Match not found");
 
-    // 3) destinatarios = creador + aprobados - autor
+    // 3) destinatarios: creador + aprobados (sin el autor)
     const { data: approved, error: apprErr } = await supabase
       .from("match_join_requests")
       .select("user_id")
@@ -94,6 +65,7 @@ export default async function handler(req, res) {
     if (match.created_by_user) recipients.add(match.created_by_user);
     for (const r of approved || []) if (r.user_id) recipients.add(r.user_id);
 
+    // no enviar al autor del mensaje
     recipients.delete(msg.user_id);
 
     const recipientIds = Array.from(recipients);
@@ -101,7 +73,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, sent: 0, reason: "no recipients" });
     }
 
-    // 4) subs
+    // 4) cargar subscripciones push
     const { data: subs, error: subsErr } = await supabase
       .from("push_subscriptions")
       .select("user_id, endpoint, p256dh, auth")
@@ -109,11 +81,13 @@ export default async function handler(req, res) {
 
     if (subsErr) return res.status(500).send(subsErr.message);
 
+    // ✅ Deep link SIEMPRE al chat del partido real del mensaje
     const payload = JSON.stringify({
       type: "chat",
       matchId,
+      messageId: msg.id,
       title: `Nuevo mensaje en ${match.club_name || "partido"}`,
-      body: (msg.message || "Mensaje nuevo").slice(0, 120),
+      body: msg.message?.slice(0, 120) || "Mensaje nuevo",
       url: `/partidos?openChat=${encodeURIComponent(matchId)}`,
     });
 
@@ -123,35 +97,27 @@ export default async function handler(req, res) {
     for (const s of subs || []) {
       try {
         await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          {
+            endpoint: s.endpoint,
+            keys: { p256dh: s.p256dh, auth: s.auth },
+          },
           payload
         );
         sent++;
       } catch (e) {
-        const emsg = String(e?.message || e);
-        errors.push(emsg);
-
-        // ✅ si está muerta (410/404 normalmente), la borramos para no acumular basura
-        const code = e?.statusCode || e?.status || null;
-        if (code === 410 || code === 404) {
-          try {
-            await supabase
-              .from("push_subscriptions")
-              .delete()
-              .eq("endpoint", s.endpoint);
-          } catch {}
-        }
+        errors.push(String(e?.message || e));
       }
     }
 
     return res.status(200).json({
       ok: true,
+      matchId,
       recipients: recipientIds.length,
       subs: (subs || []).length,
       sent,
-      errors: errors.slice(0, 10),
+      errors,
     });
   } catch (e) {
-    return res.status(500).send("push-chat crashed: " + (e?.message || String(e)));
+    return res.status(500).send(e?.message || "Server error");
   }
 }
