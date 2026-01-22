@@ -141,6 +141,14 @@ export default function MatchesPage() {
     navigate("/login", { state: { from: location.pathname + location.search } });
   }
 
+  // Abrir crear partido si viene desde el mapa
+useEffect(() => {
+  if (createParam) {
+    setOpenCreate(true);
+  }
+}, [createParam]);
+
+
   /* =========================
      Load data
   ========================= */
@@ -366,49 +374,50 @@ export default function MatchesPage() {
                           Solicitudes
                         </button>
                       ) : null}
-                        {openCreate ? (
-                          <div
-                            onClick={() => setOpenCreate(false)}
-                            style={{
-                              position: "fixed",
-                              inset: 0,
-                              background: "rgba(0,0,0,0.35)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: 16,
-                              zIndex: 9999,
-                            }}
-                          >
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              style={{
-                                width: "min(520px, 100%)",
-                                background: "#fff",
-                                borderRadius: 12,
-                                padding: 14,
-                                border: "1px solid rgba(0,0,0,0.12)",
-                              }}
-                            >
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                                <h2 style={{ margin: 0, fontSize: 16 }}>Crear partido</h2>
-                                <button type="button" className="btn ghost" onClick={() => setOpenCreate(false)}>
-                                  Cerrar
-                                </button>
-                              </div>
-
-                              <div style={{ marginTop: 10, fontSize: 13, opacity: 0.8 }}>
-                                (Esto es la ventana. Si la ves, el botón ya funciona.)
-                              </div>
-                            </div>
-                          </div>
-                        ) : null}
-
+                        
                       {session && (isCreator || myStatus) && (
                         <button className="btn ghost" onClickCapture={() => openChat(m.id)}>
                         Chat
                       </button>
                       )}
+                      {/* =========================
+   MODAL CREAR PARTIDO
+========================= */}
+{openCreate && (
+  <div
+    onClick={() => setOpenCreate(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.4)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "min(520px, 100%)",
+        background: "#fff",
+        borderRadius: 12,
+        padding: 16,
+      }}
+    >
+      <h2 style={{ marginTop: 0 }}>Crear partido</h2>
+
+      <p style={{ fontSize: 13, opacity: 0.7 }}>
+        Aquí irá el formulario (esto confirma que el botón funciona)
+      </p>
+
+      <button className="btn" onClick={() => setOpenCreate(false)}>
+        Cerrar
+      </button>
+    </div>
+  </div>
+)}
+
                     </div>
                   </div>
                 </li>
