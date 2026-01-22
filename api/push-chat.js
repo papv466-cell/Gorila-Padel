@@ -1,109 +1,126 @@
-// api/push-chat.js
-import webpush from "web-push";
-import { createClient } from "@supabase/supabase-js";
+/* public/sw.js */
 
-export default async function handler(req, res) {
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+/**
+ * PUSH payload esperado:
+ * {
+ *   title, body, url, type, matchId
+ * }
+ */
+self.addEventListener("push", (event) => {
+  let data = {};
   try {
-    if (req.method !== "POST") {
-      return res.status(405).send("Method Not Allowed");
-    }
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
 
-    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
-    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+  const title = data.title || "Gorila Pádel";
+  const body = data.body || "Tienes una notificación";
+  const url = data.url || "/partidos";
 
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-    }
-    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
-      return res.status(500).send("Missing VAPID public/private keys");
-    }
+  const options = {
+    body,
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    // IMPORTANT: guardamos TODO para usarlo en el click
+    data: {
+      url,
+      type: data.type || null,
+      matchId: data.matchId || null,
+    },
+    // opcional: agrupa notifs del mismo tipo
+    tag: data.type ? `gp-${data.type}` : "gp",
+    renotify: false,
+  };
 
-    webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
+  event.waitUntil(self.registration.showNotification(title, options));
+});
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-
-    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    const { matchId, messageId } = body || {};
-    if (!matchId || !messageId) return res.status(400).send("Missing matchId or messageId");
-
-    // 1) leer mensaje y autor
-    const { data: msg, error: msgErr } = await supabase
-      .from("match_messages")
-      .select("id, match_id, user_id, message, created_at")
-      .eq("id", messageId)
-      .single();
-
-    if (msgErr || !msg) return res.status(500).send(msgErr?.message || "Message not found");
-
-    // 2) leer partido (para título)
-    const { data: match, error: matchErr } = await supabase
-      .from("matches")
-      .select("id, club_name, start_at, created_by_user")
-      .eq("id", matchId)
-      .single();
-
-    if (matchErr || !match) return res.status(500).send(matchErr?.message || "Match not found");
-
-    // 3) destinatarios: creador + aprobados (sin el que escribe)
-    const { data: approved, error: apprErr } = await supabase
-      .from("match_join_requests")
-      .select("user_id")
-      .eq("match_id", matchId)
-      .eq("status", "approved");
-
-    if (apprErr) return res.status(500).send(apprErr.message);
-
-    const recipients = new Set();
-    if (match.created_by_user) recipients.add(match.created_by_user);
-    for (const r of approved || []) if (r.user_id) recipients.add(r.user_id);
-
-    // no enviar al autor del mensaje
-    recipients.delete(msg.user_id);
-
-    const recipientIds = Array.from(recipients);
-    if (recipientIds.length === 0) {
-      return res.status(200).json({ ok: true, sent: 0, reason: "no recipients" });
-    }
-
-    // 4) cargar subscripciones push
-    const { data: subs, error: subsErr } = await supabase
-      .from("push_subscriptions")
-      .select("user_id, endpoint, p256dh, auth")
-      .in("user_id", recipientIds);
-
-    if (subsErr) return res.status(500).send(subsErr.message);
-
-    const payload = JSON.stringify({
-      type: "chat",
-      matchId,
-      title: `Nuevo mensaje en ${match.club_name || "partido"}`,
-      body: msg.message?.slice(0, 120) || "Mensaje nuevo",
-      url: `/partidos?openChat=${encodeURIComponent(matchId)}`,
-    });
-
-    let sent = 0;
-    const errors = [];
-
-    for (const s of subs || []) {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: s.endpoint,
-            keys: { p256dh: s.p256dh, auth: s.auth },
-          },
-          payload
-        );
-        sent++;
-      } catch (e) {
-        // si la sub está muerta, la podríamos borrar; de momento guardamos error
-        errors.push(String(e?.message || e));
-      }
-    }
-
-    return res.status(200).json({ ok: true, recipients: recipientIds.length, subs: (subs || []).length, sent, errors });
-  } catch (e) {
-    return res.status(500).send(e?.message || "Server error");
+function toAbsoluteUrl(maybeRelativeUrl) {
+  try {
+    return new URL(maybeRelativeUrl, self.location.origin).href;
+  } catch {
+    return new URL("/partidos", self.location.origin).href;
   }
 }
+
+function extractOpenChatIdFromUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.searchParams.get("openChat") || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * CLICK EN NOTIFICACIÓN
+ * ✅ intenta reutilizar pestaña existente
+ * ✅ navega a la URL ABSOLUTA
+ * ✅ manda postMessage con matchId para forzar abrir chat aunque el query se pierda
+ */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const data = event.notification?.data || {};
+  const absUrl = toAbsoluteUrl(data.url || "/partidos");
+
+  // matchId puede venir en data o dentro de ?openChat=
+  const matchId = data.matchId || extractOpenChatIdFromUrl(absUrl);
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      // 1) Preferimos una pestaña visible del MISMO origin
+      const sameOriginClients = allClients.filter((c) => {
+        try {
+          return new URL(c.url).origin === self.location.origin;
+        } catch {
+          return false;
+        }
+      });
+
+      const targetClient =
+        sameOriginClients.find((c) => c.visibilityState === "visible") ||
+        sameOriginClients[0];
+
+      if (targetClient) {
+        try {
+          await targetClient.focus();
+
+          // Navegamos a la ruta del chat
+          if ("navigate" in targetClient) {
+            await targetClient.navigate(absUrl);
+          }
+
+          // Y además enviamos mensaje para que la app abra el chat sí o sí
+          if (matchId) {
+            targetClient.postMessage({
+              type: "GP_OPEN_CHAT",
+              matchId,
+              url: absUrl,
+            });
+          }
+
+          return;
+        } catch {
+          // si falla, seguimos al openWindow
+        }
+      }
+
+      // 2) Si no hay pestaña, abrimos una nueva
+      const opened = await self.clients.openWindow(absUrl);
+
+      // Nota: si no hay pestaña previa, no podemos garantizar postMessage inmediato.
+      // Por eso mantenemos también ?openChat=... en la URL.
+      return opened;
+    })()
+  );
+});
