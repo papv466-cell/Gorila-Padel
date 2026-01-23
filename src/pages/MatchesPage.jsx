@@ -15,6 +15,7 @@ import {
   approveRequest,
   rejectRequest,
   fetchLatestChatTimes,
+  deleteMatch,
 } from "../services/matches";
 import { fetchProfilesByIds } from "../services/profilesPublic";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
@@ -518,17 +519,52 @@ export default function MatchesPage() {
               const myStatus = myReqStatus[m.id];
               const isCreator = session?.user?.id === m.created_by_user;
 
+              async function handleLeave(matchId) {
+                try {
+                  await cancelMyJoin(matchId);
+                  await reload();
+                  alert("Has salido del partido ✅");
+                } catch (e) {
+                  alert(e?.message || "No se pudo salir del partido");
+                }
+              }
+              
+              async function handleDelete(matchId) {
+                const ok = confirm("¿Seguro que quieres eliminar este partido? Esto no se puede deshacer.");
+                if (!ok) return;
+              
+                try {
+                  await deleteMatch(matchId);
+                  await reload();
+                  alert("Partido eliminado ✅");
+                } catch (e) {
+                  alert(e?.message || "No se pudo eliminar el partido");
+                }
+              }
+              
               return (
                 <li key={m.id} style={{ marginBottom: 12 }}>
                   <div className="card">
                     <div className="gpCardTop">
                       <div>
                         <strong style={{ fontSize: 16 }}>{m.club_name}</strong>
-                        <div className="meta">
-                          {new Date(m.start_at).toLocaleString("es-ES")} · {m.duration_min} min · Nivel {m.level}
-                        </div>
-                        <div className="meta">
-                          Ocupadas {occupied}/4 · Huecos {left}
+                        <div className="gpInfoGrid">
+                          <div className="gpInfoBox">
+                            <div className="gpInfoLabel">Fecha y hora</div>
+                            <div className="gpInfoValue">{new Date(m.start_at).toLocaleString("es-ES")}</div>
+                          </div>
+                          <div className="gpInfoBox">
+                            <div className="gpInfoLabel">Duración</div>
+                            <div className="gpInfoValue">{m.duration_min} min</div>
+                          </div>
+                          <div className="gpInfoBox">
+                            <div className="gpInfoLabel">Nivel</div>
+                            <div className="gpInfoValue">{String(m.level || "").toUpperCase()}</div>
+                          </div>
+                          <div className="gpInfoBox">
+                            <div className="gpInfoLabel">Plazas</div>
+                            <div className="gpInfoValue">{occupied}/4 ocupadas · {left} libres</div>
+                          </div>
                         </div>
 
                         {myStatus === "approved" ? <div className="gpBadge ok">✅ Estás dentro</div> : null}
@@ -607,6 +643,21 @@ export default function MatchesPage() {
                           Chat
                         </button>
                       ) : null}
+
+                      {/* ✅ SALIR (si soy jugador aprobado o pendiente) */}
+                        {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
+                          <button className="btn ghost" onClick={() => handleLeave(m.id)}>
+                            Salir
+                          </button>
+                        ) : null}
+
+                        {/* ✅ ELIMINAR (solo creador) */}
+                        {session && isCreator ? (
+                          <button className="btn danger" onClick={() => handleDelete(m.id)}>
+                            Eliminar
+                          </button>
+                        ) : null}
+
                     </div>
                   </div>
                 </li>

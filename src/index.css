@@ -594,3 +594,129 @@ img { max-width: 100%; height: auto; }
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.18);
 }
+.gpChatBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  padding:12px;
+  height:320px;
+  overflow:auto;
+  background:#fff;
+}
+
+.gpChatMsg{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#fafafa;
+}
+/* ✅ FIX SCROLL PARTIDOS */
+html, body, #root {
+  height: 100%;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageWrap {
+  flex: 1;
+  overflow-y: auto;   /* <- clave */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* por si algún contenedor corta */
+.container {
+  overflow: visible;
+}
+/* ✅ Tarjeta partido más pro */
+.card {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  padding: 14px;
+}
+
+.gpCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta {
+  font-size: 13px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+.gpInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.gpInfoBox {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.gpInfoLabel {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.gpInfoValue {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.gpActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Botones */
+.btn {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #111;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+.btn.ghost {
+  background: #fff;
+  color: #111;
+}
+.btn.danger {
+  background: #b00020;
+  border-color: rgba(176,0,32,0.4);
+  color: #fff;
+}
+
+/* Badges */
+.gpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+.gpBadge.ok { background: rgba(0,160,80,0.12); border: 1px solid rgba(0,160,80,0.25); }
+.gpBadge.warn { background: rgba(255,170,0,0.14); border: 1px solid rgba(255,170,0,0.30); }
+.gpBadge.bad { background: rgba(176,0,32,0.12); border: 1px solid rgba(176,0,32,0.25); }

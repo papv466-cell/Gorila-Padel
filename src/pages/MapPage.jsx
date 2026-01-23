@@ -1,415 +1,753 @@
-import { useEffect, useState } from "react";
-
-import MapView from "../components/Map/MapView";
-import ClubList from "../components/UI/ClubList";
-import SearchBox from "../components/UI/SearchBox";
-
+// src/pages/MatchesPage.jsx
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { supabase } from "../services/supabaseClient";
+import {
+  createMatch,
+  fetchMatches,
+  fetchMyRequestsForMatchIds,
+  fetchApprovedCounts,
+  requestJoin,
+  cancelMyJoin,
+  fetchPendingRequests,
+  fetchMatchMessages,
+  sendMatchMessage,
+  approveRequest,
+  rejectRequest,
+  fetchLatestChatTimes,
+} from "../services/matches";
+import { fetchProfilesByIds } from "../services/profilesPublic";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
-import { getCurrentPosition } from "../services/location";
-import { geocodeNominatim } from "../services/geocode";
+import { ensurePushSubscription } from "../services/push";
 
-const SHEET_ID = "1d5wDnfeqedHMWF4hdBBoeAUf0KqwZrEOJ8k-6i8Fj0o";
-const GID = 0;
-
-const NEAR_ME_KM = 20;
-
-function haversineKm(a, b) {
-  const R = 6371;
-  const toRad = (d) => (d * Math.PI) / 180;
-
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(a.lat);
-
-  const x =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
-
-  return 2 * R * Math.asin(Math.sqrt(x));
+/* Utils */
+function toDateInputValue(d = new Date()) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function toNum(v) {
-  if (v === null || v === undefined) return null;
-  const n = Number(String(v).replace(",", "."));
-  return Number.isFinite(n) ? n : null;
+function combineDateTimeToISO(dateStr, timeStr) {
+  const [hh, mm] = String(timeStr || "19:00").split(":").map((x) => Number(x));
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setHours(Number.isFinite(hh) ? hh : 19, Number.isFinite(mm) ? mm : 0, 0, 0);
+  return d.toISOString();
 }
 
-function normalizeClub(raw, idx) {
-  const name = String(raw?.name ?? raw?.club ?? raw?.nombre ?? "Club").trim();
-  const city = String(raw?.city ?? raw?.ciudad ?? "").trim();
+export default function MatchesPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  const lat =
-    toNum(raw?.lat) ??
-    toNum(raw?.latitude) ??
-    toNum(raw?.Lat) ??
-    toNum(raw?.LAT) ??
-    null;
+  const todayISO = toDateInputValue(new Date());
 
-  const lng =
-    toNum(raw?.lng) ??
-    toNum(raw?.lon) ??
-    toNum(raw?.long) ??
-    toNum(raw?.longitude) ??
-    toNum(raw?.Lng) ??
-    toNum(raw?.LNG) ??
-    null;
+  const openChatParam = searchParams.get("openChat") || "";
+  const clubIdParam = searchParams.get("clubId") || "";
+  const clubNameParam = searchParams.get("clubName") || "";
+  const createParam = searchParams.get("create") === "1";
 
-  const baseId = raw?.id ?? raw?.clubId ?? raw?.club_id ?? raw?.ID ?? raw?.Id ?? null;
+  const isClubFilter = !!clubIdParam || !!clubNameParam;
 
-  const id =
-    baseId != null && String(baseId).trim() !== ""
-      ? String(baseId).trim()
-      : `${name}-${lat ?? "x"}-${lng ?? "y"}-${idx}`;
+  const showPushButton =
+    import.meta.env.DEV || new URLSearchParams(window.location.search).get("push") === "1";
 
-  return {
-    ...raw,
-    id: String(id),
-    name,
-    city,
-    lat,
-    lng,
-  };
-}
+  /* Session */
+  const [session, setSession] = useState(null);
 
-export default function MapPage() {
-  const [clubs, setClubs] = useState([]);
+  /* Data */
+  const [items, setItems] = useState([]);
   const [status, setStatus] = useState({ loading: true, error: null });
 
-  const [homeRequestId, setHomeRequestId] = useState(0);
+  const [myReqStatus, setMyReqStatus] = useState({});
+  const [approvedCounts, setApprovedCounts] = useState({});
+  const [latestChatTsByMatch, setLatestChatTsByMatch] = useState({});
 
-  const [cityFilter, setCityFilter] = useState(() => {
-    try {
-      return localStorage.getItem("gp:cityFilter") ?? "";
-    } catch {
-      return "";
-    }
+  /* Requests modal (creator) */
+  const [requestsOpenFor, setRequestsOpenFor] = useState(null);
+  const [pending, setPending] = useState([]);
+  const [pendingBusy, setPendingBusy] = useState(false);
+  const [profilesById, setProfilesById] = useState({});
+
+  /* Tabs/filter */
+  const [viewMode, setViewMode] = useState("explore");
+  const [selectedDay, setSelectedDay] = useState(todayISO);
+
+  /* Chat modal */
+  const [chatOpenFor, setChatOpenFor] = useState(null);
+  const [chatItems, setChatItems] = useState([]);
+  const [chatText, setChatText] = useState("");
+
+  /* Create modal */
+  const [openCreate, setOpenCreate] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  /* Clubs suggest */
+  const [clubsSheet, setClubsSheet] = useState([]);
+  const [clubQuery, setClubQuery] = useState("");
+  const [showClubSuggest, setShowClubSuggest] = useState(false);
+
+  const [form, setForm] = useState({
+    clubName: "",
+    clubId: "",
+    date: todayISO,
+    time: "19:00",
+    durationMin: 90,
+    level: "medio",
+    alreadyPlayers: 1,
+    pricePerPlayer: "",
   });
 
-  const [nearMeOnly, setNearMeOnly] = useState(() => {
+  function goLogin() {
+    navigate("/login", { state: { from: location.pathname + location.search } });
+  }
+
+  /* session */
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  /* load clubs sheet once (for suggestions) */
+  useEffect(() => {
+    fetchClubsFromGoogleSheet()
+      .then((rows) => setClubsSheet(rows ?? []))
+      .catch(() => {});
+  }, []);
+
+  /* reload */
+  async function reload() {
     try {
-      return localStorage.getItem("gp:nearMeOnly") === "1";
-    } catch {
-      return false;
+      setStatus({ loading: true, error: null });
+      const data = await fetchMatches({ limit: 500 });
+      setItems(data);
+
+      const ids = data.map((m) => m.id);
+      if (session && ids.length) {
+        setMyReqStatus(await fetchMyRequestsForMatchIds(ids));
+        setApprovedCounts(await fetchApprovedCounts(ids));
+        setLatestChatTsByMatch(await fetchLatestChatTimes(ids));
+      } else {
+        setMyReqStatus({});
+        setApprovedCounts({});
+        setLatestChatTsByMatch({});
+      }
+
+      setStatus({ loading: false, error: null });
+    } catch (e) {
+      setStatus({ loading: false, error: e?.message || "Error cargando partidos" });
     }
-  });
-
-  const [focusedClub, setFocusedClub] = useState(null);
-
-  const [userLocation, setUserLocation] = useState(null);
-  const [locStatus, setLocStatus] = useState({ loading: false, error: null });
-
-  const [searchLocation, setSearchLocation] = useState(null);
-  const [searchStatus, setSearchStatus] = useState({ loading: false, error: null });
-  const [searchResults, setSearchResults] = useState([]);
-
-  const [favoriteIds, setFavoriteIds] = useState(() => {
-    try {
-      const raw = localStorage.getItem("gp:favorites");
-      const arr = raw ? JSON.parse(raw) : [];
-      return new Set(Array.isArray(arr) ? arr.map(String) : []);
-    } catch {
-      return new Set();
-    }
-  });
-
-  const [favoritesOnly, setFavoritesOnly] = useState(() => {
-    try {
-      return localStorage.getItem("gp:favoritesOnly") === "1";
-    } catch {
-      return false;
-    }
-  });
+  }
 
   useEffect(() => {
-    let cancelled = false;
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
-    async function load() {
-      try {
-        setStatus({ loading: true, error: null });
+  /* Chat */
+  async function openChat(matchId) {
+    if (!session) return goLogin();
+    setChatOpenFor(matchId);
+    const msgs = await fetchMatchMessages(matchId, { limit: 120 });
+    setChatItems(msgs);
+  }
 
-        const raw = await fetchClubsFromGoogleSheet({ sheetId: SHEET_ID, gid: GID });
-        const arr = Array.isArray(raw) ? raw : [];
+  async function handleSendChat() {
+    if (!chatOpenFor) return;
+    await sendMatchMessage({ matchId: chatOpenFor, message: chatText });
+    setChatText("");
+    await openChat(chatOpenFor);
+  }
 
-        const normalized = arr
-          .map((c, i) => normalizeClub(c, i))
-          .filter((c) => c.lat != null && c.lng != null);
+  /**
+   * ✅ AUTO-OPEN CHAT si vienes desde push:
+   * /partidos?openChat=<match_uuid>
+   */
+  useEffect(() => {
+    if (!openChatParam) return;
 
-        if (!cancelled) {
-          setClubs(normalized);
-          setStatus({
-            loading: false,
-            error:
-              normalized.length === 0
-                ? "No llegaron clubs con lat/lng válidos desde la Sheet."
-                : null,
-          });
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setClubs([]);
-          setStatus({ loading: false, error: e?.message ?? "Error cargando clubs" });
-        }
-      }
+    // si no hay sesión, manda a login conservando la URL (para que al volver se abra)
+    if (!session) {
+      goLoginегоLogin();
+      return;
     }
 
-    load();
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await openChat(openChatParam);
+        if (cancelled) return;
+
+        // ✅ limpia el openChat de la URL (no rompe nada, y evita reabrir en refresh)
+        const sp = new URLSearchParams(window.location.search);
+        sp.delete("openChat");
+        const next = `/partidos${sp.toString() ? `?${sp.toString()}` : ""}`;
+        navigate(next, { replace: true });
+      } catch (e) {
+        console.error("Auto-open chat falló:", e);
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openChatParam, session]);
 
+  /* auto-open create if coming from map */
   useEffect(() => {
-    localStorage.setItem("gp:favorites", JSON.stringify(Array.from(favoriteIds)));
-  }, [favoriteIds]);
+    if (!createParam) return;
+    if (!session) return;
 
-  useEffect(() => {
-    localStorage.setItem("gp:cityFilter", cityFilter);
-  }, [cityFilter]);
+    setOpenCreate(true);
+    setForm((prev) => ({
+      ...prev,
+      clubId: clubIdParam || prev.clubId,
+      clubName: clubNameParam || prev.clubName,
+      date: prev.date || todayISO,
+    }));
+    setClubQuery(clubNameParam || "");
+    setShowClubSuggest(false);
+  }, [createParam, clubIdParam, clubNameParam, session, todayISO]);
 
-  useEffect(() => {
-    localStorage.setItem("gp:nearMeOnly", nearMeOnly ? "1" : "0");
-  }, [nearMeOnly]);
+  /* list */
+  const filteredList = useMemo(() => {
+    let list = items;
 
-  useEffect(() => {
-    localStorage.setItem("gp:favoritesOnly", favoritesOnly ? "1" : "0");
-  }, [favoritesOnly]);
+    if (clubIdParam) list = list.filter((m) => m.club_id === clubIdParam);
+    if (clubNameParam) list = list.filter((m) => m.club_name === clubNameParam);
 
-  useEffect(() => {
-    if (favoritesOnly && favoriteIds.size === 0) {
-      setFavoritesOnly(false);
-      try {
-        localStorage.setItem("gp:favoritesOnly", "0");
-      } catch {}
-    }
-  }, [favoritesOnly, favoriteIds]);
+    if (!isClubFilter) return list;
 
-  async function handleUseMyLocation() {
-    try {
-      setLocStatus({ loading: true, error: null });
-
-      const pos = await getCurrentPosition();
-      const loc = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-      };
-
-      setFocusedClub(null);
-      setSearchLocation(null);
-      setUserLocation(loc);
-
-      setLocStatus({ loading: false, error: null });
-    } catch (e) {
-      setLocStatus({ loading: false, error: e?.message ?? "Error obteniendo ubicación" });
-    }
-  }
-
-  async function handleSearchPlace(text) {
-    const q = String(text ?? "").trim();
-    if (!q) return;
-
-    try {
-      setSearchStatus({ loading: true, error: null });
-
-      const results = await geocodeNominatim(q, { limit: 5 });
-      setSearchResults(results);
-
-      if (results.length === 0) {
-        setSearchLocation(null);
-        setSearchStatus({ loading: false, error: "No he encontrado resultados." });
-        return;
-      }
-
-      if (results.length === 1) {
-        setFocusedClub(null);
-        setUserLocation(null);
-        setSearchLocation(results[0]);
-        setSearchResults([]);
-      }
-
-      setSearchStatus({ loading: false, error: null });
-    } catch (e) {
-      setSearchStatus({ loading: false, error: e?.message ?? "Error buscando ubicación" });
-    }
-  }
-
-  function handlePickSearchResult(result) {
-    setFocusedClub(null);
-    setUserLocation(null);
-    setSearchLocation(result);
-    setSearchResults([]);
-  }
-
-  function handleClearSearch() {
-    setSearchLocation(null);
-    setSearchResults([]);
-    setSearchStatus({ loading: false, error: null });
-  }
-
-  function handleClearSearchResults() {
-    setSearchResults([]);
-    setSearchStatus({ loading: false, error: null });
-  }
-
-  function handleGoHome() {
-    setSearchLocation(null);
-    setUserLocation(null);
-    setFocusedClub(null);
-    setHomeRequestId((n) => n + 1);
-  }
-
-  function toggleFavorite(clubId) {
-    const id = String(clubId);
-    setFavoriteIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    return list.filter((m) => {
+      const d = toDateInputValue(new Date(m.start_at));
+      return d === selectedDay;
     });
+  }, [items, clubIdParam, clubNameParam, selectedDay, isClubFilter]);
+
+  const myList = useMemo(() => {
+    if (!session) return [];
+    return filteredList.filter((m) => {
+      const st = myReqStatus[m.id];
+      return m.created_by_user === session.user.id || st === "approved" || st === "pending";
+    });
+  }, [filteredList, myReqStatus, session]);
+
+  const visibleList = viewMode === "mine" ? myList : filteredList;
+
+  /* Requests modal */
+  async function openRequests(matchId) {
+    if (!session) return goLogin();
+    try {
+      setPendingBusy(true);
+      setRequestsOpenFor(matchId);
+
+      const reqs = await fetchPendingRequests(matchId);
+      setPending(reqs);
+
+      const ids = reqs.map((r) => r.user_id).filter(Boolean);
+      if (ids.length > 0) {
+        const profs = await fetchProfilesByIds(ids);
+        setProfilesById((prev) => ({ ...prev, ...profs }));
+      }
+    } catch (e) {
+      alert(e?.message ?? "No se pudieron cargar solicitudes");
+      setRequestsOpenFor(null);
+      setPending([]);
+    } finally {
+      setPendingBusy(false);
+    }
   }
 
-  const cities = Array.from(
-    new Set(clubs.map((c) => (c.city ?? "").trim()).filter((c) => c.length > 0))
-  ).sort((a, b) => a.localeCompare(b, "es"));
+  async function handleApprove(requestId) {
+    try {
+      await approveRequest({ requestId });
+      await openRequests(requestsOpenFor);
+      await reload();
+    } catch (e) {
+      alert(e?.message ?? "No se pudo aprobar");
+    }
+  }
 
-  const clubsByCity = cityFilter
-    ? clubs.filter((c) => String(c.city ?? "").trim() === cityFilter)
-    : clubs;
+  async function handleReject(requestId) {
+    try {
+      await rejectRequest({ requestId });
+      await openRequests(requestsOpenFor);
+      await reload();
+    } catch (e) {
+      alert(e?.message ?? "No se pudo rechazar");
+    }
+  }
 
-  const clubsByNearMe = (() => {
-    if (!nearMeOnly) return clubsByCity;
-    if (!userLocation) return clubsByCity;
-    const origin = { lat: userLocation.lat, lng: userLocation.lng };
-    return clubsByCity.filter((c) => haversineKm(origin, { lat: c.lat, lng: c.lng }) <= NEAR_ME_KM);
-  })();
+  /* Create form helpers */
+  const clubSuggestions = useMemo(() => {
+    const q = (clubQuery || "").trim().toLowerCase();
+    if (!q) return [];
+    return clubsSheet
+      .filter((c) => String(c?.name || "").toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [clubQuery, clubsSheet]);
 
-  const clubsFilteredFinal =
-    favoritesOnly && favoriteIds.size > 0
-      ? clubsByNearMe.filter((c) => favoriteIds.has(String(c.id)))
-      : clubsByNearMe;
+  function pickClub(c) {
+    const id = String(c?.id ?? "");
+    const name = String(c?.name ?? "");
+    setForm((prev) => ({ ...prev, clubId: id, clubName: name }));
+    setClubQuery(name);
+    setShowClubSuggest(false);
+  }
 
-  const clubsForList = (() => {
-    if (!userLocation) return clubsFilteredFinal;
-    const origin = { lat: userLocation.lat, lng: userLocation.lng };
-    return clubsFilteredFinal
-      .map((c) => ({ ...c, distanceKm: haversineKm(origin, { lat: c.lat, lng: c.lng }) }))
-      .sort((a, b) => a.distanceKm - b.distanceKm);
-  })();
+  async function handleCreate() {
+    if (!session) return goLogin();
+
+    try {
+      setSaveError(null);
+      setSaving(true);
+
+      const startAtISO = combineDateTimeToISO(form.date, form.time);
+
+      if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
+      if (!String(form.clubId || "").trim()) {
+        throw new Error("Selecciona el club de la lista (para evitar errores).");
+      }
+
+      await createMatch({
+        clubId: form.clubId,
+        clubName: form.clubName,
+        startAtISO,
+        durationMin: Number(form.durationMin) || 90,
+        level: form.level,
+        alreadyPlayers: Number(form.alreadyPlayers) || 1,
+        pricePerPlayer: form.pricePerPlayer,
+      });
+
+      setOpenCreate(false);
+      await reload();
+      alert("Partido creado ✅");
+    } catch (e) {
+      setSaveError(e?.message || "No se pudo crear el partido");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="page">
-      <div className="layout">
-        {/* ✅ Sidebar = CONTROLES + LISTA */}
-        <aside className="sidebar">
-          <div style={{ padding: 12, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-            <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>
-              {status.loading
-                ? "Cargando clubs…"
-                : status.error
-                  ? `Error: ${status.error}`
-                  : `Clubs cargados: ${clubs.length}`}
+      {/* Botón push solo si ?push=1 */}
+      {new URLSearchParams(window.location.search).get("push") === "1" ? (
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await ensurePushSubscription();
+              alert("✅ Push activado");
+            } catch (e) {
+              console.error(e);
+              alert("❌ Error push: " + (e?.message || String(e)));
+            }
+          }}
+          style={{
+            position: "fixed",
+            right: 16,
+            bottom: 16,
+            zIndex: 999999,
+            padding: "12px 14px",
+            borderRadius: 999,
+            border: "1px solid rgba(0,0,0,0.15)",
+            background: "#fff",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          🔔 Activar Push
+        </button>
+      ) : null}
+
+      <div className="pageWrap">
+        <div className="container">
+          {/* HEADER */}
+          <div className="pageHeader">
+            <div>
+              <h1 className="pageTitle">Partidos</h1>
+              <div className="pageMeta">
+                {status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}
+              </div>
             </div>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button type="button" onClick={handleUseMyLocation} disabled={locStatus.loading} className="btn">
-                {locStatus.loading ? "Pidiendo ubicación…" : "Usar mi ubicación"}
-              </button>
-
-              <button type="button" onClick={handleGoHome} className="btn">
-                Volver a España
-              </button>
-            </div>
-
-            {locStatus.error ? (
-              <div style={{ marginTop: 8, fontSize: 12, color: "crimson" }}>{locStatus.error}</div>
-            ) : null}
-
-            <div style={{ marginTop: 12 }}>
-              <SearchBox
-                onSearch={handleSearchPlace}
-                onPickResult={handlePickSearchResult}
-                onClearResults={handleClearSearchResults}
-                loading={searchStatus.loading}
-                error={searchStatus.error}
-                results={searchResults}
-              />
-              {searchLocation ? (
-                <button type="button" onClick={handleClearSearch} className="btn ghost" style={{ marginTop: 8 }}>
-                  Limpiar búsqueda
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {showPushButton ? (
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={async () => {
+                    try {
+                      await ensurePushSubscription();
+                      alert("✅ Push activado");
+                    } catch (e) {
+                      console.error(e);
+                      alert("❌ Error push: " + (e?.message || String(e)));
+                    }
+                  }}
+                >
+                  🔔 Activar Push
                 </button>
               ) : null}
-            </div>
 
-            <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <label style={{ fontSize: 12, opacity: 0.8 }}>Ciudad:</label>
+              <button
+                className="btn"
+                onClick={() => {
+                  if (!session) return goLogin();
+                  setOpenCreate(true);
 
-              <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
-                <option value="">Todas</option>
-                {cities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-
-              <span style={{ fontSize: 12, opacity: 0.75 }}>
-                {clubsFilteredFinal.length} de {clubs.length}
-              </span>
-            </div>
-
-            <div style={{ marginTop: 10, display: "grid", gap: 8 }}>
-              <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
-                <input
-                  type="checkbox"
-                  checked={nearMeOnly}
-                  onChange={(e) => setNearMeOnly(e.target.checked)}
-                  disabled={!userLocation}
-                />
-                Solo cerca de mí ({NEAR_ME_KM} km)
-              </label>
-
-              {!userLocation ? (
-                <div style={{ fontSize: 12, opacity: 0.7 }}>Actívalo tras “Usar mi ubicación”</div>
-              ) : null}
-
-              <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12 }}>
-                <input
-                  type="checkbox"
-                  checked={favoritesOnly}
-                  onChange={(e) => setFavoritesOnly(e.target.checked)}
-                  disabled={favoriteIds.size === 0}
-                />
-                Solo favoritos
-              </label>
-
-              {favoriteIds.size === 0 ? (
-                <div style={{ fontSize: 12, opacity: 0.7 }}>Marca alguno ⭐</div>
-              ) : null}
+                  if (clubIdParam || clubNameParam) {
+                    setForm((prev) => ({
+                      ...prev,
+                      clubId: clubIdParam || prev.clubId,
+                      clubName: clubNameParam || prev.clubName,
+                    }));
+                    setClubQuery(clubNameParam || "");
+                    setShowClubSuggest(false);
+                  }
+                }}
+              >
+                Crear partido
+              </button>
             </div>
           </div>
 
-          <ClubList
-            clubs={clubsForList}
-            userLocation={userLocation}
-            favorites={favoriteIds}
-            onToggleFavorite={toggleFavorite}
-            onSelect={(club) => setFocusedClub(club)}
-          />
-        </aside>
+          {/* TABS */}
+          <div className="gpRow">
+            <button
+              className={`btn ${viewMode === "explore" ? "" : "ghost"}`}
+              onClick={() => setViewMode("explore")}
+            >
+              Explorar
+            </button>
+            <button
+              className={`btn ${viewMode === "mine" ? "" : "ghost"}`}
+              disabled={!session}
+              onClick={() => setViewMode("mine")}
+            >
+              Mis partidos
+            </button>
+          </div>
 
-        {/* ✅ Map */}
-        <main className="mapArea">
-          <MapView
-            clubs={clubsFilteredFinal}
-            focusedClub={focusedClub}
-            userLocation={userLocation}
-            searchLocation={searchLocation}
-            homeRequestId={homeRequestId}
-          />
-        </main>
+          {/* LIST */}
+          <ul style={{ listStyle: "none", padding: 0, marginTop: 14 }}>
+            {visibleList.map((m) => {
+              const approved = approvedCounts[m.id] || 0;
+              const occupied = Math.min(4, approved + (m.reserved_spots || 1));
+              const left = 4 - occupied;
+
+              const myStatus = myReqStatus[m.id]; // approved|pending|rejected|undefined
+              const isCreator = session?.user?.id === m.created_by_user;
+
+              return (
+                <li key={m.id} style={{ marginBottom: 12 }}>
+                  <div className="card">
+                    <div className="gpCardTop">
+                      <div>
+                        <strong style={{ fontSize: 16 }}>{m.club_name}</strong>
+                        <div className="meta">
+                          {new Date(m.start_at).toLocaleString("es-ES")} · {m.duration_min} min · Nivel {m.level}
+                        </div>
+                        <div className="meta">
+                          Ocupadas {occupied}/4 · Huecos {left}
+                        </div>
+
+                        {myStatus === "approved" ? <div className="gpBadge ok">✅ Estás dentro</div> : null}
+                        {myStatus === "pending" ? <div className="gpBadge warn">⏳ Solicitud pendiente</div> : null}
+                        {myStatus === "rejected" ? <div className="gpBadge bad">❌ Rechazado</div> : null}
+                      </div>
+                    </div>
+
+                    <div className="gpActions">
+                      {!session ? (
+                        <button className="btn" onClick={goLogin}>
+                          Entrar
+                        </button>
+                      ) : null}
+
+                      {session && !isCreator && !myStatus && left > 0 ? (
+                        <button
+                          className="btn"
+                          onClick={async () => {
+                            try {
+                              await requestJoin(m.id);
+                              await reload();
+                              alert("Solicitud enviada ✅");
+                            } catch (e) {
+                              alert(e?.message || "No se pudo enviar la solicitud");
+                            }
+                          }}
+                        >
+                          Unirme
+                        </button>
+                      ) : null}
+
+                      {session && myStatus === "pending" ? (
+                        <button
+                          className="btn ghost"
+                          onClick={async () => {
+                            try {
+                              await cancelMyJoin(m.id);
+                              await reload();
+                              alert("Solicitud cancelada ✅");
+                            } catch (e) {
+                              alert(e?.message || "No se pudo cancelar");
+                            }
+                          }}
+                        >
+                          Cancelar solicitud
+                        </button>
+                      ) : null}
+
+                      {session && myStatus === "rejected" ? (
+                        <button
+                          className="btn"
+                          onClick={async () => {
+                            try {
+                              await cancelMyJoin(m.id);
+                              await requestJoin(m.id);
+                              await reload();
+                              alert("Solicitud enviada ✅");
+                            } catch (e) {
+                              alert(e?.message || "No se pudo enviar");
+                            }
+                          }}
+                        >
+                          Solicitar de nuevo
+                        </button>
+                      ) : null}
+
+                      {isCreator ? (
+                        <button type="button" className="btn ghost" onClick={() => openRequests(m.id)}>
+                          Solicitudes
+                        </button>
+                      ) : null}
+
+                      {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
+                        <button className="btn ghost" onClick={() => openChat(m.id)}>
+                          Chat
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {status.error ? <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div> : null}
+        </div>
       </div>
+
+      {/* CREATE MODAL */}
+      {openCreate ? (
+        <div className="gpModalOverlay" onClick={() => setOpenCreate(false)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <h2 style={{ margin: 0, fontSize: 18 }}>Crear partido</h2>
+              <button className="btn ghost" onClick={() => setOpenCreate(false)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="gpForm">
+              <label className="gpLabel">Club</label>
+              <input
+                className="gpInput"
+                value={clubQuery}
+                placeholder="Escribe el nombre…"
+                onChange={(e) => {
+                  setClubQuery(e.target.value);
+                  setShowClubSuggest(true);
+                  setForm((prev) => ({ ...prev, clubName: e.target.value, clubId: "" }));
+                }}
+                onFocus={() => setShowClubSuggest(true)}
+              />
+
+              {showClubSuggest && clubSuggestions.length > 0 ? (
+                <div className="gpSuggest">
+                  {clubSuggestions.map((c) => (
+                    <button
+                      key={String(c.id)}
+                      className="gpSuggestItem"
+                      onClick={() => pickClub(c)}
+                      type="button"
+                    >
+                      <strong>{c.name}</strong>
+                      {c.city ? <span style={{ opacity: 0.7 }}> · {c.city}</span> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="gpGrid2">
+                <div>
+                  <label className="gpLabel">Fecha</label>
+                  <input
+                    className="gpInput"
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="gpLabel">Hora</label>
+                  <input
+                    className="gpInput"
+                    type="time"
+                    value={form.time}
+                    onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="gpGrid2">
+                <div>
+                  <label className="gpLabel">Duración (min)</label>
+                  <input
+                    className="gpInput"
+                    type="number"
+                    value={form.durationMin}
+                    onChange={(e) => setForm((p) => ({ ...p, durationMin: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="gpLabel">Nivel</label>
+                  <select
+                    className="gpInput"
+                    value={form.level}
+                    onChange={(e) => setForm((p) => ({ ...p, level: e.target.value }))}
+                  >
+                    <option value="bajo">Bajo</option>
+                    <option value="medio">Medio</option>
+                    <option value="alto">Alto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="gpGrid2">
+                <div>
+                  <label className="gpLabel">Ya somos</label>
+                  <select
+                    className="gpInput"
+                    value={form.alreadyPlayers}
+                    onChange={(e) => setForm((p) => ({ ...p, alreadyPlayers: e.target.value }))}
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                    <option value={3}>3</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="gpLabel">Precio / jugador (opcional)</label>
+                  <input
+                    className="gpInput"
+                    value={form.pricePerPlayer}
+                    onChange={(e) => setForm((p) => ({ ...p, pricePerPlayer: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {saveError ? <div style={{ color: "crimson", marginTop: 8 }}>{saveError}</div> : null}
+
+              <div className="gpRow" style={{ marginTop: 14 }}>
+                <button className="btn" disabled={saving} onClick={handleCreate}>
+                  {saving ? "Guardando…" : "Crear"}
+                </button>
+                <button className="btn ghost" onClick={() => setOpenCreate(false)}>
+                  Cancelar
+                </button>
+              </div>
+
+              <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+                *Para evitar equivocaciones, el club debe seleccionarse desde la lista.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* REQUESTS MODAL */}
+      {requestsOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setRequestsOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <h2 style={{ margin: 0, fontSize: 18 }}>Solicitudes pendientes</h2>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            {pendingBusy ? (
+              <div style={{ marginTop: 12, fontSize: 13 }}>Cargando…</div>
+            ) : pending.length === 0 ? (
+              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
+                No hay solicitudes pendientes.
+              </div>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
+                {pending.map((r) => (
+                  <li key={r.id} style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}>
+                    <div style={{ fontSize: 13 }}>
+                      Solicitud de: <strong>{profilesById[r.user_id]?.name || r.user_id}</strong>
+                    </div>
+
+                    <div className="gpActions" style={{ marginTop: 10 }}>
+                      <button className="btn" onClick={() => handleApprove(r.id)}>
+                        Aprobar
+                      </button>
+                      <button className="btn ghost" onClick={() => handleReject(r.id)}>
+                        Rechazar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* CHAT MODAL */}
+      {chatOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <h2 style={{ margin: 0, fontSize: 18 }}>Chat del partido</h2>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="gpChatBox">
+              {chatItems.map((m) => (
+                <div key={m.id} className="gpChatMsg">
+                  {m.message}
+                </div>
+              ))}
+            </div>
+
+            <textarea
+              className="gpTextarea"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Escribe…"
+            />
+
+            <div className="gpRow" style={{ marginTop: 10 }}>
+              <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

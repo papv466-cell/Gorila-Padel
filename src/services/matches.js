@@ -49,45 +49,6 @@ export async function fetchLatestChatTimes(matchIds = []) {
 // ------------------------------
 // CREAR PARTIDO
 // ------------------------------
-export async function createMatch({
-  clubId,
-  clubName,
-  startAtISO,
-  durationMin = 90,
-  level = "medio",
-  alreadyPlayers = 1,
-  pricePerPlayer = null,
-} = {}) {
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
-
-  const payload = {
-    club_id: String(clubId ?? "").trim(),
-    club_name: String(clubName ?? "").trim(),
-    start_at: startAtISO,
-    duration_min: Number(durationMin) || 90,
-    level,
-    created_by_user: session.user.id,
-    reserved_spots: Math.min(3, Math.max(1, Number(alreadyPlayers) || 1)),
-    spots_total: 4,
-  };
-
-  // si tienes la columna price_per_player, lo metemos
-  if (pricePerPlayer != null && String(pricePerPlayer).trim() !== "") {
-    payload.price_per_player = Number(pricePerPlayer);
-  }
-
-  const { data, error } = await supabase.from("matches").insert(payload).select("*").single();
-  if (error) throw error;
-  return data;
-}
-
-// ------------------------------
-// SOLICITAR UNIRSE
-// ------------------------------
 export async function requestJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -98,10 +59,31 @@ export async function requestJoin(matchId) {
   if (!session?.user) throw new Error("No hay sesión activa.");
 
   const payload = { match_id: matchId, user_id: session.user.id, status: "pending" };
-  const { error } = await supabase.from("match_join_requests").insert(payload);
+
+  // 1) guardamos solicitud y traemos id
+  const { data, error } = await supabase
+    .from("match_join_requests")
+    .insert(payload)
+    .select("id, match_id")
+    .single();
+
   if (error) throw error;
+
+  // 2) push al creador (si falla NO rompe)
+  try {
+    const r = await fetch("/api/push-join", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId, requestId: data.id }),
+    });
+    if (!r.ok) console.warn("push-join status", r.status, await r.text());
+  } catch (e) {
+    console.warn("Push join falló pero la solicitud se guardó:", e?.message || e);
+  }
+
   return true;
 }
+
 
 export async function cancelMyJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
