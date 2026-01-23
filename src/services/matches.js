@@ -307,15 +307,19 @@ export async function sendMatchMessage({ matchId, message } = {}) {
   if (insErr) throw insErr;
 
   // 2) disparamos push (si falla, NO rompe el chat)
-  try {
-    await fetch("/api/push-chat", {
+   // 2) disparamos push (si falla, NO rompe el chat)
+   try {
+    const r = await fetch("/api/push-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        matchId,
-        messageId: inserted.id,
+        messageId: inserted.id, // 👈 SOLO messageId
       }),
     });
+
+    if (!r.ok) {
+      console.warn("Push status:", r.status, await r.text());
+    }
   } catch (e) {
     console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }
