@@ -40,7 +40,11 @@ export default function MatchesPage() {
   const [searchParams] = useSearchParams();
   const openChatFromUrl = new URLSearchParams(location.search).get("openChat") || "";
   const openChatStored = sessionStorage.getItem("openChat") || "";
-  const openChatParam = openChatFromUrl || openChatStored;
+  // ✅ openChat: lee URL o sessionStorage (y NO rompe render)
+const openChatParam =
+new URLSearchParams(location.search).get("openChat") ||
+sessionStorage.getItem("openChat") ||
+"";
   
   const todayISO = toDateInputValue(new Date());
 
@@ -315,12 +319,10 @@ const chatChannelRef = useRef(null);
   
 
   // 🔐 Persistimos openChat si viene por push (evita perderlo por redirects)
-useEffect(() => {
-  const p = new URLSearchParams(window.location.search).get("openChat");
-  if (p) {
-    sessionStorage.setItem("openChat", p);
-  }
-}, []);
+  useEffect(() => {
+    const p = new URLSearchParams(location.search).get("openChat");
+    if (p) sessionStorage.setItem("openChat", p);
+  }, [location.search]);
 
   /* ✅ AUTO-OPEN CHAT DESDE NOTIFICACIÓN (UNA SOLA VEZ, SIN DUPLICADOS) */
   useEffect(() => {
@@ -334,19 +336,14 @@ useEffect(() => {
   
     const t = setTimeout(async () => {
       try {
-        await openChat(openChatParam);
-  
-        // ✅ opcional: limpiar URL para que no se reabra en refresh
-        // navigate("/partidos", { replace: true });
-  
-        // ✅ importante: una vez abierto, limpia storage para que no vuelva a abrir “fantasma”
-        sessionStorage.removeItem("openChat");
+        await openChat(openChatParam);   // ✅ abre el chat correcto
+        sessionStorage.removeItem("openChat"); // ✅ limpia el deep-link
       } catch (e) {
-        console.error("Auto-open chat falló:", e);
+        console.error("Auto-open chat falló:", e); // ✅ debug seguro
       }
-    }, 150);
+    }, 150); // ✅ delay correcto (ni corto ni largo)
   
-    return () => clearTimeout(t);
+    return () => clearTimeout(t); // ✅ limpia timeout
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authReady, session]);
   
