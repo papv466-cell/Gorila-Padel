@@ -1,5 +1,5 @@
 // src/pages/MatchesPage.jsx
-import { useEffect, useMemo, useState, useRef  } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import {
@@ -18,7 +18,7 @@ import {
 } from "../services/matches";
 import { fetchProfilesByIds } from "../services/profilesPublic";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
-import { ensurePushSubscription, isPushEnabledInBrowser } from "../services/push";
+import { ensurePushSubscription } from "../services/push";
 
 /* Utils */
 function toDateInputValue(d = new Date()) {
@@ -38,14 +38,7 @@ export default function MatchesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const openChatFromUrl = new URLSearchParams(location.search).get("openChat") || "";
-  const openChatStored = sessionStorage.getItem("openChat") || "";
-  // ✅ openChat: lee URL o sessionStorage (y NO rompe render)
-const openChatParam =
-new URLSearchParams(location.search).get("openChat") ||
-sessionStorage.getItem("openChat") ||
-"";
-  
+
   const todayISO = toDateInputValue(new Date());
 
   const clubIdParam = searchParams.get("clubId") || "";
@@ -53,34 +46,20 @@ sessionStorage.getItem("openChat") ||
   const createParam = searchParams.get("create") === "1";
   const isClubFilter = !!clubIdParam || !!clubNameParam;
 
-  const forcePushUI = new URLSearchParams(location.search).get("push") === "1"; // debug
-  const showPushButton = forcePushUI || (!pushEnabled && !pushChecking);
+  // ✅ params estables desde location.search
+  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+  // ✅ openChat (URL) y fallback (sessionStorage)
+  const openChatFromUrl = qs.get("openChat") || "";
+  const openChatFromStorage = (typeof window !== "undefined" && sessionStorage.getItem("openChat")) || "";
+  const openChatParam = openChatFromUrl || openChatFromStorage || "";
+
+  const showPushButton = import.meta.env.DEV || qs.get("push") === "1";
+  const debug = qs.get("debug") === "1";
 
   /* Session */
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  // ✅ Estado UI push
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushChecking, setPushChecking] = useState(true);
-
-  // ✅ Detecta si el navegador ya tiene push activo
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        setPushChecking(true);
-        const ok = await isPushEnabledInBrowser();
-        if (alive) setPushEnabled(ok);
-      } finally {
-        if (alive) setPushChecking(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   /* Data */
   const [items, setItems] = useState([]);
@@ -105,14 +84,6 @@ sessionStorage.getItem("openChat") ||
   const [chatItems, setChatItems] = useState([]);
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [chatSending, setChatSending] = useState(false);
-
-// Evita que una respuesta antigua “pise” una nueva
-const chatReqIdRef = useRef(0);
-
-// Canal realtime
-const chatChannelRef = useRef(null);
-
 
   /* Create modal */
   const [openCreate, setOpenCreate] = useState(false);
@@ -139,12 +110,6 @@ const chatChannelRef = useRef(null);
     navigate("/login", { state: { from: location.pathname + location.search } });
   }
 
-  useEffect(() => {
-    if (openChatFromUrl) {
-      sessionStorage.setItem("openChat", openChatFromUrl);
-    }
-  }, [openChatFromUrl]);  
-
   /* session */
   useEffect(() => {
     let alive = true;
@@ -163,9 +128,17 @@ const chatChannelRef = useRef(null);
 
     return () => {
       alive = false;
-      sub.subscription.unsubscribe();
+      sub?.subscription?.unsubscribe?.();
     };
   }, []);
+
+  /* ✅ Persistimos openChat si viene en URL (para no perderlo por redirects/splash) */
+  useEffect(() => {
+    if (!openChatFromUrl) return;
+    try {
+      sessionStorage.setItem("openChat", openChatFromUrl);
+    } catch {}
+  }, [openChatFromUrl]);
 
   /* load clubs sheet once (for suggestions) */
   useEffect(() => {
@@ -207,146 +180,48 @@ const chatChannelRef = useRef(null);
   /* Chat */
   async function openChat(matchId) {
     if (!session) return goLogin();
-    if (!matchId) return;
-  
-    setChatOpenFor(matchId);
     setChatLoading(true);
-  
-    // Incrementa id de request
-    const reqId = ++chatReqIdRef.current;
-  
+    setChatOpenFor(matchId);
     try {
-      const msgs = await fetchMatchMessages(matchId, { limit: 200 });
-      // Si entre medias abriste otro chat, ignoramos este resultado
-      if (reqId !== chatReqIdRef.current) return;
-  
+      const msgs = await fetchMatchMessages(matchId, { limit: 120 });
       const list = Array.isArray(msgs) ? msgs : Array.isArray(msgs?.data) ? msgs.data : [];
       setChatItems(list);
-    } catch (e) {
-      console.error("openChat error:", e);
-      // No vaciamos chatItems por error, para no “borrar” UI
     } finally {
-      if (reqId === chatReqIdRef.current) setChatLoading(false);
+      setChatLoading(false);
     }
-  }  
-
-  useEffect(() => {
-    // Limpia canal anterior
-    if (chatChannelRef.current) {
-      supabase.removeChannel(chatChannelRef.current);
-      chatChannelRef.current = null;
-    }
-  
-    if (!chatOpenFor || !session) return;
-  
-    const channel = supabase
-      .channel(`chat:${chatOpenFor}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "match_messages",
-          filter: `match_id=eq.${chatOpenFor}`,
-        },
-        (payload) => {
-          const row = payload?.new;
-          if (!row?.id) return;
-  
-          setChatItems((prev) => {
-            // evita duplicados si ya lo añadimos en optimistic
-            if (prev.some((m) => m.id === row.id)) return prev;
-            return [...prev, row];
-          });
-        }
-      )
-      .subscribe();
-  
-    chatChannelRef.current = channel;
-  
-    return () => {
-      if (chatChannelRef.current) {
-        supabase.removeChannel(chatChannelRef.current);
-        chatChannelRef.current = null;
-      }
-    };
-  }, [chatOpenFor, session]);
-  
+  }
 
   async function handleSendChat() {
     if (!chatOpenFor) return;
-    const text = String(chatText || "").trim();
-    if (!text) return;
-    if (!session) return goLogin();
-    if (chatSending) return;
-  
-    setChatSending(true);
+    await sendMatchMessage({ matchId: chatOpenFor, message: chatText });
     setChatText("");
-  
-    // optimistic: pintamos YA el mensaje
-    const tempId = `tmp_${Date.now()}`;
-    const optimistic = {
-      id: tempId,
-      match_id: chatOpenFor,
-      user_id: session.user.id,
-      message: text,
-      created_at: new Date().toISOString(),
-      __optimistic: true,
-    };
-  
-    setChatItems((prev) => [...prev, optimistic]);
-  
-    try {
-      const inserted = await sendMatchMessage({ matchId: chatOpenFor, message: text });
-  
-      // Reemplaza el temporal por el real si llega
-      if (inserted?.id) {
-        setChatItems((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, ...inserted, __optimistic: false } : m))
-        );
-      }
-    } catch (e) {
-      console.error("send chat error:", e);
-      // Si falla, marcamos el temporal como error
-      setChatItems((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, __error: true } : m))
-      );
-      alert(e?.message || "No se pudo enviar el mensaje");
-    } finally {
-      setChatSending(false);
-    }
+    await openChat(chatOpenFor);
   }
-  
 
-  // 🔐 Persistimos openChat si viene por push (evita perderlo por redirects)
-  useEffect(() => {
-    const p = new URLSearchParams(location.search).get("openChat");
-    if (p) sessionStorage.setItem("openChat", p);
-  }, [location.search]);
-
-  /* ✅ AUTO-OPEN CHAT DESDE NOTIFICACIÓN (UNA SOLA VEZ, SIN DUPLICADOS) */
+  /* ✅ AUTO-OPEN CHAT desde notificación (una sola vez) */
   useEffect(() => {
     if (!openChatParam) return;
     if (!authReady) return;
-  
+
     if (!session) {
-      goLogin(); // al volver, seguirá openChat en sessionStorage
+      goLogin(); // mantiene from con openChat
       return;
     }
-  
+
     const t = setTimeout(async () => {
       try {
-        await openChat(openChatParam);   // ✅ abre el chat correcto
-        sessionStorage.removeItem("openChat"); // ✅ limpia el deep-link
+        await openChat(openChatParam);
+        try {
+          sessionStorage.removeItem("openChat");
+        } catch {}
       } catch (e) {
-        console.error("Auto-open chat falló:", e); // ✅ debug seguro
+        console.error("Auto-open chat falló:", e);
       }
-    }, 150); // ✅ delay correcto (ni corto ni largo)
-  
-    return () => clearTimeout(t); // ✅ limpia timeout
+    }, 150);
+
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authReady, session]);
-  
 
   /* auto-open create if coming from map */
   useEffect(() => {
@@ -513,13 +388,12 @@ const chatChannelRef = useRef(null);
       ) : null}
 
       {/* ✅ BOTÓN PUSH (solo si URL tiene ?push=1) */}
-      {new URLSearchParams(location.search).get("push") === "1" ? (
+      {qs.get("push") === "1" ? (
         <button
           type="button"
           onClick={async () => {
             try {
               await ensurePushSubscription();
-              setPushEnabled(true)
               alert("✅ Push activado");
             } catch (e) {
               console.error(e);
@@ -595,9 +469,6 @@ const chatChannelRef = useRef(null);
               </button>
             </div>
           </div>
-          <div style={{ fontSize: 12, opacity: 0.75, alignSelf: "center" }}>
-          {pushChecking ? "🔄 Revisando Push…" : pushEnabled ? "🔔 Push activo ✅" : "🔕 Push no activo"}
-        </div>
 
           {/* TABS */}
           <div className="gpRow">
@@ -623,7 +494,7 @@ const chatChannelRef = useRef(null);
               const occupied = Math.min(4, approved + (m.reserved_spots || 1));
               const left = 4 - occupied;
 
-              const myStatus = myReqStatus[m.id]; // approved|pending|rejected|undefined
+              const myStatus = myReqStatus[m.id];
               const isCreator = session?.user?.id === m.created_by_user;
 
               return (
@@ -722,9 +593,52 @@ const chatChannelRef = useRef(null);
             })}
           </ul>
 
-          {status.error ? <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div> : null}
+          {status.error ? (
+            <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div>
+          ) : null}
         </div>
       </div>
+
+      {/* REQUESTS MODAL */}
+      {requestsOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setRequestsOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <h2 style={{ margin: 0, fontSize: 18 }}>Solicitudes pendientes</h2>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            {pendingBusy ? (
+              <div style={{ marginTop: 12, fontSize: 13 }}>Cargando…</div>
+            ) : pending.length === 0 ? (
+              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
+                No hay solicitudes pendientes.
+              </div>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
+                {pending.map((r) => (
+                  <li key={r.id} style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}>
+                    <div style={{ fontSize: 13 }}>
+                      Solicitud de: <strong>{profilesById[r.user_id]?.name || r.user_id}</strong>
+                    </div>
+
+                    <div className="gpActions" style={{ marginTop: 10 }}>
+                      <button className="btn" onClick={() => handleApprove(r.id)}>
+                        Aprobar
+                      </button>
+                      <button className="btn ghost" onClick={() => handleReject(r.id)}>
+                        Rechazar
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* CREATE MODAL */}
       {openCreate ? (
@@ -854,122 +768,66 @@ const chatChannelRef = useRef(null);
         </div>
       ) : null}
 
-      {/* REQUESTS MODAL */}
-      {requestsOpenFor ? (
-        <div className="gpModalOverlay" onClick={() => setRequestsOpenFor(null)}>
+      {/* CHAT MODAL */}
+      {chatOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
           <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
-              <h2 style={{ margin: 0, fontSize: 18 }}>Solicitudes pendientes</h2>
-              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Chat del partido</h2>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
                 Cerrar
               </button>
             </div>
 
-            {pendingBusy ? (
-              <div style={{ marginTop: 12, fontSize: 13 }}>Cargando…</div>
-            ) : pending.length === 0 ? (
-              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
-                No hay solicitudes pendientes.
-              </div>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
-                {pending.map((r) => (
-                  <li key={r.id} style={{ padding: 10, border: "1px solid #ddd", borderRadius: 10 }}>
-                    <div style={{ fontSize: 13 }}>
-                      Solicitud de: <strong>{profilesById[r.user_id]?.name || r.user_id}</strong>
-                    </div>
+            {chatLoading ? <div style={{ fontSize: 12, opacity: 0.6 }}>Cargando chat…</div> : null}
 
-                    <div className="gpActions" style={{ marginTop: 10 }}>
-                      <button className="btn" onClick={() => handleApprove(r.id)}>
-                        Aprobar
-                      </button>
-                      <button className="btn ghost" onClick={() => handleReject(r.id)}>
-                        Rechazar
-                      </button>
+            <div className="gpChatBox">
+              {chatItems.length === 0 ? (
+                <div style={{ opacity: 0.6, fontSize: 13 }}>Aún no hay mensajes.</div>
+              ) : (
+                chatItems.map((m) => {
+                  const mine = session?.user?.id && m.user_id === session.user.id;
+                  return (
+                    <div
+                      key={m.id}
+                      className="gpChatMsg"
+                      style={{
+                        alignSelf: mine ? "flex-end" : "flex-start",
+                        maxWidth: "85%",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{m.message}</div>
+                      <div
+                        style={{
+                          marginTop: 6,
+                          fontSize: 11,
+                          opacity: 0.6,
+                          textAlign: mine ? "right" : "left",
+                        }}
+                      >
+                        {m.created_at ? new Date(m.created_at).toLocaleString("es-ES") : ""}
+                      </div>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  );
+                })
+              )}
+            </div>
+
+            <textarea
+              className="gpTextarea"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Escribe…"
+            />
+
+            <div className="gpRow" style={{ marginTop: 10 }}>
+              <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>
+                Enviar
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
-
-      {/* CHAT MODAL */}
-{chatOpenFor ? (
-  <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
-    <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
-      <div className="gpModalHeader">
-        <h2 style={{ margin: 0, fontSize: 18 }}>Chat del partido</h2>
-        <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
-          Cerrar
-        </button>
-      </div>
-
-      {chatLoading ? (
-        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 6 }}>
-          Cargando chat…
-        </div>
-      ) : null}
-
-      <div className="gpChatBox">
-        {chatItems.length === 0 ? (
-          <div style={{ opacity: 0.6, fontSize: 13 }}>Aún no hay mensajes.</div>
-        ) : (
-          chatItems.map((m) => {
-            const mine = session?.user?.id && m.user_id === session.user.id;
-
-            return (
-              <div
-                key={m.id}
-                className="gpChatMsg"
-                style={{
-                  alignSelf: mine ? "flex-end" : "flex-start",
-                  maxWidth: "85%",
-                  opacity: m.__optimistic ? 0.7 : 1,
-                  border: m.__error ? "1px solid crimson" : undefined,
-                }}
-              >
-                <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>
-                  {m.message}
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontSize: 11,
-                    opacity: 0.6,
-                    textAlign: mine ? "right" : "left",
-                  }}
-                >
-                  {m.created_at ? new Date(m.created_at).toLocaleString("es-ES") : ""}
-                  {m.__error ? " · Error" : ""}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <textarea
-        className="gpTextarea"
-        value={chatText}
-        onChange={(e) => setChatText(e.target.value)}
-        placeholder="Escribe…"
-      />
-
-      <div className="gpRow" style={{ marginTop: 10 }}>
-        <button
-          className="btn"
-          onClick={handleSendChat}
-          disabled={!chatText.trim() || chatSending}
-        >
-          {chatSending ? "Enviando…" : "Enviar"}
-        </button>
-      </div>
-    </div>
-  </div>
-) : null}
     </div>
   );
 }
