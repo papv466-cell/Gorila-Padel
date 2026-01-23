@@ -49,9 +49,13 @@ export default function MatchesPage() {
   // ✅ params estables desde location.search
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
+  // ✅ deep links
+  const openRequestsParam = qs.get("openRequests") || "";
+
   // ✅ openChat (URL) y fallback (sessionStorage)
   const openChatFromUrl = qs.get("openChat") || "";
-  const openChatFromStorage = (typeof window !== "undefined" && sessionStorage.getItem("openChat")) || "";
+  const openChatFromStorage =
+    (typeof window !== "undefined" && sessionStorage.getItem("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
   const showPushButton = import.meta.env.DEV || qs.get("push") === "1";
@@ -177,6 +181,30 @@ export default function MatchesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, session]);
 
+  /* Requests modal */
+  async function openRequests(matchId) {
+    if (!session) return goLogin();
+    try {
+      setPendingBusy(true);
+      setRequestsOpenFor(matchId);
+
+      const reqs = await fetchPendingRequests(matchId);
+      setPending(reqs);
+
+      const ids = reqs.map((r) => r.user_id).filter(Boolean);
+      if (ids.length > 0) {
+        const profs = await fetchProfilesByIds(ids);
+        setProfilesById((prev) => ({ ...prev, ...profs }));
+      }
+    } catch (e) {
+      alert(e?.message ?? "No se pudieron cargar solicitudes");
+      setRequestsOpenFor(null);
+      setPending([]);
+    } finally {
+      setPendingBusy(false);
+    }
+  }
+
   /* Chat */
   async function openChat(matchId) {
     if (!session) return goLogin();
@@ -204,7 +232,7 @@ export default function MatchesPage() {
     if (!authReady) return;
 
     if (!session) {
-      goLogin(); // mantiene from con openChat
+      goLogin();
       return;
     }
 
@@ -222,6 +250,24 @@ export default function MatchesPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authReady, session]);
+
+  /* ✅ AUTO-OPEN REQUESTS desde notificación (una sola vez) */
+  useEffect(() => {
+    if (!openRequestsParam) return;
+    if (!authReady) return;
+
+    if (!session) {
+      goLogin();
+      return;
+    }
+
+    const t = setTimeout(() => {
+      openRequests(openRequestsParam);
+    }, 150);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequestsParam, authReady, session]);
 
   /* auto-open create if coming from map */
   useEffect(() => {
@@ -268,30 +314,6 @@ export default function MatchesPage() {
   }, [filteredList, myReqStatus, session]);
 
   const visibleList = viewMode === "mine" ? myList : filteredList;
-
-  /* Requests modal */
-  async function openRequests(matchId) {
-    if (!session) return goLogin();
-    try {
-      setPendingBusy(true);
-      setRequestsOpenFor(matchId);
-
-      const reqs = await fetchPendingRequests(matchId);
-      setPending(reqs);
-
-      const ids = reqs.map((r) => r.user_id).filter(Boolean);
-      if (ids.length > 0) {
-        const profs = await fetchProfilesByIds(ids);
-        setProfilesById((prev) => ({ ...prev, ...profs }));
-      }
-    } catch (e) {
-      alert(e?.message ?? "No se pudieron cargar solicitudes");
-      setRequestsOpenFor(null);
-      setPending([]);
-    } finally {
-      setPendingBusy(false);
-    }
-  }
 
   async function handleApprove(requestId) {
     try {
@@ -382,39 +404,40 @@ export default function MatchesPage() {
           }}
         >
           openChatParam: {openChatParam || "(vacío)"} <br />
+          openRequestsParam: {openRequestsParam || "(vacío)"} <br />
           authReady: {String(authReady)} <br />
           session: {session ? "SI" : "NO"}
         </div>
       ) : null}
 
       {/* ✅ BOTÓN PUSH (siempre visible) */}
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await ensurePushSubscription();
-                alert("✅ Push activado");
-              } catch (e) {
-                console.error(e);
-                alert("❌ Error push: " + (e?.message || String(e)));
-              }
-            }}
-            style={{
-              position: "fixed",
-              right: 16,
-              bottom: 16,
-              zIndex: 999999,
-              padding: "12px 14px",
-              borderRadius: 999,
-              border: "1px solid rgba(0,0,0,0.15)",
-              background: "#fff",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
-          >
-            🔔 Activar Push
-          </button>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await ensurePushSubscription();
+            alert("✅ Push activado");
+          } catch (e) {
+            console.error(e);
+            alert("❌ Error push: " + (e?.message || String(e)));
+          }
+        }}
+        style={{
+          position: "fixed",
+          right: 16,
+          bottom: 16,
+          zIndex: 999999,
+          padding: "12px 14px",
+          borderRadius: 999,
+          border: "1px solid rgba(0,0,0,0.15)",
+          background: "#fff",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+          cursor: "pointer",
+          fontWeight: 700,
+        }}
+      >
+        🔔 Activar Push
+      </button>
 
       <div className="pageWrap">
         <div className="container">
@@ -591,9 +614,7 @@ export default function MatchesPage() {
             })}
           </ul>
 
-          {status.error ? (
-            <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div>
-          ) : null}
+          {status.error ? <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div> : null}
         </div>
       </div>
 
@@ -611,9 +632,7 @@ export default function MatchesPage() {
             {pendingBusy ? (
               <div style={{ marginTop: 12, fontSize: 13 }}>Cargando…</div>
             ) : pending.length === 0 ? (
-              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>
-                No hay solicitudes pendientes.
-              </div>
+              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>No hay solicitudes pendientes.</div>
             ) : (
               <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
                 {pending.map((r) => (
@@ -666,12 +685,7 @@ export default function MatchesPage() {
               {showClubSuggest && clubSuggestions.length > 0 ? (
                 <div className="gpSuggest">
                   {clubSuggestions.map((c) => (
-                    <button
-                      key={String(c.id)}
-                      className="gpSuggestItem"
-                      onClick={() => pickClub(c)}
-                      type="button"
-                    >
+                    <button key={String(c.id)} className="gpSuggestItem" onClick={() => pickClub(c)} type="button">
                       <strong>{c.name}</strong>
                       {c.city ? <span style={{ opacity: 0.7 }}> · {c.city}</span> : null}
                     </button>
