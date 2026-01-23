@@ -290,39 +290,36 @@ export async function sendMatchMessage({ matchId, message } = {}) {
   const session = sessData?.session;
   if (!session?.user) throw new Error("No hay sesión activa.");
 
-  const { data, error } = await supabase
+  
+    // 1) guardamos el mensaje
+    const { data: inserted, error: insErr } = await supabase
     .from("match_messages")
-    .insert({
-      match_id: matchId,
-      user_id: session.user.id,
-      message: text,
-    })
-    .select("*")
+    .insert([
+      {
+        match_id: matchId,
+        user_id: session.user.id,
+        message: text,
+      },
+    ])
+    .select("id, match_id")
     .single();
 
-  if (error) throw error;
+  if (insErr) throw insErr;
 
-  async function postPushChat(payload) {
-    const res = await fetch("/api/push-chat", {
+  // 2) disparamos push (si falla, NO rompe el chat)
+  try {
+    await fetch("/api/push-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messageId: data.id }), // ✅ solo messageId
+      body: JSON.stringify({
+        matchId,
+        messageId: inserted.id,
+      }),
     });
-
-    const t = await res.text();
-    if (!res.ok) throw new Error(t || `push failed ${res.status}`);
-    try {
-      return JSON.parse(t);
-    } catch {
-      return t;
-    }
-  }
-
-  try {
-    await postPushChat({ type: "chat", matchId, messageId: data.id });
   } catch (e) {
     console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }
 
-  return data;
+  return inserted;
 }
+
