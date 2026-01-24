@@ -8,11 +8,17 @@ function nowISO() {
 // ------------------------------
 // LISTAR PARTIDOS (solo futuros)
 // ------------------------------
+function startOfTodayISO() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
 export async function fetchMatches({ limit = 500 } = {}) {
   const { data, error } = await supabase
     .from("matches")
     .select("*")
-    .gte("start_at", nowISO())
+    .gte("start_at", startOfTodayISO()) // 👈 antes: nowISO()
     .order("start_at", { ascending: true })
     .limit(limit);
 
@@ -251,7 +257,7 @@ export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }
   let q = supabase
     .from("matches")
     .select("id, club_id, club_name, start_at, duration_min, level")
-    .gte("start_at", nowISO())
+    .gte("start_at", startOfTodayISO()) // 👈 antes: nowISO()
     .order("start_at", { ascending: true })
     .limit(limit);
 
