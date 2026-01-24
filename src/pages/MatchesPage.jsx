@@ -29,7 +29,9 @@ function toDateInputValue(d = new Date()) {
   return `${yyyy}-${mm}-${dd}`;
 }
 function combineDateTimeToISO(dateStr, timeStr) {
-  const [hh, mm] = String(timeStr || "19:00").split(":").map((x) => Number(x));
+  const [hh, mm] = String(timeStr || "19:00")
+    .split(":")
+    .map((x) => Number(x));
   const d = new Date(`${dateStr}T00:00:00`);
   d.setHours(Number.isFinite(hh) ? hh : 19, Number.isFinite(mm) ? mm : 0, 0, 0);
   return d.toISOString();
@@ -42,21 +44,20 @@ export default function MatchesPage() {
 
   const todayISO = toDateInputValue(new Date());
 
+  // ✅ params estables desde location.search (IMPORTANTE: qs va ANTES de usarlo)
+  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
   const clubIdParam = searchParams.get("clubId") || "";
   const clubNameParam = searchParams.get("clubName") || "";
   const createParam = searchParams.get("create") === "1";
   const isClubFilter = !!clubIdParam || !!clubNameParam;
 
-  // ✅ params estables desde location.search
-  const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
-
   // ✅ deep links
+  const openChatFromUrl = qs.get("openChat") || "";
   const openRequestsParam = qs.get("openRequests") || "";
 
-  // ✅ openChat (URL) y fallback (sessionStorage)
-  const openChatFromUrl = qs.get("openChat") || "";
   const openChatFromStorage =
-    (typeof window !== "undefined" && sessionStorage.getItem("openChat")) || "";
+    (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
   const showPushButton = import.meta.env.DEV || qs.get("push") === "1";
@@ -141,7 +142,7 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!openChatFromUrl) return;
     try {
-      sessionStorage.setItem("openChat", openChatFromUrl);
+      window.sessionStorage?.setItem?.("openChat", openChatFromUrl);
     } catch {}
   }, [openChatFromUrl]);
 
@@ -241,7 +242,7 @@ export default function MatchesPage() {
       try {
         await openChat(openChatParam);
         try {
-          sessionStorage.removeItem("openChat");
+          window.sessionStorage?.removeItem?.("openChat");
         } catch {}
       } catch (e) {
         console.error("Auto-open chat falló:", e);
@@ -333,6 +334,29 @@ export default function MatchesPage() {
       await reload();
     } catch (e) {
       alert(e?.message ?? "No se pudo rechazar");
+    }
+  }
+
+  async function handleLeave(matchId) {
+    try {
+      await cancelMyJoin(matchId);
+      await reload();
+      alert("Has salido del partido ✅");
+    } catch (e) {
+      alert(e?.message || "No se pudo salir del partido");
+    }
+  }
+
+  async function handleDelete(matchId) {
+    const ok = confirm("¿Seguro que quieres eliminar este partido? Esto no se puede deshacer.");
+    if (!ok) return;
+
+    try {
+      await deleteMatch(matchId);
+      await reload();
+      alert("Partido eliminado ✅");
+    } catch (e) {
+      alert(e?.message || "No se pudo eliminar el partido");
     }
   }
 
@@ -446,9 +470,7 @@ export default function MatchesPage() {
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Partidos</h1>
-              <div className="pageMeta">
-                {status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}
-              </div>
+              <div className="pageMeta">{status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}</div>
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -494,10 +516,7 @@ export default function MatchesPage() {
 
           {/* TABS */}
           <div className="gpRow">
-            <button
-              className={`btn ${viewMode === "explore" ? "" : "ghost"}`}
-              onClick={() => setViewMode("explore")}
-            >
+            <button className={`btn ${viewMode === "explore" ? "" : "ghost"}`} onClick={() => setViewMode("explore")}>
               Explorar
             </button>
             <button
@@ -509,142 +528,128 @@ export default function MatchesPage() {
             </button>
           </div>
 
-          {/* LIST */}
-          <ul style={{ listStyle: "none", padding: 0, marginTop: 14 }}>
-            {visibleList.map((m) => {
-              const approved = approvedCounts[m.id] || 0;
-              const occupied = Math.min(4, approved + (m.reserved_spots || 1));
-              const left = 4 - occupied;
+          {/* LIST (si alguna vez tu CSS “bloquea” el scroll, esto ayuda a forzarlo) */}
+          <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 210px)" }}>
+            <ul style={{ listStyle: "none", padding: 0, marginTop: 14 }}>
+              {visibleList.map((m) => {
+                const approved = approvedCounts[m.id] || 0;
+                const occupied = Math.min(4, approved + (m.reserved_spots || 1));
+                const left = 4 - occupied;
 
-              const myStatus = myReqStatus[m.id];
-              const isCreator = session?.user?.id === m.created_by_user;
+                const myStatus = myReqStatus[m.id];
+                const isCreator = session?.user?.id === m.created_by_user;
 
-              async function handleLeave(matchId) {
-                try {
-                  await cancelMyJoin(matchId);
-                  await reload();
-                  alert("Has salido del partido ✅");
-                } catch (e) {
-                  alert(e?.message || "No se pudo salir del partido");
-                }
-              }
-              
-              async function handleDelete(matchId) {
-                const ok = confirm("¿Seguro que quieres eliminar este partido? Esto no se puede deshacer.");
-                if (!ok) return;
-              
-                try {
-                  await deleteMatch(matchId);
-                  await reload();
-                  alert("Partido eliminado ✅");
-                } catch (e) {
-                  alert(e?.message || "No se pudo eliminar el partido");
-                }
-              }
-              
-              return (
-                <li key={m.id} style={{ marginBottom: 12 }}>
-                  <div className="card">
-                    <div className="gpCardTop">
-                      <div>
-                        <strong style={{ fontSize: 16 }}>{m.club_name}</strong>
-                        <div className="gpInfoGrid">
-                          <div className="gpInfoBox">
-                            <div className="gpInfoLabel">Fecha y hora</div>
-                            <div className="gpInfoValue">{new Date(m.start_at).toLocaleString("es-ES")}</div>
+                return (
+                  <li key={m.id} style={{ marginBottom: 12 }}>
+                    <div className="card">
+                      <div className="gpCardTop">
+                        <div style={{ width: "100%" }}>
+                          <strong style={{ fontSize: 16 }}>{m.club_name}</strong>
+
+                          {/* Tarjetas info “pro” (requiere que existan estas clases en tu CSS; si no, se ve igual de correcto) */}
+                          <div className="gpInfoGrid" style={{ marginTop: 10, display: "grid", gap: 10 }}>
+                            <div className="gpInfoBox" style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
+                              <div className="gpInfoLabel" style={{ fontSize: 11, opacity: 0.7 }}>Fecha y hora</div>
+                              <div className="gpInfoValue" style={{ fontSize: 13, fontWeight: 700 }}>
+                                {new Date(m.start_at).toLocaleString("es-ES")}
+                              </div>
+                            </div>
+                            <div className="gpInfoBox" style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
+                              <div className="gpInfoLabel" style={{ fontSize: 11, opacity: 0.7 }}>Duración</div>
+                              <div className="gpInfoValue" style={{ fontSize: 13, fontWeight: 700 }}>{m.duration_min} min</div>
+                            </div>
+                            <div className="gpInfoBox" style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
+                              <div className="gpInfoLabel" style={{ fontSize: 11, opacity: 0.7 }}>Nivel</div>
+                              <div className="gpInfoValue" style={{ fontSize: 13, fontWeight: 700 }}>
+                                {String(m.level || "").toUpperCase()}
+                              </div>
+                            </div>
+                            <div className="gpInfoBox" style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
+                              <div className="gpInfoLabel" style={{ fontSize: 11, opacity: 0.7 }}>Plazas</div>
+                              <div className="gpInfoValue" style={{ fontSize: 13, fontWeight: 700 }}>
+                                {occupied}/4 ocupadas · {left} libres
+                              </div>
+                            </div>
                           </div>
-                          <div className="gpInfoBox">
-                            <div className="gpInfoLabel">Duración</div>
-                            <div className="gpInfoValue">{m.duration_min} min</div>
-                          </div>
-                          <div className="gpInfoBox">
-                            <div className="gpInfoLabel">Nivel</div>
-                            <div className="gpInfoValue">{String(m.level || "").toUpperCase()}</div>
-                          </div>
-                          <div className="gpInfoBox">
-                            <div className="gpInfoLabel">Plazas</div>
-                            <div className="gpInfoValue">{occupied}/4 ocupadas · {left} libres</div>
-                          </div>
+
+                          {myStatus === "approved" ? <div className="gpBadge ok">✅ Estás dentro</div> : null}
+                          {myStatus === "pending" ? <div className="gpBadge warn">⏳ Solicitud pendiente</div> : null}
+                          {myStatus === "rejected" ? <div className="gpBadge bad">❌ Rechazado</div> : null}
                         </div>
-
-                        {myStatus === "approved" ? <div className="gpBadge ok">✅ Estás dentro</div> : null}
-                        {myStatus === "pending" ? <div className="gpBadge warn">⏳ Solicitud pendiente</div> : null}
-                        {myStatus === "rejected" ? <div className="gpBadge bad">❌ Rechazado</div> : null}
                       </div>
-                    </div>
 
-                    <div className="gpActions">
-                      {!session ? (
-                        <button className="btn" onClick={goLogin}>
-                          Entrar
-                        </button>
-                      ) : null}
+                      <div className="gpActions">
+                        {!session ? (
+                          <button className="btn" onClick={goLogin}>
+                            Entrar
+                          </button>
+                        ) : null}
 
-                      {session && !isCreator && !myStatus && left > 0 ? (
-                        <button
-                          className="btn"
-                          onClick={async () => {
-                            try {
-                              await requestJoin(m.id);
-                              await reload();
-                              alert("Solicitud enviada ✅");
-                            } catch (e) {
-                              alert(e?.message || "No se pudo enviar la solicitud");
-                            }
-                          }}
-                        >
-                          Unirme
-                        </button>
-                      ) : null}
+                        {session && !isCreator && !myStatus && left > 0 ? (
+                          <button
+                            className="btn"
+                            onClick={async () => {
+                              try {
+                                await requestJoin(m.id);
+                                await reload();
+                                alert("Solicitud enviada ✅");
+                              } catch (e) {
+                                alert(e?.message || "No se pudo enviar la solicitud");
+                              }
+                            }}
+                          >
+                            Unirme
+                          </button>
+                        ) : null}
 
-                      {session && myStatus === "pending" ? (
-                        <button
-                          className="btn ghost"
-                          onClick={async () => {
-                            try {
-                              await cancelMyJoin(m.id);
-                              await reload();
-                              alert("Solicitud cancelada ✅");
-                            } catch (e) {
-                              alert(e?.message || "No se pudo cancelar");
-                            }
-                          }}
-                        >
-                          Cancelar solicitud
-                        </button>
-                      ) : null}
+                        {session && myStatus === "pending" ? (
+                          <button
+                            className="btn ghost"
+                            onClick={async () => {
+                              try {
+                                await cancelMyJoin(m.id);
+                                await reload();
+                                alert("Solicitud cancelada ✅");
+                              } catch (e) {
+                                alert(e?.message || "No se pudo cancelar");
+                              }
+                            }}
+                          >
+                            Cancelar solicitud
+                          </button>
+                        ) : null}
 
-                      {session && myStatus === "rejected" ? (
-                        <button
-                          className="btn"
-                          onClick={async () => {
-                            try {
-                              await cancelMyJoin(m.id);
-                              await requestJoin(m.id);
-                              await reload();
-                              alert("Solicitud enviada ✅");
-                            } catch (e) {
-                              alert(e?.message || "No se pudo enviar");
-                            }
-                          }}
-                        >
-                          Solicitar de nuevo
-                        </button>
-                      ) : null}
+                        {session && myStatus === "rejected" ? (
+                          <button
+                            className="btn"
+                            onClick={async () => {
+                              try {
+                                await cancelMyJoin(m.id);
+                                await requestJoin(m.id);
+                                await reload();
+                                alert("Solicitud enviada ✅");
+                              } catch (e) {
+                                alert(e?.message || "No se pudo enviar");
+                              }
+                            }}
+                          >
+                            Solicitar de nuevo
+                          </button>
+                        ) : null}
 
-                      {isCreator ? (
-                        <button type="button" className="btn ghost" onClick={() => openRequests(m.id)}>
-                          Solicitudes
-                        </button>
-                      ) : null}
+                        {isCreator ? (
+                          <button type="button" className="btn ghost" onClick={() => openRequests(m.id)}>
+                            Solicitudes
+                          </button>
+                        ) : null}
 
-                      {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
-                        <button className="btn ghost" onClick={() => openChat(m.id)}>
-                          Chat
-                        </button>
-                      ) : null}
+                        {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
+                          <button className="btn ghost" onClick={() => openChat(m.id)}>
+                            Chat
+                          </button>
+                        ) : null}
 
-                      {/* ✅ SALIR (si soy jugador aprobado o pendiente) */}
+                        {/* ✅ SALIR (si soy jugador aprobado o pendiente) */}
                         {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
                           <button className="btn ghost" onClick={() => handleLeave(m.id)}>
                             Salir
@@ -657,13 +662,13 @@ export default function MatchesPage() {
                             Eliminar
                           </button>
                         ) : null}
-
+                      </div>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
 
           {status.error ? <div style={{ marginTop: 10, color: "crimson" }}>{status.error}</div> : null}
         </div>
@@ -736,7 +741,12 @@ export default function MatchesPage() {
               {showClubSuggest && clubSuggestions.length > 0 ? (
                 <div className="gpSuggest">
                   {clubSuggestions.map((c) => (
-                    <button key={String(c.id)} className="gpSuggestItem" onClick={() => pickClub(c)} type="button">
+                    <button
+                      key={String(c.id)}
+                      className="gpSuggestItem"
+                      onClick={() => pickClub(c)}
+                      type="button"
+                    >
                       <strong>{c.name}</strong>
                       {c.city ? <span style={{ opacity: 0.7 }}> · {c.city}</span> : null}
                     </button>
