@@ -44,7 +44,7 @@ export default function MatchesPage() {
 
   const todayISO = toDateInputValue(new Date());
 
-  // ✅ params estables desde location.search (IMPORTANTE: qs va ANTES de usarlo)
+  // ✅ params estables desde location.search
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const clubIdParam = searchParams.get("clubId") || "";
@@ -60,6 +60,7 @@ export default function MatchesPage() {
     (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
+  // ✅ si quieres botón push en prod con ?push=1, mantenemos esto
   const showPushButton = import.meta.env.DEV || qs.get("push") === "1";
   const debug = qs.get("debug") === "1";
 
@@ -82,7 +83,7 @@ export default function MatchesPage() {
   const [profilesById, setProfilesById] = useState({});
 
   /* Tabs/filter */
-  const [viewMode, setViewMode] = useState("explore");
+  const [viewMode, setViewMode] = useState("mine"); // ✅ por defecto Mis partidos
   const [selectedDay, setSelectedDay] = useState(todayISO);
 
   /* Chat modal */
@@ -95,6 +96,9 @@ export default function MatchesPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+
+  /* Push button state */
+  const [pushBusy, setPushBusy] = useState(false);
 
   /* Clubs suggest */
   const [clubsSheet, setClubsSheet] = useState([]);
@@ -182,6 +186,107 @@ export default function MatchesPage() {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, session]);
+
+  // ✅ REALTIME: refresca partidos cuando alguien crea/edita/borra
+useEffect(() => {
+  if (!authReady) return;
+
+  console.log("[realtime matches] init…");
+
+  const channel = supabase
+    .channel("realtime:matches-page")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "matches" },
+      (payload) => {
+        console.log("[realtime matches] event:", payload.eventType, payload);
+
+        // 🔁 IMPORTANTE: no await aquí, que no bloquee
+        reload();
+      }
+    )
+    .subscribe((status) => {
+      console.log("[realtime matches] status:", status);
+    });
+
+  return () => {
+    console.log("[realtime matches] cleanup");
+    supabase.removeChannel(channel);
+  };
+  // ✅ recargamos al cambiar sesión también, porque cambia cómo calculas myReqStatus
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authReady, session]);
+
+  useEffect(() => {
+    if (!authReady) return;
+  
+    const channel = supabase
+      .channel("realtime:matches")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches" },
+        () => {
+          reload();
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
+  
+
+  useEffect(() => {
+    if (!authReady) return;
+  
+    const channel = supabase
+      .channel("realtime:matches")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches" },
+        () => {
+          reload();
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
+  
+  // ✅ REALTIME: refresca partidos cuando alguien crea/edita/borra
+useEffect(() => {
+  if (!authReady) return;
+
+  // Importante: canal único y cleanup al salir
+  const channel = supabase
+    .channel("realtime:matches")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "matches" },
+      async (payload) => {
+        console.log("[realtime matches]", payload.eventType, payload);
+
+        // Recargamos la lista (y contadores) al vuelo
+        await reload();
+      }
+    )
+    .subscribe((status) => {
+      console.log("[realtime matches] status:", status);
+    });
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+  // reload depende de session/authReady dentro, pero NO lo metemos en deps
+  // para evitar resuscribirse en bucle
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [authReady]);
+
 
   /* Requests modal */
   async function openRequests(matchId) {
@@ -295,17 +400,15 @@ export default function MatchesPage() {
   /* list */
   const filteredList = useMemo(() => {
     let list = items;
-
-    if (clubIdParam) list = list.filter((m) => m.club_id === clubIdParam);
-    if (clubNameParam) list = list.filter((m) => m.club_name === clubNameParam);
-
-    if (!isClubFilter) return list;
-
-    return list.filter((m) => {
-      const d = toDateInputValue(new Date(m.start_at));
-      return d === selectedDay;
-    });
-  }, [items, clubIdParam, clubNameParam, selectedDay, isClubFilter]);
+  
+    // ✅ Filtramos SOLO por clubId (estable)
+    if (clubIdParam) list = list.filter((m) => String(m.club_id) === String(clubIdParam));
+  
+    // ❌ NO filtrar por clubName exacto (rompe fácil)
+    // if (clubNameParam) list = list.filter((m) => m.club_name === clubNameParam);
+  
+    return list;
+  }, [items, clubIdParam]);
 
   const myList = useMemo(() => {
     if (!session) return [];
@@ -315,7 +418,7 @@ export default function MatchesPage() {
     });
   }, [filteredList, myReqStatus, session]);
 
-  const visibleList = viewMode === "mine" ? myList : filteredList;
+  const visibleList = myList; // ✅ sin explorar, solo Mis partidos
 
   async function handleApprove(requestId) {
     try {
@@ -410,6 +513,20 @@ export default function MatchesPage() {
     }
   }
 
+  async function handleEnablePush() {
+    if (!session) return goLogin();
+    try {
+      setPushBusy(true);
+      await ensurePushSubscription();
+      alert("✅ Push activado");
+    } catch (e) {
+      console.error(e);
+      alert("❌ Error push: " + (e?.message || String(e)));
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   return (
     <div className="page">
       {/* DEBUG SOLO SI ?debug=1 */}
@@ -435,60 +552,28 @@ export default function MatchesPage() {
         </div>
       ) : null}
 
-      {/* ✅ BOTÓN PUSH (siempre visible) */}
-      <button
-        type="button"
-        onClick={async () => {
-          try {
-            await ensurePushSubscription();
-            alert("✅ Push activado");
-          } catch (e) {
-            console.error(e);
-            alert("❌ Error push: " + (e?.message || String(e)));
-          }
-        }}
-        style={{
-          position: "fixed",
-          right: 16,
-          bottom: 16,
-          zIndex: 999999,
-          padding: "12px 14px",
-          borderRadius: 999,
-          border: "1px solid rgba(0,0,0,0.15)",
-          background: "#fff",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-          cursor: "pointer",
-          fontWeight: 700,
-        }}
-      >
-        🔔 Activar Push
-      </button>
-
       <div className="pageWrap">
         <div className="container">
           {/* HEADER */}
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Partidos</h1>
-              <div className="pageMeta">{status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}</div>
+              <div className="pageMeta">
+                {status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {/* ✅ UN SOLO BOTÓN PUSH (en header) */}
               {showPushButton ? (
                 <button
                   type="button"
                   className="btn ghost"
-                  onClick={async () => {
-                    try {
-                      await ensurePushSubscription();
-                      alert("✅ Push activado");
-                    } catch (e) {
-                      console.error(e);
-                      alert("❌ Error push: " + (e?.message || String(e)));
-                    }
-                  }}
+                  onClick={handleEnablePush}
+                  disabled={pushBusy}
+                  title={!session ? "Tienes que iniciar sesión" : ""}
                 >
-                  🔔 Activar Push
+                  {pushBusy ? "Activando…" : "🔔 Activar Push"}
                 </button>
               ) : null}
 
@@ -514,21 +599,14 @@ export default function MatchesPage() {
             </div>
           </div>
 
-          {/* TABS */}
+          {/* ✅ Solo Mis partidos */}
           <div className="gpRow">
-            <button className={`btn ${viewMode === "explore" ? "" : "ghost"}`} onClick={() => setViewMode("explore")}>
-              Explorar
-            </button>
-            <button
-              className={`btn ${viewMode === "mine" ? "" : "ghost"}`}
-              disabled={!session}
-              onClick={() => setViewMode("mine")}
-            >
+            <button className="btn" disabled={!session} onClick={() => setViewMode("mine")}>
               Mis partidos
             </button>
           </div>
 
-          {/* LIST (si alguna vez tu CSS “bloquea” el scroll, esto ayuda a forzarlo) */}
+          {/* LIST */}
           <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 210px)" }}>
             <ul style={{ listStyle: "none", padding: 0, marginTop: 14 }}>
               {visibleList.map((m) => {
@@ -546,7 +624,6 @@ export default function MatchesPage() {
                         <div style={{ width: "100%" }}>
                           <strong style={{ fontSize: 16 }}>{m.club_name}</strong>
 
-                          {/* Tarjetas info “pro” (requiere que existan estas clases en tu CSS; si no, se ve igual de correcto) */}
                           <div className="gpInfoGrid" style={{ marginTop: 10, display: "grid", gap: 10 }}>
                             <div className="gpInfoBox" style={{ border: "1px solid #eee", borderRadius: 12, padding: 10 }}>
                               <div className="gpInfoLabel" style={{ fontSize: 11, opacity: 0.7 }}>Fecha y hora</div>
@@ -649,14 +726,12 @@ export default function MatchesPage() {
                           </button>
                         ) : null}
 
-                        {/* ✅ SALIR (si soy jugador aprobado o pendiente) */}
                         {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
                           <button className="btn ghost" onClick={() => handleLeave(m.id)}>
                             Salir
                           </button>
                         ) : null}
 
-                        {/* ✅ ELIMINAR (solo creador) */}
                         {session && isCreator ? (
                           <button className="btn danger" onClick={() => handleDelete(m.id)}>
                             Eliminar

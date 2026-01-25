@@ -1,134 +1,195 @@
-function detectField(header) {
-  const h = String(header ?? "").trim().toLowerCase();
+// src/services/sheets.js
 
-  if (["lat", "latitude", "latitud"].includes(h)) return "lat";
-  if (["lng", "lon", "long", "longitude", "longitud"].includes(h)) return "lng";
-  if (["name", "club", "club_name", "nombre", "club nombre"].includes(h)) return "name";
-  if (["address", "direccion", "dirección", "address_full"].includes(h)) return "address";
-  if (["city", "ciudad", "municipio", "localidad"].includes(h)) return "city";
-
-  return null;
-}
-
-function normalizeCoordinateString(raw) {
-  let s = String(raw ?? "").trim();
-
-  // Quita espacios raros
-  s = s.replace(/\s+/g, "");
-
-  // Caso 1: miles '.' y decimal ','  ->  1.234,56  => 1234.56
-  if (s.includes(".") && s.includes(",")) {
-    s = s.replace(/\./g, "").replace(",", ".");
-    return s;
-  }
-
-  // Caso 2: varios puntos (ej: 36.680.822)
-  const dotCount = (s.match(/\./g) || []).length;
-  if (dotCount > 1) {
-    const firstDot = s.indexOf(".");
-    s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, "");
-    return s;
-  }
-
-  // Caso 3: varias comas (raro)
-  const commaCount = (s.match(/,/g) || []).length;
-  if (commaCount > 1) {
-    const firstComma = s.indexOf(",");
-    s = s.slice(0, firstComma + 1) + s.slice(firstComma + 1).replace(/,/g, "");
-  }
-
-  // Caso 4: decimal con coma -> punto
-  s = s.replace(",", ".");
-  return s;
-}
-
-function toNumber(v) {
-  if (v == null) return null;
-  const s = normalizeCoordinateString(v);
-  const n = Number(s);
+function toNumberSafe(x) {
+  const n = Number(x);
   return Number.isFinite(n) ? n : null;
 }
 
-export async function fetchClubsFromGoogleSheet({ sheetId, gid = 0 }) {
-  // Endpoint más fiable para CSV
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+/**
+ * Normaliza coordenadas que pueden venir en formatos raros:
+ * - "36.680.822"  -> 36.680822
+ * - "-4.454.437"  -> -4.454437
+ * - "36,680822"   -> 36.680822
+ * - " 36.680 822" -> 36.680822
+ *
+ * Estrategia:
+ * 1) limpiamos espacios
+ * 2) si hay coma y no punto => coma decimal
+ * 3) si hay varios puntos => generamos candidatos y elegimos el que esté en rango lat/lng
+ */
+function normalizeCoord(value, kind = "lat") {
+  if (value == null) return null;
 
-  const res = await fetch(url, { cache: "no-store" });
+  let v = String(value).trim();
+  if (!v) return null;
 
-  if (!res.ok) {
-    throw new Error(`No se pudo leer Google Sheets (HTTP ${res.status}). ¿Está público?`);
+  // quitamos espacios
+  v = v.replace(/\s+/g, "");
+
+  // si usa coma como decimal
+  if (v.includes(",") && !v.includes(".")) {
+    v = v.replace(",", ".");
   }
 
-  const csv = await res.text();
-
-  // Si Google devuelve HTML (permisos/login), lo detectamos
-  const head = csv.slice(0, 200).toLowerCase();
-  if (head.includes("<!doctype html") || head.includes("<html") || head.includes("accounts.google.com")) {
-    throw new Error(
-      "Google Sheets no está accesible como CSV. Pon el documento en 'Cualquiera con el enlace: Lector' o 'Público'."
-    );
+  // si es número ya limpio
+  const direct = toNumberSafe(v);
+  if (direct != null) {
+    if (kind === "lat" && direct >= -90 && direct <= 90) return direct;
+    if (kind === "lng" && direct >= -180 && direct <= 180) return direct;
   }
 
-  // Parser CSV simple (soporta comillas)
-  const rows = [];
-  let row = [];
-  let cell = "";
-  let inQuotes = false;
+  // Si hay varios puntos, probamos candidatos
+  const dots = (v.match(/\./g) || []).length;
+  if (dots >= 2) {
+    const isNeg = v.startsWith("-");
+    const sign = isNeg ? "-" : "";
+    const raw = isNeg ? v.slice(1) : v;
 
-  for (let i = 0; i < csv.length; i++) {
-    const ch = csv[i];
-    const next = csv[i + 1];
+    const parts = raw.split(".").filter(Boolean);
 
-    if (ch === '"' && inQuotes && next === '"') {
-      cell += '"';
-      i++;
-      continue;
-    }
-    if (ch === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-    if (ch === "," && !inQuotes) {
-      row.push(cell);
-      cell = "";
-      continue;
-    }
-    if ((ch === "\n" || ch === "\r") && !inQuotes) {
-      if (ch === "\r" && next === "\n") i++;
-      row.push(cell);
-      rows.push(row);
-      row = [];
-      cell = "";
-      continue;
-    }
-    cell += ch;
+    // Candidato A: primer punto es decimal (lo que tú quieres)
+    // "36.680.822" => "36.680822"
+    const candA = sign + parts[0] + "." + parts.slice(1).join("");
+    const numA = toNumberSafe(candA);
+
+    // Candidato B: último punto es decimal (a veces pasa)
+    // "36.680.822" => "36680.822"
+    const candB = sign + parts.slice(0, -1).join("") + "." + parts[parts.length - 1];
+    const numB = toNumberSafe(candB);
+
+    // Elegimos el que tenga sentido
+    const ok = (n) => {
+      if (n == null) return false;
+      if (kind === "lat") return n >= -90 && n <= 90;
+      return n >= -180 && n <= 180;
+    };
+
+    if (ok(numA)) return numA;
+    if (ok(numB)) return numB;
+
+    // Si ninguno cae en rango, devolvemos el que no sea null (por si acaso)
+    return numA ?? numB ?? null;
   }
 
-  if (cell.length || row.length) {
-    row.push(cell);
-    rows.push(row);
-  }
+  // Último intento: convertir lo que sea
+  const n = toNumberSafe(v);
+  return n;
+}
 
-  if (rows.length < 2) return [];
+function normalizeClub(rowObj = {}) {
+  const out = { ...rowObj };
 
-  const headers = rows[0].map((h) => h.trim());
-  const mapping = headers.map(detectField);
+  const id =
+    out.id ??
+    out.club_id ??
+    out.clubId ??
+    out.ID ??
+    out.Id ??
+    "";
 
-  const clubs = rows.slice(1).map((r, idx) => {
-    const obj = { id: String(idx) };
+  const name =
+    out.name ??
+    out.club_name ??
+    out.clubName ??
+    out.Nombre ??
+    out.nombre ??
+    "";
 
+  const city =
+    out.city ??
+    out.ciudad ??
+    out.Ciudad ??
+    "";
+
+  const address =
+    out.address ??
+    out.direccion ??
+    out.Direccion ??
+    out.dirección ??
+    out.Dirección ??
+    "";
+
+  // ✅ IMPORTANTE: tu hoja tiene "lon" (NO "lng")
+  const latRaw = out.lat ?? out.latitude ?? out.Lat ?? out.LAT ?? "";
+  const lngRaw =
+    out.lng ??
+    out.lon ?? // ✅ CLAVE
+    out.longitude ??
+    out.Longitude ??
+    out.Lng ??
+    out.LNG ??
+    out.Lon ??
+    out.LON ??
+    "";
+
+  const lat = normalizeCoord(latRaw, "lat");
+  const lng = normalizeCoord(lngRaw, "lng");
+
+  return {
+    ...out,
+    id: String(id || "").trim(),
+    name: String(name || "").trim(),
+    city: String(city || "").trim(),
+    address: String(address || "").trim(),
+    lat,
+    lng,
+  };
+}
+
+function rowsToObjects(values = []) {
+  if (!Array.isArray(values) || values.length < 2) return [];
+
+  const headers = (values[0] || []).map((h) => String(h || "").trim());
+  const out = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i] || [];
+    const obj = {};
     for (let c = 0; c < headers.length; c++) {
-      const key = mapping[c];
-      const value = (r[c] ?? "").trim();
+      const key = headers[c];
       if (!key) continue;
-
-      if (key === "lat" || key === "lng") obj[key] = toNumber(value);
-      else obj[key] = value;
+      obj[key] = row[c] ?? "";
     }
+    out.push(normalizeClub(obj));
+  }
 
-    return obj;
-  });
+  return out;
+}
 
-  // Solo filas válidas con coordenadas
-  return clubs.filter((c) => typeof c.lat === "number" && typeof c.lng === "number");
+export async function fetchClubsFromGoogleSheet(opts = {}) {
+  const sheetId =
+    opts.sheetId ||
+    import.meta.env.VITE_GOOGLE_SHEET_ID ||
+    "";
+
+  const apiKey =
+    opts.apiKey ||
+    import.meta.env.VITE_GOOGLE_API_KEY ||
+    "";
+
+  const range =
+    opts.range ||
+    import.meta.env.VITE_GOOGLE_SHEET_RANGE ||
+    "Clubs!A:Z";
+
+  if (!sheetId || !apiKey) {
+    const msg =
+      "Config Google Sheets incompleta. Revisa .env: VITE_GOOGLE_SHEET_ID y VITE_GOOGLE_API_KEY.";
+    console.warn(msg, { sheetId: !!sheetId, apiKey: !!apiKey });
+    throw new Error(msg);
+  }
+
+  const url =
+    `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheetId)}` +
+    `/values/${encodeURIComponent(range)}?key=${encodeURIComponent(apiKey)}`;
+
+  const r = await fetch(url);
+
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    throw new Error(`Google Sheets error (${r.status}). ${t || "No body"}`);
+  }
+
+  const json = await r.json();
+  return rowsToObjects(json?.values || []);
 }

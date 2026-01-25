@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 import { BrowserRouter } from "react-router-dom";
+import "leaflet/dist/leaflet.css";
 
 // ✅ En local, el SW suele dar guerra. Solo en PROD.
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
