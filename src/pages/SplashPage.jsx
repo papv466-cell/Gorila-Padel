@@ -12,12 +12,12 @@ export default function SplashPage() {
         textAlign: "center",
         padding: 24,
       }}
-      aria-label="Cargando Global Padel"
+      aria-label="Cargando Gorila Pádel"
     >
       <div style={{ display: "grid", gap: 10, justifyItems: "center" }}>
         <img
-          src="/logo.png"
-          alt="Global Padel"
+          src="/imglogog.png"
+          alt="Gorila Pádel"
           style={{
             width: 120,
             height: 120,
@@ -31,10 +31,11 @@ export default function SplashPage() {
           }}
         />
         <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.2 }}>
-          Global Padel
+          Gorila Pádel
         </div>
         <div style={{ fontSize: 13, opacity: 0.82 }}>
-          Encuentra clubs · crea partidos · únete
+          Únete · crea partidos · encuentra clubs
+                  . Engorilate .
         </div>
       </div>
     </div>

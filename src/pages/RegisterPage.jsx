@@ -6,8 +6,9 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [handle, setHandle] = useState("");
-  const [sex, setSex] = useState("O");
-  const [hand, setHand] = useState("derecha");
+  const [sex, setSex] = useState("X");
+  const [handedness, setHandedness] = useState("right"); // right | left | both
+  const [birthdate, setBirthdate] = useState(""); // "YYYY-MM-DD" (opcional)
   const [level, setLevel] = useState("medio");
 
   const [email, setEmail] = useState("");
@@ -18,13 +19,31 @@ export default function RegisterPage() {
   const [error, setError] = useState(null);
   const [ok, setOk] = useState(null);
 
-  // ✅ handle limpio y estable
+  // ✅ handle limpio
   const cleanHandle = useMemo(() => {
     return String(handle || "")
       .trim()
-      .replace(/\s+/g, " ") // colapsa espacios internos
-      .replace(/^\@+/, ""); // si escribe @teresa, lo dejamos en teresa
+      .replace(/\s+/g, " ")
+      .replace(/^\@+/, "");
   }, [handle]);
+
+  // ✅ avatar por defecto (si existen los ficheros)
+  const defaultAvatarUrl = useMemo(() => {
+    if (sex === "F") return "/avatars/gorila-f.png";
+    if (sex === "M") return "/avatars/gorila-m.png";
+    return "/avatars/gorila-o.png";
+  }, [sex]);
+
+  // ✅ birthdate normalizado a YYYY-MM-DD o null
+  const birthdateValue = useMemo(() => {
+    const v = String(birthdate || "").trim();
+    if (!v) return null;
+    // HTML date ya devuelve YYYY-MM-DD, pero validamos por si acaso
+    const ts = new Date(v).getTime();
+    if (!Number.isFinite(ts)) return null;
+    // devolvemos el string tal cual (YYYY-MM-DD)
+    return v;
+  }, [birthdate]);
 
   async function handleRegister(e) {
     e.preventDefault();
@@ -40,10 +59,18 @@ export default function RegisterPage() {
     if (pw.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
     if (pw !== password2) return setError("Las contraseñas no coinciden.");
 
+    if (!["right", "left", "both"].includes(handedness)) {
+      return setError("Elige mano derecha, izquierda o ambas.");
+    }
+
+    if (birthdate && !birthdateValue) {
+      return setError("La fecha de nacimiento no es válida.");
+    }
+
     try {
       setBusy(true);
 
-      // 1) Pre-check rápido del apodo
+      // 1) Pre-check apodo
       const { data: existing, error: exErr } = await supabase
         .from("profiles")
         .select("id")
@@ -55,7 +82,7 @@ export default function RegisterPage() {
         return setError("Ese apodo ya existe. Prueba otro.");
       }
 
-      // 2) SignUp con metadata (para que el trigger cree el perfil)
+      // 2) SignUp + metadata (trigger crea perfil)
       const { error: err } = await supabase.auth.signUp({
         email: em,
         password: pw,
@@ -63,8 +90,11 @@ export default function RegisterPage() {
           data: {
             handle: cleanHandle,
             sex,
-            hand,
             level,
+            handedness, // ✅ right | left | both
+            birthdate: birthdateValue, // ✅ null o YYYY-MM-DD
+            // ✅ Si aún no tienes esos ficheros, pon null para no romper:
+            avatar_url: defaultAvatarUrl || null,
           },
         },
       });
@@ -83,7 +113,7 @@ export default function RegisterPage() {
   return (
     <div className="authWrapper">
       <div className="authCard">
-        <img src="/logo.png" alt="Global Padel" className="authLogo" />
+        <img src="/imglogog.png" alt="Gorila Pádel" className="authLogo" />
 
         <h1 className="authTitle">Crear cuenta</h1>
         <p className="authSub">Apodo + datos básicos para que todo funcione (ceder plaza, valoraciones, clases…).</p>
@@ -105,15 +135,16 @@ export default function RegisterPage() {
             <select className="authInput" value={sex} onChange={(e) => setSex(e.target.value)}>
               <option value="F">Mujer</option>
               <option value="M">Hombre</option>
-              <option value="O">Otro</option>
+              <option value="X">Otro</option>
             </select>
           </label>
 
           <label className="authLabel">
             Mano
-            <select className="authInput" value={hand} onChange={(e) => setHand(e.target.value)}>
-              <option value="derecha">Derecha</option>
-              <option value="izquierda">Izquierda</option>
+            <select className="authInput" value={handedness} onChange={(e) => setHandedness(e.target.value)}>
+              <option value="right">Derecha</option>
+              <option value="left">Izquierda</option>
+              <option value="both">Ambas</option>
             </select>
           </label>
 
@@ -124,6 +155,16 @@ export default function RegisterPage() {
               <option value="medio">Medio</option>
               <option value="alto">Alto</option>
             </select>
+          </label>
+
+          <label className="authLabel">
+            Fecha de nacimiento (opcional)
+            <input
+              className="authInput"
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+            />
           </label>
 
           <label className="authLabel">

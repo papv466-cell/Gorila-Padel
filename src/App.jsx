@@ -10,10 +10,25 @@ import RegisterPage from "./pages/RegisterPage";
 import SplashPage from "./pages/SplashPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfilePage from "./pages/ProfilePage";
+
+import TeachersPage from "./pages/TeachersPage";
+import TeacherProfilePage from "./pages/TeacherProfilePage";
+
+import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
 
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+
+// ✅ Guard para rutas privadas (vuelve a la ruta original tras login)
+function RequireAuth({ session, children }) {
+  const location = useLocation();
+  if (!session) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
+  return children;
+}
 
 export default function App() {
   const location = useLocation();
@@ -22,25 +37,25 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [sessionReady, setSessionReady] = useState(false);
 
-  // ✅ Splash SIEMPRE 4.5s al arrancar (pero si ya estamos dentro y llega push, NO recargamos gracias al SW message)
-  const [splashDone, setSplashDone] = useState(false);
+  // ✅ Splash mínimo (evita parpadeo)
+  const [minSplashDone, setMinSplashDone] = useState(false);
   useEffect(() => {
-    setSplashDone(false);
-    const t = setTimeout(() => setSplashDone(true), 4500);
+    const t = setTimeout(() => setMinSplashDone(true), 350);
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ Sesión
+  // ✅ Sesión Supabase
   useEffect(() => {
     let alive = true;
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data, error }) => {
       if (!alive) return;
-      setSession(data.session ?? null);
+      if (!error) setSession(data.session ?? null);
       setSessionReady(true);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!alive) return;
       setSession(newSession ?? null);
       setSessionReady(true);
     });
@@ -51,25 +66,7 @@ export default function App() {
     };
   }, []);
 
-  // ✅ RECIBIR MENSAJES DEL SERVICE WORKER (click en notificación)
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-
-    const onMsg = (event) => {
-      const data = event?.data;
-      if (!data || data.type !== "NAVIGATE") return;
-
-      const url = String(data.url || "");
-      if (!url) return;
-
-      // Navegación SPA sin reload => sin splash
-      navigate(url, { replace: false });
-    };
-
-    navigator.serviceWorker.addEventListener("message", onMsg);
-    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
-  }, [navigate]);
-
+  // ✅ Detectar “pantallas de auth” (sin navbar)
   const isAuthShell = useMemo(() => {
     const p = location.pathname;
     return (
@@ -81,24 +78,34 @@ export default function App() {
     );
   }, [location.pathname]);
 
-  // ✅ Si hay sesión y estás en auth → al mapa
+  // ✅ Si ya hay sesión y estás en auth -> mapa
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
+    if (!isAuthShell) return;
+    navigate("/mapa", { replace: true });
+  }, [sessionReady, session, isAuthShell, navigate]);
 
-    const p = location.pathname;
-    const inAuth =
-      p.startsWith("/login") ||
-      p.startsWith("/register") ||
-      p.startsWith("/registro") ||
-      p.startsWith("/forgot-password") ||
-      p.startsWith("/reset-password");
+  // ✅ Click en notificación => navegar sin reload
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
 
-    if (inAuth) navigate("/mapa", { replace: true });
-  }, [sessionReady, session, location.pathname, navigate]);
+    const onMsg = (event) => {
+      const data = event?.data;
+      if (!data || data.type !== "NAVIGATE") return;
 
-  // ✅ Mientras: SOLO splash (nada más)
-  if (!splashDone || !sessionReady) return <SplashPage />;
+      const url = String(data.url || "");
+      if (!url) return;
+
+      navigate(url, { replace: false });
+    };
+
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, [navigate]);
+
+  // ✅ Splash
+  if (!sessionReady || !minSplashDone) return <SplashPage />;
 
   return (
     <div className="appShell">
@@ -110,10 +117,74 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={session ? "/mapa" : "/login"} replace />} />
 
-          <Route path="/mapa" element={<MapPage />} />
-          <Route path="/partidos" element={<MatchesPage />} />
-          <Route path="/clases" element={<ClassesPage />} />
+          {/* ✅ Rutas privadas */}
+          <Route
+            path="/mapa"
+            element={
+              <RequireAuth session={session}>
+                <MapPage />
+              </RequireAuth>
+            }
+          />
 
+          {/* ✅ Inclusivos (PRIVADO) */}
+          <Route
+            path="/inclusivos"
+            element={
+              <RequireAuth session={session}>
+                <InclusiveMatchesPage />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/partidos"
+            element={
+              <RequireAuth session={session}>
+                <MatchesPage />
+              </RequireAuth>
+            }
+          />
+
+          <Route
+            path="/clases"
+            element={
+              <RequireAuth session={session}>
+                <ClassesPage />
+              </RequireAuth>
+            }
+          />
+
+          {/* ✅ Profesores */}
+          <Route
+            path="/profesores"
+            element={
+              <RequireAuth session={session}>
+                <TeachersPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/profesores/:id"
+            element={
+              <RequireAuth session={session}>
+                <TeacherProfilePage />
+              </RequireAuth>
+            }
+          />
+
+          {/* ✅ Perfil (una ruta canónica) */}
+          <Route
+            path="/perfil"
+            element={
+              <RequireAuth session={session}>
+                <ProfilePage />
+              </RequireAuth>
+            }
+          />
+          <Route path="/profile" element={<Navigate to="/perfil" replace />} />
+
+          {/* ✅ Rutas públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/registro" element={<RegisterPage />} />

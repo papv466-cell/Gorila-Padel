@@ -1,53 +1,104 @@
-import { NavLink, useNavigate } from "react-router-dom";
+// src/components/UI/Navbar.jsx
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../services/supabaseClient";
 
-function LinkTab({ to, children }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) => `navLink ${isActive ? "active" : ""}`}
-    >
-      {children}
-    </NavLink>
-  );
-}
-
 export default function Navbar() {
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  async function handleLogout() {
+  const links = useMemo(
+    () => [
+      { to: "/mapa", label: "Mapa" },
+      { to: "/clases", label: "Clases" },
+      { to: "/partidos", label: "Partidos" },
+      { to: "/inclusivos", label: "Inclusivos" },
+      { to: "/perfil", label: "Perfil" },
+    ],
+    []
+  );
+
+  // ✅ Si cambias de ruta, cerramos el panel móvil (sin hacks raros)
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
+
+  async function onLogout() {
     try {
       await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Logout error:", e);
     } finally {
-      // aseguramos UI limpia aunque el SW/cache haga cosas raras
+      setOpen(false);
       navigate("/login", { replace: true });
-      window.location.reload(); 
     }
   }
-
 
   return (
     <header className="navbar">
       <div className="navLeft">
-        {/* ✅ LOGO DESDE /public */}
-        <img
-          src="/logo.png"
-          alt="Global Padel"
-          className="navLogo"
-        />
+        <img className="navLogo" src="/imglogog.png" alt="Global Padel" />
         <div className="navBrand">Global Padel</div>
       </div>
 
-      <nav className="navTabs">
-        <LinkTab to="/mapa">Mapa</LinkTab>
-        <LinkTab to="/partidos">Partidos</LinkTab>
+      {/* Desktop tabs */}
+      <nav className="navTabs navTabsDesktop" aria-label="Navegación principal">
+        {links.map((l) => (
+          <NavLink
+            key={l.to}
+            to={l.to}
+            className={({ isActive }) => `navLink ${isActive ? "active" : ""}`}
+            end={l.to === "/mapa"}
+          >
+            {l.label}
+          </NavLink>
+        ))}
       </nav>
 
+      {/* Derecha: Salir + burger en móvil */}
       <div className="navRight">
-        <button type="button" className="btn ghost" onClick={handleLogout}>
+        {/* ✅ Salir con look idéntico a navLink */}
+        <button type="button" className="navLink navLinkBtn" onClick={onLogout}>
           Salir
         </button>
+
+        <div className="navMobileOnly">
+          <button
+            type="button"
+            className="navBurger"
+            aria-label="Abrir menú"
+            aria-expanded={open ? "true" : "false"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile panel */}
+      {open ? (
+        <div className="navMobilePanel" role="dialog" aria-label="Menú" onClick={() => setOpen(false)}>
+          <div className="navMobilePanelInner" onClick={(e) => e.stopPropagation()}>
+            {links.map((l) => (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) => `navMobileLink ${isActive ? "active" : ""}`}
+                onClick={() => setOpen(false)}
+                end={l.to === "/mapa"}
+              >
+                {l.label}
+              </NavLink>
+            ))}
+
+            {/* ✅ Salir en móvil con el mismo estilo que los links del panel */}
+            <button type="button" className="navMobileLink navLinkBtn" onClick={onLogout}>
+              Salir
+            </button>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }

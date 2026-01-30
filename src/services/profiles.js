@@ -1,29 +1,37 @@
 import { supabase } from "./supabaseClient";
 
-export async function fetchMyProfile() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+export async function getMyProfile() {
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess?.session?.user?.id;
+  if (!uid) return null;
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", uid)
     .maybeSingle();
 
   if (error) throw error;
-  return data ?? null;
+  return data || null;
 }
 
-export async function upsertMyProfile(profile) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("No hay usuario autenticado.");
+export async function upsertMyProfile(patch = {}) {
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess?.session?.user?.id;
+  if (!uid) throw new Error("No hay sesión activa");
 
-  const payload = { id: user.id, ...profile };
+  const payload = {
+    id: uid,
+    ...patch,
+    updated_at: new Date().toISOString(),
+  };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
-    .upsert(payload, { onConflict: "id" });
+    .upsert(payload, { onConflict: "id" })
+    .select("*")
+    .single();
 
   if (error) throw error;
-  return true;
+  return data;
 }

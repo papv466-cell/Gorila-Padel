@@ -1,24 +1,37 @@
 // src/services/matches.js
 import { supabase } from "./supabaseClient";
 
-function nowISO() {
-  return new Date().toISOString();
-}
-
-// ------------------------------
-// LISTAR PARTIDOS (solo futuros)
-// ------------------------------
+/* =========================
+   Utils
+========================= */
 function startOfTodayISO() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d.toISOString();
 }
 
+
+/**
+ * Realtime de solicitudes (tabla match_join_requests)
+ * Útil para que:
+ * - el creador vea solicitudes nuevas al instante
+ * - el usuario vea cambios approved/rejected al instante
+ */
+
+/**
+ * Realtime de chat por partido (tabla match_messages filtrado por match_id)
+ * @param {string} matchId
+ * @param {(payload:any)=>void} onChange
+ */
+
+/* =========================
+   LISTAR PARTIDOS (futuros)
+========================= */
 export async function fetchMatches({ limit = 500 } = {}) {
   const { data, error } = await supabase
     .from("matches")
     .select("*")
-    .gte("start_at", startOfTodayISO()) // 👈 antes: nowISO()
+    .gte("start_at", startOfTodayISO())
     .order("start_at", { ascending: true })
     .limit(limit);
 
@@ -26,10 +39,10 @@ export async function fetchMatches({ limit = 500 } = {}) {
   return data ?? [];
 }
 
-// ------------------------------
-// ÚLTIMO MENSAJE POR PARTIDO (badge)
-// Devuelve: { [matchId]: timestamp_ms }
-// ------------------------------
+/* =========================
+   ÚLTIMO MENSAJE POR PARTIDO
+   Devuelve: { [matchId]: timestamp_ms }
+========================= */
 export async function fetchLatestChatTimes(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
@@ -52,9 +65,9 @@ export async function fetchLatestChatTimes(matchIds = []) {
   return out;
 }
 
-// ------------------------------
-// CREAR PARTIDO
-// ------------------------------
+/* =========================
+   CREAR PARTIDO
+========================= */
 export async function createMatch({
   clubId,
   clubName,
@@ -91,9 +104,9 @@ export async function createMatch({
   return data;
 }
 
-// ------------------------------
-// SOLICITAR UNIRSE
-// ------------------------------
+/* =========================
+   SOLICITAR UNIRSE
+========================= */
 export async function requestJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -148,10 +161,10 @@ export async function cancelMyJoin(matchId) {
   return true;
 }
 
-// ------------------------------
-// MIS REQUESTS para matchIds
-// Devuelve: { [matchId]: "pending"|"approved"|"rejected" }
-// ------------------------------
+/* =========================
+   MIS REQUESTS para matchIds
+   Devuelve: { [matchId]: status }
+========================= */
 export async function fetchMyRequestsForMatchIds(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
@@ -174,9 +187,9 @@ export async function fetchMyRequestsForMatchIds(matchIds = []) {
   return out;
 }
 
-// ------------------------------
-// CONTAR APROBADOS por matchId
-// ------------------------------
+/* =========================
+   CONTAR APROBADOS por matchId
+========================= */
 export async function fetchApprovedCounts(matchIds = []) {
   if (!Array.isArray(matchIds) || matchIds.length === 0) return {};
 
@@ -195,9 +208,9 @@ export async function fetchApprovedCounts(matchIds = []) {
   return out;
 }
 
-// ------------------------------
-// PENDIENTES (solo creador por RLS)
-// ------------------------------
+/* =========================
+   PENDIENTES (solo creador por RLS)
+========================= */
 export async function fetchPendingRequests(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -250,14 +263,14 @@ export async function rejectRequest({ requestId }) {
   return data;
 }
 
-// ------------------------------
-// PREVIEW PARTIDOS POR CLUB (solo futuros)
-// ------------------------------
+/* =========================
+   PREVIEW PARTIDOS POR CLUB (futuros)
+========================= */
 export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
   let q = supabase
     .from("matches")
     .select("id, club_id, club_name, start_at, duration_min, level")
-    .gte("start_at", startOfTodayISO()) // 👈 antes: nowISO()
+    .gte("start_at", startOfTodayISO())
     .order("start_at", { ascending: true })
     .limit(limit);
 
@@ -269,9 +282,9 @@ export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }
   return data ?? [];
 }
 
-// ------------------------------
-// ELIMINAR PARTIDO
-// ------------------------------
+/* =========================
+   ELIMINAR PARTIDO
+========================= */
 export async function deleteMatch(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -286,9 +299,9 @@ export async function deleteMatch(matchId) {
   return true;
 }
 
-// ------------------------------
-// CHAT: mensajes
-// ------------------------------
+/* =========================
+   CHAT: mensajes
+========================= */
 export async function fetchMatchMessages(matchId, opts = {}) {
   const limit = opts?.limit ?? 120;
 
@@ -303,7 +316,6 @@ export async function fetchMatchMessages(matchId, opts = {}) {
   return data ?? [];
 }
 
-// ✅ push desde backend (si falla NO rompe chat)
 export async function sendMatchMessage({ matchId, message } = {}) {
   if (!matchId) throw new Error("Falta matchId");
   const text = String(message ?? "").trim();
@@ -336,17 +348,112 @@ export async function sendMatchMessage({ matchId, message } = {}) {
     const r = await fetch("/api/push-chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messageId: inserted.id, // 👈 SOLO messageId
-      }),
+      body: JSON.stringify({ messageId: inserted.id }),
     });
 
-    if (!r.ok) {
-      console.warn("Push status:", r.status, await r.text());
-    }
+    if (!r.ok) console.warn("Push status:", r.status, await r.text());
   } catch (e) {
     console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }
 
   return inserted;
+}
+// ------------------------------
+// REALTIME SUBSCRIPTIONS (ÚNICAS)
+// ------------------------------
+
+// ✅ cambios en partidos (crear/editar/borrar)
+export function subscribeMatchesRealtime(onChange) {
+  const channel = supabase
+    .channel("rt:matches")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "matches" },
+      (payload) => {
+        try {
+          onChange?.(payload);
+        } catch (e) {
+          console.warn("onChange matches realtime error", e);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    try {
+      supabase.removeChannel(channel);
+    } catch {}
+  };
+}
+
+// ✅ cambios en solicitudes de unirse (pending/approved/rejected)
+export function subscribeJoinRequestsRealtime(onChange) {
+  const channel = supabase
+    .channel("rt:join-requests")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "match_join_requests" },
+      (payload) => {
+        try {
+          onChange?.(payload);
+        } catch (e) {
+          console.warn("onChange join_requests realtime error", e);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    try {
+      supabase.removeChannel(channel);
+    } catch {}
+  };
+}
+
+// ✅ Realtime: TODOS los mensajes (para popups globales)
+export function subscribeAllMatchMessagesRealtime(onPayload) {
+  const channel = supabase
+    .channel("rt:match_messages_all")
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "match_messages" },
+      (payload) => onPayload?.(payload)
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}
+
+// ✅ cambios en mensajes de chat (por matchId)
+export function subscribeMatchMessagesRealtime(matchId, onChange) {
+  const mid = String(matchId || "");
+  if (!mid) return () => {};
+
+  const channel = supabase
+    .channel(`rt:match-messages:${mid}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "match_messages",
+        filter: `match_id=eq.${mid}`,
+      },
+      (payload) => {
+        try {
+          onChange?.(payload);
+        } catch (e) {
+          console.warn("onChange match_messages realtime error", e);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    try {
+      supabase.removeChannel(channel);
+    } catch {}
+  };
 }

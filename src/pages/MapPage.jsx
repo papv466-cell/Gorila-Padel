@@ -2,9 +2,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
-import { fetchMatches } from "../services/matches";
+import { fetchMatches, subscribeMatchesRealtime } from "../services/matches";
+import gorilaMarker from "../assets/map/marker-gorila.png";
+import { supabase } from "../services/supabaseClient";
 
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -12,7 +14,6 @@ import "leaflet/dist/leaflet.css";
 const iconRetinaUrl = new URL("leaflet/dist/images/marker-icon-2x.png", import.meta.url).toString();
 const iconUrl = new URL("leaflet/dist/images/marker-icon.png", import.meta.url).toString();
 const shadowUrl = new URL("leaflet/dist/images/marker-shadow.png", import.meta.url).toString();
-const [flyToPos, setFlyToPos] = useState(null);
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
@@ -36,20 +37,41 @@ function makeCountIcon(count) {
   return L.divIcon({
     className: "gpClusterIcon",
     html: `
-      <div style="
-        width: 38px; height: 38px;
-        border-radius: 999px;
-        display:flex; align-items:center; justify-content:center;
-        border:2px solid #111;
-        background:#fff;
-        font-weight:900;
-        font-size:14px;
-        box-shadow:0 10px 25px rgba(0,0,0,0.18);
-      ">${count}</div>
+      <div class="gpClusterCircle" style="background:#74B800;">
+        <div class="gpClusterNumber">${count}</div>
+      </div>
     `,
-    iconSize: [38, 38],
-    iconAnchor: [19, 19],
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
     popupAnchor: [0, -14],
+  });
+}
+
+function startOfTodayISO() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+function endOfTodayISO() {
+  const d = new Date();
+  d.setHours(23, 59, 59, 999);
+  return d.toISOString();
+}
+
+function makeClubIcon({ isFav, hasFreeClass, pulse }) {
+  return L.divIcon({
+    className: "gpClubIcon",
+    html: `
+      <div class="gpClubIconWrap ${hasFreeClass ? "free" : "nofree"} ${pulse ? "pulse" : ""}">
+        ${isFav ? `<div class="gpFavStar">⭐</div>` : ""}
+        ${hasFreeClass ? `<div class="gpFreeDot" title="Clases libres hoy"></div>` : ""}
+        <img src="${gorilaMarker}" class="gpClubIconImg" />
+      </div>
+    `,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -18],
   });
 }
 
@@ -83,11 +105,13 @@ function MapEvents({ onZoom, onMove, onClick }) {
   return null;
 }
 
+/* ✅ FlyTo controlado por estado (backup) */
 function FlyTo({ target, zoomLevel }) {
   const map = useMap();
 
   useEffect(() => {
     if (!target) return;
+
     map.flyTo([target.lat, target.lng], zoomLevel ?? Math.max(map.getZoom(), 14), {
       animate: true,
       duration: 0.8,
@@ -120,12 +144,15 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
+  const [todayClassesByClub, setTodayClassesByClub] = useState(() => new Map()); // club_id -> { freeCount, totalCount }
+  const [mapTheme, setMapTheme] = useState("light"); // "light" | "dark"
+
   const [matches, setMatches] = useState([]);
 
   const [query, setQuery] = useState("");
   const [showSuggest, setShowSuggest] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(""); // ✅ ciudad exacta elegida
-  const [selectedClubId, setSelectedClubId] = useState(""); // ✅ club exacto elegido
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedClubId, setSelectedClubId] = useState("");
 
   const [zoom, setZoom] = useState(11);
   const [mapCenter, setMapCenter] = useState({ lat: 36.7213, lng: -4.4214 }); // Málaga
@@ -148,7 +175,8 @@ export default function MapPage() {
   });
 
   const mapRef = useRef(null);
-  const [pendingFlyTo, setPendingFlyTo] = useState(null);
+  const mapBoxRef = useRef(null); // ✅ para scroll al mapa
+  const [flyToPos, setFlyToPos] = useState(null);
 
   function persistFav(nextSet) {
     try {
@@ -166,6 +194,66 @@ export default function MapPage() {
     persistFav(next);
   }
 
+  async function loadMatches() {
+    try {
+      const ms = await fetchMatches({ limit: 500 });
+      setMatches(Array.isArray(ms) ? ms : []);
+    } catch {
+      setMatches([]);
+    }
+  }
+
+  async function loadTodayClasses() {
+    try {
+      const start = startOfTodayISO();
+      const end = endOfTodayISO();
+      const nowIso = new Date().toISOString();
+
+      const { data: allRows, error: eAll } = await supabase
+        .from("classes")
+        .select("club_id")
+        .eq("is_cancelled", false)
+        .gte("start_at", start)
+        .lte("start_at", end)
+        .gte("start_at", nowIso);
+
+      if (eAll) throw eAll;
+
+      const { data: freeRows, error: eFree } = await supabase
+        .from("classes")
+        .select("club_id")
+        .eq("is_cancelled", false)
+        .eq("is_booked", false)
+        .gte("start_at", start)
+        .lte("start_at", end)
+        .gte("start_at", nowIso);
+
+      if (eFree) throw eFree;
+
+      const map = new Map();
+
+      for (const r of allRows || []) {
+        const id = String(r?.club_id || "").trim();
+        if (!id) continue;
+        const prev = map.get(id) || { totalCount: 0, freeCount: 0 };
+        prev.totalCount += 1;
+        map.set(id, prev);
+      }
+
+      for (const r of freeRows || []) {
+        const id = String(r?.club_id || "").trim();
+        if (!id) continue;
+        const prev = map.get(id) || { totalCount: 0, freeCount: 0 };
+        prev.freeCount += 1;
+        map.set(id, prev);
+      }
+
+      setTodayClassesByClub(map);
+    } catch {
+      setTodayClassesByClub(new Map());
+    }
+  }
+
   useEffect(() => {
     let alive = true;
 
@@ -178,15 +266,8 @@ export default function MapPage() {
         if (!alive) return;
         setClubs(Array.isArray(rows) ? rows : []);
 
-        // partidos (para enseñar los 3 próximos en popup)
-        try {
-          const ms = await fetchMatches({ limit: 500 });
-          if (!alive) return;
-          setMatches(Array.isArray(ms) ? ms : []);
-        } catch {
-          if (!alive) return;
-          setMatches([]);
-        }
+        await loadMatches();
+        await loadTodayClasses();
       } catch (e) {
         if (!alive) return;
         setErr(e?.message || "Error cargando clubs");
@@ -200,29 +281,34 @@ export default function MapPage() {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ REALTIME: refrescamos partidos y “clases libres hoy”
+  useEffect(() => {
+    const unsub = subscribeMatchesRealtime(() => {
+      loadMatches();
+      loadTodayClasses();
+    });
+
+    return () => unsub?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const clubsWithCoords = useMemo(() => {
     return (clubs || []).filter((c) => Number.isFinite(c?.lat) && Number.isFinite(c?.lng));
   }, [clubs]);
 
-  // ✅ filtro base (club exacto / ciudad exacta / texto libre)
   const baseFiltered = useMemo(() => {
     const q = normText(query);
-
     let list = clubsWithCoords;
 
-    // ✅ si eligió club exacto desde sugerencias
     if (selectedClubId) {
       list = list.filter((c) => String(c?.id || "") === String(selectedClubId));
-    }
-    // ✅ si eligió ciudad exacta desde sugerencias
-    else if (selectedCity) {
+    } else if (selectedCity) {
       const sel = normText(selectedCity);
       list = list.filter((c) => normText(c?.city) === sel);
-    }
-    // ✅ texto libre: busca en club/ciudad/dirección
-    else if (q) {
+    } else if (q) {
       list = list.filter((c) => {
         const name = normText(c?.name);
         const city = normText(c?.city);
@@ -231,12 +317,8 @@ export default function MapPage() {
       });
     }
 
-    // solo favoritos
-    if (favOnly) {
-      list = list.filter((c) => favIds.has(String(c?.id || "")));
-    }
+    if (favOnly) list = list.filter((c) => favIds.has(String(c?.id || "")));
 
-    // cerca de mí
     if (nearOnly && userPos) {
       list = list.filter((c) => haversineKm(userPos, { lat: c.lat, lng: c.lng }) <= nearKm);
     }
@@ -247,13 +329,11 @@ export default function MapPage() {
   const sortedList = useMemo(() => {
     const list = [...baseFiltered];
 
-    // favoritos primero
     list.sort((a, b) => {
       const aFav = favIds.has(String(a?.id || "")) ? 1 : 0;
       const bFav = favIds.has(String(b?.id || "")) ? 1 : 0;
       if (aFav !== bFav) return bFav - aFav;
 
-      // por distancia si hay userPos
       if (userPos) {
         const da = haversineKm(userPos, { lat: a.lat, lng: a.lng });
         const db = haversineKm(userPos, { lat: b.lat, lng: b.lng });
@@ -272,18 +352,16 @@ export default function MapPage() {
     return [36.7213, -4.4214];
   }, [sortedList]);
 
-  /* ✅ SUGERENCIAS: ciudades + clubs (con normText) */
+  /* ✅ SUGERENCIAS: ciudades + clubs */
   const suggestions = useMemo(() => {
     const q = normText(query);
     if (!q || q.length < 2) return [];
 
-    // ciudades únicas
     const cityMap = new Map();
     for (const c of clubsWithCoords) {
-      const city =
-  normalizeCity(c.city) ||
-  normalizeCity(String(c.address || "").split(",").pop()); // ✅ intenta sacar “ciudad” del address
+      const city = normalizeCity(c.city) || normalizeCity(String(c.address || "").split(",").pop());
       if (!city) continue;
+
       const key = normText(city);
       if (!cityMap.has(key)) cityMap.set(key, { type: "city", label: city, city });
     }
@@ -311,14 +389,12 @@ export default function MapPage() {
   const clusterItems = useMemo(() => {
     const list = sortedList;
 
-    // Tier 1: por ciudad
     if (zoom <= 10) {
       const byCity = new Map();
       for (const c of list) {
         const city = normalizeCity(c.city) || "Otros";
         const key = normText(city) || "otros";
-        const entry =
-          byCity.get(key) || { key: `city:${key}`, label: city, count: 0, latSum: 0, lngSum: 0 };
+        const entry = byCity.get(key) || { key: `city:${key}`, label: city, count: 0, latSum: 0, lngSum: 0 };
         entry.count += 1;
         entry.latSum += c.lat;
         entry.lngSum += c.lng;
@@ -334,7 +410,6 @@ export default function MapPage() {
       }));
     }
 
-    // Tier 2: grid
     if (zoom <= 12) {
       const step = 0.05;
       const grid = new Map();
@@ -356,11 +431,10 @@ export default function MapPage() {
         label: "Zona",
         count: e.count,
         lat: e.latSum / e.count,
-        lng: e.latSum && e.count ? e.lngSum / e.count : 0,
+        lng: e.lngSum / e.count,
       }));
     }
 
-    // Tier 3: clubes
     return list.map((c) => ({ type: "club", club: c, key: String(c.id || c.name) }));
   }, [sortedList, zoom]);
 
@@ -369,17 +443,26 @@ export default function MapPage() {
       alert("Este navegador no soporta geolocalización.");
       return;
     }
+
     setLocBusy(true);
-  
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPos(p);
-  
+
         if (centerMap) {
-          setFlyToPos(p); // ✅ esto hace zoom seguro
+          setFlyToPos(p); // ✅ backup por estado siempre
+          if (mapRef.current) {
+            try {
+              mapRef.current.flyTo([p.lat, p.lng], Math.max(mapRef.current.getZoom(), 14), {
+                animate: true,
+                duration: 0.8,
+              });
+            } catch {}
+          }
         }
-  
+
         setLocBusy(false);
       },
       (e) => {
@@ -390,7 +473,6 @@ export default function MapPage() {
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
     );
   }
-  
 
   function clearAll() {
     setQuery("");
@@ -402,70 +484,131 @@ export default function MapPage() {
 
     if (mapRef.current) {
       mapRef.current.setView(defaultCenter, 11);
+    } else {
+      setFlyToPos({ lat: 36.7213, lng: -4.4214 });
     }
   }
 
-  function doSearchCenter() {
-    if (!mapRef.current) return;
+  // ✅ Helpers: scroll + invalidate + flyTo “seguro”
+  function flyToSafe(lat, lng, z = 14) {
+    setFlyToPos({ lat, lng }); // ✅ backup siempre
 
-    // club exacto
+    // scroll suave al mapa (por si estás abajo en la lista)
+    if (mapBoxRef.current) {
+      mapBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // invalidar tamaño (por si el scroll/móvil altera el layout)
+    setTimeout(() => {
+      try {
+        mapRef.current?.invalidateSize();
+      } catch {}
+      try {
+        mapRef.current?.flyTo([lat, lng], z, { duration: 0.8 });
+      } catch {}
+    }, 120);
+  }
+
+  function centerByCity(cityName) {
+    const sel = normText(cityName);
+    const inCity = clubsWithCoords.filter((c) => normText(c.city) === sel);
+    if (!inCity.length) return false;
+
+    const lat = inCity.reduce((s, x) => s + x.lat, 0) / inCity.length;
+    const lng = inCity.reduce((s, x) => s + x.lng, 0) / inCity.length;
+    flyToSafe(lat, lng, 12);
+    return true;
+  }
+
+  // ✅ ARREGLADO: Buscar SIEMPRE centra algo útil
+  function doSearchCenter() {
+    setShowSuggest(false);
+
+    // 1) club seleccionado
     if (selectedClubId) {
       const c = clubsWithCoords.find((x) => String(x.id || "") === String(selectedClubId));
-      if (c) mapRef.current.setView([c.lat, c.lng], 14);
+      if (c) flyToSafe(c.lat, c.lng, 14);
       return;
     }
 
-    // ciudad exacta
+    // 2) ciudad seleccionada
     if (selectedCity) {
-      const sel = normText(selectedCity);
-      const inCity = clubsWithCoords.filter((c) => normText(c.city) === sel);
-      if (inCity.length) {
-        const lat = inCity.reduce((s, x) => s + x.lat, 0) / inCity.length;
-        const lng = inCity.reduce((s, x) => s + x.lng, 0) / inCity.length;
-        mapRef.current.setView([lat, lng], 12);
+      if (centerByCity(selectedCity)) return;
+    }
+
+    // 3) si hay query: usa sugerencia top si existe
+    const q = normText(query);
+    if (q && q.length >= 2) {
+      const top = suggestions?.[0];
+
+      if (top?.type === "club") {
+        setSelectedClubId(top.clubId);
+        setSelectedCity("");
+        flyToSafe(top.lat, top.lng, 14);
+        return;
+      }
+
+      if (top?.type === "city") {
+        setSelectedCity(top.city);
+        setSelectedClubId("");
+        if (centerByCity(top.city)) return;
+      }
+
+      // 4) fallback: primer match por includes
+      const hit = clubsWithCoords.find((c) => {
+        const name = normText(c?.name);
+        const city = normText(c?.city);
+        const address = normText(c?.address);
+        return name.includes(q) || city.includes(q) || address.includes(q);
+      });
+
+      if (hit) {
+        setSelectedClubId(String(hit.id || ""));
+        setSelectedCity("");
+        flyToSafe(hit.lat, hit.lng, 14);
         return;
       }
     }
 
-    // ✅ si el texto coincide con alguna ciudad exacta
-const q = normText(query);
-if (q) {
-  const inCity = clubsWithCoords.filter((c) => normText(c.city) === q);
-  if (inCity.length) {
-    const lat = inCity.reduce((s, x) => s + x.lat, 0) / inCity.length;
-    const lng = inCity.reduce((s, x) => s + x.lng, 0) / inCity.length;
-    mapRef.current.setView([lat, lng], 12);
-    return;
-  }
-}
+    // 5) si hay lista filtrada, centra el primero
+    const first = baseFiltered?.[0] || sortedList?.[0];
+    if (first) {
+      flyToSafe(first.lat, first.lng, 13);
+      return;
+    }
 
-    // fallback al primer resultado
-    const first = sortedList[0];
-    if (first) mapRef.current.setView([first.lat, first.lng], 13);
+    // 6) fallback default
+    flyToSafe(36.7213, -4.4214, 11);
   }
 
   const upcomingByClubId = useMemo(() => {
     const now = Date.now();
     const map = new Map();
+
     for (const m of matches || []) {
       const clubId = String(m.club_id || "");
       if (!clubId) continue;
+
       const t = new Date(m.start_at).getTime();
       if (!Number.isFinite(t) || t < now) continue;
+
       if (!map.has(clubId)) map.set(clubId, []);
       map.get(clubId).push(m);
     }
+
     for (const [k, arr] of map.entries()) {
       arr.sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
       map.set(k, arr.slice(0, 3));
     }
+
     return map;
   }, [matches]);
 
   return (
-    <div className="page">
+    <div className="page gpMapPage">
       <div className="pageWrap">
         <div className="container">
+          {/* HEADER */}
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Mapa</h1>
@@ -476,18 +619,26 @@ if (q) {
             </div>
           </div>
 
-          {/* ✅ TOP BAR BOTONES */}
+          {/* TOP BAR */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-            <button className="btn ghost" type="button" onClick={clearAll}>
+            <button className="btn ghost gpMapBtn" type="button" onClick={clearAll}>
               Limpiar
             </button>
 
-            <button className="btn" type="button" onClick={doSearchCenter} disabled={loading}>
+            <button className="btn gpMapBtn" type="button" onClick={doSearchCenter} disabled={loading}>
               Buscar
             </button>
 
             <button
-              className="btn ghost"
+              className={`btn ${mapTheme === "dark" ? "" : "ghost"} gpMapBtn`}
+              type="button"
+              onClick={() => setMapTheme((v) => (v === "dark" ? "light" : "dark"))}
+            >
+              {mapTheme === "dark" ? "🌙 Oscuro" : "☀️ Claro"}
+            </button>
+
+            <button
+              className="btn ghost gpMapBtn"
               type="button"
               onClick={() => requestMyLocation({ centerMap: true })}
               disabled={locBusy}
@@ -497,23 +648,32 @@ if (q) {
             </button>
 
             <button
-              className={`btn ${nearOnly ? "" : "ghost"}`}
               type="button"
+              className={`gpChipBtn ${nearOnly ? "isOn" : ""}`}
               onClick={() => {
                 if (!userPos) requestMyLocation({ centerMap: false });
                 setNearOnly((v) => !v);
               }}
               title="Filtra clubs a 20 km de tu ubicación"
             >
-              Cerca de mí {nearKm} km
+              <span className="gpChipIcon" aria-hidden="true">📍</span>
+              <span className="gpChipText">Cerca de mí {nearKm} km</span>
+              <span className="gpChipDot" aria-hidden="true" />
             </button>
 
-            <button className={`btn ${favOnly ? "" : "ghost"}`} type="button" onClick={() => setFavOnly((v) => !v)}>
-              ⭐ Favoritos
+            <button
+              type="button"
+              className={`gpChipBtn ${favOnly ? "isOn" : ""}`}
+              onClick={() => setFavOnly((v) => !v)}
+              title="Mostrar solo mis clubs favoritos"
+            >
+              <span className="gpChipIcon" aria-hidden="true">{favOnly ? "⭐" : "☆"}</span>
+              <span className="gpChipText">Favoritos{favIds.size ? ` (${favIds.size})` : ""}</span>
+              <span className="gpChipDot" aria-hidden="true" />
             </button>
           </div>
 
-          {/* ✅ BUSCADOR + AUTOCOMPLETE */}
+          {/* BUSCADOR + AUTOCOMPLETE */}
           <div style={{ position: "relative", marginTop: 10 }}>
             <input
               className="gpInput"
@@ -523,10 +683,13 @@ if (q) {
                 const v = e.target.value;
                 setQuery(v);
                 setSelectedClubId("");
-                setSelectedCity(""); // ✅ si escribo, quito selección exacta
+                setSelectedCity("");
                 setShowSuggest(true);
               }}
               onFocus={() => setShowSuggest(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") doSearchCenter();
+              }}
             />
 
             {showSuggest && suggestions.length > 0 ? (
@@ -555,20 +718,13 @@ if (q) {
                         setSelectedClubId(s.clubId);
                         setSelectedCity("");
                         setShowSuggest(false);
-                        if (mapRef.current) mapRef.current.setView([s.lat, s.lng], 14);
+                        flyToSafe(s.lat, s.lng, 14);
                       } else {
                         setQuery(s.city);
                         setSelectedCity(s.city);
                         setSelectedClubId("");
                         setShowSuggest(false);
-
-                        const sel = normText(s.city);
-                        const inCity = clubsWithCoords.filter((c) => normText(c.city) === sel);
-                        if (inCity.length && mapRef.current) {
-                          const lat = inCity.reduce((sum, x) => sum + x.lat, 0) / inCity.length;
-                          const lng = inCity.reduce((sum, x) => sum + x.lng, 0) / inCity.length;
-                          mapRef.current.setView([lat, lng], 12);
-                        }
+                        centerByCity(s.city);
                       }
                     }}
                     style={{
@@ -594,16 +750,18 @@ if (q) {
 
           {err ? <div style={{ marginTop: 10, color: "crimson" }}>{err}</div> : null}
 
-          {/* ✅ MAPA */}
+          {/* MAPA */}
           <div
-            style={{
-              marginTop: 12,
-              borderRadius: 16,
-              overflow: "hidden",
-              border: "1px solid #eee",
-              height: 420,
-            }}
-          >
+              ref={mapBoxRef}
+              className="gpMapMapWrap"
+              style={{
+                marginTop: 12,
+                borderRadius: 16,
+                overflow: "hidden",
+                border: "1px solid #eee",
+                height: 420,
+              }}
+            >
             <MapContainer
               center={defaultCenter}
               zoom={11}
@@ -613,15 +771,21 @@ if (q) {
                 setZoom(map.getZoom());
                 const c = map.getCenter();
                 setMapCenter({ lat: c.lat, lng: c.lng });
-                if (pendingFlyTo) {
-                  map.flyTo(pendingFlyTo.center, pendingFlyTo.zoom, { duration: 0.8 });
-                  setPendingFlyTo(null);
-                }
               }}
             >
               <MapEvents onZoom={(z) => setZoom(z)} onMove={(c) => setMapCenter(c)} onClick={() => setShowSuggest(false)} />
 
-              <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <TileLayer
+                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+                url={
+                  mapTheme === "dark"
+                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                }
+              />
+
+              {/* ✅ flyTo backup por estado */}
+              <FlyTo target={flyToPos} zoomLevel={14} />
 
               {/* ✅ mi ubicación visible */}
               {userPos ? (
@@ -631,7 +795,7 @@ if (q) {
                   </Popup>
                 </Marker>
               ) : null}
-                <FlyTo target={flyToPos} zoomLevel={14} />
+
               {/* clusters + clubs */}
               {clusterItems.map((it) => {
                 if (it.type === "cluster") {
@@ -654,19 +818,34 @@ if (q) {
                 const c = it.club;
                 const clubId = String(c?.id || "");
                 const isFav = favIds.has(clubId);
+
+                const stats = todayClassesByClub.get(clubId) || { freeCount: 0, totalCount: 0 };
+                const hasFreeClass = (stats.freeCount || 0) > 0;
+                const pulse = hasFreeClass;
+
                 const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
                 const up = upcomingByClubId.get(clubId) || [];
 
                 return (
-                  <Marker key={it.key} position={[c.lat, c.lng]}>
+                  <Marker key={it.key} position={[c.lat, c.lng]} icon={makeClubIcon({ isFav, hasFreeClass, pulse })}>
                     <Popup>
                       <div style={{ fontSize: 13, minWidth: 220 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                           <div>
                             <strong>{c.name}</strong>
                             <div style={{ opacity: 0.75 }}>{c.city}</div>
+
+                            {hasFreeClass ? (
+                              <div style={{ marginTop: 8, fontSize: 12, fontWeight: 900, color: "#111" }}>
+                                🟢 {stats.freeCount} clase(s) libre(s) hoy
+                              </div>
+                            ) : null}
+
                             {c.address ? <div style={{ opacity: 0.65, marginTop: 4 }}>{c.address}</div> : null}
-                            {dist != null ? <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div> : null}
+
+                            {dist != null ? (
+                              <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div>
+                            ) : null}
                           </div>
 
                           <button
@@ -674,12 +853,20 @@ if (q) {
                             className="btn ghost"
                             onClick={() => toggleFav(clubId)}
                             title={isFav ? "Quitar favorito" : "Guardar favorito"}
-                            style={{ height: 34, alignSelf: "flex-start" }}
+                            style={{
+                              width: 42,
+                              height: 38,
+                              display: "grid",
+                              placeItems: "center",
+                              borderRadius: 12,
+                              alignSelf: "flex-start",
+                            }}
                           >
                             {isFav ? "⭐" : "☆"}
                           </button>
                         </div>
 
+                        {/* 3 próximos partidos */}
                         <div style={{ marginTop: 10 }}>
                           <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Próximos partidos</div>
                           {up.length === 0 ? (
@@ -695,27 +882,36 @@ if (q) {
                                     padding: "8px 10px",
                                   }}
                                 >
-                                  <div style={{ fontSize: 12, fontWeight: 800 }}>{new Date(m.start_at).toLocaleString("es-ES")}</div>
-                                  <div style={{ fontSize: 12, opacity: 0.75 }}>{m.duration_min} min · Nivel {m.level}</div>
+                                  <div style={{ fontSize: 12, fontWeight: 800 }}>
+                                    {new Date(m.start_at).toLocaleString("es-ES")}
+                                  </div>
+                                  <div style={{ fontSize: 12, opacity: 0.75 }}>
+                                    {m.duration_min} min · Nivel {m.level}
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           )}
                         </div>
 
-                        <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div className="gpPopupActions">
                           <button
-                            className="btn ghost"
-                            type="button"
-                            onClick={() => navigate(`/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)}
+                            className="gpBtn gpBtnSoft"
+                            onClick={() => navigate(`/clases?club=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
+                          >
+                            Ver clases
+                          </button>
+
+                          <button
+                            className="gpBtn"
+                            onClick={() => navigate(`/partidos?clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
                           >
                             Ver partidos
                           </button>
 
                           <button
-                            className="btn"
-                            type="button"
-                            onClick={() => navigate(`/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)}
+                            className="gpBtn gpBtnPrimary"
+                            onClick={() => navigate(`/partidos?create=1&clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
                           >
                             Crear partido
                           </button>
@@ -728,86 +924,148 @@ if (q) {
             </MapContainer>
           </div>
 
-          {/* ✅ LISTA PRO */}
-          <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-            {loading ? (
-              <div style={{ opacity: 0.7 }}>Cargando clubs…</div>
-            ) : sortedList.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>No se encontraron clubs.</div>
-            ) : (
-              sortedList.map((c) => {
-                const clubId = String(c?.id || "");
-                const isFav = favIds.has(clubId);
-                const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
+          {/* LISTA (panel con scroll interno) */}
+<div
+  className="gpMapListPanel"
+  style={{
+    marginTop: 14,
+    borderRadius: 16,
+    border: "1px solid rgba(0,0,0,0.08)",
+    background: "#fff",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
+    overflow: "hidden",
+  }}
+>
+  <div className="gpMapListHeader" style={{
+      padding: 12,
+      borderBottom: "1px solid rgba(0,0,0,0.06)",
+      fontWeight: 950,
+    }}
+  >
+    Clubs ({sortedList.length})
+  </div>
 
-                return (
-                  <div
-                    key={clubId || c.name}
-                    className="card"
-                    style={{
-                      padding: 14,
-                      borderRadius: 14,
-                      border: "1px solid rgba(0,0,0,0.08)",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
-                      <button
-                        type="button"
-                        className="btn ghost"
-                        onClick={() => toggleFav(clubId)}
-                        title={isFav ? "Quitar favorito" : "Guardar favorito"}
-                        style={{ width: 42, height: 38, display: "grid", placeItems: "center", borderRadius: 12 }}
-                      >
-                        {isFav ? "⭐" : "☆"}
-                      </button>
+  <div
+    className="gpMapListBody"
+    style={{
+      overflowY: "auto",
+      padding: 12,
+      display: "grid",
+      gap: 10,
+      WebkitOverflowScrolling: "touch",
+    }}
+  >
+    {loading ? (
+      <div style={{ opacity: 0.7 }}>Cargando clubs…</div>
+    ) : sortedList.length === 0 ? (
+      <div style={{ opacity: 0.7 }}>No se encontraron clubs.</div>
+    ) : (
+      sortedList.map((c) => {
+        const clubId = String(c?.id || "");
+        const isFav = favIds.has(clubId);
+        const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
 
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 950, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {c.name}
-                        </div>
-                        <div style={{ opacity: 0.75, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {c.city}
-                          {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
-                        </div>
-                      </div>
-                    </div>
+        return (
+          <div
+            key={clubId || c.name}
+            className="card"
+            style={{
+              padding: 12,
+              borderRadius: 14,
+              border: "1px solid rgba(0,0,0,0.08)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => toggleFav(clubId)}
+                title={isFav ? "Quitar favorito" : "Guardar favorito"}
+                style={{ height: 34, minWidth: 44, padding: "0 12px" }}
+              >
+                {isFav ? "⭐" : "☆"}
+              </button>
 
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <button
-                        className="btn ghost"
-                        type="button"
-                        onClick={() => navigate(`/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)}
-                      >
-                        Ver partidos
-                      </button>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 950,
+                    fontSize: 14,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {c.name}
+                </div>
+                <div
+                  style={{
+                    opacity: 0.75,
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {c.city}
+                  {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
+                </div>
+              </div>
+            </div>
 
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() => navigate(`/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)}
-                      >
-                        Crear partido
-                      </button>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`
+                  )
+                }
+              >
+                Partidos
+              </button>
 
-                      <button
-                        className="btn ghost"
-                        type="button"
-                        onClick={() => {
-                          if (mapRef.current) mapRef.current.setView([c.lat, c.lng], 14);
-                        }}
-                      >
-                        Ver en mapa
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+              <button
+                className="btn"
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`
+                  )
+                }
+              >
+                Crear
+              </button>
+
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={() => {
+                  flyToSafe(c.lat, c.lng, 14);
+                }}
+              >
+                Ver
+              </button>
+            </div>
           </div>
+        );
+      })
+    )}
+  </div>
+</div>
+
 
           <div style={{ marginTop: 18, opacity: 0.5, fontSize: 12 }}>
             ruta: {location.pathname} · zoom: {zoom} · centro: {mapCenter.lat.toFixed(3)},{mapCenter.lng.toFixed(3)}
