@@ -318,17 +318,14 @@ img { max-width: 100%; height: auto; }
   gap: 16px;
 }
 
-.authLogo {
+.authLogo{
   width: 150px !important;
   height: 150px !important;
   max-width: 150px !important;
   max-height: 150px !important;
-  object-fit: contain !important;
-  display: block;
-  margin: 0 auto 8px;
-  border-radius: 26px;
-  background: rgba(17,24,39,0.04);
-  padding: 16px;
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 18px !important;
 }
 
 .authTitle {
@@ -1829,4 +1826,60 @@ html, body, #root {
   max-height: calc(100dvh - 44px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+}
+/* =========================
+   FIX GLOBAL MÓVIL (NO ROMPER)
+   - Evita web gigante (junto al viewport)
+   - Evita pantallas cortadas (registro / crear partido)
+   ========================= */
+   html, body {
+    height: 100%;
+    margin: 0;
+    overflow: auto !important; /* pisa el overflow:hidden antiguo */
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  /* Que la app pueda scrollear dentro de pageWrap sin cortar contenido */
+  #root {
+    min-height: 100%;
+  }
+  /* =========================
+   MAPA vs LISTA (mobile)
+   - La lista SIEMPRE por encima
+   - El mapa no “se cuela” visualmente
+   ========================= */
+
+.gpMapListPanel{
+  background: #fff;
+  position: relative;
+  z-index: 5;
+}
+
+/* Móvil: lista tipo bottom-sheet por encima del mapa */
+@media (max-width: 768px){
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999;           /* por encima de leaflet */
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* El mapa se queda “debajo” y no tapa la lista */
+  .leaflet-container{
+    z-index: 1;
+  }
+
+  /* IMPORTANTE: deja hueco para la lista fixed */
+  .pageWrap{
+    padding-bottom: 320px !important; /* ajusta 280-360 según te guste */
+  }
+
+  /* La lista no debe ocupar toda la pantalla */
+  .gpMapListBody{
+    max-height: 32vh !important; /* baja si la ves grande */
+  }
 }
