@@ -1694,3 +1694,33 @@ html, body, #root {
     z-index: 2;
   }
 }
+/* =========================
+   MAP — alturas responsive (para que el sheet funcione)
+   ========================= */
+
+/* Desktop */
+.gpMapMapWrap{
+  height: 420px;
+}
+
+/* Móvil: mapa más alto y proporcional */
+@media (max-width: 768px){
+  .gpMapMapWrap{
+    height: 54vh;
+    min-height: 280px;
+  }
+}
+/* Evita “zoom raro” o que algo se salga del viewport */
+.pageWrap, .container, .page, .appMain {
+  overflow-x: hidden;
+}
+/* Contenedor siempre respirable en móvil */
+.container{
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Importantísimo: en layouts flex, permite que el contenido encoja */
+.navLeft, .navRight, .navTabs, .pageHeader, .gpCardTop, .gpActions {
+  min-width: 0;
+}

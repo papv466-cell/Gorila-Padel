@@ -759,7 +759,6 @@ export default function MapPage() {
                 borderRadius: 16,
                 overflow: "hidden",
                 border: "1px solid #eee",
-                height: 420,
               }}
             >
             <MapContainer

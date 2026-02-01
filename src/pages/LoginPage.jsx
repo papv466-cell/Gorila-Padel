@@ -70,8 +70,8 @@ export default function LoginPage() {
     <div className="authWrapper">
       <div className="authCard">
         <img
-          src="/logo.png"
-          alt="Global Padel"
+          src="/imglogog.png"
+          alt="Gorila Pádel"
           className="authLogo"
           draggable="false"
         />
