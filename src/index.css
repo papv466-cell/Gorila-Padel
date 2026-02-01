@@ -318,15 +318,15 @@ img { max-width: 100%; height: auto; }
   gap: 16px;
 }
 
-.authLogo {
-  width: 96px !important;
-  height: 96px !important;
-  max-width: 96px !important;
-  max-height: 96px !important;
+.authLogo{
+  width: 140px !important;
+  height: 140px !important;
+  max-width: 140px !important;
+  max-height: 140px !important;
   object-fit: contain !important;
   display: block;
-  margin: 0 auto 6px;
-  border-radius: 22px;
+  margin: 0 auto 10px;
+  border-radius: 26px;
   background: rgba(17,24,39,0.04);
   padding: 14px;
 }
@@ -1723,4 +1723,48 @@ html, body, #root {
 /* Importantísimo: en layouts flex, permite que el contenido encoja */
 .navLeft, .navRight, .navTabs, .pageHeader, .gpCardTop, .gpActions {
   min-width: 0;
+}
+/* ===== MAP layering FIX (Leaflet vs bottom sheet) ===== */
+.gpMapMapWrap{
+  position: relative;
+  z-index: 1;
+}
+
+/* Leaflet a nivel base */
+.leaflet-container{
+  position: relative;
+  z-index: 1;
+}
+
+/* Panel/lista SIEMPRE por encima del mapa */
+.gpMapListPanel{
+  position: relative;
+  z-index: 2000;
+}
+
+@media (max-width: 768px){
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 3000; /* más alto que Leaflet */
+  }
+}
+@media (max-width: 768px){
+  /* para que el contenido no quede debajo del bottom sheet */
+  .pageWrap{
+    padding-bottom: 260px; /* sube/baja según el alto real del panel */
+  }
+
+  .gpMapListBody{
+    max-height: 34vh;
+    overflow: auto;
+  }
+}
+/* ===== AUTH: permitir scroll aunque el body esté bloqueado ===== */
+.authWrapper{
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100dvh; /* mejor que 100vh en iOS */
 }
