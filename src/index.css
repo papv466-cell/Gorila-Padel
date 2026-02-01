@@ -318,17 +318,17 @@ img { max-width: 100%; height: auto; }
   gap: 16px;
 }
 
-.authLogo{
-  width: 140px !important;
-  height: 140px !important;
-  max-width: 140px !important;
-  max-height: 140px !important;
+.authLogo {
+  width: 150px !important;
+  height: 150px !important;
+  max-width: 150px !important;
+  max-height: 150px !important;
   object-fit: contain !important;
   display: block;
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
   border-radius: 26px;
   background: rgba(17,24,39,0.04);
-  padding: 14px;
+  padding: 16px;
 }
 
 .authTitle {
@@ -1767,4 +1767,66 @@ html, body, #root {
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   min-height: 100dvh; /* mejor que 100vh en iOS */
+}
+/* =========================
+   FIX GLOBAL MÓVIL (sin romper layout)
+   - Permite scroll real cuando hace falta (auth, forms)
+   - Evita “pantalla gigante” por overflow raro
+   ========================= */
+
+   html, body {
+    height: 100%;
+    overflow: auto; /* <- clave: que el móvil pueda scrollear */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #root {
+    height: 100%;
+  }
+  
+  /* iOS safe areas */
+  .pageWrap {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+  /* =========================
+   MAP LIST: no desbordar en móvil
+   ========================= */
+
+.gpMapListPanel, .gpMapListBody, .card {
+  max-width: 100%;
+}
+
+.card {
+  min-width: 0;
+}
+
+.card > div {
+  min-width: 0;
+}
+
+/* Botones dentro de la card: que no empujen fuera */
+.card .btn {
+  max-width: 100%;
+}
+
+/* El bloque derecho de acciones: si no cabe, baja */
+@media (max-width: 520px){
+  .gpMapListBody .card{
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .gpMapListBody .card > div:last-child{
+    justify-content: flex-start !important;
+  }
+}
+/* Auth y formularios: que siempre puedan scrollear completos */
+.authWrapper {
+  min-height: 100dvh;
+}
+
+.authCard {
+  max-height: calc(100dvh - 44px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
