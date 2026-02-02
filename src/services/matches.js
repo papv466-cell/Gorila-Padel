@@ -19,18 +19,17 @@ async function getSessionOrThrow() {
 }
 
 /**
- * ✅ Esto arregla LOCAL vs VERCEL
+ * ✅ LOCAL vs VERCEL
  * - En Vercel: API_BASE = ""  → fetch("/api/..") normal
- * - En local:  API_BASE = "https://gorila-padel.vercel.app" (o el dominio que uses)
+ * - En local:  API_BASE = "https://gorila-padel.vercel.app" para probar push
  *
- * Si quieres controlar esto fino, crea en tu .env.local:
+ * Si quieres control fino, en tu .env.local pon:
  * VITE_API_BASE=https://gorila-padel.vercel.app
  */
 function getApiBase() {
   const envBase = import.meta.env.VITE_API_BASE;
   if (envBase) return String(envBase).replace(/\/$/, "");
 
-  // Heurística: si estás en local, pega a Vercel para probar
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     const isLocal = host === "localhost" || host === "127.0.0.1";
@@ -52,14 +51,25 @@ async function callApi(path, { method = "POST", session, body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  // Para depurar SIN romper:
+  // Intentamos leer texto siempre (para debug)
+  const txt = await r.text().catch(() => "");
+
+  // Log útil siempre
+  console.log(`[API ${path}] status=${r.status} body=${txt}`);
+
+  // Si no es OK devolvemos info pero NO rompemos el flujo
   if (!r.ok) {
-    const t = await r.text().catch(() => "");
-    console.warn(`[API ${path}] status=${r.status} body=${t}`);
-    return { ok: false, status: r.status, text: t };
+    console.warn(`[API ${path}] ❌ status=${r.status} body=${txt}`);
+    return { ok: false, status: r.status, text: txt };
   }
 
-  return { ok: true, status: r.status };
+  // Si es OK, intentamos parsear JSON (si lo hay)
+  let json = null;
+  try {
+    json = txt ? JSON.parse(txt) : null;
+  } catch {}
+
+  return { ok: true, status: r.status, text: txt, json };
 }
 
 /* =========================
@@ -158,10 +168,15 @@ export async function requestJoin(matchId) {
 
   // ✅ Push al creador (si falla NO rompe)
   try {
-    await callApi("/api/push-join", {
+    const out = await callApi("/api/push-join", {
       session,
       body: { matchId: data.match_id, requestId: data.id },
     });
+
+    // Si responde pero no envía, lo verás aquí
+    if (out?.ok && out?.json && (out.json.sent ?? 0) === 0) {
+      console.warn("⚠️ push-join NO enviado:", out.json);
+    }
   } catch (e) {
     console.warn("Push join falló pero la solicitud se guardó:", e?.message || e);
   }
@@ -232,7 +247,7 @@ export async function fetchApprovedCounts(matchIds = []) {
 }
 
 /* =========================
-   PENDIENTES (solo creador por RLS)
+   PENDIENTES
 ========================= */
 export async function fetchPendingRequests(matchId) {
   if (!matchId) throw new Error("Falta matchId");
@@ -358,15 +373,33 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 
   if (insErr) throw insErr;
 
-  // ✅ Push chat (si falla, NO rompe)
-  try {
-    await callApi("/api/push-chat", {
-      session,
-      body: { messageId: inserted.id },
-    });
-  } catch (e) {
-    console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
-  }
+    // ✅ Push chat (si falla, NO rompe)
+    try {
+      const session = await getSessionOrThrow();
+  
+      const r = await fetch("/api/push-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ messageId: inserted.id }),
+      });
+  
+      const txt = await r.text().catch(() => "");
+      console.log("push-chat raw:", r.status, txt);
+  
+      if (!r.ok) console.warn("push-chat status:", r.status, txt);
+      else {
+        try {
+          const j = JSON.parse(txt);
+          console.log("push-chat json:", j);
+          if ((j.sent ?? 0) === 0) console.warn("⚠️ push-chat NO enviado:", j);
+        } catch {}
+      }
+    } catch (e) {
+      console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
+    }  
 
   return inserted;
 }

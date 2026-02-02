@@ -97,6 +97,9 @@ export default function MatchesPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+
   const todayISO = toDateInputValue(new Date());
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
@@ -113,10 +116,6 @@ export default function MatchesPage() {
 
   const showPushButton = !!session;
   const debug = qs.get("debug") === "1";
-
-  /* Session */
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
 
   /* Data */
   const [items, setItems] = useState([]);

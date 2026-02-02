@@ -74,7 +74,8 @@ export async function ensurePushSubscription() {
   // 7) Upsert (requiere UNIQUE endpoint + policy update/insert)
   const { error: upErr } = await supabase
     .from("push_subscriptions")
-    .upsert(payload, { onConflict: "endpoint" });
+    .upsert(payload, { onConflict: "user_id,endpoint" });
+
 
   if (upErr) {
     console.error("❌ push_subscriptions upsert error:", upErr);
