@@ -18,6 +18,50 @@ async function getSessionOrThrow() {
   return session;
 }
 
+/**
+ * ✅ Esto arregla LOCAL vs VERCEL
+ * - En Vercel: API_BASE = ""  → fetch("/api/..") normal
+ * - En local:  API_BASE = "https://gorila-padel.vercel.app" (o el dominio que uses)
+ *
+ * Si quieres controlar esto fino, crea en tu .env.local:
+ * VITE_API_BASE=https://gorila-padel.vercel.app
+ */
+function getApiBase() {
+  const envBase = import.meta.env.VITE_API_BASE;
+  if (envBase) return String(envBase).replace(/\/$/, "");
+
+  // Heurística: si estás en local, pega a Vercel para probar
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (isLocal) return "https://gorila-padel.vercel.app";
+  }
+  return "";
+}
+
+async function callApi(path, { method = "POST", session, body } = {}) {
+  const API_BASE = getApiBase();
+  const url = `${API_BASE}${path}`;
+
+  const r = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  // Para depurar SIN romper:
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    console.warn(`[API ${path}] status=${r.status} body=${t}`);
+    return { ok: false, status: r.status, text: t };
+  }
+
+  return { ok: true, status: r.status };
+}
+
 /* =========================
    LISTAR PARTIDOS (futuros)
 ========================= */
@@ -91,9 +135,6 @@ export async function createMatch({
   const { data, error } = await supabase.from("matches").insert(payload).select("*").single();
   if (error) throw error;
 
-  // (Opcional) push a "seguidores" / etc si tienes endpoint
-  // try { await fetch("/api/push-match-created", {...}) } catch {}
-
   return data;
 }
 
@@ -116,17 +157,11 @@ export async function requestJoin(matchId) {
   if (error) throw error;
 
   // ✅ Push al creador (si falla NO rompe)
-  // ✅ IMPORTANTE: metemos Authorization para evitar 401 en Vercel
   try {
-    const r = await fetch("/api/push-join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ matchId: data.match_id, requestId: data.id }),
+    await callApi("/api/push-join", {
+      session,
+      body: { matchId: data.match_id, requestId: data.id },
     });
-    if (!r.ok) console.warn("push-join status", r.status, await r.text());
   } catch (e) {
     console.warn("Push join falló pero la solicitud se guardó:", e?.message || e);
   }
@@ -229,17 +264,6 @@ export async function approveRequest({ requestId }) {
     .single();
 
   if (error) throw error;
-
-  // (Opcional) push al jugador aprobado si tienes endpoint:
-  // try {
-  //   const r = await fetch("/api/push-join-approved", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-  //     body: JSON.stringify({ requestId: data.id }),
-  //   });
-  //   if (!r.ok) console.warn("push-join-approved status", r.status, await r.text());
-  // } catch {}
-
   return data;
 }
 
@@ -259,17 +283,6 @@ export async function rejectRequest({ requestId }) {
     .single();
 
   if (error) throw error;
-
-  // (Opcional) push al jugador rechazado si tienes endpoint:
-  // try {
-  //   const r = await fetch("/api/push-join-rejected", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-  //     body: JSON.stringify({ requestId: data.id }),
-  //   });
-  //   if (!r.ok) console.warn("push-join-rejected status", r.status, await r.text());
-  // } catch {}
-
   return data;
 }
 
@@ -321,7 +334,7 @@ export async function fetchMatchMessages(matchId, opts = {}) {
   return data ?? [];
 }
 
-// ✅ ARREGLADO: acepta { matchId, text } o { matchId, message }
+// ✅ acepta { matchId, text } o { matchId, message }
 export async function sendMatchMessage({ matchId, text, message } = {}) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -347,16 +360,10 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 
   // ✅ Push chat (si falla, NO rompe)
   try {
-    const r = await fetch("/api/push-chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ messageId: inserted.id }),
+    await callApi("/api/push-chat", {
+      session,
+      body: { messageId: inserted.id },
     });
-
-    if (!r.ok) console.warn("push-chat status:", r.status, await r.text());
   } catch (e) {
     console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }

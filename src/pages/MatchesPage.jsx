@@ -111,7 +111,7 @@ export default function MatchesPage() {
     (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
-  const showPushButton = import.meta.env.DEV || qs.get("push") === "1";
+  const showPushButton = !!session;
   const debug = qs.get("debug") === "1";
 
   /* Session */
@@ -268,6 +268,24 @@ export default function MatchesPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* ✅ Push dentro de la app abierta (SW → window event) */
+  useEffect(() => {
+    const onPush = (e) => {
+      const p = e?.detail || {};
+      const title = String(p.title || "Gorila Pádel");
+      const body = String(p.body || "");
+
+      // ✅ toast dentro de la app (app abierta)
+      if (body) toast.success(`${title}: ${body}`);
+      else toast.success(title);
+
+      if (debug) console.log("📩 gp:push", p);
+    };
+
+    window.addEventListener("gp:push", onPush);
+    return () => window.removeEventListener("gp:push", onPush);
+  }, [toast, debug]);
 
   /* auto-open chat from url/storage */
   useEffect(() => {
@@ -525,14 +543,14 @@ export default function MatchesPage() {
 
   async function handleSendChat() {
     if (!chatOpenFor) return;
-
-    const text = String(chatText || "").trim();
-    if (!text) return;
-
     try {
-      // ✅ no lo vaciamos hasta que supabase confirme, así no “desaparece” si falla
-      await sendMatchMessage({ matchId: chatOpenFor, text });
+      const message = chatText.trim();
+      if (!message) return;
+
       setChatText("");
+
+      // ✅ matches.js espera { matchId, message }
+      await sendMatchMessage({ matchId: chatOpenFor, message });
 
       const rows = await fetchMatchMessages(chatOpenFor);
       setChatItems(Array.isArray(rows) ? rows : []);
@@ -806,9 +824,7 @@ export default function MatchesPage() {
                     >
                       <div>
                         <div style={{ fontWeight: 950 }}>{name}</div>
-                        <div style={{ fontSize: 12, opacity: 0.75 }}>
-                          {new Date(r.created_at).toLocaleString("es-ES")}
-                        </div>
+                        <div style={{ fontSize: 12, opacity: 0.75 }}>{new Date(r.created_at).toLocaleString("es-ES")}</div>
                       </div>
                       <div className="gpRow">
                         <button className="gpBtn" onClick={() => handleApprove(r.id)}>
@@ -867,43 +883,24 @@ export default function MatchesPage() {
 
               <div style={{ width: 170 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Fecha</div>
-                <input
-                  className="gpInput"
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-                />
+                <input className="gpInput" type="date" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} />
               </div>
 
               <div style={{ width: 140 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Hora</div>
-                <input
-                  className="gpInput"
-                  type="time"
-                  value={form.time}
-                  onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
-                />
+                <input className="gpInput" type="time" value={form.time} onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))} />
               </div>
             </div>
 
             <div className="gpRow" style={{ gap: 12, marginTop: 12 }}>
               <div style={{ width: 170 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Duración (min)</div>
-                <input
-                  className="gpInput"
-                  type="number"
-                  value={form.durationMin}
-                  onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))}
-                />
+                <input className="gpInput" type="number" value={form.durationMin} onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))} />
               </div>
 
               <div style={{ width: 170 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Nivel</div>
-                <select
-                  className="gpInput"
-                  value={form.level}
-                  onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}
-                >
+                <select className="gpInput" value={form.level} onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}>
                   <option value="bajo">Bajo</option>
                   <option value="medio">Medio</option>
                   <option value="alto">Alto</option>
@@ -912,11 +909,7 @@ export default function MatchesPage() {
 
               <div style={{ width: 190 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Ya sois</div>
-                <select
-                  className="gpInput"
-                  value={form.alreadyPlayers}
-                  onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}
-                >
+                <select className="gpInput" value={form.alreadyPlayers} onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}>
                   <option value={1}>1 (solo yo)</option>
                   <option value={2}>2</option>
                   <option value={3}>3</option>
@@ -925,13 +918,7 @@ export default function MatchesPage() {
 
               <div style={{ width: 170 }}>
                 <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Precio/jugador</div>
-                <input
-                  className="gpInput"
-                  type="number"
-                  value={form.pricePerPlayer}
-                  onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))}
-                  placeholder="(opcional)"
-                />
+                <input className="gpInput" type="number" value={form.pricePerPlayer} onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))} placeholder="(opcional)" />
               </div>
             </div>
 
@@ -969,19 +956,13 @@ export default function MatchesPage() {
                     <div style={{ fontSize: 12, opacity: 0.65, fontWeight: 900 }}>
                       {it.user_id?.slice?.(0, 6)}… · {new Date(it.created_at).toLocaleString("es-ES")}
                     </div>
-                    {/* ✅ ARREGLADO: es message */}
                     <div style={{ marginTop: 6, fontSize: 14, fontWeight: 800 }}>{it.message}</div>
                   </div>
                 ))}
               </div>
             )}
 
-            <textarea
-              className="gpTextarea"
-              value={chatText}
-              onChange={(e) => setChatText(e.target.value)}
-              placeholder="Escribe…"
-            />
+            <textarea className="gpTextarea" value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Escribe…" />
 
             <div className="gpRow" style={{ marginTop: 10 }}>
               <button className="gpBtn" onClick={handleSendChat} disabled={!chatText.trim()}>

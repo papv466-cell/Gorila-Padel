@@ -134,7 +134,6 @@ export default function App() {
   useEffect(() => {
     const unlock = () => {
       unlockGorilaAudio().catch(() => {});
-      // lo quitamos para no spamear
       window.removeEventListener("pointerdown", unlock);
       window.removeEventListener("keydown", unlock);
     };
@@ -150,7 +149,7 @@ export default function App() {
 
   // ✅ Mensajes desde Service Worker:
   // - NAVIGATE: navegar sin reload
-  // - PUSH_RECEIVED / PUSH_CLICKED: sonar gorila
+  // - PUSH_RECEIVED / PUSH_CLICKED: sonar gorila + mostrar toast en app abierta
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
@@ -164,10 +163,22 @@ export default function App() {
         return;
       }
 
-      // 🔊 Sonido gorila: push recibido (app abierta) o push clicado
+      // 🔊 + 🔔 (toast dentro de la app abierta)
       if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-        // 1 vez por notificación
+        // 1) sonido gorila (una vez por notificación)
         playGorila(1);
+
+        // 2) toast dentro de la app (MatchesPage escucha "gp:push")
+        const detail = {
+          title: data.title || "Gorila Pádel",
+          body: data.body || "",
+          url: data.url || (type === "PUSH_CLICKED" ? "/partidos" : "/partidos"),
+        };
+
+        try {
+          window.dispatchEvent(new CustomEvent("gp:push", { detail }));
+        } catch {}
+
         return;
       }
     };
