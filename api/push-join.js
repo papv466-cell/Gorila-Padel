@@ -1,4 +1,3 @@
-// api/push-join.js
 import webpush from "web-push";
 import { createClient } from "@supabase/supabase-js";
 
@@ -8,7 +7,8 @@ export default async function handler(req, res) {
 
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
+    const VAPID_PUBLIC =
+      process.env.VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY;
     const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
     if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -21,7 +21,6 @@ export default async function handler(req, res) {
     const { matchId, requestId } = body || {};
     if (!matchId || !requestId) return res.status(400).send("Missing matchId or requestId");
 
-    // 1) match (para sacar creador + título)
     const { data: match, error: matchErr } = await supabase
       .from("matches")
       .select("id, club_name, created_by_user, start_at")
@@ -32,7 +31,6 @@ export default async function handler(req, res) {
     const creatorId = match.created_by_user;
     if (!creatorId) return res.status(200).json({ ok: true, sent: 0, reason: "no creator" });
 
-    // 2) request (para saber quién solicita)
     const { data: reqRow, error: reqErr } = await supabase
       .from("match_join_requests")
       .select("id, match_id, user_id, status, created_at")
@@ -40,10 +38,9 @@ export default async function handler(req, res) {
       .single();
     if (reqErr || !reqRow) return res.status(500).send(reqErr?.message || "Request not found");
 
-    // Si el que solicita es el creador, no enviamos
     if (reqRow.user_id === creatorId) return res.status(200).json({ ok: true, sent: 0, reason: "self" });
 
-    // 3) push subs del creador
+    // ✅ TU COLUMNA ES user_id
     const { data: subs, error: subsErr } = await supabase
       .from("push_subscriptions")
       .select("endpoint, p256dh, auth")
@@ -65,13 +62,17 @@ export default async function handler(req, res) {
 
     for (const s of subs) {
       try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payload
-        );
+        await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
         sent++;
       } catch (e) {
-        errors.push(String(e?.message || e));
+        const statusCode = e?.statusCode || e?.status || null;
+        errors.push({ statusCode, message: String(e?.message || e) });
+
+        if (statusCode === 410) {
+          try {
+            await supabase.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
+          } catch {}
+        }
       }
     }
 
