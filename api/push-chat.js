@@ -3,27 +3,27 @@ import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
-      return res.status(405).send("Method Not Allowed");
+    // ✅ CORS (solo para local)
+    const origin = req.headers.origin || "";
+    const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1");
+    if (isLocal) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
+    if (req.method === "OPTIONS") return res.status(200).end();
+    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    // ✅ ENV LIMPIO (backend)
+    const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    // ✅ Limpio y sin duplicados
-    const VAPID_PUBLIC =
-      process.env.VAPID_PUBLIC_KEY ||
-      process.env.VITE_VAPID_PUBLIC_KEY ||
-      process.env.VITE_VAPID_PUBLIC_KEY; // (si está repetido en tu env no pasa nada)
-
+    const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
     const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
+    if (!SUPABASE_URL || !SERVICE_ROLE)
       return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-    }
-    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE)
       return res.status(500).send("Missing VAPID public/private keys");
-    }
 
     webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -39,129 +39,97 @@ export default async function handler(req, res) {
       .eq("id", messageId)
       .single();
 
-    if (msgErr || !msg) {
-      return res.status(500).send(msgErr?.message || "Message not found");
-    }
+    if (msgErr || !msg) return res.status(500).send(msgErr?.message || "Message not found");
 
     const matchId = msg.match_id;
 
     // 2) Leer partido
     const { data: match, error: matchErr } = await supabase
       .from("matches")
-      .select("id, club_name, start_at, created_by_user")
+      .select("id, club_name, created_by_user")
       .eq("id", matchId)
       .single();
 
-    if (matchErr || !match) {
-      return res.status(500).send(matchErr?.message || "Match not found");
-    }
+    if (matchErr || !match) return res.status(500).send(matchErr?.message || "Match not found");
 
-    // 3) Construir destinatarios (sin duplicados)
+    // 3) Recipients (creador + joiners + participantes chat)
     const recipients = new Set();
+    if (match.created_by_user) recipients.add(match.created_by_user);
 
-    // creador
-    if (match.created_by_user) recipients.add(String(match.created_by_user));
-
-    // joiners approved/pending
     const { data: joiners, error: joinErr } = await supabase
       .from("match_join_requests")
       .select("user_id, status")
       .eq("match_id", matchId)
       .in("status", ["approved", "pending"]);
-
     if (joinErr) return res.status(500).send(joinErr.message);
+    for (const r of joiners || []) if (r.user_id) recipients.add(r.user_id);
 
-    for (const r of joiners || []) {
-      if (r?.user_id) recipients.add(String(r.user_id));
-    }
-
-    // usuarios que han escrito en el chat
     const { data: chatUsers, error: chatUsersErr } = await supabase
       .from("match_messages")
       .select("user_id")
       .eq("match_id", matchId);
-
     if (chatUsersErr) return res.status(500).send(chatUsersErr.message);
+    for (const r of chatUsers || []) if (r.user_id) recipients.add(r.user_id);
 
-    for (const r of chatUsers || []) {
-      if (r?.user_id) recipients.add(String(r.user_id));
-    }
+    // No mandarse a uno mismo
+    recipients.delete(msg.user_id);
 
-    // ✅ Nunca enviar al autor del mensaje
-    const authorId = String(msg.user_id || "");
-    recipients.delete(authorId);
-
-    const recipientIds = Array.from(recipients).filter(Boolean);
-
+    const recipientIds = Array.from(recipients);
     if (recipientIds.length === 0) {
-      return res.status(200).json({
-        ok: true,
-        matchId,
-        messageId,
-        authorId,
-        recipients: 0,
-        subs: 0,
-        sent: 0,
-        reason: "no recipients after filtering author",
-      });
+      return res.status(200).json({ ok: true, sent: 0, reason: "no recipients" });
     }
 
-    // 4) Cargar subscriptions de esos destinatarios
-    // ✅ TU COLUMNA ES user_id (perfecto)
+    // 4) Cargar subs
     const { data: subs, error: subsErr } = await supabase
       .from("push_subscriptions")
-      .select("user_id, endpoint, p256dh, auth")
+      .select("user_id, endpoint, p256dh, auth, updated_at")
       .in("user_id", recipientIds);
 
     if (subsErr) return res.status(500).send(subsErr.message);
 
-    // Si no hay subs, devolvemos info útil para depurar
-    if (!subs || subs.length === 0) {
-      return res.status(200).json({
-        ok: true,
-        matchId,
-        messageId,
-        authorId,
-        recipients: recipientIds.length,
-        recipientIds,
-        subs: 0,
-        sent: 0,
-        reason: "no push_subscriptions for recipients",
-      });
+    // 🔥 CRÍTICO: si hay varias subs del mismo user, quédate con la MÁS NUEVA
+    const byUser = new Map();
+    for (const s of subs || []) {
+      const prev = byUser.get(s.user_id);
+      if (!prev) byUser.set(s.user_id, s);
+      else {
+        const prevTs = new Date(prev.updated_at || 0).getTime();
+        const curTs = new Date(s.updated_at || 0).getTime();
+        if (curTs >= prevTs) byUser.set(s.user_id, s);
+      }
     }
+    const finalSubs = Array.from(byUser.values());
 
     const payload = JSON.stringify({
       type: "chat",
       matchId,
       title: `Nuevo mensaje en ${match.club_name || "partido"}`,
-      body: String(msg.message || "").slice(0, 120) || "Mensaje nuevo",
+      body: msg.message?.slice(0, 120) || "Mensaje nuevo",
       url: `/partidos?openChat=${encodeURIComponent(matchId)}`,
     });
 
     let sent = 0;
     const errors = [];
 
-    for (const s of subs) {
+    for (const s of finalSubs) {
       try {
         await webpush.sendNotification(
-          {
-            endpoint: s.endpoint,
-            keys: { p256dh: s.p256dh, auth: s.auth },
-          },
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
           payload
         );
         sent++;
       } catch (e) {
         const statusCode = e?.statusCode || e?.status || null;
+
         errors.push({
           statusCode,
           message: String(e?.message || e),
           user_id: s.user_id,
-          endpoint: (s.endpoint || "").slice(0, 60) + "...",
+          endpoint: s.endpoint?.slice?.(0, 60) + "...",
         });
 
-        // ✅ Endpoint muerto → lo borramos
-        if (statusCode === 410) {
+        // ✅ BORRAR TAMBIÉN EN 403 (FCM suele dar 403 cuando esa sub ya no vale)
+        if (statusCode === 410 || statusCode === 403) {
           try {
             await supabase.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
           } catch {}
@@ -173,11 +141,11 @@ export default async function handler(req, res) {
       ok: true,
       matchId,
       messageId,
-      authorId,
+      authorId: msg.user_id,
       recipients: recipientIds.length,
-      recipientIds,
-      subs: subs.length,
+      subs: finalSubs.length,
       sent,
+      recipientIds,
       errors,
     });
   } catch (e) {
