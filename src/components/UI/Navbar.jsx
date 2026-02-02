@@ -38,8 +38,8 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navLeft">
-        <img className="navLogo" src="/imglogog.png" alt="Global Padel" />
-        <div className="navBrand">Global Padel</div>
+        <img className="navLogo" src="/imglogog.png" alt="Gorila Pádel" />
+        <div className="navBrand">Gorila Pádel</div>
       </div>
 
       {/* Desktop tabs */}

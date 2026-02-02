@@ -11,43 +11,17 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(204).end();
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-    const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    // ✅ VAPID: intenta varios nombres por si en Vercel los tienes distintos
-    const VAPID_PUBLIC =
-      process.env.VAPID_PUBLIC_KEY ||
-      process.env.VITE_VAPID_PUBLIC_KEY ||
-      process.env.VAPID_PUBLIC ||
-      process.env.VITE_VAPID_PUBLIC;
+        const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
+        const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
-    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE;
+        if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+        if (!VAPID_PUBLIC || !VAPID_PRIVATE) return res.status(500).send("Missing VAPID public/private keys");
 
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return res.status(500).json({
-        ok: false,
-        where: "env",
-        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
-        has: {
-          SUPABASE_URL: !!SUPABASE_URL,
-          SERVICE_ROLE: !!SERVICE_ROLE,
-        },
-      });
-    }
-
-    if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
-      return res.status(500).json({
-        ok: false,
-        where: "env",
-        error: "Missing VAPID public/private keys",
-        has: {
-          VAPID_PUBLIC: !!VAPID_PUBLIC,
-          VAPID_PRIVATE: !!VAPID_PRIVATE,
-        },
-      });
-    }
-
-    webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
+        webpush.setVapidDetails("mailto:papv466@gmail.com", VAPID_PUBLIC, VAPID_PRIVATE);
+        ;
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false },

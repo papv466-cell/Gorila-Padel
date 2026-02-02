@@ -19,22 +19,11 @@ async function getSessionOrThrow() {
 }
 
 /**
- * ✅ LOCAL vs VERCEL
- * - En Vercel: API_BASE = ""  → fetch("/api/..") normal
- * - En local:  API_BASE = "https://gorila-padel.vercel.app" para probar push
- *
- * Si quieres control fino, en tu .env.local pon:
- * VITE_API_BASE=https://gorila-padel.vercel.app
+ * ✅ MISMO ORIGEN SIEMPRE
+ * - En Vercel: /api/... va a las serverless functions
+ * - En local:  /api/... lo pilla el proxy de Vite (vite.config.js)
  */
 function getApiBase() {
-  const envBase = import.meta.env.VITE_API_BASE;
-  if (envBase) return String(envBase).replace(/\/$/, "");
-
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    const isLocal = host === "localhost" || host === "127.0.0.1";
-    if (isLocal) return "https://gorila-padel.vercel.app";
-  }
   return "";
 }
 
@@ -51,23 +40,18 @@ async function callApi(path, { method = "POST", session, body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  // Intentamos leer texto siempre (para debug)
   const txt = await r.text().catch(() => "");
-
-  // Log útil siempre
-  console.log(`[API ${path}] status=${r.status} body=${txt}`);
-
-  // Si no es OK devolvemos info pero NO rompemos el flujo
-  if (!r.ok) {
-    console.warn(`[API ${path}] ❌ status=${r.status} body=${txt}`);
-    return { ok: false, status: r.status, text: txt };
-  }
-
-  // Si es OK, intentamos parsear JSON (si lo hay)
   let json = null;
   try {
     json = txt ? JSON.parse(txt) : null;
   } catch {}
+
+  console.log(`[API ${path}] status=${r.status}`, json ?? txt);
+
+  if (!r.ok) {
+    console.warn(`[API ${path}] ❌ status=${r.status}`, json ?? txt);
+    return { ok: false, status: r.status, text: txt, json };
+  }
 
   return { ok: true, status: r.status, text: txt, json };
 }
@@ -166,16 +150,15 @@ export async function requestJoin(matchId) {
 
   if (error) throw error;
 
-  // ✅ Push al creador (si falla NO rompe)
+  // ✅ Push al creador (NO rompe si falla)
   try {
     const out = await callApi("/api/push-join", {
       session,
       body: { matchId: data.match_id, requestId: data.id },
     });
 
-    // Si responde pero no envía, lo verás aquí
     if (out?.ok && out?.json && (out.json.sent ?? 0) === 0) {
-      console.warn("⚠️ push-join NO enviado:", out.json);
+      console.warn("⚠️ push-join respondió OK pero NO envió:", out.json);
     }
   } catch (e) {
     console.warn("Push join falló pero la solicitud se guardó:", e?.message || e);
@@ -373,33 +356,19 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 
   if (insErr) throw insErr;
 
-    // ✅ Push chat (si falla, NO rompe)
-    try {
-      const session = await getSessionOrThrow();
-  
-      const r = await fetch("/api/push-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ messageId: inserted.id }),
-      });
-  
-      const txt = await r.text().catch(() => "");
-      console.log("push-chat raw:", r.status, txt);
-  
-      if (!r.ok) console.warn("push-chat status:", r.status, txt);
-      else {
-        try {
-          const j = JSON.parse(txt);
-          console.log("push-chat json:", j);
-          if ((j.sent ?? 0) === 0) console.warn("⚠️ push-chat NO enviado:", j);
-        } catch {}
-      }
-    } catch (e) {
-      console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
-    }  
+  // ✅ Push chat (NO rompe si falla)
+  try {
+    const out = await callApi("/api/push-chat", {
+      session,
+      body: { messageId: inserted.id },
+    });
+
+    if (out?.ok && out?.json && (out.json.sent ?? 0) === 0) {
+      console.warn("⚠️ push-chat respondió OK pero NO envió:", out.json);
+    }
+  } catch (e) {
+    console.warn("Push chat falló pero el mensaje se guardó:", e?.message || e);
+  }
 
   return inserted;
 }
