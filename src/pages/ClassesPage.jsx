@@ -6,6 +6,12 @@ import { useToast } from "../components/ToastProvider";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 
+// 🦍🔊 Gorila timers
+import { scheduleGorilaForEnd, clearGorilaTimers } from "../services/gorilaSound";
+
+const LS_ACTIVE_CLASS_ID = "gp_active_class_id";
+const LS_ACTIVE_CLASS_END_AT = "gp_active_class_end_at";
+
 function toDateInputValue(d = new Date()) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -43,6 +49,31 @@ function initials(name = "") {
 
 function isUuid(x = "") {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
+}
+
+// helpers active class
+function setActiveClass(classId, endAtIso) {
+  try {
+    localStorage.setItem(LS_ACTIVE_CLASS_ID, String(classId || ""));
+    localStorage.setItem(LS_ACTIVE_CLASS_END_AT, String(endAtIso || ""));
+  } catch {}
+}
+
+function clearActiveClass() {
+  try {
+    localStorage.removeItem(LS_ACTIVE_CLASS_ID);
+    localStorage.removeItem(LS_ACTIVE_CLASS_END_AT);
+  } catch {}
+}
+
+function getActiveClass() {
+  try {
+    const id = String(localStorage.getItem(LS_ACTIVE_CLASS_ID) || "").trim();
+    const end_at = String(localStorage.getItem(LS_ACTIVE_CLASS_END_AT) || "").trim();
+    return { id, end_at };
+  } catch {
+    return { id: "", end_at: "" };
+  }
 }
 
 export default function ClassesPage() {
@@ -154,6 +185,33 @@ export default function ClassesPage() {
     if (!session?.user?.id) return;
     ensurePushSubscription().catch(() => {});
   }, [authReady, session?.user?.id]);
+
+  // ✅ Al entrar en Clases: reprogramar timers si hay “clase activa” guardada
+  useEffect(() => {
+    if (!authReady) return;
+
+    const { id, end_at } = getActiveClass();
+    if (!id || !end_at) return;
+
+    const endMs = new Date(end_at).getTime();
+    if (!Number.isFinite(endMs) || endMs <= Date.now()) {
+      // ya pasó -> limpiamos
+      clearGorilaTimers();
+      clearActiveClass();
+      return;
+    }
+
+    // programar (5 min antes + fin)
+    scheduleGorilaForEnd(end_at);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
+
+  // ✅ Al salir de la pantalla (unmount): NO borramos active, pero sí limpiamos timers (se reprograman al volver)
+  useEffect(() => {
+    return () => {
+      clearGorilaTimers();
+    };
+  }, []);
 
   // -------- Favoritos: IDs de profes favoritos ----------
   useEffect(() => {
@@ -336,6 +394,16 @@ export default function ClassesPage() {
       const map = {};
       for (const p of profs || []) map[String(p.id)] = p;
       setProfilesById(map);
+
+      // ✅ limpieza automática si la clase activa ya terminó
+      const { id: activeId, end_at: activeEnd } = getActiveClass();
+      if (activeId && activeEnd) {
+        const endMs2 = new Date(activeEnd).getTime();
+        if (!Number.isFinite(endMs2) || endMs2 <= Date.now()) {
+          clearGorilaTimers();
+          clearActiveClass();
+        }
+      }
     } catch (e) {
       toast.error(e?.message || "No se pudieron cargar las clases");
       setItems([]);
@@ -433,6 +501,10 @@ export default function ClassesPage() {
     if (!session?.user) return goLogin();
     if (bookingId) return;
 
+    // buscamos end_at (para programar el gorila)
+    const cls = items.find((x) => x.id === classId) || null;
+    const endAt = cls?.end_at ? String(cls.end_at) : "";
+
     setBookingId(classId);
     setItems((prev) => prev.map((x) => (x.id === classId ? { ...x, is_booked: true } : x)));
 
@@ -441,6 +513,13 @@ export default function ClassesPage() {
       if (error) throw error;
 
       toast.success("Clase reservada 🦍");
+
+      // ✅ PRO: marcar clase activa + timers (5min antes + fin)
+      if (endAt) {
+        setActiveClass(classId, endAt);
+        scheduleGorilaForEnd(endAt, classId);
+      }
+
       await loadDay();
     } catch (e) {
       toast.error(e?.message || "No se pudo reservar");
@@ -462,6 +541,14 @@ export default function ClassesPage() {
       if (error) throw error;
 
       toast.success("Reserva anulada. El profe ha sido avisado 📭");
+
+      // ✅ si era mi clase activa -> limpiar
+      const { id: activeId } = getActiveClass();
+      if (activeId && String(activeId) === String(classId)) {
+        clearGorilaTimers();
+        clearActiveClass();
+      }
+
       await loadDay();
     } catch (e) {
       toast.error(e?.message || "No se pudo anular");
@@ -486,6 +573,14 @@ export default function ClassesPage() {
       if (error) throw error;
 
       toast.success(cls.is_booked ? "Clase cancelada y alumno avisado ✅" : "Clase borrada ✅");
+
+      // ✅ si justo era la activa -> limpiar
+      const { id: activeId } = getActiveClass();
+      if (activeId && String(activeId) === String(classId)) {
+        clearGorilaTimers();
+        clearActiveClass();
+      }
+
       await loadDay();
     } catch (e) {
       toast.error(e?.message || "No se pudo cancelar");
@@ -521,12 +616,9 @@ export default function ClassesPage() {
         const start = new Date(c.start_at);
         if (String(day) === String(todayStr) && start < now) return false;
 
-        // filtros base
         if (filterClubId && String(c.club_id || "") !== String(filterClubId)) return false;
         if (filterTeacher && String(c.teacher_id || "") !== String(filterTeacher)) return false;
 
-        // ✅ si venimos del mapa con club=...
-        // - si tengo favoritos => solo clases libres de mis profes favoritos
         if (cameFromMapClub && hasFavs) {
           if (!favTeacherIds.has(String(c.teacher_id))) return false;
           if (c.is_booked) return false;
@@ -573,6 +665,16 @@ export default function ClassesPage() {
     return false;
   }, [isTeacher, slotClubPick]);
 
+  // ✅ UI: si hay clase activa guardada, mostramos un mini aviso
+  const activeInfo = useMemo(() => {
+    const { id, end_at } = getActiveClass();
+    if (!id || !end_at) return null;
+    const endMs = new Date(end_at).getTime();
+    if (!Number.isFinite(endMs) || endMs <= Date.now()) return null;
+    const minsLeft = Math.max(0, Math.round((endMs - Date.now()) / 60000));
+    return { id, end_at, minsLeft };
+  }, [items, day, loading]);
+
   return (
     <div className="page">
       <div className="pageWrap">
@@ -586,6 +688,38 @@ export default function ClassesPage() {
               </div>
             </div>
           </div>
+
+          {/* ✅ Banner clase activa */}
+          {activeInfo ? (
+            <div
+              className="card"
+              style={{
+                marginTop: 12,
+                border: "2px solid rgba(0,0,0,0.10)",
+                background: "rgba(34,197,94,0.10)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ fontWeight: 950 }}>
+                  🦍 Clase activa en marcha — quedan ~{activeInfo.minsLeft} min
+                </div>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => {
+                    clearGorilaTimers();
+                    clearActiveClass();
+                    toast.success("Avisos de clase desactivados ✅");
+                  }}
+                >
+                  Parar avisos
+                </button>
+              </div>
+              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
+                Sonará el gorila a falta de 5 min (2x) y al terminar (4x).
+              </div>
+            </div>
+          ) : null}
 
           <div className="gpRow" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ fontWeight: 900, fontSize: 13, opacity: 0.75 }}>Día:</div>

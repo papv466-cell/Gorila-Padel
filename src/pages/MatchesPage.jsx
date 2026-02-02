@@ -28,6 +28,9 @@ import { fetchProfilesByIds } from "../services/profilesPublic";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 
+// ✅ avisos sonoros
+import { scheduleEndWarningsForEvent, unscheduleEventWarnings } from "../services/gorilaSound";
+
 /* Utils */
 function toDateInputValue(d = new Date()) {
   const yyyy = d.getFullYear();
@@ -172,29 +175,17 @@ export default function MatchesPage() {
     };
   }, []);
 
-  // Dedupe toasts de mensajes (StrictMode/DEV)
-  const seenMsgIdsRef = useRef(new Set());
-  const hasSeenMsg = (id) => seenMsgIdsRef.current.has(String(id));
-  const markSeenMsg = (id) => {
-    const s = seenMsgIdsRef.current;
-    s.add(String(id));
-    if (s.size > 500) {
-      const arr = Array.from(s);
-      seenMsgIdsRef.current = new Set(arr.slice(-250));
-    }
-  };
-
   function goLogin() {
-    navigate("/login", { state: { from: location.pathname + location.search } });
+    navigate("/login", { replace: true, state: { from: location.pathname + location.search } });
   }
 
-  /* session */
+  /* Session load */
   useEffect(() => {
     let alive = true;
 
     supabase.auth.getSession().then(({ data }) => {
       if (!alive) return;
-      setSession(data.session ?? null);
+      setSession(data?.session ?? null);
       setAuthReady(true);
     });
 
@@ -210,299 +201,75 @@ export default function MatchesPage() {
     };
   }, []);
 
-  /* Persist openChat si viene en URL */
-  useEffect(() => {
-    if (!openChatFromUrl) return;
-    try {
-      window.sessionStorage?.setItem?.("openChat", openChatFromUrl);
-    } catch {}
-  }, [openChatFromUrl]);
-
-  /* load clubs sheet once */
+  /* initial clubs (sheet) */
   useEffect(() => {
     fetchClubsFromGoogleSheet()
-      .then((rows) => setClubsSheet(rows ?? []))
-      .catch(() => {});
+      .then((rows) => setClubsSheet(Array.isArray(rows) ? rows : []))
+      .catch(() => setClubsSheet([]));
   }, []);
 
-  /* Carga inicial */
-  async function reloadFull() {
+  /* load matches + status */
+  async function load() {
     try {
       setStatus({ loading: true, error: null });
 
-      const data = await fetchMatches({ limit: 500 });
+      const list = await fetchMatches({ limit: 400 });
       if (!aliveRef.current) return;
 
-      setItems(sortByStartAtAsc(data));
+      const unique = uniqById(list);
+      setItems(sortByStartAtAsc(unique));
 
-      const ids = data.map((m) => m.id);
-      if (session && ids.length) {
-        const [mine, counts, latest] = await Promise.all([
-          fetchMyRequestsForMatchIds(ids),
-          fetchApprovedCounts(ids),
-          fetchLatestChatTimes(ids),
-        ]);
-        if (!aliveRef.current) return;
+      const ids = unique.map((m) => m.id);
+      const my = await fetchMyRequestsForMatchIds(ids);
+      if (!aliveRef.current) return;
+      setMyReqStatus(my || {});
 
-        setMyReqStatus(mine || {});
-        setApprovedCounts(counts || {});
-        setLatestChatTsByMatch(latest || {});
-      } else {
-        setMyReqStatus({});
-        setApprovedCounts({});
-        setLatestChatTsByMatch({});
-      }
+      const counts = await fetchApprovedCounts(ids);
+      if (!aliveRef.current) return;
+      setApprovedCounts(counts || {});
 
-      setStatus({ loading: false, error: null });
+      const latest = await fetchLatestChatTimes(ids);
+      if (!aliveRef.current) return;
+      setLatestChatTsByMatch(latest || {});
     } catch (e) {
       if (!aliveRef.current) return;
-      setStatus({ loading: false, error: e?.message || "Error cargando partidos" });
+      setStatus({ loading: false, error: e?.message || "No se pudieron cargar los partidos" });
+      setItems([]);
+    } finally {
+      if (!aliveRef.current) return;
+      setStatus((s) => ({ ...s, loading: false }));
     }
   }
 
   useEffect(() => {
     if (!authReady) return;
-    reloadFull();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady, session]);
+  }, [authReady]);
 
-  /* Realtime matches */
+  /* realtime */
   useEffect(() => {
-    if (!authReady) return;
+    const unsub1 = subscribeMatchesRealtime((payload) => {
+      const t = payload?.eventType;
+      const row = payload?.new || payload?.old;
+      if (!row?.id) return;
 
-    const unsub = subscribeMatchesRealtime((payload) => {
-      const type = payload?.eventType;
-      const rowNew = payload?.new || null;
-      const rowOld = payload?.old || null;
-
-      if (type === "INSERT" && rowNew?.id) {
-        setItems((prev) => upsertMatchSorted(prev, rowNew));
-        setApprovedCounts((prev) => ({ ...prev, [rowNew.id]: prev[rowNew.id] || 0 }));
-      }
-
-      if (type === "UPDATE" && rowNew?.id) {
-        setItems((prev) => upsertMatchSorted(prev, rowNew));
-      }
-
-      if (type === "DELETE") {
-        const id = rowOld?.id;
-        if (id) {
-          setItems((prev) => removeMatch(prev, id));
-          setMyReqStatus((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
-          setApprovedCounts((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
-          setLatestChatTsByMatch((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
-          if (chatOpenFor === id) setChatOpenFor(null);
-          if (requestsOpenFor === id) setRequestsOpenFor(null);
-        }
-      }
+      if (t === "DELETE") setItems((prev) => removeMatch(prev, row.id));
+      else setItems((prev) => upsertMatchSorted(prev, row));
     });
 
-    return () => unsub?.();
-  }, [authReady, chatOpenFor, requestsOpenFor]);
+    const unsub2 = subscribeJoinRequestsRealtime(() => load());
+    const unsub3 = subscribeAllMatchMessagesRealtime(() => load());
 
-  /* Requests modal */
-  async function openRequests(matchId) {
-    if (!session) return goLogin();
-    try {
-      setPendingBusy(true);
-      setRequestsOpenFor(matchId);
+    return () => {
+      unsub1?.();
+      unsub2?.();
+      unsub3?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      const reqs = await fetchPendingRequests(matchId);
-      if (!aliveRef.current) return;
-      setPending(reqs || []);
-
-      const ids = (reqs || []).map((r) => r.user_id).filter(Boolean);
-      if (ids.length > 0) {
-        const profs = await fetchProfilesByIds(ids);
-        if (!aliveRef.current) return;
-        setProfilesById((prev) => ({ ...prev, ...(profs || {}) }));
-      }
-    } catch (e) {
-      toast.error(e?.message ?? "No se pudieron cargar solicitudes");
-      setRequestsOpenFor(null);
-      setPending([]);
-    } finally {
-      if (aliveRef.current) setPendingBusy(false);
-    }
-  }
-
-  /* Realtime join requests + popup al creador */
-  useEffect(() => {
-    if (!authReady) return;
-    if (!session?.user?.id) return;
-
-    const unsub = subscribeJoinRequestsRealtime(async (payload) => {
-      const type = payload?.eventType;
-      const rowNew = payload?.new || null;
-      const rowOld = payload?.old || null;
-
-      const matchId = String(rowNew?.match_id || rowOld?.match_id || "");
-      if (!matchId) return;
-
-      // Toast al creador si entra una solicitud pending
-      if (type === "INSERT") {
-        const match = items.find((x) => String(x.id) === matchId);
-        const isCreator = match?.created_by_user && match.created_by_user === session.user.id;
-        const statusNew = String(rowNew?.status || "pending");
-        const isPending = statusNew === "pending" || !statusNew;
-
-        if (isCreator && isPending && String(requestsOpenFor || "") !== matchId) {
-          toast.info("Nueva solicitud para unirse", {
-            title: match?.club_name || "Tu partido",
-            duration: 4500,
-            onClick: () => openRequests(matchId),
-          });
-        }
-      }
-
-      // Recalcula contadores SOLO ese partido
-      try {
-        const counts = await fetchApprovedCounts([matchId]);
-        if (aliveRef.current) setApprovedCounts((prev) => ({ ...prev, ...(counts || {}) }));
-      } catch {}
-
-      // Mi estado SOLO ese partido
-      try {
-        const mine = await fetchMyRequestsForMatchIds([matchId]);
-        if (aliveRef.current) setMyReqStatus((prev) => ({ ...prev, ...(mine || {}) }));
-      } catch {}
-
-      // Si modal abierto, refresca pendientes
-      if (String(requestsOpenFor || "") === matchId) {
-        try {
-          setPendingBusy(true);
-          const reqs = await fetchPendingRequests(matchId);
-          if (!aliveRef.current) return;
-
-          setPending(reqs || []);
-          const ids = (reqs || []).map((r) => r.user_id).filter(Boolean);
-          if (ids.length > 0) {
-            const profs = await fetchProfilesByIds(ids);
-            if (!aliveRef.current) return;
-            setProfilesById((prev) => ({ ...prev, ...(profs || {}) }));
-          }
-        } catch {
-          // no rompemos UI
-        } finally {
-          if (aliveRef.current) setPendingBusy(false);
-        }
-      }
-    });
-
-    return () => unsub?.();
-  }, [authReady, session, items, requestsOpenFor, toast]);
-
-  /* Chat */
-  async function openChat(matchId) {
-    if (!session) return goLogin();
-    setChatLoading(true);
-    setChatOpenFor(matchId);
-    try {
-      const msgs = await fetchMatchMessages(matchId, { limit: 200 });
-      const list = Array.isArray(msgs) ? msgs : Array.isArray(msgs?.data) ? msgs.data : [];
-      setChatItems(list || []);
-    } finally {
-      setChatLoading(false);
-    }
-  }
-
-  /* Realtime mensajes globales (toast cuando chat está cerrado) */
-  useEffect(() => {
-    if (!authReady) return;
-    if (!session?.user?.id) return;
-
-    const unsub = subscribeAllMatchMessagesRealtime((payload) => {
-      const rowNew = payload?.new || null;
-      if (!rowNew?.id) return;
-
-      // dedupe
-      if (hasSeenMsg(rowNew.id)) return;
-      markSeenMsg(rowNew.id);
-
-      const matchId = String(rowNew.match_id || "");
-      if (!matchId) return;
-
-      // si es mío, fuera
-      const mine = rowNew.user_id && rowNew.user_id === session.user.id;
-      if (mine) return;
-
-      // si tengo el chat abierto de ese partido, no toast (ya lo veo)
-      if (chatOpenFor && String(chatOpenFor) === matchId) return;
-
-      // Solo avisar si me afecta: creador o approved/pending
-      const match = items.find((x) => String(x.id) === matchId);
-      const isCreator = match?.created_by_user && match.created_by_user === session.user.id;
-      const st = myReqStatus[matchId];
-      const isParticipant = st === "approved" || st === "pending";
-      if (!isCreator && !isParticipant) return;
-
-      // guarda último mensaje
-      if (rowNew?.created_at) {
-        const ts = new Date(rowNew.created_at).getTime();
-        if (Number.isFinite(ts)) setLatestChatTsByMatch((prev) => ({ ...prev, [matchId]: ts }));
-      }
-
-      toast.info("📩 Nuevo mensaje", {
-        title: match?.club_name || "Chat",
-        duration: 4500,
-        onClick: () => openChat(matchId),
-      });
-    });
-
-    return () => unsub?.();
-  }, [authReady, session, chatOpenFor, items, myReqStatus, toast]);
-
-  /* Realtime chat (solo cuando chat abierto) */
-  useEffect(() => {
-    if (!authReady) return;
-    if (!session?.user?.id) return;
-    if (!chatOpenFor) return;
-
-    const unsub = subscribeMatchMessagesRealtime(chatOpenFor, (payload) => {
-      const type = payload?.eventType;
-      const rowNew = payload?.new || null;
-
-      if (type === "INSERT" && rowNew?.id) {
-        setChatItems((prev) => uniqById([...(prev || []), rowNew]));
-
-        // actualiza último mensaje
-        if (rowNew?.created_at) {
-          const ts = new Date(rowNew.created_at).getTime();
-          if (Number.isFinite(ts)) setLatestChatTsByMatch((prev) => ({ ...prev, [chatOpenFor]: ts }));
-        }
-      }
-    });
-
-    return () => unsub?.();
-  }, [authReady, session, chatOpenFor]);
-
-  async function handleSendChat() {
-    if (!chatOpenFor) return;
-    const text = chatText.trim();
-    if (!text) return;
-
-    try {
-      setChatText("");
-      await sendMatchMessage({ matchId: chatOpenFor, message: text });
-    } catch (e) {
-      toast.error(e?.message || "No se pudo enviar el mensaje");
-      setChatText(text);
-    }
-  }
-
-  /* Auto-open chat desde notificación */
+  /* auto-open chat from url/storage */
   useEffect(() => {
     if (!openChatParam) return;
     if (!authReady) return;
@@ -512,22 +279,15 @@ export default function MatchesPage() {
       return;
     }
 
-    const t = setTimeout(async () => {
-      try {
-        await openChat(openChatParam);
-        try {
-          window.sessionStorage?.removeItem?.("openChat");
-        } catch {}
-      } catch (e) {
-        console.error("Auto-open chat falló:", e);
-      }
-    }, 120);
+    try {
+      window.sessionStorage?.removeItem?.("openChat");
+    } catch {}
 
-    return () => clearTimeout(t);
+    openChat(openChatParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authReady, session]);
 
-  /* Auto-open requests desde notificación */
+  /* auto-open requests from url */
   useEffect(() => {
     if (!openRequestsParam) return;
     if (!authReady) return;
@@ -537,8 +297,7 @@ export default function MatchesPage() {
       return;
     }
 
-    const t = setTimeout(() => openRequests(openRequestsParam), 120);
-    return () => clearTimeout(t);
+    openRequests(openRequestsParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequestsParam, authReady, session]);
 
@@ -588,6 +347,59 @@ export default function MatchesPage() {
   }, [filteredList, myReqStatus, session]);
 
   const visibleList = viewMode === "mine" ? myList : filteredList;
+
+  /* =========================
+     ⏱️ Avisos sonoros (5 min antes + fin)
+  ========================= */
+  useEffect(() => {
+    if (!authReady) return;
+
+    const uid = session?.user?.id ? String(session.user.id) : "";
+    const desired = new Set();
+
+    for (const m of visibleList || []) {
+      const isCreator = uid && String(m.created_by_user) === uid;
+      const myStatus = myReqStatus?.[m.id] || null;
+
+      if (!isCreator && myStatus !== "approved") continue;
+
+      const startMs = new Date(m.start_at).getTime();
+      const durMin = Number(m.duration_min) || 90;
+      const endMs = Number.isFinite(startMs) ? startMs + durMin * 60 * 1000 : NaN;
+      if (!Number.isFinite(endMs)) continue;
+
+      const key = `match:${m.id}`;
+      desired.add(key);
+
+      scheduleEndWarningsForEvent({
+        key,
+        endMs,
+        warn5MinTimes: 2,
+        endTimes: 4,
+      });
+    }
+
+    unscheduleEventWarnings((key) => key.startsWith("match:") && !desired.has(key));
+  }, [authReady, session?.user?.id, visibleList, myReqStatus]);
+
+  async function openRequests(matchId) {
+    try {
+      setRequestsOpenFor(matchId);
+      setPendingBusy(true);
+
+      const rows = await fetchPendingRequests(matchId);
+      setPending(Array.isArray(rows) ? rows : []);
+
+      const ids = (rows || []).map((r) => r.user_id);
+      const profs = await fetchProfilesByIds(ids);
+      setProfilesById(profs || {});
+    } catch (e) {
+      toast.error(e?.message || "No pude cargar solicitudes");
+      setPending([]);
+    } finally {
+      setPendingBusy(false);
+    }
+  }
 
   async function handleApprove(requestId) {
     try {
@@ -657,8 +469,7 @@ export default function MatchesPage() {
       const startAtISO = combineDateTimeToISO(form.date, form.time);
 
       if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId || "").trim())
-        throw new Error("Selecciona el club de la lista (para evitar errores).");
+      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista (para evitar errores).");
 
       await createMatch({
         clubId: form.clubId,
@@ -694,27 +505,60 @@ export default function MatchesPage() {
     }
   }
 
+  /* Chat */
+  async function openChat(matchId) {
+    try {
+      setChatOpenFor(matchId);
+      setChatItems([]);
+      setChatText("");
+      setChatLoading(true);
+
+      const rows = await fetchMatchMessages(matchId);
+      setChatItems(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      toast.error(e?.message || "No pude abrir el chat");
+      setChatItems([]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  async function handleSendChat() {
+    if (!chatOpenFor) return;
+
+    const text = String(chatText || "").trim();
+    if (!text) return;
+
+    try {
+      // ✅ no lo vaciamos hasta que supabase confirme, así no “desaparece” si falla
+      await sendMatchMessage({ matchId: chatOpenFor, text });
+      setChatText("");
+
+      const rows = await fetchMatchMessages(chatOpenFor);
+      setChatItems(Array.isArray(rows) ? rows : []);
+    } catch (e) {
+      toast.error(e?.message || "No pude enviar");
+    }
+  }
+
+  // ✅ realtime cuando está abierto
+  useEffect(() => {
+    if (!chatOpenFor) return;
+    const unsub = subscribeMatchMessagesRealtime(chatOpenFor, async () => {
+      try {
+        const rows = await fetchMatchMessages(chatOpenFor);
+        if (!aliveRef.current) return;
+        setChatItems(Array.isArray(rows) ? rows : []);
+      } catch {}
+    });
+    return () => unsub?.();
+  }, [chatOpenFor]);
+
   return (
     <div className="gpPage">
-      {/* Estilos “pro” (fallback si tu CSS global cambió) */}
       <style>{`
-  .gpPage{
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 18px 16px 30px;
-  }
-
-  .gpWrap{
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-
-    max-width: 980px;
-    margin: 0 auto;
-  }
+        .gpPage{height:100%;min-height:0;display:flex;flex-direction:column;padding:18px 16px 30px;}
+        .gpWrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:980px;margin:0 auto;}
         .gpHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
         .gpTitle{font-size:40px;line-height:1.05;margin:0;font-weight:900;letter-spacing:-0.02em;}
         .gpMeta{margin-top:6px;font-size:13px;opacity:.75;font-weight:700;}
@@ -723,177 +567,125 @@ export default function MatchesPage() {
         .gpBtn{border:0;border-radius:14px;padding:10px 14px;font-weight:900;cursor:pointer;background:#111;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.12);}
         .gpBtn:disabled{opacity:.55;cursor:not-allowed;}
         .gpBtnGhost{background:transparent;color:#111;border:1px solid rgba(0,0,0,.12);box-shadow:none;}
-        .gpBtnDanger{background:#dc2626;}
-        .gpTabs{display:flex;gap:10px;margin-top:10px;margin-bottom:12px;}
-        .gpInput{width:100%;max-width:520px;padding:10px 12px;border-radius:12px;border:1px solid rgba(0,0,0,.12);outline:none;}
-        .gpCard{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:14px 14px 12px;box-shadow:0 16px 40px rgba(0,0,0,.06);}
-        .gpCardTop{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;}
-        .gpClub{font-size:18px;font-weight:950;margin:0;}
-        .gpInfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;}
-        @media(min-width:720px){.gpInfo{grid-template-columns:repeat(4,minmax(0,1fr));}}
-        .gpBox{border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.0));}
-        .gpLabel{font-size:11px;opacity:.7;font-weight:800;}
-        .gpVal{margin-top:4px;font-size:13px;font-weight:900;}
+        .gpBtnDanger{background:#dc2626;color:#fff;}
+        .gpCard{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:14px;box-shadow:0 10px 24px rgba(0,0,0,.06);}
+        .gpGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px;}
+        .gpBox{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:10px;}
+        .gpLabel{font-size:11px;opacity:.65;font-weight:900;}
+        .gpVal{margin-top:4px;font-weight:900;font-size:13px;}
         .gpBadges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-        .gpBadge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;}
-        .gpOk{background:rgba(22,163,74,.12);color:#166534;border:1px solid rgba(22,163,74,.25);}
-        .gpWarn{background:rgba(245,158,11,.14);color:#92400e;border:1px solid rgba(245,158,11,.28);}
-        .gpBad{background:rgba(220,38,38,.12);color:#991b1b;border:1px solid rgba(220,38,38,.25);}
-        .gpActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+        .gpBadge{font-size:12px;font-weight:900;border-radius:999px;padding:6px 10px;border:1px solid rgba(0,0,0,.08);background:rgba(0,0,0,.03);}
+        .gpOk{background:rgba(34,197,94,.12);color:rgb(21,128,61);}
+        .gpWarn{background:rgba(245,158,11,.14);color:rgb(146,64,14);}
+        .gpBad{background:rgba(220,38,38,.12);color:rgb(185,28,28);}
+        .gpActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px;}
+        .gpTabs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0;}
+        .gpTab{border:1px solid rgba(0,0,0,.12);background:transparent;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer;}
+        .gpTabOn{background:#111;color:#fff;border-color:#111;}
         .gpList{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px;}
-        .gpModalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999;}
-        .gpModal{background:#fff;border-radius:18px;max-width:720px;width:100%;max-height:85vh;overflow:auto;padding:14px;border:1px solid rgba(0,0,0,.1);box-shadow:0 30px 80px rgba(0,0,0,.35);}
-        .gpModalHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+        .gpModalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:14px;z-index:9999;}
+        .gpModal{width:min(860px,100%);background:#fff;border-radius:18px;border:1px solid rgba(0,0,0,.12);padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.28);max-height:85vh;overflow:auto;}
+        .gpModalHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
         .gpH2{margin:0;font-size:18px;font-weight:950;}
-        .gpChatBox{display:flex;flex-direction:column;gap:10px;min-height:220px;max-height:46vh;overflow:auto;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px;background:rgba(0,0,0,.02);margin-top:10px;}
-        .gpMsg{padding:10px 12px;border-radius:14px;border:1px solid rgba(0,0,0,.08);background:#fff;max-width:85%;}
-        .gpTextarea{width:100%;min-height:86px;border-radius:14px;border:1px solid rgba(0,0,0,.12);padding:10px 12px;margin-top:10px;outline:none;}
-        .gpSuggest{margin-top:8px;border:1px solid rgba(0,0,0,.12);border-radius:14px;overflow:hidden;background:#fff;}
-        .gpSuggestItem{display:block;width:100%;text-align:left;border:0;background:#fff;padding:10px 12px;cursor:pointer;font-weight:900;}
-        .gpSuggestItem:hover{background:rgba(0,0,0,.04);}
+        .gpInput{width:100%;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 12px;font-weight:800;outline:none;}
+        .gpInput:focus{border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.12);}
+        .gpTextarea{width:100%;min-height:90px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 12px;font-weight:800;outline:none;resize:vertical;}
+        .gpTextarea:focus{border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.12);}
+        .gpSuggest{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.18);z-index:9999;}
+        .gpSuggestBtn{width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-weight:900;cursor:pointer;}
+        .gpSuggestBtn:hover{background:rgba(0,0,0,.04);}
+        @media(max-width:720px){.gpTitle{font-size:30px}.gpGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
       `}</style>
 
-      {/* DEBUG */}
-      {debug ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 10,
-            left: 10,
-            zIndex: 999999,
-            background: "#fff",
-            border: "2px solid #000",
-            padding: "8px 10px",
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 800,
-          }}
-        >
-          openChatParam: {openChatParam || "(vacío)"} <br />
-          openRequestsParam: {openRequestsParam || "(vacío)"} <br />
-          authReady: {String(authReady)} <br />
-          session: {session ? "SI" : "NO"}
-        </div>
-      ) : null}
-
       <div className="gpWrap">
-        {/* HEADER */}
         <div className="gpHeader">
           <div>
             <h1 className="gpTitle">Partidos</h1>
-            <div className="gpMeta">{status.loading ? "Cargando…" : `Mostrando ${visibleList.length}`}</div>
+            <div className="gpMeta">
+              {status.loading ? "Cargando…" : `${visibleList.length} partido(s)`}
+              {isClubFilter ? ` · Club: ${clubNameParam || clubIdParam}` : ""}
+            </div>
           </div>
 
           <div className="gpTopActions">
+            {isClubFilter ? (
+              <div className="gpRow">
+                <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.75 }}>Día:</div>
+                <input
+                  className="gpInput"
+                  type="date"
+                  value={selectedDay}
+                  onChange={(e) => setSelectedDay(e.target.value)}
+                  style={{ width: 170 }}
+                />
+              </div>
+            ) : (
+              <div className="gpTabs">
+                <button className={`gpTab ${viewMode === "mine" ? "gpTabOn" : ""}`} onClick={() => setViewMode("mine")}>
+                  Los míos
+                </button>
+                <button className={`gpTab ${viewMode === "all" ? "gpTabOn" : ""}`} onClick={() => setViewMode("all")}>
+                  Todos
+                </button>
+              </div>
+            )}
+
+            <button className="gpBtn" onClick={() => setOpenCreate(true)}>
+              ➕ Crear
+            </button>
+
             {showPushButton ? (
-              <button
-                type="button"
-                className="gpBtn gpBtnGhost"
-                onClick={handleEnablePush}
-                disabled={pushBusy}
-                title={!session ? "Tienes que iniciar sesión" : ""}
-              >
-                {pushBusy ? "Activando…" : "🔔 Activar Push"}
+              <button className="gpBtn gpBtnGhost" onClick={handleEnablePush} disabled={pushBusy}>
+                {pushBusy ? "Activando…" : "🔔 Push"}
               </button>
             ) : null}
-
-            <button
-              className="gpBtn"
-              onClick={() => {
-                if (!session) return goLogin();
-                setOpenCreate(true);
-
-                if (clubIdParam || clubNameParam) {
-                  setForm((prev) => ({
-                    ...prev,
-                    clubId: clubIdParam || prev.clubId,
-                    clubName: clubNameParam || prev.clubName,
-                  }));
-                  setClubQuery(clubNameParam || "");
-                  setShowClubSuggest(false);
-                }
-              }}
-            >
-              ➕ Crear partido
-            </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="gpTabs">
-          <button
-            className={`gpBtn ${viewMode === "mine" ? "" : "gpBtnGhost"}`}
-            disabled={!session}
-            onClick={() => setViewMode("mine")}
-          >
-            Mis partidos
-          </button>
-          <button className={`gpBtn ${viewMode === "all" ? "" : "gpBtnGhost"}`} onClick={() => setViewMode("all")}>
-            Todos
-          </button>
-        </div>
-
-        {/* filtro día si vienes de club */}
-        {isClubFilter ? (
-          <div className="gpRow" style={{ marginTop: 6 }}>
-            <div style={{ fontWeight: 900, fontSize: 13, opacity: 0.8 }}>Día:</div>
-            <input
-              className="gpInput"
-              type="date"
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(e.target.value)}
-              style={{ maxWidth: 190 }}
-            />
-          </div>
-        ) : null}
-
-        {/* LIST */}
         <ul className="gpList">
           {visibleList.map((m) => {
-            const approved = approvedCounts[m.id] || 0;
-            const occupied = Math.min(4, approved + (m.reserved_spots || 1));
-            const left = 4 - occupied;
+            const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
+            const left = Math.max(0, 4 - occupied);
 
-            const myStatus = myReqStatus[m.id];
-            const isCreator = session?.user?.id === m.created_by_user;
+            const myStatus = myReqStatus[m.id] || null;
+            const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
 
             return (
-              <li key={m.id}>
-                <div className="gpCard">
-                  <div className="gpCardTop">
-                    <div style={{ width: "100%" }}>
-                      <p className="gpClub">{m.club_name}</p>
+              <li key={m.id} className="gpCard">
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ minWidth: 260, flex: 1 }}>
+                    <div style={{ fontSize: 16, fontWeight: 950 }}>{m.club_name}</div>
 
-                      <div className="gpInfo">
-                        <div className="gpBox">
-                          <div className="gpLabel">Fecha y hora</div>
-                          <div className="gpVal">{formatWhen(m.start_at)}</div>
-                        </div>
-
-                        <div className="gpBox">
-                          <div className="gpLabel">Duración</div>
-                          <div className="gpVal">{m.duration_min} min</div>
-                        </div>
-
-                        <div className="gpBox">
-                          <div className="gpLabel">Nivel</div>
-                          <div className="gpVal">{String(m.level || "").toUpperCase()}</div>
-                        </div>
-
-                        <div className="gpBox">
-                          <div className="gpLabel">Plazas</div>
-                          <div className="gpVal">
-                            {occupied}/4 ocupadas · {left} libres
-                          </div>
-                        </div>
+                    <div className="gpGrid">
+                      <div className="gpBox">
+                        <div className="gpLabel">Fecha y hora</div>
+                        <div className="gpVal">{formatWhen(m.start_at)}</div>
                       </div>
 
-                      <div className="gpBadges">
-                        {myStatus === "approved" ? <span className="gpBadge gpOk">✅ Estás dentro</span> : null}
-                        {myStatus === "pending" ? <span className="gpBadge gpWarn">⏳ Solicitud pendiente</span> : null}
-                        {myStatus === "rejected" ? <span className="gpBadge gpBad">❌ Rechazado</span> : null}
-                        {isCreator ? <span className="gpBadge gpOk">👑 Eres creador</span> : null}
+                      <div className="gpBox">
+                        <div className="gpLabel">Duración</div>
+                        <div className="gpVal">{m.duration_min} min</div>
                       </div>
+
+                      <div className="gpBox">
+                        <div className="gpLabel">Nivel</div>
+                        <div className="gpVal">{String(m.level || "").toUpperCase()}</div>
+                      </div>
+
+                      <div className="gpBox">
+                        <div className="gpLabel">Plazas</div>
+                        <div className="gpVal">
+                          {occupied}/4 ocupadas · {left} libres
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="gpBadges">
+                      {myStatus === "approved" ? <span className="gpBadge gpOk">✅ Estás dentro</span> : null}
+                      {myStatus === "pending" ? <span className="gpBadge gpWarn">⏳ Solicitud pendiente</span> : null}
+                      {myStatus === "rejected" ? <span className="gpBadge gpBad">❌ Rechazado</span> : null}
+                      {isCreator ? <span className="gpBadge gpOk">👑 Eres creador</span> : null}
+                      {latestChatTsByMatch[m.id] ? <span className="gpBadge">💬 Chat activo</span> : null}
                     </div>
                   </div>
 
@@ -1000,28 +792,36 @@ export default function MatchesPage() {
             {pendingBusy ? (
               <div style={{ marginTop: 12, fontSize: 13, fontWeight: 900 }}>Cargando…</div>
             ) : pending.length === 0 ? (
-              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75, fontWeight: 800 }}>
-                No hay solicitudes pendientes.
-              </div>
+              <div style={{ marginTop: 12, fontSize: 13, opacity: 0.75 }}>No hay solicitudes pendientes.</div>
             ) : (
-              <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 10 }}>
-                {pending.map((r) => (
-                  <li key={r.id} style={{ padding: 12, border: "1px solid rgba(0,0,0,.12)", borderRadius: 14 }}>
-                    <div style={{ fontSize: 13, fontWeight: 900 }}>
-                      Solicitud de: <strong>{profilesById[r.user_id]?.name || r.user_id}</strong>
+              <div style={{ display: "grid", gap: 10 }}>
+                {pending.map((r) => {
+                  const p = profilesById?.[String(r.user_id)] || null;
+                  const name = p?.name || p?.handle || String(r.user_id).slice(0, 6) + "…";
+                  return (
+                    <div
+                      key={r.id}
+                      className="gpCard"
+                      style={{ padding: 12, borderRadius: 14, display: "flex", justifyContent: "space-between", gap: 10 }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 950 }}>{name}</div>
+                        <div style={{ fontSize: 12, opacity: 0.75 }}>
+                          {new Date(r.created_at).toLocaleString("es-ES")}
+                        </div>
+                      </div>
+                      <div className="gpRow">
+                        <button className="gpBtn" onClick={() => handleApprove(r.id)}>
+                          ✅ Aprobar
+                        </button>
+                        <button className="gpBtn gpBtnGhost" onClick={() => handleReject(r.id)}>
+                          ❌ Rechazar
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="gpActions" style={{ marginTop: 10 }}>
-                      <button className="gpBtn" onClick={() => handleApprove(r.id)}>
-                        Aprobar
-                      </button>
-                      <button className="gpBtn gpBtnGhost" onClick={() => handleReject(r.id)}>
-                        Rechazar
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -1038,113 +838,112 @@ export default function MatchesPage() {
               </button>
             </div>
 
-            <div style={{ marginTop: 12 }}>
-              <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Club</label>
-              <input
-                className="gpInput"
-                value={clubQuery}
-                placeholder="Escribe el nombre…"
-                onChange={(e) => {
-                  setClubQuery(e.target.value);
-                  setShowClubSuggest(true);
-                  setForm((prev) => ({ ...prev, clubName: e.target.value, clubId: "" }));
-                }}
-                onFocus={() => setShowClubSuggest(true)}
-              />
+            <div className="gpRow" style={{ gap: 12, alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 240, position: "relative" }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Club</div>
+                <input
+                  className="gpInput"
+                  value={clubQuery}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setClubQuery(v);
+                    setShowClubSuggest(true);
+                    setForm((prev) => ({ ...prev, clubName: v, clubId: "" }));
+                  }}
+                  onFocus={() => setShowClubSuggest(true)}
+                  placeholder="Escribe 2–3 letras…"
+                />
 
-              {showClubSuggest && clubSuggestions.length > 0 ? (
-                <div className="gpSuggest">
-                  {clubSuggestions.map((c) => (
-                    <button key={String(c.id)} className="gpSuggestItem" onClick={() => pickClub(c)} type="button">
-                      <strong>{c.name}</strong>
-                      {c.city ? <span style={{ opacity: 0.7 }}> · {c.city}</span> : null}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Fecha</label>
-                  <input
-                    className="gpInput"
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Hora</label>
-                  <input
-                    className="gpInput"
-                    type="time"
-                    value={form.time}
-                    onChange={(e) => setForm((p) => ({ ...p, time: e.target.value }))}
-                  />
-                </div>
+                {showClubSuggest && clubSuggestions.length ? (
+                  <div className="gpSuggest">
+                    {clubSuggestions.map((c) => (
+                      <button key={c.id} className="gpSuggestBtn" onClick={() => pickClub(c)} type="button">
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Duración (min)</label>
-                  <input
-                    className="gpInput"
-                    type="number"
-                    value={form.durationMin}
-                    onChange={(e) => setForm((p) => ({ ...p, durationMin: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Nivel</label>
-                  <select
-                    className="gpInput"
-                    value={form.level}
-                    onChange={(e) => setForm((p) => ({ ...p, level: e.target.value }))}
-                  >
-                    <option value="bajo">Bajo</option>
-                    <option value="medio">Medio</option>
-                    <option value="alto">Alto</option>
-                  </select>
-                </div>
+              <div style={{ width: 170 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Fecha</div>
+                <input
+                  className="gpInput"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Ya somos</label>
-                  <select
-                    className="gpInput"
-                    value={form.alreadyPlayers}
-                    onChange={(e) => setForm((p) => ({ ...p, alreadyPlayers: e.target.value }))}
-                  >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={3}>3</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Precio / jugador (opcional)</label>
-                  <input
-                    className="gpInput"
-                    value={form.pricePerPlayer}
-                    onChange={(e) => setForm((p) => ({ ...p, pricePerPlayer: e.target.value }))}
-                  />
-                </div>
+              <div style={{ width: 140 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Hora</div>
+                <input
+                  className="gpInput"
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="gpRow" style={{ gap: 12, marginTop: 12 }}>
+              <div style={{ width: 170 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Duración (min)</div>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.durationMin}
+                  onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))}
+                />
               </div>
 
-              {saveError ? <div style={{ color: "#dc2626", marginTop: 10, fontWeight: 900 }}>{saveError}</div> : null}
-
-              <div className="gpRow" style={{ marginTop: 14 }}>
-                <button className="gpBtn" disabled={saving} onClick={handleCreate}>
-                  {saving ? "Guardando…" : "Crear"}
-                </button>
-                <button className="gpBtn gpBtnGhost" onClick={() => setOpenCreate(false)}>
-                  Cancelar
-                </button>
+              <div style={{ width: 170 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Nivel</div>
+                <select
+                  className="gpInput"
+                  value={form.level}
+                  onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}
+                >
+                  <option value="bajo">Bajo</option>
+                  <option value="medio">Medio</option>
+                  <option value="alto">Alto</option>
+                </select>
               </div>
 
-              <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75, fontWeight: 800 }}>
-                *Para evitar equivocaciones, el club debe seleccionarse desde la lista.
+              <div style={{ width: 190 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Ya sois</div>
+                <select
+                  className="gpInput"
+                  value={form.alreadyPlayers}
+                  onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}
+                >
+                  <option value={1}>1 (solo yo)</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                </select>
               </div>
+
+              <div style={{ width: 170 }}>
+                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Precio/jugador</div>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.pricePerPlayer}
+                  onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))}
+                  placeholder="(opcional)"
+                />
+              </div>
+            </div>
+
+            {saveError ? <div style={{ marginTop: 10, color: "#dc2626", fontWeight: 900 }}>{saveError}</div> : null}
+
+            <div className="gpRow" style={{ marginTop: 14 }}>
+              <button className="gpBtn" onClick={handleCreate} disabled={saving}>
+                {saving ? "Creando…" : "Crear partido"}
+              </button>
+              <button className="gpBtn gpBtnGhost" onClick={() => setOpenCreate(false)} disabled={saving}>
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
@@ -1155,38 +954,27 @@ export default function MatchesPage() {
         <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
           <div className="gpModal" onClick={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
-              <h2 className="gpH2">Chat del partido</h2>
+              <h2 className="gpH2">Chat</h2>
               <button className="gpBtn gpBtnGhost" onClick={() => setChatOpenFor(null)}>
                 Cerrar
               </button>
             </div>
 
-            {chatLoading ? <div style={{ fontSize: 12, opacity: 0.7, fontWeight: 800 }}>Cargando chat…</div> : null}
-
-            <div className="gpChatBox">
-              {chatItems.length === 0 ? (
-                <div style={{ opacity: 0.7, fontSize: 13, fontWeight: 800 }}>Aún no hay mensajes.</div>
-              ) : (
-                chatItems.map((m) => {
-                  const mine = session?.user?.id && m.user_id === session.user.id;
-                  return (
-                    <div
-                      key={m.id}
-                      className="gpMsg"
-                      style={{
-                        alignSelf: mine ? "flex-end" : "flex-start",
-                        background: mine ? "rgba(0,0,0,.06)" : "#fff",
-                      }}
-                    >
-                      <div style={{ fontSize: 13, whiteSpace: "pre-wrap", fontWeight: 800 }}>{m.message}</div>
-                      <div style={{ marginTop: 6, fontSize: 11, opacity: 0.6, textAlign: mine ? "right" : "left" }}>
-                        {m.created_at ? new Date(m.created_at).toLocaleString("es-ES") : ""}
-                      </div>
+            {chatLoading ? (
+              <div style={{ marginTop: 12, fontSize: 13, fontWeight: 900 }}>Cargando…</div>
+            ) : (
+              <div style={{ display: "grid", gap: 10 }}>
+                {(chatItems || []).map((it) => (
+                  <div key={it.id} className="gpCard" style={{ padding: 10 }}>
+                    <div style={{ fontSize: 12, opacity: 0.65, fontWeight: 900 }}>
+                      {it.user_id?.slice?.(0, 6)}… · {new Date(it.created_at).toLocaleString("es-ES")}
                     </div>
-                  );
-                })
-              )}
-            </div>
+                    {/* ✅ ARREGLADO: es message */}
+                    <div style={{ marginTop: 6, fontSize: 14, fontWeight: 800 }}>{it.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <textarea
               className="gpTextarea"

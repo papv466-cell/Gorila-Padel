@@ -5,21 +5,6 @@
 /* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ===== FIX SCROLL: la página NO scrollea, scrollea la sidebar ===== */
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  overflow: hidden; /* clave: evita scroll del body */
-}
-
-body {
-  margin: 0;
-  display: block; /* mata cualquier layout raro del template */
-  background: #fff;
-  color: #111827;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-}
-
 /* Links */
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -628,10 +613,7 @@ img { max-width: 100%; height: auto; }
   padding:10px 12px;
   background:#fafafa;
 }
-/* ✅ FIX SCROLL PARTIDOS */
-html, body, #root {
-  height: 100%;
-}
+
 
 .page {
   min-height: 100vh;
@@ -1770,12 +1752,6 @@ html, body, #root {
    - Permite scroll real cuando hace falta (auth, forms)
    - Evita “pantalla gigante” por overflow raro
    ========================= */
-
-   html, body {
-    height: 100%;
-    overflow: auto; /* <- clave: que el móvil pueda scrollear */
-    -webkit-overflow-scrolling: touch;
-  }
   
   #root {
     height: 100%;
@@ -1832,12 +1808,7 @@ html, body, #root {
    - Evita web gigante (junto al viewport)
    - Evita pantallas cortadas (registro / crear partido)
    ========================= */
-   html, body {
-    height: 100%;
-    margin: 0;
-    overflow: auto !important; /* pisa el overflow:hidden antiguo */
-    -webkit-text-size-adjust: 100%;
-  }
+
   
   /* Que la app pueda scrollear dentro de pageWrap sin cortar contenido */
   #root {
@@ -1883,3 +1854,539 @@ html, body, #root {
     max-height: 32vh !important; /* baja si la ves grande */
   }
 }
+/* ===== BASE: App tipo shell (NO scroll en body) ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body{
+  overflow: hidden;                 /* clave */
+  -webkit-text-size-adjust: 100%;
+  background:#fff;
+  color:#111827;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+}
+
+img { max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+/* =========================================================
+   GLOBAL PADEL — PATCH FINAL (NO ROMPE NADA)
+   PÉGALO AL FINAL DEL index.css
+   Objetivo: fixes de scroll + mapa + navbar + leaflet
+   Sin tocar estilos existentes de profes/clases/etc.
+   ========================================================= */
+
+/* 1) Evitar web “gigante” por overflow horizontal (muy seguro) */
+html, body { overflow-x: hidden; }
+#root, .appShell, .appMain, .page, .pageWrap, .container { overflow-x: hidden; }
+
+/* 2) Base flex: permite que los hijos puedan scrollear (muy seguro) */
+.appShell, .appMain, .page { min-height: 0; }
+
+/* 3) Scroll interno: si ya lo tienes, esto lo refuerza sin romper */
+.pageWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 4) AUTH: aunque el body esté bloqueado, login/registro siempre scrollean */
+.authWrapper{
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100dvh;
+}
+.authCard{
+  max-height: calc(100dvh - 44px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 5) Leaflet tiles “a cuadros”: evita que el reset global afecte al mapa */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg{
+  max-width: none !important;
+  max-height: none !important;
+}
+.leaflet-container{
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 6) MAP: layering + alturas (sin romper estilos existentes) */
+
+/* El contenedor del mapa siempre “debajo” de overlays/paneles */
+.gpMapMapWrap{
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Leaflet base */
+.gpMapMapWrap .leaflet-container{
+  position: relative;
+  z-index: 1;
+}
+
+/* Lista/panel SIEMPRE por encima del mapa */
+.gpMapListPanel{
+  position: relative;
+  z-index: 3000;
+  max-width: 100%;
+}
+
+/* Desktop: altura estable para el mapa (no depende de vh) */
+@media (min-width: 769px){
+  .gpMapMapWrap{
+    height: 420px; /* tu valor actual, estable */
+  }
+}
+
+/* Móvil: mapa más alto + panel bottom-sheet sin tapar contenido */
+@media (max-width: 768px){
+  /* El mapa gana altura proporcional */
+  .gpMapMapWrap{
+    height: 54vh !important;
+    min-height: 280px;
+  }
+
+  /* El panel se vuelve bottom sheet fijo */
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999; /* por encima de Leaflet */
+    border-radius: 18px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* El cuerpo de la lista NO puede crecer infinito */
+  .gpMapListBody{
+    max-height: 32vh !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Dejamos hueco para que el contenido no quede debajo del sheet */
+  .gpMapPage .pageWrap{
+    padding-bottom: 320px !important; /* ajusta 280–360 según tu gusto */
+  }
+}
+
+/* 7) NAVBAR: botón "Salir" idéntico a navLink (sin fondo blanco) */
+.navLinkBtn{
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.navLinkBtn:hover{
+  background: rgba(255,255,255,0.06) !important;
+  text-decoration: none;
+}
+button.navMobileLink.navLinkBtn{
+  width: 100%;
+  text-align: left;
+}
+
+/* 8) Inputs y cards dentro de lista/mapa: evitar desbordes raros en móvil */
+.gpMapListPanel, .gpMapListBody, .card{
+  max-width: 100%;
+}
+.card{ min-width: 0; }
+.card > div{ min-width: 0; }
+
+/* Botones dentro de card: nunca empujan fuera */
+.card .btn{
+  max-width: 100%;
+}
+
+/* Si tu card del listado del mapa era flex, en móvil apila sin romper */
+@media (max-width: 520px){
+  .gpMapListBody .card{
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .gpMapListBody .card > div:last-child{
+    justify-content: flex-start !important;
+  }
+}
+
+/* 9) iOS safe-area: evita que quede tapado abajo */
+.pageWrap{
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+/* =========================
+   MAP PAGE — PRO LAYOUT (NO ROMPER)
+   Desktop: lista lateral + mapa
+   Móvil: bottom sheet plegable
+   ========================= */
+
+   .gpMapMapWrap{
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  /* --- DESKTOP: side panel (si quieres mantenerlo así) --- */
+  @media (min-width: 769px){
+    .gpMapPage .container{
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+  
+    /* mapa a la derecha */
+    .gpMapMapWrap{
+      grid-column: 2;
+      height: calc(100dvh - 180px); /* ajusta si tu header ocupa más */
+      min-height: 520px;
+    }
+  
+    /* lista a la izquierda con scroll interno */
+    .gpMapListPanel{
+      grid-column: 1;
+      height: calc(100dvh - 180px);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+    }
+  
+    .gpMapListBody{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+  
+  /* --- MÓVIL: bottom sheet plegable --- */
+  @media (max-width: 768px){
+    .gpMapPage .container{
+      position: relative;
+    }
+  
+    /* mapa grande */
+    .gpMapMapWrap{
+      height: 56dvh !important;
+      min-height: 320px;
+      z-index: 1;
+    }
+  
+    /* panel como bottom sheet real */
+    .gpMapListPanel{
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 9999;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 22px 60px rgba(0,0,0,0.18);
+      background: #fff;
+    }
+  
+    /* header clicable */
+    .gpMapListHeader{
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+  
+    .gpMapSheetHandle{
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.18);
+      margin: 0 auto;
+    }
+  
+    /* body en 2 estados */
+    .gpMapListBody.isOpen{
+      max-height: 55dvh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    .gpMapListBody.isClosed{
+      max-height: 18dvh;   /* 👈 aquí se ve “bien” (no enano) */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    /* deja aire para que la sheet no tape clicks del mapa */
+    .gpMapPage .pageWrap{
+      padding-bottom: 260px !important;
+    }
+  }
+  /* =========================
+   GORILA HOME + HUB (PRO)
+   pegar al FINAL del CSS
+   ========================= */
+
+.gpHome { background: #0b0f0c; color: #e9f7e6; }
+.gpHomeInner { padding-top: 26px; padding-bottom: 26px; }
+.gpHomeHero { text-align: left; margin-bottom: 18px; }
+.gpHomeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px; height: 54px;
+  border-radius: 16px;
+  background: rgba(116,184,0,0.18);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.gpHomeTitle { font-size: 28px; letter-spacing: .6px; margin: 0; }
+.gpHomeSub { margin: 8px 0 0; opacity: .9; max-width: 520px; }
+.gpHomeSub2 { opacity: .75; }
+
+.gpHomeActions { display: grid; gap: 12px; margin-top: 18px; }
+.gpBigCta {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+  border-radius: 18px;
+  padding: 14px 14px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #e9f7e6;
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  transform: translateZ(0);
+}
+.gpBigCta:active { transform: scale(0.99); }
+.gpBigCtaEmoji {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: grid; place-items: center;
+  background: rgba(116,184,0,0.18);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 24px;
+}
+.gpBigCtaTitle { font-weight: 950; font-size: 18px; }
+.gpBigCtaMeta { opacity: .78; font-size: 13px; margin-top: 2px; }
+.gpBigCtaArrow { opacity: .75; font-weight: 900; font-size: 18px; text-align: right; }
+
+.gpBigCtaPlay { border-color: rgba(116,184,0,0.25); }
+.gpBigCtaLearn { border-color: rgba(116,184,0,0.18); }
+
+.gpHomeFooter { margin-top: 18px; opacity: .75; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.gpHomeFooterDot { opacity: .45; }
+
+.gpHub { background: #0b0f0c; color: #e9f7e6; }
+.gpHubHeader { padding-top: 16px; padding-bottom: 8px; }
+.gpHubKicker {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(116,184,0,0.16);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-weight: 900;
+  font-size: 12px;
+  opacity: .95;
+}
+.gpHubTitle { margin: 10px 0 0; font-size: 26px; font-weight: 950; }
+.gpHubSub { margin: 6px 0 0; opacity: .8; }
+
+.gpHubGrid { display: grid; gap: 12px; margin-top: 14px; }
+.gpHubCard {
+  width: 100%;
+  text-align: left;
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #e9f7e6;
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  cursor: pointer;
+}
+.gpHubCard:active { transform: scale(0.99); }
+.gpHubCardPrimary { border-color: rgba(116,184,0,0.28); background: rgba(116,184,0,0.10); }
+.gpHubIcon { font-size: 24px; margin-bottom: 8px; }
+.gpHubCardTitle { font-size: 16px; font-weight: 950; }
+.gpHubCardMeta { margin-top: 4px; font-size: 13px; opacity: .78; }
+.gpHubBottom { margin-top: 16px; display: flex; justify-content: flex-start; }
+
+.gpInclusive { background: #0b0f0c; color: #e9f7e6; }
+.gpInclusiveInner { padding-top: 18px; padding-bottom: 26px; }
+.gpInclusiveBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(116,184,0,0.16);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 18px;
+}
+.gpInclusiveTitle { margin: 10px 0 0; font-size: 24px; font-weight: 950; }
+.gpInclusiveSub { margin: 8px 0 0; opacity: .82; max-width: 560px; }
+
+.gpInclusiveCards { display: grid; gap: 10px; margin-top: 14px; }
+.gpMiniCard {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.gpMiniCardTitle { font-weight: 950; }
+.gpMiniCardMeta { margin-top: 4px; opacity: .78; font-size: 13px; }
+
+.gpInclusiveBottom { margin-top: 16px; display: grid; gap: 10px; }
+/* =====================================================
+   GORILA THEME · VERDE + NEGRO
+   (bloque final – NO BORRAR estilos anteriores)
+   ===================================================== */
+
+   :root {
+    --gp-green: #74B800;
+    --gp-green-soft: #EAF6D9;
+    --gp-black: #0E0E0E;
+    --gp-black-soft: #2A2A2A;
+    --gp-white: #FFFFFF;
+  }
+  
+  /* Fondo global */
+  .appShell,
+  .page,
+  .gpHome,
+  .gpHub,
+  .gpInclusive {
+    background: var(--gp-green);
+    color: var(--gp-black);
+  }
+  
+  /* Textos */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--gp-black);
+  }
+  
+  p,
+  span,
+  div {
+    color: inherit;
+  }
+  
+  /* Home */
+  .gpHomeTitle,
+  .gpHomeSub,
+  .gpHomeFooter {
+    color: var(--gp-black);
+  }
+  
+  /* Botones grandes Home */
+  .gpBigCta {
+    background: var(--gp-white);
+    border: 1px solid rgba(0,0,0,0.08);
+    color: var(--gp-black);
+  }
+  
+  .gpBigCtaEmoji {
+    background: var(--gp-green-soft);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  
+  .gpBigCtaArrow {
+    color: var(--gp-black);
+  }
+  
+  /* Hubs */
+  .gpHubKicker {
+    background: var(--gp-black);
+    color: var(--gp-white);
+    border: none;
+  }
+  
+  .gpHubCard {
+    background: var(--gp-white);
+    color: var(--gp-black);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  
+  .gpHubCardPrimary {
+    background: var(--gp-green-soft);
+    border: 1px solid rgba(0,0,0,0.12);
+  }
+  
+  /* Inclusivo */
+  .gpInclusiveBadge {
+    background: var(--gp-black);
+    color: var(--gp-white);
+  }
+  
+  .gpMiniCard {
+    background: var(--gp-white);
+    color: var(--gp-black);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  
+  /* Botones genéricos */
+  .btn {
+    background: var(--gp-black);
+    color: var(--gp-white);
+    border-radius: 14px;
+  }
+  
+  .btn.ghost {
+    background: transparent;
+    color: var(--gp-black);
+    border: 1px solid rgba(0,0,0,0.2);
+  }
+  
+  /* Inputs */
+  input,
+  select,
+  textarea {
+    background: var(--gp-white);
+    color: var(--gp-black);
+    border-radius: 12px;
+  }
+  
+  /* Navbar */
+  .navbar,
+  .navbar * {
+    background: var(--gp-black);
+    color: var(--gp-white);
+  }
+  
+  /* Cards generales */
+  .card {
+    background: var(--gp-white);
+    color: var(--gp-black);
+  }
+  
+  /* Sombra premium */
+  .gpBigCta,
+  .gpHubCard,
+  .card,
+  .gpMiniCard {
+    box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+  }
+  

@@ -10,19 +10,13 @@ function startOfTodayISO() {
   return d.toISOString();
 }
 
-
-/**
- * Realtime de solicitudes (tabla match_join_requests)
- * Útil para que:
- * - el creador vea solicitudes nuevas al instante
- * - el usuario vea cambios approved/rejected al instante
- */
-
-/**
- * Realtime de chat por partido (tabla match_messages filtrado por match_id)
- * @param {string} matchId
- * @param {(payload:any)=>void} onChange
- */
+async function getSessionOrThrow() {
+  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
+  if (sessErr) throw sessErr;
+  const session = sessData?.session;
+  if (!session?.user) throw new Error("No hay sesión activa.");
+  return session;
+}
 
 /* =========================
    LISTAR PARTIDOS (futuros)
@@ -77,11 +71,7 @@ export async function createMatch({
   alreadyPlayers = 1,
   pricePerPlayer = null,
 } = {}) {
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
+  const session = await getSessionOrThrow();
 
   const payload = {
     club_id: String(clubId ?? "").trim(),
@@ -94,13 +84,16 @@ export async function createMatch({
     spots_total: 4,
   };
 
-  // si existe la columna price_per_player en tu tabla, lo guardamos
   if (pricePerPlayer != null && String(pricePerPlayer).trim() !== "") {
     payload.price_per_player = Number(pricePerPlayer);
   }
 
   const { data, error } = await supabase.from("matches").insert(payload).select("*").single();
   if (error) throw error;
+
+  // (Opcional) push a "seguidores" / etc si tienes endpoint
+  // try { await fetch("/api/push-match-created", {...}) } catch {}
+
   return data;
 }
 
@@ -110,15 +103,10 @@ export async function createMatch({
 export async function requestJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
+  const session = await getSessionOrThrow();
 
   const payload = { match_id: matchId, user_id: session.user.id, status: "pending" };
 
-  // 1) guardamos solicitud y traemos id
   const { data, error } = await supabase
     .from("match_join_requests")
     .insert(payload)
@@ -127,11 +115,15 @@ export async function requestJoin(matchId) {
 
   if (error) throw error;
 
-  // 2) push al creador (si falla NO rompe)
+  // ✅ Push al creador (si falla NO rompe)
+  // ✅ IMPORTANTE: metemos Authorization para evitar 401 en Vercel
   try {
     const r = await fetch("/api/push-join", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ matchId: data.match_id, requestId: data.id }),
     });
     if (!r.ok) console.warn("push-join status", r.status, await r.text());
@@ -145,11 +137,7 @@ export async function requestJoin(matchId) {
 export async function cancelMyJoin(matchId) {
   if (!matchId) throw new Error("Falta matchId");
 
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
+  const session = await getSessionOrThrow();
 
   const { error } = await supabase
     .from("match_join_requests")
@@ -226,8 +214,8 @@ export async function fetchPendingRequests(matchId) {
 }
 
 export async function approveRequest({ requestId }) {
-  const { data: sessData } = await supabase.auth.getSession();
-  const uid = sessData?.session?.user?.id;
+  const session = await getSessionOrThrow();
+  const uid = session?.user?.id;
 
   const { data, error } = await supabase
     .from("match_join_requests")
@@ -241,12 +229,23 @@ export async function approveRequest({ requestId }) {
     .single();
 
   if (error) throw error;
+
+  // (Opcional) push al jugador aprobado si tienes endpoint:
+  // try {
+  //   const r = await fetch("/api/push-join-approved", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+  //     body: JSON.stringify({ requestId: data.id }),
+  //   });
+  //   if (!r.ok) console.warn("push-join-approved status", r.status, await r.text());
+  // } catch {}
+
   return data;
 }
 
 export async function rejectRequest({ requestId }) {
-  const { data: sessData } = await supabase.auth.getSession();
-  const uid = sessData?.session?.user?.id;
+  const session = await getSessionOrThrow();
+  const uid = session?.user?.id;
 
   const { data, error } = await supabase
     .from("match_join_requests")
@@ -260,6 +259,17 @@ export async function rejectRequest({ requestId }) {
     .single();
 
   if (error) throw error;
+
+  // (Opcional) push al jugador rechazado si tienes endpoint:
+  // try {
+  //   const r = await fetch("/api/push-join-rejected", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+  //     body: JSON.stringify({ requestId: data.id }),
+  //   });
+  //   if (!r.ok) console.warn("push-join-rejected status", r.status, await r.text());
+  // } catch {}
+
   return data;
 }
 
@@ -287,12 +297,7 @@ export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }
 ========================= */
 export async function deleteMatch(matchId) {
   if (!matchId) throw new Error("Falta matchId");
-
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
-
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
+  await getSessionOrThrow();
 
   const { error } = await supabase.from("matches").delete().eq("id", matchId);
   if (error) throw error;
@@ -316,26 +321,23 @@ export async function fetchMatchMessages(matchId, opts = {}) {
   return data ?? [];
 }
 
-export async function sendMatchMessage({ matchId, message } = {}) {
+// ✅ ARREGLADO: acepta { matchId, text } o { matchId, message }
+export async function sendMatchMessage({ matchId, text, message } = {}) {
   if (!matchId) throw new Error("Falta matchId");
-  const text = String(message ?? "").trim();
-  if (!text) throw new Error("Mensaje vacío");
-  if (text.length > 1000) throw new Error("Máximo 1000 caracteres.");
 
-  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
-  if (sessErr) throw sessErr;
+  const msg = String((text ?? message) ?? "").trim();
+  if (!msg) throw new Error("Mensaje vacío");
+  if (msg.length > 1000) throw new Error("Máximo 1000 caracteres.");
 
-  const session = sessData?.session;
-  if (!session?.user) throw new Error("No hay sesión activa.");
+  const session = await getSessionOrThrow();
 
-  // 1) guardamos el mensaje
   const { data: inserted, error: insErr } = await supabase
     .from("match_messages")
     .insert([
       {
         match_id: matchId,
         user_id: session.user.id,
-        message: text,
+        message: msg,
       },
     ])
     .select("id, match_id")
@@ -343,40 +345,38 @@ export async function sendMatchMessage({ matchId, message } = {}) {
 
   if (insErr) throw insErr;
 
-  // 2) disparamos push (si falla, NO rompe el chat)
+  // ✅ Push chat (si falla, NO rompe)
   try {
     const r = await fetch("/api/push-chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({ messageId: inserted.id }),
     });
 
-    if (!r.ok) console.warn("Push status:", r.status, await r.text());
+    if (!r.ok) console.warn("push-chat status:", r.status, await r.text());
   } catch (e) {
     console.warn("Push falló pero el mensaje se guardó:", e?.message || e);
   }
 
   return inserted;
 }
-// ------------------------------
-// REALTIME SUBSCRIPTIONS (ÚNICAS)
-// ------------------------------
 
-// ✅ cambios en partidos (crear/editar/borrar)
+/* =========================
+   REALTIME SUBSCRIPTIONS
+========================= */
 export function subscribeMatchesRealtime(onChange) {
   const channel = supabase
     .channel("rt:matches")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "matches" },
-      (payload) => {
-        try {
-          onChange?.(payload);
-        } catch (e) {
-          console.warn("onChange matches realtime error", e);
-        }
+    .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, (payload) => {
+      try {
+        onChange?.(payload);
+      } catch (e) {
+        console.warn("onChange matches realtime error", e);
       }
-    )
+    })
     .subscribe();
 
   return () => {
@@ -386,21 +386,16 @@ export function subscribeMatchesRealtime(onChange) {
   };
 }
 
-// ✅ cambios en solicitudes de unirse (pending/approved/rejected)
 export function subscribeJoinRequestsRealtime(onChange) {
   const channel = supabase
     .channel("rt:join-requests")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "match_join_requests" },
-      (payload) => {
-        try {
-          onChange?.(payload);
-        } catch (e) {
-          console.warn("onChange join_requests realtime error", e);
-        }
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_join_requests" }, (payload) => {
+      try {
+        onChange?.(payload);
+      } catch (e) {
+        console.warn("onChange join_requests realtime error", e);
       }
-    )
+    })
     .subscribe();
 
   return () => {
@@ -410,14 +405,11 @@ export function subscribeJoinRequestsRealtime(onChange) {
   };
 }
 
-// ✅ Realtime: TODOS los mensajes (para popups globales)
 export function subscribeAllMatchMessagesRealtime(onPayload) {
   const channel = supabase
     .channel("rt:match_messages_all")
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "match_messages" },
-      (payload) => onPayload?.(payload)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "match_messages" }, (payload) =>
+      onPayload?.(payload)
     )
     .subscribe();
 
@@ -426,7 +418,6 @@ export function subscribeAllMatchMessagesRealtime(onPayload) {
   };
 }
 
-// ✅ cambios en mensajes de chat (por matchId)
 export function subscribeMatchMessagesRealtime(matchId, onChange) {
   const mid = String(matchId || "");
   if (!mid) return () => {};
@@ -435,12 +426,7 @@ export function subscribeMatchMessagesRealtime(matchId, onChange) {
     .channel(`rt:match-messages:${mid}`)
     .on(
       "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "match_messages",
-        filter: `match_id=eq.${mid}`,
-      },
+      { event: "*", schema: "public", table: "match_messages", filter: `match_id=eq.${mid}` },
       (payload) => {
         try {
           onChange?.(payload);

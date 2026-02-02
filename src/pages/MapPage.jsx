@@ -121,24 +121,45 @@ function FlyTo({ target, zoomLevel }) {
   return null;
 }
 
-/* ✅ icono “mi ubicación” */
+/* ✅ icono “mi ubicación” => 🍌 banana */
 const userIcon = L.divIcon({
   className: "gpUserIcon",
   html: `
     <div style="
-      width:18px;height:18px;border-radius:999px;
-      background:#111;
-      border:3px solid #fff;
-      box-shadow:0 10px 25px rgba(0,0,0,0.25);
-    "></div>
+      width:34px;height:34px;border-radius:999px;
+      background:#fff;
+      border:2px solid #111;
+      display:grid;place-items:center;
+      font-size:18px;
+      box-shadow:0 14px 30px rgba(0,0,0,0.25);
+      transform: translateY(-2px);
+    ">🍌</div>
   `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
 });
 
 export default function MapPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // ✅ Modo vista: /mapa?view=list  => lista primero y mapa plegado
+  const viewMode = useMemo(() => {
+    const sp = new URLSearchParams(location.search);
+    return (sp.get("view") || "").toLowerCase(); // "list" | ""
+  }, [location.search]);
+
+  const isListView = viewMode === "list";
+
+  // ✅ mapa abierto/cerrado (en list view empieza cerrado)
+  const [mapOpen, setMapOpen] = useState(!isListView);
+
+  // ✅ si cambia la URL, ajustamos modo
+  useEffect(() => {
+    setMapOpen(!isListView);
+  }, [isListView]);
+
+  const [sheetOpen, setSheetOpen] = useState(true);
 
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -284,16 +305,26 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ REALTIME: refrescamos partidos y “clases libres hoy”
+  // ✅ REALTIME
   useEffect(() => {
     const unsub = subscribeMatchesRealtime(() => {
       loadMatches();
       loadTodayClasses();
     });
-
     return () => unsub?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ✅ al abrir el mapa, invalidamos tamaño para Leaflet
+  useEffect(() => {
+    if (!mapOpen) return;
+    const t = setTimeout(() => {
+      try {
+        mapRef.current?.invalidateSize();
+      } catch {}
+    }, 80);
+    return () => clearTimeout(t);
+  }, [mapOpen]);
 
   const clubsWithCoords = useMemo(() => {
     return (clubs || []).filter((c) => Number.isFinite(c?.lat) && Number.isFinite(c?.lng));
@@ -352,7 +383,7 @@ export default function MapPage() {
     return [36.7213, -4.4214];
   }, [sortedList]);
 
-  /* ✅ SUGERENCIAS: ciudades + clubs */
+  /* ✅ SUGERENCIAS */
   const suggestions = useMemo(() => {
     const q = normText(query);
     if (!q || q.length < 2) return [];
@@ -452,7 +483,7 @@ export default function MapPage() {
         setUserPos(p);
 
         if (centerMap) {
-          setFlyToPos(p); // ✅ backup por estado siempre
+          setFlyToPos(p);
           if (mapRef.current) {
             try {
               mapRef.current.flyTo([p.lat, p.lng], Math.max(mapRef.current.getZoom(), 14), {
@@ -489,16 +520,15 @@ export default function MapPage() {
     }
   }
 
-  // ✅ Helpers: scroll + invalidate + flyTo “seguro”
   function flyToSafe(lat, lng, z = 14) {
-    setFlyToPos({ lat, lng }); // ✅ backup siempre
+    if (isListView && !mapOpen) setMapOpen(true);
 
-    // scroll suave al mapa (por si estás abajo en la lista)
+    setFlyToPos({ lat, lng });
+
     if (mapBoxRef.current) {
       mapBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // invalidar tamaño (por si el scroll/móvil altera el layout)
     setTimeout(() => {
       try {
         mapRef.current?.invalidateSize();
@@ -520,23 +550,20 @@ export default function MapPage() {
     return true;
   }
 
-  // ✅ ARREGLADO: Buscar SIEMPRE centra algo útil
   function doSearchCenter() {
     setShowSuggest(false);
+    if (isListView && !mapOpen) setMapOpen(true);
 
-    // 1) club seleccionado
     if (selectedClubId) {
       const c = clubsWithCoords.find((x) => String(x.id || "") === String(selectedClubId));
       if (c) flyToSafe(c.lat, c.lng, 14);
       return;
     }
 
-    // 2) ciudad seleccionada
     if (selectedCity) {
       if (centerByCity(selectedCity)) return;
     }
 
-    // 3) si hay query: usa sugerencia top si existe
     const q = normText(query);
     if (q && q.length >= 2) {
       const top = suggestions?.[0];
@@ -554,7 +581,6 @@ export default function MapPage() {
         if (centerByCity(top.city)) return;
       }
 
-      // 4) fallback: primer match por includes
       const hit = clubsWithCoords.find((c) => {
         const name = normText(c?.name);
         const city = normText(c?.city);
@@ -570,14 +596,12 @@ export default function MapPage() {
       }
     }
 
-    // 5) si hay lista filtrada, centra el primero
     const first = baseFiltered?.[0] || sortedList?.[0];
     if (first) {
       flyToSafe(first.lat, first.lng, 13);
       return;
     }
 
-    // 6) fallback default
     flyToSafe(36.7213, -4.4214, 11);
   }
 
@@ -604,22 +628,23 @@ export default function MapPage() {
     return map;
   }, [matches]);
 
+  const listMaxHeight = sheetOpen ? "52vh" : "0px";
+
   return (
     <div className="page gpMapPage">
       <div className="pageWrap">
         <div className="container">
-          {/* HEADER */}
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Mapa</h1>
               <div className="pageMeta">
                 {loading ? "Cargando…" : `Clubs: ${sortedList.length}`}
                 {userPos ? " · ordenados por cercanía" : ""}
+                {isListView ? " · vista lista" : ""}
               </div>
             </div>
           </div>
 
-          {/* TOP BAR */}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <button className="btn ghost gpMapBtn" type="button" onClick={clearAll}>
               Limpiar
@@ -673,7 +698,6 @@ export default function MapPage() {
             </button>
           </div>
 
-          {/* BUSCADOR + AUTOCOMPLETE */}
           <div style={{ position: "relative", marginTop: 10 }}>
             <input
               className="gpInput"
@@ -750,324 +774,331 @@ export default function MapPage() {
 
           {err ? <div style={{ marginTop: 10, color: "crimson" }}>{err}</div> : null}
 
-          {/* MAPA */}
-          <div
+          {isListView ? (
+            <div style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                className={`btn ${mapOpen ? "ghost" : ""} gpMapBtn`}
+                onClick={() => setMapOpen((v) => !v)}
+                style={{ width: "100%", borderRadius: 16, padding: "12px 14px", fontWeight: 950 }}
+              >
+                {mapOpen ? "Ocultar mapa ✖️" : "Ver mapa 🗺️"}
+              </button>
+            </div>
+          ) : null}
+
+          {!isListView || mapOpen ? (
+            <div
               ref={mapBoxRef}
               className="gpMapMapWrap"
               style={{
                 marginTop: 12,
                 borderRadius: 16,
                 overflow: "hidden",
-                border: "1px solid #eee",
+                border: "1px solid rgba(0,0,0,0.12)",
+                height: 420,
+                background: "#fff",
               }}
             >
-            <MapContainer
-              center={defaultCenter}
-              zoom={11}
-              style={{ height: "100%", width: "100%" }}
-              whenCreated={(map) => {
-                mapRef.current = map;
-                setZoom(map.getZoom());
-                const c = map.getCenter();
-                setMapCenter({ lat: c.lat, lng: c.lng });
-              }}
-            >
-              <MapEvents onZoom={(z) => setZoom(z)} onMove={(c) => setMapCenter(c)} onClick={() => setShowSuggest(false)} />
+              <MapContainer
+                center={defaultCenter}
+                zoom={11}
+                style={{ height: "100%", width: "100%" }}
+                whenCreated={(map) => {
+                  mapRef.current = map;
+                  setZoom(map.getZoom());
+                  const c = map.getCenter();
+                  setMapCenter({ lat: c.lat, lng: c.lng });
+                }}
+              >
+                <MapEvents onZoom={(z) => setZoom(z)} onMove={(c) => setMapCenter(c)} onClick={() => setShowSuggest(false)} />
 
-              <TileLayer
-                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-                url={
-                  mapTheme === "dark"
-                    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                }
-              />
+                <TileLayer
+                  attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+                  url={
+                    mapTheme === "dark"
+                      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  }
+                />
 
-              {/* ✅ flyTo backup por estado */}
-              <FlyTo target={flyToPos} zoomLevel={14} />
+                <FlyTo target={flyToPos} zoomLevel={14} />
 
-              {/* ✅ mi ubicación visible */}
-              {userPos ? (
-                <Marker position={[userPos.lat, userPos.lng]} icon={userIcon}>
-                  <Popup>
-                    <div style={{ fontSize: 13, fontWeight: 800 }}>Estás aquí</div>
-                  </Popup>
-                </Marker>
-              ) : null}
-
-              {/* clusters + clubs */}
-              {clusterItems.map((it) => {
-                if (it.type === "cluster") {
-                  return (
-                    <Marker
-                      key={it.key}
-                      position={[it.lat, it.lng]}
-                      icon={makeCountIcon(it.count)}
-                      eventHandlers={{
-                        click: () => {
-                          if (!mapRef.current) return;
-                          const nextZoom = Math.min(14, zoom + 2);
-                          mapRef.current.setView([it.lat, it.lng], nextZoom);
-                        },
-                      }}
-                    />
-                  );
-                }
-
-                const c = it.club;
-                const clubId = String(c?.id || "");
-                const isFav = favIds.has(clubId);
-
-                const stats = todayClassesByClub.get(clubId) || { freeCount: 0, totalCount: 0 };
-                const hasFreeClass = (stats.freeCount || 0) > 0;
-                const pulse = hasFreeClass;
-
-                const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
-                const up = upcomingByClubId.get(clubId) || [];
-
-                return (
-                  <Marker key={it.key} position={[c.lat, c.lng]} icon={makeClubIcon({ isFav, hasFreeClass, pulse })}>
+                {userPos ? (
+                  <Marker position={[userPos.lat, userPos.lng]} icon={userIcon}>
                     <Popup>
-                      <div style={{ fontSize: 13, minWidth: 220 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                          <div>
-                            <strong>{c.name}</strong>
-                            <div style={{ opacity: 0.75 }}>{c.city}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800 }}>🍌 Estás aquí</div>
+                    </Popup>
+                  </Marker>
+                ) : null}
 
-                            {hasFreeClass ? (
-                              <div style={{ marginTop: 8, fontSize: 12, fontWeight: 900, color: "#111" }}>
-                                🟢 {stats.freeCount} clase(s) libre(s) hoy
-                              </div>
-                            ) : null}
+                {clusterItems.map((it) => {
+                  if (it.type === "cluster") {
+                    return (
+                      <Marker
+                        key={it.key}
+                        position={[it.lat, it.lng]}
+                        icon={makeCountIcon(it.count)}
+                        eventHandlers={{
+                          click: () => {
+                            if (!mapRef.current) return;
+                            const nextZoom = Math.min(14, zoom + 2);
+                            mapRef.current.setView([it.lat, it.lng], nextZoom);
+                          },
+                        }}
+                      />
+                    );
+                  }
 
-                            {c.address ? <div style={{ opacity: 0.65, marginTop: 4 }}>{c.address}</div> : null}
+                  const c = it.club;
+                  const clubId = String(c?.id || "");
+                  const isFav = favIds.has(clubId);
 
-                            {dist != null ? (
-                              <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div>
-                            ) : null}
+                  const stats = todayClassesByClub.get(clubId) || { freeCount: 0, totalCount: 0 };
+                  const hasFreeClass = (stats.freeCount || 0) > 0;
+                  const pulse = hasFreeClass;
+
+                  const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
+                  const up = upcomingByClubId.get(clubId) || [];
+
+                  return (
+                    <Marker key={it.key} position={[c.lat, c.lng]} icon={makeClubIcon({ isFav, hasFreeClass, pulse })}>
+                      <Popup>
+                        <div style={{ fontSize: 13, minWidth: 220 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                            <div>
+                              <strong>{c.name}</strong>
+                              <div style={{ opacity: 0.75 }}>{c.city}</div>
+
+                              {hasFreeClass ? (
+                                <div style={{ marginTop: 8, fontSize: 12, fontWeight: 900, color: "#111" }}>
+                                  🟢 {stats.freeCount} clase(s) libre(s) hoy
+                                </div>
+                              ) : null}
+
+                              {c.address ? <div style={{ opacity: 0.65, marginTop: 4 }}>{c.address}</div> : null}
+
+                              {dist != null ? (
+                                <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div>
+                              ) : null}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="btn ghost"
+                              onClick={() => toggleFav(clubId)}
+                              title={isFav ? "Quitar favorito" : "Guardar favorito"}
+                              style={{
+                                width: 42,
+                                height: 38,
+                                display: "grid",
+                                placeItems: "center",
+                                borderRadius: 12,
+                                alignSelf: "flex-start",
+                              }}
+                            >
+                              {isFav ? "⭐" : "☆"}
+                            </button>
                           </div>
 
+                          <div style={{ marginTop: 10 }}>
+                            <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Próximos partidos</div>
+                            {up.length === 0 ? (
+                              <div style={{ fontSize: 12, opacity: 0.65, marginTop: 6 }}>(No hay partidos próximos todavía)</div>
+                            ) : (
+                              <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
+                                {up.map((m) => (
+                                  <div
+                                    key={m.id}
+                                    style={{
+                                      border: "1px solid rgba(0,0,0,0.08)",
+                                      borderRadius: 10,
+                                      padding: "8px 10px",
+                                    }}
+                                  >
+                                    <div style={{ fontSize: 12, fontWeight: 800 }}>
+                                      {new Date(m.start_at).toLocaleString("es-ES")}
+                                    </div>
+                                    <div style={{ fontSize: 12, opacity: 0.75 }}>
+                                      {m.duration_min} min · Nivel {m.level}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="gpPopupActions">
+                            <button
+                              className="gpBtn gpBtnSoft"
+                              onClick={() => navigate(`/clases?club=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
+                            >
+                              Ver clases
+                            </button>
+
+                            <button
+                              className="gpBtn"
+                              onClick={() => navigate(`/partidos?clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
+                            >
+                              Ver partidos
+                            </button>
+
+                            <button
+                              className="gpBtn gpBtnPrimary"
+                              onClick={() =>
+                                navigate(`/partidos?create=1&clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)
+                              }
+                            >
+                              Crear partido
+                            </button>
+                          </div>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+              </MapContainer>
+            </div>
+          ) : null}
+
+          <div
+            className="gpMapListPanel"
+            style={{
+              marginTop: 14,
+              borderRadius: 16,
+              border: "1px solid rgba(0,0,0,0.08)",
+              background: "#fff",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              className="gpMapListHeader"
+              role="button"
+              onClick={() => setSheetOpen((v) => !v)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "12px 12px",
+                cursor: "pointer",
+                userSelect: "none",
+              }}
+            >
+              <div className="gpMapSheetHandle" />
+              <div style={{ fontWeight: 950 }}>Clubs ({sortedList.length})</div>
+              <div style={{ opacity: 0.7, fontWeight: 900 }}>{sheetOpen ? "⏷" : "⏶"}</div>
+            </div>
+
+            <div
+              className="gpMapListBody"
+              style={{
+                display: sheetOpen ? "block" : "none",
+                maxHeight: listMaxHeight,
+                overflowY: "auto",
+                padding: 12,
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {loading ? (
+                <div style={{ opacity: 0.7 }}>Cargando clubs…</div>
+              ) : sortedList.length === 0 ? (
+                <div style={{ opacity: 0.7 }}>No se encontraron clubs.</div>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {sortedList.map((c) => {
+                    const clubId = String(c?.id || "");
+                    const isFav = favIds.has(clubId);
+                    const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
+
+                    return (
+                      <div
+                        key={clubId || c.name}
+                        className="card"
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
                           <button
                             type="button"
                             className="btn ghost"
                             onClick={() => toggleFav(clubId)}
                             title={isFav ? "Quitar favorito" : "Guardar favorito"}
-                            style={{
-                              width: 42,
-                              height: 38,
-                              display: "grid",
-                              placeItems: "center",
-                              borderRadius: 12,
-                              alignSelf: "flex-start",
-                            }}
+                            style={{ height: 34, minWidth: 44, padding: "0 12px" }}
                           >
                             {isFav ? "⭐" : "☆"}
                           </button>
-                        </div>
 
-                        {/* 3 próximos partidos */}
-                        <div style={{ marginTop: 10 }}>
-                          <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.8 }}>Próximos partidos</div>
-                          {up.length === 0 ? (
-                            <div style={{ fontSize: 12, opacity: 0.65, marginTop: 6 }}>(No hay partidos próximos todavía)</div>
-                          ) : (
-                            <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
-                              {up.map((m) => (
-                                <div
-                                  key={m.id}
-                                  style={{
-                                    border: "1px solid rgba(0,0,0,0.08)",
-                                    borderRadius: 10,
-                                    padding: "8px 10px",
-                                  }}
-                                >
-                                  <div style={{ fontSize: 12, fontWeight: 800 }}>
-                                    {new Date(m.start_at).toLocaleString("es-ES")}
-                                  </div>
-                                  <div style={{ fontSize: 12, opacity: 0.75 }}>
-                                    {m.duration_min} min · Nivel {m.level}
-                                  </div>
-                                </div>
-                              ))}
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 950,
+                                fontSize: 14,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {c.name}
                             </div>
-                          )}
+                            <div
+                              style={{
+                                opacity: 0.75,
+                                fontSize: 13,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {c.city}
+                              {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="gpPopupActions">
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                           <button
-                            className="gpBtn gpBtnSoft"
-                            onClick={() => navigate(`/clases?club=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
+                            className="btn ghost"
+                            type="button"
+                            onClick={() =>
+                              navigate(`/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)
+                            }
                           >
-                            Ver clases
+                            Partidos
                           </button>
 
                           <button
-                            className="gpBtn"
-                            onClick={() => navigate(`/partidos?clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
+                            className="btn"
+                            type="button"
+                            onClick={() =>
+                              navigate(`/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)
+                            }
                           >
-                            Ver partidos
+                            Crear
                           </button>
 
-                          <button
-                            className="gpBtn gpBtnPrimary"
-                            onClick={() => navigate(`/partidos?create=1&clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
-                          >
-                            Crear partido
+                          <button className="btn ghost" type="button" onClick={() => flyToSafe(c.lat, c.lng, 14)}>
+                            Ver
                           </button>
                         </div>
                       </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-            </MapContainer>
-          </div>
-
-          {/* LISTA (panel con scroll interno) */}
-<div
-  className="gpMapListPanel"
-  style={{
-    marginTop: 14,
-    borderRadius: 16,
-    border: "1px solid rgba(0,0,0,0.08)",
-    background: "#fff",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
-    overflow: "hidden",
-  }}
->
-  <div className="gpMapListHeader" style={{
-      padding: 12,
-      borderBottom: "1px solid rgba(0,0,0,0.06)",
-      fontWeight: 950,
-    }}
-  >
-    Clubs ({sortedList.length})
-  </div>
-
-  <div
-    className="gpMapListBody"
-    style={{
-      overflowY: "auto",
-      padding: 12,
-      display: "grid",
-      gap: 10,
-      WebkitOverflowScrolling: "touch",
-    }}
-  >
-    {loading ? (
-      <div style={{ opacity: 0.7 }}>Cargando clubs…</div>
-    ) : sortedList.length === 0 ? (
-      <div style={{ opacity: 0.7 }}>No se encontraron clubs.</div>
-    ) : (
-      sortedList.map((c) => {
-        const clubId = String(c?.id || "");
-        const isFav = favIds.has(clubId);
-        const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
-
-        return (
-          <div
-            key={clubId || c.name}
-            className="card"
-            style={{
-              padding: 12,
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.08)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={() => toggleFav(clubId)}
-                title={isFav ? "Quitar favorito" : "Guardar favorito"}
-                style={{ height: 34, minWidth: 44, padding: "0 12px" }}
-              >
-                {isFav ? "⭐" : "☆"}
-              </button>
-
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontWeight: 950,
-                    fontSize: 14,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {c.name}
+                    );
+                  })}
                 </div>
-                <div
-                  style={{
-                    opacity: 0.75,
-                    fontSize: 13,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {c.city}
-                  {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap",
-                justifyContent: "flex-end",
-              }}
-            >
-              <button
-                className="btn ghost"
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`
-                  )
-                }
-              >
-                Partidos
-              </button>
-
-              <button
-                className="btn"
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`
-                  )
-                }
-              >
-                Crear
-              </button>
-
-              <button
-                className="btn ghost"
-                type="button"
-                onClick={() => {
-                  flyToSafe(c.lat, c.lng, 14);
-                }}
-              >
-                Ver
-              </button>
+              )}
             </div>
           </div>
-        );
-      })
-    )}
-  </div>
-</div>
 
-
-          <div style={{ marginTop: 18, opacity: 0.5, fontSize: 12 }}>
-            ruta: {location.pathname} · zoom: {zoom} · centro: {mapCenter.lat.toFixed(3)},{mapCenter.lng.toFixed(3)}
+          <div style={{ marginTop: 18, opacity: 0.6, fontSize: 12 }}>
+            ruta: {location.pathname}{location.search} · zoom: {zoom} · centro: {mapCenter.lat.toFixed(3)},{mapCenter.lng.toFixed(3)}
           </div>
         </div>
       </div>
