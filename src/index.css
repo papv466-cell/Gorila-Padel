@@ -49,7 +49,7 @@ img { max-width: 100%; height: auto; }
   
     border-bottom: 1px solid rgba(255,255,255,0.08);
     background: #0b0f14;
-    color: #fff;
+    color: #74B800;
     flex: 0 0 56px;
   }
   
@@ -80,7 +80,7 @@ img { max-width: 100%; height: auto; }
   padding: 7px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.92);
+  color: rgba#74B800;
   font-size: 13px;
 }
 .navLink:hover { background: rgba(255,255,255,0.06); }
@@ -101,12 +101,12 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.14);
   border-radius: 12px;
-  background: #fff;
+  background: #74B800;
   cursor: pointer;
   font: inherit;
   font-weight: 600;
 }
-.btn:hover { background: #f9fafb; }
+.btn:hover { background: #74B800; }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
 .btn.ghost { background: transparent; border-style: dashed; }
 
@@ -187,7 +187,7 @@ img { max-width: 100%; height: auto; }
   border: 1px solid rgba(0,0,0,0.14);
   padding: 10px 12px;
   font: inherit;
-  background: #fff;
+  background: #74B800;
 }
 
 /* =========================
@@ -225,7 +225,7 @@ img { max-width: 100%; height: auto; }
   padding: 12px;
   border-radius: 14px;
   border: 1px solid rgba(0,0,0,0.10);
-  background: #fff;
+  background: #74B800;
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
@@ -259,7 +259,7 @@ img { max-width: 100%; height: auto; }
   width: 44px;
   border-radius: 14px;
   border: 1px solid rgba(0,0,0,0.10);
-  background: #fff;
+  background: #74B800;
   cursor: pointer;
   font-size: 18px;
   display: grid;
@@ -295,7 +295,7 @@ img { max-width: 100%; height: auto; }
 
 .authCard {
   width: min(420px, 92vw);
-  background: #fff;
+  background: #74B800;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 30px 80px rgba(0,0,0,0.35);
@@ -352,7 +352,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.14);
   background: #0b0f14;
-  color: #fff;
+  color: #74B800;
   font-weight: 800;
   cursor: pointer;
 }
@@ -378,7 +378,7 @@ img { max-width: 100%; height: auto; }
   display: grid;
   place-items: center;
   background: #0b0f14;
-  color: #fff;
+  color: #74B800;
   z-index: 999999;
   text-align: center;
   padding: 24px;
@@ -508,7 +508,7 @@ img { max-width: 100%; height: auto; }
 
 .gpModalCard {
   width: min(620px, 100%);
-  background: #fff;
+  background: #74B800;
   border-radius: 14px;
   padding: 14px;
   border: 1px solid rgba(0,0,0,0.12);
@@ -562,7 +562,7 @@ img { max-width: 100%; height: auto; }
   width: 100%;
   text-align: left;
   padding: 10px 12px;
-  background: #fff;
+  background: #74B800;
   border: none;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   cursor: pointer;
@@ -582,7 +582,7 @@ img { max-width: 100%; height: auto; }
 .gpChatMsg {
   padding: 8px 10px;
   border-radius: 10px;
-  background: #fff;
+  background: #74B800;
   border: 1px solid rgba(0,0,0,0.06);
   margin-bottom: 8px;
 }
@@ -604,14 +604,14 @@ img { max-width: 100%; height: auto; }
   padding:12px;
   height:320px;
   overflow:auto;
-  background:#fff;
+  background:#74B800;
 }
 
 .gpChatMsg{
   border:1px solid rgba(0,0,0,.08);
   border-radius:12px;
   padding:10px 12px;
-  background:#fafafa;
+  background:#74B800;
 }
 
 
@@ -635,7 +635,7 @@ img { max-width: 100%; height: auto; }
 .card {
   border: 1px solid rgba(0,0,0,0.08);
   border-radius: 16px;
-  background: #fff;
+  background: #74B800;
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
   padding: 14px;
 }
@@ -690,18 +690,18 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.12);
   background: #111;
-  color: #fff;
+  color: #74B800;
   font-weight: 800;
   cursor: pointer;
 }
 .btn.ghost {
-  background: #fff;
+  background: #74B800;
   color: #111;
 }
 .btn.danger {
   background: #b00020;
   border-color: rgba(176,0,32,0.4);
-  color: #fff;
+  color: #74B800;
 }
 
 /* Badges */
@@ -795,7 +795,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,0.85);
   box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-  background: #fff;                 /* por si el PNG trae transparencias */
+  background: #74B800;                 /* por si el PNG trae transparencias */
 }
 
 /* BOTONES SOLO MAPA */
@@ -806,7 +806,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .btn.ghost.gpMapBtn {
-  background: rgba(255,255,255,0.85) !important;
+  background: rgba#74B800 !important;
   border-style: solid !important; /* adiós punteado si existiera */
 }
 
@@ -825,7 +825,7 @@ img { max-width: 100%; height: auto; }
   border: 2px solid rgba(0,0,0,0.85) !important;
   box-shadow: 0 12px 28px rgba(0,0,0,0.22) !important;
 
-  background: #fff !important; /* por si hay transparencia */
+  background: #74B800 !important; /* por si hay transparencia */
   object-fit: cover !important; /* para que recorte bien */
 }
 .gpChipBtn{
@@ -837,7 +837,7 @@ img { max-width: 100%; height: auto; }
   border-radius:999px;
 
   border:1px solid rgba(0,0,0,0.14);
-  background:#fff;
+  background:#74B800;
   color:#111;
 
   font-weight:900;
@@ -912,7 +912,7 @@ img { max-width: 100%; height: auto; }
 .gpBtn{
   appearance:none;
   border:1px solid rgba(0,0,0,0.14);
-  background:#fff;
+  background:#74B800;
   color:#111;
   font-weight:900;
   font-size:13px;
@@ -935,7 +935,7 @@ img { max-width: 100%; height: auto; }
 
 .gpBtnPrimary{
   background:#111;
-  color:#fff;
+  color:#74B800;
   border-color:#111;
 }
 
@@ -968,7 +968,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#fff;
+  background:#74B800;
   border:2px solid rgba(0,0,0,0.85);
   box-shadow:0 12px 28px rgba(0,0,0,0.22);
   position:relative;
@@ -1002,7 +1002,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#fff;
+  background:#74B800;
   border:2px solid rgba(0,0,0,0.9);
   box-shadow:0 14px 30px rgba(0,0,0,0.28);
   position:relative;
@@ -1043,7 +1043,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#fff;
+  background:#74B800;
   border:2px solid rgba(0,0,0,0.92);
   box-shadow:0 14px 30px rgba(0,0,0,0.28);
   position:relative;
@@ -1149,7 +1149,7 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,0.12);
-  background: #fff;
+  background: #74B800;
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0,0,0,0.06);
@@ -1195,7 +1195,7 @@ img { max-width: 100%; height: auto; }
   font-weight: 950;
   cursor: pointer;
   background: #111;
-  color: #fff;
+  color: #74B800;
 }
 
 .gpBtnSoft {
@@ -1206,7 +1206,7 @@ img { max-width: 100%; height: auto; }
 
 .gpBtnPrimary {
   background: #111;
-  color: #fff;
+  color: #74B800;
 }
 /* =========================
    MAP UI — DEFINITIVO (último bloque manda)
@@ -1218,7 +1218,7 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.12);
   background: #111;
-  color: #fff;
+  color: #74B800;
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0,0,0,0.10);
@@ -1231,7 +1231,7 @@ img { max-width: 100%; height: auto; }
 .btn:disabled{ opacity: .6; cursor: not-allowed; transform:none; }
 
 .btn.ghost{
-  background:#fff;
+  background:#74B800;
   color:#111;
   box-shadow: 0 10px 22px rgba(0,0,0,0.06);
 }
@@ -1245,7 +1245,7 @@ img { max-width: 100%; height: auto; }
   padding:0 14px;
   border-radius:999px;
   border:1px solid rgba(0,0,0,0.14);
-  background:#fff;
+  background:#74B800;
   color:#111;
   font-weight:950;
   box-shadow:0 10px 24px rgba(0,0,0,0.08);
@@ -1333,7 +1333,7 @@ img { max-width: 100%; height: auto; }
   /* bottom sheet fijo */
   .gpMapSheet{
     flex: 0 0 auto;
-    background:#fff;
+    background:#74B800;
     border-top: 1px solid rgba(0,0,0,0.10);
     box-shadow: 0 -18px 40px rgba(0,0,0,0.10);
     border-top-left-radius: 18px;
@@ -1375,7 +1375,7 @@ img { max-width: 100%; height: auto; }
   /* Chip “Favoritos” más premium */
 .gpChipBtn{
   border: 1px solid rgba(0,0,0,0.12);
-  background: #fff;
+  background: #74B800;
 }
 .gpChipBtn.isOn{
   background: rgba(116,184,0,0.22);
@@ -1389,7 +1389,7 @@ img { max-width: 100%; height: auto; }
     position: sticky;
     top: 0;
     z-index: 20;
-    background: #fff;
+    background: #74B800;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
   }
@@ -1406,7 +1406,7 @@ img { max-width: 100%; height: auto; }
     margin-top: 14px;
     border-radius: 16px;
     border: 1px solid rgba(0,0,0,0.08);
-    background: #fff;
+    background: #74B800;
     box-shadow: 0 10px 25px rgba(0,0,0,0.06);
     overflow: hidden;
   }
@@ -1449,7 +1449,7 @@ img { max-width: 100%; height: auto; }
     .gpMapListHeader{
       position: sticky;
       top: 0;
-      background: #fff;
+      background: #74B800;
       z-index: 2;
     }
   
@@ -1477,7 +1477,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.06);
-  color: #fff;
+  color: #74B800;
   font-weight: 900;
   cursor: pointer;
 }
@@ -1504,7 +1504,7 @@ img { max-width: 100%; height: auto; }
   padding: 12px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.10);
-  color: rgba(255,255,255,0.92);
+  color: rgba#74B800;
   font-weight: 800;
 }
 .navMobileLink.active{
@@ -1579,7 +1579,7 @@ img { max-width: 100%; height: auto; }
   margin-top: 14px;
   border-radius: 16px;
   border: 1px solid rgba(0,0,0,0.08);
-  background: #fff;
+  background: #74B800;
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
   overflow: hidden;
 }
@@ -1669,7 +1669,7 @@ img { max-width: 100%; height: auto; }
   .gpMapListHeader{
     position: sticky;
     top: 0;
-    background: #fff;
+    background: #74B800;
     z-index: 2;
   }
 }
@@ -1821,7 +1821,7 @@ img { max-width: 100%; height: auto; }
    ========================= */
 
 .gpMapListPanel{
-  background: #fff;
+  background: #74B800;
   position: relative;
   z-index: 5;
 }
@@ -1865,7 +1865,7 @@ html, body, #root {
 body{
   overflow: hidden;                 /* clave */
   -webkit-text-size-adjust: 100%;
-  background:#fff;
+  background:#74B800;
   color:#111827;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
 }
@@ -2102,7 +2102,7 @@ button.navMobileLink.navLinkBtn{
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 22px 60px rgba(0,0,0,0.18);
-      background: #fff;
+      background: #74B800;
     }
   
     /* header clicable */
@@ -2177,7 +2177,7 @@ button.navMobileLink.navLinkBtn{
   cursor: pointer;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
-  color: #e9f7e6;
+  color: #74B800;
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   transform: translateZ(0);
 }
@@ -2200,7 +2200,7 @@ button.navMobileLink.navLinkBtn{
 .gpHomeFooter { margin-top: 18px; opacity: .75; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
 .gpHomeFooterDot { opacity: .45; }
 
-.gpHub { background: #0b0f0c; color: #e9f7e6; }
+.gpHub { background: #0b0f0c; color: #74B800; }
 .gpHubHeader { padding-top: 16px; padding-bottom: 8px; }
 .gpHubKicker {
   display: inline-flex;
@@ -2223,7 +2223,7 @@ button.navMobileLink.navLinkBtn{
   padding: 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #e9f7e6;
+  color: #74B800;
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   cursor: pointer;
 }
@@ -2234,7 +2234,7 @@ button.navMobileLink.navLinkBtn{
 .gpHubCardMeta { margin-top: 4px; font-size: 13px; opacity: .78; }
 .gpHubBottom { margin-top: 16px; display: flex; justify-content: flex-start; }
 
-.gpInclusive { background: #0b0f0c; color: #e9f7e6; }
+.gpInclusive { background: #0b0f0c; color: #74B800 }
 .gpInclusiveInner { padding-top: 18px; padding-bottom: 26px; }
 .gpInclusiveBadge {
   display: inline-flex;
@@ -2266,11 +2266,11 @@ button.navMobileLink.navLinkBtn{
    ===================================================== */
 
    :root {
-    --gp-green: #74B800;
-    --gp-green-soft: #EAF6D9;
-    --gp-black: #0E0E0E;
-    --gp-black-soft: #2A2A2A;
-    --gp-white: #FFFFFF;
+    --gp-green: #0E0E0E;
+    --gp-green-soft: #74B800;
+    --gp-black: #2A2A2A;
+    --gp-black-soft: #74B800;
+    --gp-white: #74B800;
   }
   
   /* Fondo global */
@@ -2304,13 +2304,13 @@ button.navMobileLink.navLinkBtn{
   /* Botones grandes Home */
   .gpBigCta {
     background: var(--gp-white);
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid #74B800;;
     color: var(--gp-black);
   }
   
   .gpBigCtaEmoji {
     background: var(--gp-green-soft);
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid #74B800;;
   }
   
   .gpBigCtaArrow {
@@ -2327,12 +2327,12 @@ button.navMobileLink.navLinkBtn{
   .gpHubCard {
     background: var(--gp-white);
     color: var(--gp-black);
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid #74B800;;
   }
   
   .gpHubCardPrimary {
     background: var(--gp-green-soft);
-    border: 1px solid rgba(0,0,0,0.12);
+    border: 1px solid #74B800;;
   }
   
   /* Inclusivo */
@@ -2344,7 +2344,7 @@ button.navMobileLink.navLinkBtn{
   .gpMiniCard {
     background: var(--gp-white);
     color: var(--gp-black);
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid #74B800;;
   }
   
   /* Botones genéricos */
@@ -2357,7 +2357,7 @@ button.navMobileLink.navLinkBtn{
   .btn.ghost {
     background: transparent;
     color: var(--gp-black);
-    border: 1px solid rgba(0,0,0,0.2);
+    border: 1px solid #74B800;;
   }
   
   /* Inputs */
@@ -2387,6 +2387,6 @@ button.navMobileLink.navLinkBtn{
   .gpHubCard,
   .card,
   .gpMiniCard {
-    box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+    box-shadow: 0 14px 30px #74B800;;
   }
   

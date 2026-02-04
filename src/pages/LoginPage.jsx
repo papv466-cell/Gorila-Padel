@@ -70,10 +70,11 @@ export default function LoginPage() {
     <div className="authWrapper">
       <div className="authCard">
         <img
-          src="/imglogog.png"
+          src="/brand/register-gorila.png"
           alt="Gorila Pádel"
           className="authLogo"
           draggable="false"
+          style={{ margin: "0 auto", display: "block", }}
         />
 
         <h1 className="authTitle">Entrar</h1>

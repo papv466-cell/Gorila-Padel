@@ -38,10 +38,8 @@ export default function RegisterPage() {
   const birthdateValue = useMemo(() => {
     const v = String(birthdate || "").trim();
     if (!v) return null;
-    // HTML date ya devuelve YYYY-MM-DD, pero validamos por si acaso
     const ts = new Date(v).getTime();
     if (!Number.isFinite(ts)) return null;
-    // devolvemos el string tal cual (YYYY-MM-DD)
     return v;
   }, [birthdate]);
 
@@ -91,9 +89,8 @@ export default function RegisterPage() {
             handle: cleanHandle,
             sex,
             level,
-            handedness, // ✅ right | left | both
-            birthdate: birthdateValue, // ✅ null o YYYY-MM-DD
-            // ✅ Si aún no tienes esos ficheros, pon null para no romper:
+            handedness,
+            birthdate: birthdateValue,
             avatar_url: defaultAvatarUrl || null,
           },
         },
@@ -111,111 +108,206 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="authWrapper">
-      <div className="authCard">
-        <img src="/imglogog.png" alt="Gorila Pádel" className="authLogo" />
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0b0f0c",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* ✅ LOGO CENTRADO */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+          <img
+            src="/imglogog.png"
+            alt="Gorila Pádel"
+            style={{ height: 56, width: "auto", display: "block" }}
+          />
+        </div>
 
-        <h1 className="authTitle">Crear cuenta</h1>
-        <p className="authSub">Apodo + datos básicos para que todo funcione (ceder plaza, valoraciones, clases…).</p>
-
-        <form className="authForm" onSubmit={handleRegister}>
-          <label className="authLabel">
-            Apodo (único)
-            <input
-              className="authInput"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              placeholder="Ej: teresa39"
-              autoComplete="nickname"
+        {/* ✅ CARD */}
+        <div
+          className="authCard"
+          style={{
+            borderRadius: 20,
+            overflow: "hidden",
+            border: "1px solid rgba(255,255,255,0.12)",
+            background: "rgba(255,255,255,0.06)",
+            boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
+            position: "relative",
+          }}
+        >
+          {/* ✅ HERO con gorila detrás */}
+          <div style={{ position: "relative", height: 250 }}>
+            <img
+              src="/brand/register-gorila.png"
+              alt="Gorila"
+              style={{
+                position: "absolute",
+                inset: 0,
+                height: "100%",
+                width: "100%",
+                objectFit: "contain",
+                objectPosition: "center",
+                transform: "translateY(10px)",
+              }}
             />
-          </label>
 
-          <label className="authLabel">
-            Sexo
-            <select className="authInput" value={sex} onChange={(e) => setSex(e.target.value)}>
-              <option value="F">Mujer</option>
-              <option value="M">Hombre</option>
-              <option value="X">Otro</option>
-            </select>
-          </label>
-
-          <label className="authLabel">
-            Mano
-            <select className="authInput" value={handedness} onChange={(e) => setHandedness(e.target.value)}>
-              <option value="right">Derecha</option>
-              <option value="left">Izquierda</option>
-              <option value="both">Ambas</option>
-            </select>
-          </label>
-
-          <label className="authLabel">
-            Nivel
-            <select className="authInput" value={level} onChange={(e) => setLevel(e.target.value)}>
-              <option value="iniciacion">Iniciación</option>
-              <option value="medio">Medio</option>
-              <option value="alto">Alto</option>
-            </select>
-          </label>
-
-          <label className="authLabel">
-            Fecha de nacimiento (opcional)
-            <input
-              className="authInput"
-              type="date"
-              value={birthdate}
-              onChange={(e) => setBirthdate(e.target.value)}
+            {/* oscurecer para legibilidad */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.15), rgba(0,0,0,0.7))",
+              }}
             />
-          </label>
 
-          <label className="authLabel">
-            Email
-            <input
-              className="authInput"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-            />
-          </label>
+            {/* título centrado abajo */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                paddingBottom: 18,
+                textAlign: "center",
+              }}
+            >
+              <h1 style={{ color: "white", fontSize: 26, fontWeight: 900, margin: 0 }}>
+                Crear cuenta
+              </h1>
+              <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 13, margin: "6px 0 0 0" }}>
+                Apodo + datos básicos para que todo funcione (ceder plaza, valoraciones, clases…).
+              </p>
+            </div>
+          </div>
 
-          <label className="authLabel">
-            Contraseña
-            <input
-              className="authInput"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="mínimo 6 caracteres"
-              autoComplete="new-password"
-            />
-          </label>
+          {/* ✅ FORM (tu form igual) */}
+          <div style={{ padding: 18 }}>
+            <form className="authForm" onSubmit={handleRegister}>
+              <label className="authLabel">
+                Apodo (único)
+                <input
+                  className="authInput"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                  placeholder="Ej: teresa39"
+                  autoComplete="nickname"
+                />
+              </label>
 
-          <label className="authLabel">
-            Repite la contraseña
-            <input
-              className="authInput"
-              type="password"
-              value={password2}
-              onChange={(e) => setPassword2(e.target.value)}
-              placeholder="repite la contraseña"
-              autoComplete="new-password"
-            />
-          </label>
+              <label className="authLabel">
+                Sexo
+                <select className="authInput" value={sex} onChange={(e) => setSex(e.target.value)}>
+                  <option value="F">Mujer</option>
+                  <option value="M">Hombre</option>
+                  <option value="X">Otro</option>
+                </select>
+              </label>
 
-          {error ? <div className="authError">{error}</div> : null}
-          {ok ? <div className="authOk">{ok}</div> : null}
+              <label className="authLabel">
+                Mano
+                <select
+                  className="authInput"
+                  value={handedness}
+                  onChange={(e) => setHandedness(e.target.value)}
+                >
+                  <option value="right">Derecha</option>
+                  <option value="left">Izquierda</option>
+                  <option value="both">Ambas</option>
+                </select>
+              </label>
 
-          <button className="authBtn" type="submit" disabled={busy}>
-            {busy ? "Creando…" : "Crear cuenta"}
-          </button>
-        </form>
+              <label className="authLabel">
+                Nivel
+                <select className="authInput" value={level} onChange={(e) => setLevel(e.target.value)}>
+                  <option value="iniciacion">Iniciación</option>
+                  <option value="medio">Medio</option>
+                  <option value="alto">Alto</option>
+                </select>
+              </label>
 
-        <div className="authFooter">
-          <span>¿Ya tienes cuenta?</span>{" "}
-          <Link className="authLink" to="/login">
-            Entrar
-          </Link>
+              <label className="authLabel">
+                Fecha de nacimiento (opcional)
+                <input
+                  className="authInput"
+                  type="date"
+                  value={birthdate}
+                  onChange={(e) => setBirthdate(e.target.value)}
+                />
+              </label>
+
+              <label className="authLabel">
+                Email
+                <input
+                  className="authInput"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  autoComplete="email"
+                />
+              </label>
+
+              <label className="authLabel">
+                Contraseña
+                <input
+                  className="authInput"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="mínimo 6 caracteres"
+                  autoComplete="new-password"
+                />
+              </label>
+
+              <label className="authLabel">
+                Repite la contraseña
+                <input
+                  className="authInput"
+                  type="password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  placeholder="repite la contraseña"
+                  autoComplete="new-password"
+                />
+              </label>
+
+              {error ? <div className="authError">{error}</div> : null}
+              {ok ? <div className="authOk">{ok}</div> : null}
+
+              {/* ✅ Botón: dejamos el mismo, pero lo hacemos más “hero” */}
+              <button
+                className="authBtn"
+                type="submit"
+                disabled={busy}
+                style={{
+                  width: "100%",
+                  borderRadius: 14,
+                  padding: "12px 14px",
+                  fontWeight: 900,
+                  marginTop: 10,
+                }}
+              >
+                {busy ? "Creando…" : "Entrar"}
+              </button>
+            </form>
+
+            <div className="authFooter" style={{ marginTop: 14, textAlign: "center" }}>
+              <span>¿Ya tienes cuenta?</span>{" "}
+              <Link className="authLink" to="/login">
+                Entrar
+              </Link>
+            </div>
+          </div>
+
+        
         </div>
       </div>
     </div>
