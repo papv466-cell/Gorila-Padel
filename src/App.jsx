@@ -25,7 +25,6 @@ import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
-// 🦍🔊 sonido
 import { playGorila, unlockGorilaAudio } from "./services/gorilaSound";
 
 // ✅ Guard para rutas privadas
@@ -35,43 +34,6 @@ function RequireAuth({ session, children }) {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   return children;
-}
-
-// ✅ Botón global "Atrás"
-function GlobalBackButton({ hidden }) {
-  const navigate = useNavigate();
-  if (hidden) return null;
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        if (window.history.length > 1) navigate(-1);
-        else navigate("/");
-      }}
-      title="Atrás"
-      style={{
-        position: "fixed",
-        left: 14,
-        top: 14,
-        zIndex: 99999,
-        width: 46,
-        height: 46,
-        borderRadius: 16,
-        border: "2px solid #111",
-        background: "#fff",
-        color: "#111",
-        boxShadow: "0 18px 40px rgba(0,0,0,0.25)",
-        fontWeight: 950,
-        cursor: "pointer",
-        display: "grid",
-        placeItems: "center",
-        userSelect: "none",
-      }}
-    >
-      ←
-    </button>
-  );
 }
 
 export default function App() {
@@ -130,7 +92,7 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
-  // ✅ Unlock de audio con el primer toque/click (necesario en móviles)
+  // ✅ Unlock audio (móvil)
   useEffect(() => {
     const unlock = () => {
       unlockGorilaAudio().catch(() => {});
@@ -147,9 +109,7 @@ export default function App() {
     };
   }, []);
 
-  // ✅ Mensajes desde Service Worker:
-  // - NAVIGATE: navegar sin reload
-  // - PUSH_RECEIVED / PUSH_CLICKED: sonar gorila + mostrar toast en app abierta
+  // ✅ Mensajes SW
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
@@ -163,23 +123,18 @@ export default function App() {
         return;
       }
 
-      // 🔊 + 🔔 (toast dentro de la app abierta)
       if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-        // 1) sonido gorila (una vez por notificación)
         playGorila(1);
 
-        // 2) toast dentro de la app (MatchesPage escucha "gp:push")
         const detail = {
           title: data.title || "Gorila Pádel",
           body: data.body || "",
-          url: data.url || (type === "PUSH_CLICKED" ? "/partidos" : "/partidos"),
+          url: data.url || "/partidos",
         };
 
         try {
           window.dispatchEvent(new CustomEvent("gp:push", { detail }));
         } catch {}
-
-        return;
       }
     };
 
@@ -187,26 +142,25 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener("message", onMsg);
   }, [navigate]);
 
-  // ✅ Splash
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
-  // ✅ Ocultamos el botón en Home y en auth
-  const hideBackButton = isAuthShell || location.pathname === "/";
+  // ✅ Back SOLO si: no auth y no Home
+  const showBack = !isAuthShell && location.pathname !== "/";
+  const onBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
 
   return (
     <div className="appShell">
-      {!isAuthShell ? <Navbar /> : null}
-
-      <GlobalBackButton hidden={hideBackButton} />
+      {!isAuthShell ? <Navbar showBack={showBack} onBack={onBack} /> : null}
 
       <main className="appMain">
         {!isAuthShell ? <PWAInstallPrompt /> : null}
 
         <Routes>
-          {/* ✅ Portada */}
           <Route path="/" element={<HomePage />} />
 
-          {/* ✅ Hubs (PRIVADOS) */}
           <Route
             path="/juega"
             element={
@@ -232,7 +186,6 @@ export default function App() {
             }
           />
 
-          {/* ✅ Privadas */}
           <Route
             path="/mapa"
             element={
@@ -269,7 +222,6 @@ export default function App() {
             }
           />
 
-          {/* ✅ Profesores */}
           <Route
             path="/profesores"
             element={
@@ -287,7 +239,6 @@ export default function App() {
             }
           />
 
-          {/* ✅ Perfil */}
           <Route
             path="/perfil"
             element={
@@ -298,7 +249,6 @@ export default function App() {
           />
           <Route path="/profile" element={<Navigate to="/perfil" replace />} />
 
-          {/* ✅ Públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/registro" element={<RegisterPage />} />

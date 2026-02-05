@@ -12,6 +12,9 @@ import { scheduleGorilaForEnd, clearGorilaTimers } from "../services/gorilaSound
 const LS_ACTIVE_CLASS_ID = "gp_active_class_id";
 const LS_ACTIVE_CLASS_END_AT = "gp_active_class_end_at";
 
+/* -----------------------------
+   Utils
+------------------------------ */
 function toDateInputValue(d = new Date()) {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -43,6 +46,7 @@ function initials(name = "") {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2);
+
   if (!parts.length) return "🦍";
   return parts.map((p) => p[0].toUpperCase()).join("");
 }
@@ -51,7 +55,9 @@ function isUuid(x = "") {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
 }
 
-// helpers active class
+/* -----------------------------
+   Active class helpers (LS)
+------------------------------ */
 function setActiveClass(classId, endAtIso) {
   try {
     localStorage.setItem(LS_ACTIVE_CLASS_ID, String(classId || ""));
@@ -76,6 +82,9 @@ function getActiveClass() {
   }
 }
 
+/* -----------------------------
+   Page
+------------------------------ */
 export default function ClassesPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -127,6 +136,7 @@ export default function ClassesPage() {
 
   // ---------- Clubs sheet ----------
   const [clubsSheet, setClubsSheet] = useState([]);
+
   useEffect(() => {
     fetchClubsFromGoogleSheet()
       .then((rows) => setClubsSheet(Array.isArray(rows) ? rows : []))
@@ -152,6 +162,8 @@ export default function ClassesPage() {
       })
       .filter((x) => x.id && x.name);
   }, [clubsSheet]);
+
+  const uid = useMemo(() => (session?.user?.id ? String(session.user.id) : ""), [session?.user?.id]);
 
   function goLogin() {
     navigate("/login", { replace: true });
@@ -182,9 +194,9 @@ export default function ClassesPage() {
   // ✅ Push subscription SOLO una vez por sesión
   useEffect(() => {
     if (!authReady) return;
-    if (!session?.user?.id) return;
+    if (!uid) return;
     ensurePushSubscription().catch(() => {});
-  }, [authReady, session?.user?.id]);
+  }, [authReady, uid]);
 
   // ✅ Al entrar en Clases: reprogramar timers si hay “clase activa” guardada
   useEffect(() => {
@@ -195,13 +207,11 @@ export default function ClassesPage() {
 
     const endMs = new Date(end_at).getTime();
     if (!Number.isFinite(endMs) || endMs <= Date.now()) {
-      // ya pasó -> limpiamos
       clearGorilaTimers();
       clearActiveClass();
       return;
     }
 
-    // programar (5 min antes + fin)
     scheduleGorilaForEnd(end_at);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady]);
@@ -221,17 +231,12 @@ export default function ClassesPage() {
       try {
         setFavReady(false);
 
-        const uid = session?.user?.id ? String(session.user.id) : "";
         if (!uid) {
           setFavTeacherIds(new Set());
           return;
         }
 
-        const { data, error } = await supabase
-          .from("teacher_favorites")
-          .select("teacher_id")
-          .eq("user_id", uid);
-
+        const { data, error } = await supabase.from("teacher_favorites").select("teacher_id").eq("user_id", uid);
         if (error) throw error;
 
         const s = new Set((data || []).map((x) => String(x.teacher_id)).filter(Boolean));
@@ -252,7 +257,7 @@ export default function ClassesPage() {
     return () => {
       alive = false;
     };
-  }, [authReady, session?.user?.id]);
+  }, [authReady, uid]);
 
   // ✅ Leer filtros desde URL:
   // - /clases?teacher=<uuid>
@@ -274,10 +279,10 @@ export default function ClassesPage() {
   }, [authReady]);
 
   // -------- Teacher status ----------
-  async function fetchTeacherStatus(uid) {
+  async function fetchTeacherStatus(teacherId) {
     setTeacherReady(false);
 
-    if (!uid) {
+    if (!teacherId) {
       setIsTeacher(false);
       setTeacherReady(true);
       return;
@@ -286,12 +291,7 @@ export default function ClassesPage() {
     try {
       setTeacherLoading(true);
 
-      const { data, error } = await supabase
-        .from("teachers")
-        .select("id, is_active")
-        .eq("id", uid)
-        .maybeSingle();
-
+      const { data, error } = await supabase.from("teachers").select("id, is_active").eq("id", teacherId).maybeSingle();
       if (error) throw error;
 
       if (!data?.id) setIsTeacher(false);
@@ -306,9 +306,9 @@ export default function ClassesPage() {
 
   useEffect(() => {
     if (!authReady) return;
-    fetchTeacherStatus(session?.user?.id);
+    fetchTeacherStatus(uid);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady, session?.user?.id]);
+  }, [authReady, uid]);
 
   // ✅ Autocomplete CREAR clase
   const slotClubSuggest = useMemo(() => {
@@ -384,11 +384,7 @@ export default function ClassesPage() {
         return;
       }
 
-      const { data: profs, error: eProf } = await supabase
-        .from("profiles")
-        .select("id, name, handle, avatar_url")
-        .in("id", teacherIds);
-
+      const { data: profs, error: eProf } = await supabase.from("profiles").select("id, name, handle, avatar_url").in("id", teacherIds);
       if (eProf) throw eProf;
 
       const map = {};
@@ -427,7 +423,7 @@ export default function ClassesPage() {
 
   // -------- Activar profesor con código ----------
   async function confirmTeacherCode() {
-    if (!session?.user?.id) return goLogin();
+    if (!uid) return goLogin();
 
     try {
       setTeacherBusy(true);
@@ -440,7 +436,7 @@ export default function ClassesPage() {
 
       toast.success("Modo profesor activado 🦍");
       setShowTeacherCode(false);
-      await fetchTeacherStatus(session.user.id);
+      await fetchTeacherStatus(uid);
     } catch (e) {
       toast.error(e?.message || "No se pudo activar");
     } finally {
@@ -650,10 +646,7 @@ export default function ClassesPage() {
     return ids
       .map((id) => {
         const p = profilesById?.[id];
-        const display =
-          (p?.name && String(p.name).trim()) ||
-          (p?.handle && String(p.handle).trim()) ||
-          `Profe ${id.slice(0, 6)}…`;
+        const display = (p?.name && String(p.name).trim()) || (p?.handle && String(p.handle).trim()) || `Profe ${id.slice(0, 6)}…`;
         return { id, name: display };
       })
       .sort((a, b) => normText(a.name).localeCompare(normText(b.name)));
@@ -676,7 +669,7 @@ export default function ClassesPage() {
   }, [items, day, loading]);
 
   return (
-    <div className="page">
+    <div className="page gpClassesPage">
       <div className="pageWrap">
         <div className="container">
           <div className="pageHeader">
@@ -700,9 +693,7 @@ export default function ClassesPage() {
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                <div style={{ fontWeight: 950 }}>
-                  🦍 Clase activa en marcha — quedan ~{activeInfo.minsLeft} min
-                </div>
+                <div style={{ fontWeight: 950 }}>🦍 Clase activa en marcha — quedan ~{activeInfo.minsLeft} min</div>
                 <button
                   type="button"
                   className="btn ghost"
@@ -715,21 +706,13 @@ export default function ClassesPage() {
                   Parar avisos
                 </button>
               </div>
-              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
-                Sonará el gorila a falta de 5 min (2x) y al terminar (4x).
-              </div>
+              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>Sonará el gorila a falta de 5 min (2x) y al terminar (4x).</div>
             </div>
           ) : null}
 
           <div className="gpRow" style={{ gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ fontWeight: 900, fontSize: 13, opacity: 0.75 }}>Día:</div>
-            <input
-              className="gpInput"
-              type="date"
-              value={day}
-              onChange={(e) => setDay(e.target.value)}
-              style={{ maxWidth: 200 }}
-            />
+            <input className="gpInput" type="date" value={day} onChange={(e) => setDay(e.target.value)} style={{ maxWidth: 200 }} />
 
             {!teacherReady || teacherLoading ? (
               <div className="gpBadge warn">⏳ Comprobando profesor…</div>
@@ -760,12 +743,23 @@ export default function ClassesPage() {
 
                 <div>
                   <label className="gpLabel">Precio (opcional)</label>
-                  <input className="gpInput" type="number" value={slotPrice} onChange={(e) => setSlotPrice(e.target.value)} placeholder="Ej: 30" />
+                  <input
+                    className="gpInput"
+                    type="number"
+                    value={slotPrice}
+                    onChange={(e) => setSlotPrice(e.target.value)}
+                    placeholder="Ej: 30"
+                  />
                 </div>
 
                 <div>
                   <label className="gpLabel">Ciudad / barrio / dirección (opcional)</label>
-                  <input className="gpInput" value={slotLocation} onChange={(e) => setSlotLocation(e.target.value)} placeholder="Ej: Málaga · Teatinos · Calle X..." />
+                  <input
+                    className="gpInput"
+                    value={slotLocation}
+                    onChange={(e) => setSlotLocation(e.target.value)}
+                    placeholder="Ej: Málaga · Teatinos · Calle X..."
+                  />
                 </div>
 
                 <div style={{ gridColumn: "1 / -1" }}>
@@ -784,21 +778,29 @@ export default function ClassesPage() {
                   </datalist>
 
                   {slotClubQuery && !slotClubPick?.id ? (
-                    <div style={{ marginTop: 8, fontSize: 12, color: "crimson", fontWeight: 800 }}>
-                      Elige un club de la lista para evitar errores.
-                    </div>
+                    <div style={{ marginTop: 8, fontSize: 12, color: "crimson", fontWeight: 800 }}>Elige un club de la lista para evitar errores.</div>
                   ) : null}
                 </div>
 
                 <div>
                   <label className="gpLabel">Pista</label>
-                  <input className="gpInput" value={slotCourt} onChange={(e) => setSlotCourt(e.target.value)} placeholder="Ej: Pista 3 / Central" />
+                  <input
+                    className="gpInput"
+                    value={slotCourt}
+                    onChange={(e) => setSlotCourt(e.target.value)}
+                    placeholder="Ej: Pista 3 / Central"
+                  />
                 </div>
               </div>
 
               <div style={{ marginTop: 10 }}>
                 <label className="gpLabel">Notas (opcional)</label>
-                <input className="gpInput" value={slotNotes} onChange={(e) => setSlotNotes(e.target.value)} placeholder="Ej: clase técnica + bandeja" />
+                <input
+                  className="gpInput"
+                  value={slotNotes}
+                  onChange={(e) => setSlotNotes(e.target.value)}
+                  placeholder="Ej: clase técnica + bandeja"
+                />
               </div>
 
               <div className="gpRow" style={{ marginTop: 12 }}>
@@ -887,7 +889,6 @@ export default function ClassesPage() {
                   const end = new Date(c.end_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
                   const booked = !!c.is_booked;
 
-                  const uid = session?.user?.id ? String(session.user.id) : "";
                   const isOwnerTeacher = uid && String(c.teacher_id) === uid;
 
                   const prof = profilesById[String(c.teacher_id)] || null;
@@ -923,7 +924,15 @@ export default function ClassesPage() {
                             </span>
 
                             {clubLabel ? (
-                              <span style={{ padding: "5px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 800 }}>
+                              <span
+                                style={{
+                                  padding: "5px 10px",
+                                  borderRadius: 999,
+                                  background: "rgba(0,0,0,0.06)",
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                }}
+                              >
                                 🏟️ {clubLabel}
                               </span>
                             ) : null}
@@ -932,13 +941,30 @@ export default function ClassesPage() {
                           {/* Profe */}
                           <div
                             onClick={() => navigate(`/profesores/${c.teacher_id}`)}
-                            style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10, cursor: "pointer", userSelect: "none" }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              marginTop: 10,
+                              cursor: "pointer",
+                              userSelect: "none",
+                            }}
                             title="Ver perfil del profesor"
                           >
                             {avatar ? (
                               <img src={avatar} alt={profName} style={{ width: 34, height: 34, borderRadius: 999, objectFit: "cover" }} />
                             ) : (
-                              <div style={{ width: 34, height: 34, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 900, background: "rgba(0,0,0,0.06)" }}>
+                              <div
+                                style={{
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: 999,
+                                  display: "grid",
+                                  placeItems: "center",
+                                  fontWeight: 900,
+                                  background: "rgba(0,0,0,0.06)",
+                                }}
+                              >
                                 {initials(profName)}
                               </div>
                             )}
@@ -948,19 +974,43 @@ export default function ClassesPage() {
 
                               <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
                                 {c.court ? (
-                                  <span style={{ padding: "5px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 800 }}>
+                                  <span
+                                    style={{
+                                      padding: "5px 10px",
+                                      borderRadius: 999,
+                                      background: "rgba(0,0,0,0.06)",
+                                      fontSize: 12,
+                                      fontWeight: 800,
+                                    }}
+                                  >
                                     🎾 {c.court}
                                   </span>
                                 ) : null}
 
                                 {c.location ? (
-                                  <span style={{ padding: "5px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 800 }}>
+                                  <span
+                                    style={{
+                                      padding: "5px 10px",
+                                      borderRadius: 999,
+                                      background: "rgba(0,0,0,0.06)",
+                                      fontSize: 12,
+                                      fontWeight: 800,
+                                    }}
+                                  >
                                     📍 {c.location}
                                   </span>
                                 ) : null}
 
                                 {c.price ? (
-                                  <span style={{ padding: "5px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 800 }}>
+                                  <span
+                                    style={{
+                                      padding: "5px 10px",
+                                      borderRadius: 999,
+                                      background: "rgba(0,0,0,0.06)",
+                                      fontSize: 12,
+                                      fontWeight: 800,
+                                    }}
+                                  >
                                     💶 {c.price}€
                                   </span>
                                 ) : null}
@@ -1001,33 +1051,38 @@ export default function ClassesPage() {
             )}
           </div>
         </div>
-      </div>
 
-      {/* MODAL CÓDIGO PROFESOR */}
-      {showTeacherCode ? (
-        <div className="gpModalOverlay" onClick={() => setShowTeacherCode(false)}>
-          <div className="gpModalCard" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
-            <div className="gpModalHeader">
-              <div style={{ fontWeight: 900, fontSize: 16 }}>🦍 Activar modo profesor</div>
-              <button type="button" className="btn ghost" onClick={() => setShowTeacherCode(false)}>
-                Cerrar
-              </button>
-            </div>
+        {/* MODAL CÓDIGO PROFESOR */}
+        {showTeacherCode ? (
+          <div className="gpModalOverlay" onClick={() => setShowTeacherCode(false)}>
+            <div className="gpModalCard" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
+              <div className="gpModalHeader">
+                <div style={{ fontWeight: 900, fontSize: 16 }}>🦍 Activar modo profesor</div>
+                <button type="button" className="btn ghost" onClick={() => setShowTeacherCode(false)}>
+                  Cerrar
+                </button>
+              </div>
 
-            <label className="gpLabel">Código de profesor</label>
-            <input className="gpInput" value={codeInput} onChange={(e) => setCodeInput(e.target.value)} placeholder="Ej: GP-7H2K-2026" />
+              <label className="gpLabel">Código de profesor</label>
+              <input
+                className="gpInput"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                placeholder="Ej: GP-7H2K-2026"
+              />
 
-            <div className="gpRow" style={{ marginTop: 14 }}>
-              <button type="button" className="btn" onClick={confirmTeacherCode} disabled={teacherBusy}>
-                {teacherBusy ? "Activando…" : "Activar"}
-              </button>
-              <button type="button" className="btn ghost" onClick={() => setShowTeacherCode(false)} disabled={teacherBusy}>
-                Cancelar
-              </button>
+              <div className="gpRow" style={{ marginTop: 14 }}>
+                <button type="button" className="btn" onClick={confirmTeacherCode} disabled={teacherBusy}>
+                  {teacherBusy ? "Activando…" : "Activar"}
+                </button>
+                <button type="button" className="btn ghost" onClick={() => setShowTeacherCode(false)} disabled={teacherBusy}>
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

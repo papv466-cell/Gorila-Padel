@@ -28,7 +28,7 @@ import { fetchProfilesByIds } from "../services/profilesPublic";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 
-// ✅ avisos sonoros
+// ✅ avisos sonoros (NO TOCAR)
 import { scheduleEndWarningsForEvent, unscheduleEventWarnings } from "../services/gorilaSound";
 
 /* Utils */
@@ -97,6 +97,9 @@ export default function MatchesPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  // Perfiles para pintar avatar del creador (solo UI)
+  const [rosterProfilesById, setRosterProfilesById] = useState({});
+
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -110,8 +113,7 @@ export default function MatchesPage() {
 
   const openChatFromUrl = qs.get("openChat") || "";
   const openRequestsParam = qs.get("openRequests") || "";
-  const openChatFromStorage =
-    (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
+  const openChatFromStorage = (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
   const showPushButton = !!session;
@@ -140,6 +142,19 @@ export default function MatchesPage() {
   const [chatItems, setChatItems] = useState([]);
   const [chatText, setChatText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+
+  /* ✅ CEDER */
+  const [cedeOpenFor, setCedeOpenFor] = useState(null);
+  const [cedeQuery, setCedeQuery] = useState("");
+  const [cedeBusy, setCedeBusy] = useState(false);
+  const [cedeResults, setCedeResults] = useState([]);
+
+  /* ✅ INVITAR */
+  const [inviteOpenFor, setInviteOpenFor] = useState(null);
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteResults, setInviteResults] = useState([]);
+  const [inviteSelected, setInviteSelected] = useState([]);
 
   /* Create modal */
   const [openCreate, setOpenCreate] = useState(false);
@@ -230,6 +245,21 @@ export default function MatchesPage() {
       const latest = await fetchLatestChatTimes(ids);
       if (!aliveRef.current) return;
       setLatestChatTsByMatch(latest || {});
+
+      // ✅ perfiles para pintar avatar del creador en la card (solo UI)
+      try {
+        const creatorIds = Array.from(
+          new Set((unique || []).map((m) => m?.created_by_user).filter(Boolean).map(String))
+        );
+        if (creatorIds.length) {
+          const profs = await fetchProfilesByIds(creatorIds);
+          if (aliveRef.current) setRosterProfilesById(profs || {});
+        } else {
+          setRosterProfilesById({});
+        }
+      } catch {
+        setRosterProfilesById({});
+      }
     } catch (e) {
       if (!aliveRef.current) return;
       setStatus({ loading: false, error: e?.message || "No se pudieron cargar los partidos" });
@@ -275,7 +305,6 @@ export default function MatchesPage() {
       const title = String(p.title || "Gorila Pádel");
       const body = String(p.body || "");
 
-      // ✅ toast dentro de la app (app abierta)
       if (body) toast.success(`${title}: ${body}`);
       else toast.success(title);
 
@@ -345,15 +374,12 @@ export default function MatchesPage() {
 
     if (clubIdParam) list = list.filter((m) => String(m.club_id) === String(clubIdParam));
 
-    if (isClubFilter) {
-      list = list.filter((m) => {
-        const d = toDateInputValue(new Date(m.start_at));
-        return d === selectedDay;
-      });
+    if (selectedDay) {
+      list = list.filter((m) => toDateInputValue(new Date(m.start_at)) === selectedDay);
     }
 
     return list;
-  }, [items, clubIdParam, isClubFilter, selectedDay]);
+  }, [items, clubIdParam, selectedDay]);
 
   const myList = useMemo(() => {
     if (!session) return [];
@@ -367,6 +393,7 @@ export default function MatchesPage() {
 
   /* =========================
      ⏱️ Avisos sonoros (5 min antes + fin)
+     (NO TOCAR)
   ========================= */
   useEffect(() => {
     if (!authReady) return;
@@ -398,6 +425,186 @@ export default function MatchesPage() {
 
     unscheduleEventWarnings((key) => key.startsWith("match:") && !desired.has(key));
   }, [authReady, session?.user?.id, visibleList, myReqStatus]);
+
+  // =========
+  // Calendar helpers (para la strip de días)
+  // =========
+  function addDays(dateStr, deltaDays) {
+    const d = new Date(`${dateStr}T00:00:00`);
+    d.setDate(d.getDate() + deltaDays);
+    return toDateInputValue(d);
+  }
+
+  function fmtDayLabel(dateStr) {
+    try {
+      const d = new Date(`${dateStr}T00:00:00`);
+      return d.toLocaleDateString("es-ES", { weekday: "short" });
+    } catch {
+      return "";
+    }
+  }
+
+  const calendarDays = useMemo(() => {
+    const base = selectedDay || todayISO;
+    const out = [];
+    for (let i = -3; i <= 10; i++) out.push(addDays(base, i));
+    return out;
+  }, [selectedDay, todayISO]);
+
+  const dayCounts = useMemo(() => {
+    let list = items;
+    if (clubIdParam) list = list.filter((m) => String(m.club_id) === String(clubIdParam));
+
+    const map = {};
+    for (const m of list || []) {
+      const k = toDateInputValue(new Date(m.start_at));
+      map[k] = (map[k] || 0) + 1;
+    }
+    return map;
+  }, [items, clubIdParam]);
+
+  // =========
+  // Búsqueda pública de perfiles (CEDER / INVITAR)
+  // =========
+  async function searchPublicProfiles(q) {
+    const query = String(q || "").trim();
+    if (query.length < 3) return [];
+
+    const { data, error } = await supabase
+      .from("profiles_public")
+      .select("id, name, handle, avatar_url")
+      .or(`name.ilike.%${query}%,handle.ilike.%${query}%`)
+      .limit(12);
+
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+  }
+
+  // Debounce CEDER
+  useEffect(() => {
+    let t = null;
+    const q = cedeQuery.trim();
+
+    if (q.length < 3) {
+      setCedeResults([]);
+      return;
+    }
+
+    t = setTimeout(async () => {
+      try {
+        const rows = await searchPublicProfiles(q);
+        if (!aliveRef.current) return;
+        setCedeResults(rows);
+      } catch {
+        if (!aliveRef.current) return;
+        setCedeResults([]);
+      }
+    }, 220);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cedeQuery]);
+
+  // Debounce INVITAR
+  useEffect(() => {
+    let t = null;
+    const q = inviteQuery.trim();
+
+    if (q.length < 3) {
+      setInviteResults([]);
+      return;
+    }
+
+    t = setTimeout(async () => {
+      try {
+        const rows = await searchPublicProfiles(q);
+        if (!aliveRef.current) return;
+        setInviteResults(rows);
+      } catch {
+        if (!aliveRef.current) return;
+        setInviteResults([]);
+      }
+    }, 220);
+
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteQuery]);
+
+  async function transferSpot({ matchId, toUserId }) {
+    if (!session) return goLogin();
+    if (!matchId || !toUserId) return;
+
+    setCedeBusy(true);
+    try {
+      const { error } = await supabase.rpc("gp_transfer_match_spot", {
+        p_match_id: matchId,
+        p_to_user_id: toUserId,
+      });
+      if (error) throw error;
+
+      toast.success("Plaza cedida ✅");
+      setCedeOpenFor(null);
+      setCedeQuery("");
+      setCedeResults([]);
+      await load();
+    } catch (e) {
+      toast.error(e?.message || "No se pudo ceder la plaza");
+    } finally {
+      setCedeBusy(false);
+    }
+  }
+
+  async function sendInvites({ matchId, userIds }) {
+    if (!session) return goLogin();
+  
+    const uniq = Array.from(new Set((userIds || []).map(String).filter(Boolean))).slice(0, 10);
+    if (!matchId || uniq.length === 0) return;
+  
+    setInviteBusy(true);
+    try {
+      // 1) Traer ya invitados (solo esos ids)
+      const { data: existing, error: exErr } = await supabase
+        .from("match_invites")
+        .select("to_user_id")
+        .eq("match_id", matchId)
+        .in("to_user_id", uniq);
+  
+      if (exErr) throw exErr;
+  
+      const existingSet = new Set((existing || []).map((r) => String(r.to_user_id)));
+      const toInsert = uniq.filter((id) => !existingSet.has(String(id)));
+  
+      // 2) Si no hay nada nuevo, avisamos y salimos sin petar
+      if (toInsert.length === 0) {
+        toast.success("Ya estaban invitados ✅");
+        setInviteOpenFor(null);
+        setInviteQuery("");
+        setInviteResults([]);
+        setInviteSelected([]);
+        return;
+      }
+  
+      // 3) Insertar solo los nuevos
+      const payload = toInsert.map((to) => ({
+        match_id: matchId,
+        from_user_id: session.user.id,
+        to_user_id: to,
+      }));
+  
+      const { error } = await supabase.from("match_invites").insert(payload);
+      if (error) throw error;
+  
+      toast.success(`Invitaciones enviadas ✅ (${toInsert.length})`);
+      setInviteOpenFor(null);
+      setInviteQuery("");
+      setInviteResults([]);
+      setInviteSelected([]);
+    } catch (e) {
+      toast.error(e?.message || "No se pudieron enviar invitaciones");
+    } finally {
+      setInviteBusy(false);
+    }
+  }
 
   async function openRequests(matchId) {
     try {
@@ -463,9 +670,7 @@ export default function MatchesPage() {
   const clubSuggestions = useMemo(() => {
     const q = (clubQuery || "").trim().toLowerCase();
     if (!q) return [];
-    return (clubsSheet || [])
-      .filter((c) => String(c?.name || "").toLowerCase().includes(q))
-      .slice(0, 8);
+    return (clubsSheet || []).filter((c) => String(c?.name || "").toLowerCase().includes(q)).slice(0, 10);
   }, [clubQuery, clubsSheet]);
 
   function pickClub(c) {
@@ -500,6 +705,7 @@ export default function MatchesPage() {
 
       setOpenCreate(false);
       toast.success("Partido creado");
+      await load();
     } catch (e) {
       setSaveError(e?.message || "No se pudo crear el partido");
       toast.error(e?.message || "No se pudo crear el partido");
@@ -547,8 +753,6 @@ export default function MatchesPage() {
       if (!message) return;
 
       setChatText("");
-
-      // ✅ matches.js espera { matchId, message }
       await sendMatchMessage({ matchId: chatOpenFor, message });
 
       const rows = await fetchMatchMessages(chatOpenFor);
@@ -572,60 +776,40 @@ export default function MatchesPage() {
   }, [chatOpenFor]);
 
   return (
-    <div className="gpPage">
-      <style>{`
-        .gpPage{height:100%;min-height:0;display:flex;flex-direction:column;padding:18px 16px 30px;}
-        .gpWrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:980px;margin:0 auto;}
-        .gpHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
-        .gpTitle{font-size:40px;line-height:1.05;margin:0;font-weight:900;letter-spacing:-0.02em;}
-        .gpMeta{margin-top:6px;font-size:13px;opacity:.75;font-weight:700;}
-        .gpTopActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
-        .gpRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-        .gpBtn{border:0;border-radius:14px;padding:10px 14px;font-weight:900;cursor:pointer;background:#111;color:#fff;box-shadow:0 10px 24px rgba(0,0,0,.12);}
-        .gpBtn:disabled{opacity:.55;cursor:not-allowed;}
-        .gpBtnGhost{background:transparent;color:#111;border:1px solid rgba(0,0,0,.12);box-shadow:none;}
-        .gpBtnDanger{background:#dc2626;color:#fff;}
-        .gpCard{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:14px;box-shadow:0 10px 24px rgba(0,0,0,.06);}
-        .gpGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px;}
-        .gpBox{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:10px;}
-        .gpLabel{font-size:11px;opacity:.65;font-weight:900;}
-        .gpVal{margin-top:4px;font-weight:900;font-size:13px;}
-        .gpBadges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-        .gpBadge{font-size:12px;font-weight:900;border-radius:999px;padding:6px 10px;border:1px solid rgba(0,0,0,.08);background:rgba(0,0,0,.03);}
-        .gpOk{background:rgba(34,197,94,.12);color:rgb(21,128,61);}
-        .gpWarn{background:rgba(245,158,11,.14);color:rgb(146,64,14);}
-        .gpBad{background:rgba(220,38,38,.12);color:rgb(185,28,28);}
-        .gpActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px;}
-        .gpTabs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0;}
-        .gpTab{border:1px solid rgba(0,0,0,.12);background:transparent;border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer;}
-        .gpTabOn{background:#111;color:#fff;border-color:#111;}
-        .gpList{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px;}
-        .gpModalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;padding:14px;z-index:9999;}
-        .gpModal{width:min(860px,100%);background:#fff;border-radius:18px;border:1px solid rgba(0,0,0,.12);padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.28);max-height:85vh;overflow:auto;}
-        .gpModalHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-        .gpH2{margin:0;font-size:18px;font-weight:950;}
-        .gpInput{width:100%;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 12px;font-weight:800;outline:none;}
-        .gpInput:focus{border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.12);}
-        .gpTextarea{width:100%;min-height:90px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:10px 12px;font-weight:800;outline:none;resize:vertical;}
-        .gpTextarea:focus{border-color:#111;box-shadow:0 0 0 3px rgba(17,17,17,.12);}
-        .gpSuggest{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.18);z-index:9999;}
-        .gpSuggestBtn{width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-weight:900;cursor:pointer;}
-        .gpSuggestBtn:hover{background:rgba(0,0,0,.04);}
-        @media(max-width:720px){.gpTitle{font-size:30px}.gpGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-      `}</style>
-
-      <div className="gpWrap">
-        <div className="gpHeader">
-          <div>
-            <h1 className="gpTitle">Partidos</h1>
-            <div className="gpMeta">
-              {status.loading ? "Cargando…" : `${visibleList.length} partido(s)`}
-              {isClubFilter ? ` · Club: ${clubNameParam || clubIdParam}` : ""}
+    <div className="page gpMatchesPage">
+      <div className="pageWrap">
+        <div className="container">
+          <div className="pageHeader">
+            <div>
+              <h1 className="pageTitle">Partidos</h1>
+              <div className="pageMeta">
+                {status.loading ? "Cargando…" : `${visibleList.length} partido(s)`}
+                {isClubFilter ? ` · Club: ${clubNameParam || clubIdParam}` : ""}
+              </div>
             </div>
-          </div>
 
-          <div className="gpTopActions">
-            {isClubFilter ? (
+            <div className="gpActions" style={{ justifyContent: "flex-end" }}>
+              <div className="gpCalendarStrip" role="tablist" aria-label="Calendario de partidos">
+                {calendarDays.map((d) => {
+                  const isActive = d === selectedDay;
+                  const count = dayCounts[d] || 0;
+
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      className={`gpDayPill ${isActive ? "isActive" : ""}`}
+                      onClick={() => setSelectedDay(d)}
+                      title={count ? `${count} partido(s)` : "Sin partidos"}
+                    >
+                      <div className="gpDow">{fmtDayLabel(d)}</div>
+                      <div className="gpDom">{d.slice(8, 10)}</div>
+                      {count ? <div className="gpDot" /> : <div className="gpDot isOff" />}
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="gpRow">
                 <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.75 }}>Día:</div>
                 <input
@@ -636,172 +820,396 @@ export default function MatchesPage() {
                   style={{ width: 170 }}
                 />
               </div>
-            ) : (
-              <div className="gpTabs">
-                <button className={`gpTab ${viewMode === "mine" ? "gpTabOn" : ""}`} onClick={() => setViewMode("mine")}>
-                  Los míos
-                </button>
-                <button className={`gpTab ${viewMode === "all" ? "gpTabOn" : ""}`} onClick={() => setViewMode("all")}>
-                  Todos
-                </button>
-              </div>
-            )}
 
-            <button className="gpBtn" onClick={() => setOpenCreate(true)}>
-              ➕ Crear
-            </button>
+              {!isClubFilter ? (
+                <div className="gpSegmented">
+                  <button className={viewMode === "mine" ? "isActive" : ""} onClick={() => setViewMode("mine")}>
+                    Los míos
+                  </button>
+                  <button className={viewMode === "all" ? "isActive" : ""} onClick={() => setViewMode("all")}>
+                    Todos
+                  </button>
+                </div>
+              ) : null}
 
-            {showPushButton ? (
-              <button className="gpBtn gpBtnGhost" onClick={handleEnablePush} disabled={pushBusy}>
-                {pushBusy ? "Activando…" : "🔔 Push"}
+              <button className="btn" onClick={() => setOpenCreate(true)}>
+                ➕ Crear
               </button>
-            ) : null}
+
+              {showPushButton ? (
+                <button className="btn ghost" onClick={handleEnablePush} disabled={pushBusy}>
+                  {pushBusy ? "Activando…" : "🔔 Push"}
+                </button>
+              ) : null}
+            </div>
           </div>
-        </div>
 
-        <ul className="gpList">
-          {visibleList.map((m) => {
-            const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
-            const left = Math.max(0, 4 - occupied);
+          <ul className="gpMatchesGrid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {visibleList.map((m) => {
+              const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
+              const left = Math.max(0, 4 - occupied);
 
-            const myStatus = myReqStatus[m.id] || null;
-            const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
+              const myStatus = myReqStatus[m.id] || null;
+              const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
 
-            return (
-              <li key={m.id} className="gpCard">
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ minWidth: 260, flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 950 }}>{m.club_name}</div>
+              // ✅ creador (solo UI)
+              const creatorId = m.created_by_user ? String(m.created_by_user) : "";
+              const creatorProf = rosterProfilesById?.[creatorId] || null;
+              const creatorName =
+                (creatorProf?.name && String(creatorProf.name).trim()) ||
+                (creatorProf?.handle && String(creatorProf.handle).trim()) ||
+                "Creador";
+              const creatorAvatar = creatorProf?.avatar_url || "";
 
-                    <div className="gpGrid">
-                      <div className="gpBox">
-                        <div className="gpLabel">Fecha y hora</div>
-                        <div className="gpVal">{formatWhen(m.start_at)}</div>
-                      </div>
-
-                      <div className="gpBox">
-                        <div className="gpLabel">Duración</div>
-                        <div className="gpVal">{m.duration_min} min</div>
-                      </div>
-
-                      <div className="gpBox">
-                        <div className="gpLabel">Nivel</div>
-                        <div className="gpVal">{String(m.level || "").toUpperCase()}</div>
-                      </div>
-
-                      <div className="gpBox">
-                        <div className="gpLabel">Plazas</div>
-                        <div className="gpVal">
-                          {occupied}/4 ocupadas · {left} libres
+              return (
+                <li key={m.id} className="gpMatchCard">
+                  {/* ROSTER (UI) */}
+                  <div className="gpRoster">
+                    <div className="gpTeam">
+                      {/* Team A - Slot 1: creador */}
+                      <div className="gpSlot">
+                        {creatorAvatar ? (
+                          <img className="gpSlotImg" src={creatorAvatar} alt={creatorName} />
+                        ) : (
+                          <div className="gpSlotImg" style={{ display: "grid", placeItems: "center", fontWeight: 1000 }}>
+                            🦍
+                          </div>
+                        )}
+                        <div className="gpSlotText">
+                          <div className="gpSlotName">{creatorName}</div>
+                          <div className="gpSlotMeta">Creador</div>
                         </div>
                       </div>
+
+                      {/* Team A - Slot 2: vacío (por ahora UI) */}
+                      <div className="gpSlot gpSlotEmpty">
+                        <div className="gpGorila">🦍</div>
+                        <div className="gpSlotMeta">Falta jugador…</div>
+                      </div>
                     </div>
 
-                    <div className="gpBadges">
-                      {myStatus === "approved" ? <span className="gpBadge gpOk">✅ Estás dentro</span> : null}
-                      {myStatus === "pending" ? <span className="gpBadge gpWarn">⏳ Solicitud pendiente</span> : null}
-                      {myStatus === "rejected" ? <span className="gpBadge gpBad">❌ Rechazado</span> : null}
-                      {isCreator ? <span className="gpBadge gpOk">👑 Eres creador</span> : null}
-                      {latestChatTsByMatch[m.id] ? <span className="gpBadge">💬 Chat activo</span> : null}
+                    <div className="gpVs">VS</div>
+
+                    <div className="gpTeam">
+                      <div className="gpSlot gpSlotEmpty">
+                        <div className="gpGorila">🦍</div>
+                        <div className="gpSlotMeta">Aquí puede ir alguien</div>
+                      </div>
+                      <div className="gpSlot gpSlotEmpty">
+                        <div className="gpGorila">🦍</div>
+                        <div className="gpSlotMeta">¿Te apuntas?</div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="gpActions">
-                    {!session ? (
-                      <button className="gpBtn" onClick={goLogin}>
-                        Entrar
-                      </button>
-                    ) : null}
+                  <div className="gpHeadline">{m.club_name}</div>
 
-                    {session && !isCreator && !myStatus && left > 0 ? (
-                      <button
-                        className="gpBtn"
-                        onClick={async () => {
-                          try {
-                            await requestJoin(m.id);
-                            toast.success("Solicitud enviada");
-                          } catch (e) {
-                            toast.error(e?.message || "No se pudo enviar la solicitud");
-                          }
-                        }}
-                      >
-                        🤝 Unirme
-                      </button>
-                    ) : null}
-
-                    {session && myStatus === "pending" ? (
-                      <button
-                        className="gpBtn gpBtnGhost"
-                        onClick={async () => {
-                          try {
-                            await cancelMyJoin(m.id);
-                            toast.success("Solicitud cancelada");
-                          } catch (e) {
-                            toast.error(e?.message || "No se pudo cancelar");
-                          }
-                        }}
-                      >
-                        Cancelar solicitud
-                      </button>
-                    ) : null}
-
-                    {session && myStatus === "rejected" ? (
-                      <button
-                        className="gpBtn"
-                        onClick={async () => {
-                          try {
-                            await cancelMyJoin(m.id);
-                            await requestJoin(m.id);
-                            toast.success("Solicitud enviada");
-                          } catch (e) {
-                            toast.error(e?.message || "No se pudo enviar");
-                          }
-                        }}
-                      >
-                        Solicitar de nuevo
-                      </button>
-                    ) : null}
-
-                    {isCreator ? (
-                      <button type="button" className="gpBtn gpBtnGhost" onClick={() => openRequests(m.id)}>
-                        📥 Solicitudes
-                      </button>
-                    ) : null}
-
-                    {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
-                      <button className="gpBtn gpBtnGhost" onClick={() => openChat(m.id)}>
-                        💬 Chat
-                      </button>
-                    ) : null}
-
-                    {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
-                      <button className="gpBtn gpBtnGhost" onClick={() => handleLeave(m.id)}>
-                        Salir
-                      </button>
-                    ) : null}
-
-                    {session && isCreator ? (
-                      <button className="gpBtn gpBtnDanger" onClick={() => handleDelete(m.id)}>
-                        🗑️ Eliminar
-                      </button>
-                    ) : null}
+                  <div className="gpCaption">
+                    <div className="gpChip">🗓️ {formatWhen(m.start_at)}</div>
+                    <div className="gpChip">⏱️ {m.duration_min} min</div>
+                    <div className="gpChip">🎚️ {String(m.level || "").toUpperCase()}</div>
                   </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
 
-        {status.error ? <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div> : null}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                    {myStatus === "approved" ? <span className="meta" style={{ fontWeight: 950 }}>✅ Estás dentro</span> : null}
+                    {myStatus === "pending" ? <span className="meta" style={{ fontWeight: 950 }}>⏳ Pendiente</span> : null}
+                    {myStatus === "rejected" ? <span className="meta" style={{ fontWeight: 950 }}>❌ Rechazado</span> : null}
+                    {isCreator ? <span className="meta" style={{ fontWeight: 950 }}>👑 Eres creador</span> : null}
+                    {latestChatTsByMatch[m.id] ? <span className="meta" style={{ fontWeight: 950 }}>💬 Chat activo</span> : null}
+                  </div>
+
+                  <div className="gpDivider" />
+
+                  <div className="gpActionBar">
+                    <div className="gpActionLeft">
+                      {isCreator ? (
+                        <button type="button" className="btn ghost gpIconBtn" onClick={() => openRequests(m.id)}>
+                          📥 Solicitudes
+                        </button>
+                      ) : null}
+
+                      {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
+                        <button
+                          type="button"
+                          className="btn ghost gpIconBtn"
+                          onClick={() => {
+                            setCedeOpenFor(m.id);
+                            setCedeQuery("");
+                            setCedeResults([]);
+                          }}
+                        >
+                          🫱 Ceder
+                        </button>
+                      ) : null}
+
+                      {session && isCreator ? (
+                        <button
+                          type="button"
+                          className="btn ghost gpIconBtn"
+                          onClick={() => {
+                            setInviteOpenFor(m.id);
+                            setInviteQuery("");
+                            setInviteResults([]);
+                            setInviteSelected([]);
+                          }}
+                        >
+                          📣 Invitar
+                        </button>
+                      ) : null}
+
+                      {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
+                        <button className="btn ghost gpIconBtn" onClick={() => openChat(m.id)}>
+                          💬 Chat
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div className="gpActionRight">
+                      {!session ? (
+                        <button className="btn" onClick={goLogin}>
+                          Entrar
+                        </button>
+                      ) : null}
+
+                      {session && !isCreator && !myStatus && left > 0 ? (
+                        <button
+                          className="btn"
+                          onClick={async () => {
+                            try {
+                              await requestJoin(m.id);
+                              toast.success("Solicitud enviada");
+                            } catch (e) {
+                              toast.error(e?.message || "No se pudo enviar la solicitud");
+                            }
+                          }}
+                        >
+                          🤝 Unirme
+                        </button>
+                      ) : null}
+
+                      {session && myStatus === "pending" ? (
+                        <button
+                          className="btn ghost"
+                          onClick={async () => {
+                            try {
+                              await cancelMyJoin(m.id);
+                              toast.success("Solicitud cancelada");
+                            } catch (e) {
+                              toast.error(e?.message || "No se pudo cancelar");
+                            }
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      ) : null}
+
+                      {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
+                        <button className="btn ghost" onClick={() => handleLeave(m.id)}>
+                          Salir
+                        </button>
+                      ) : null}
+
+                      {session && isCreator ? (
+                        <button className="btn danger" onClick={() => handleDelete(m.id)}>
+                          🗑️ Eliminar
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {status.error ? <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div> : null}
+        </div>
       </div>
+
+      {/* =========================
+          MODAL: CEDER PLAZA
+      ========================= */}
+      {cedeOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setCedeOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Ceder plaza</div>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <label className="gpLabel">Escribe 3+ letras (nombre o @handle)</label>
+              <input
+                className="gpInput"
+                value={cedeQuery}
+                onChange={(e) => setCedeQuery(e.target.value)}
+                placeholder="Ej: car / @carlos"
+              />
+              <div className="meta" style={{ marginTop: 6 }}>Selecciona a quién quieres ceder tu sitio.</div>
+            </div>
+
+            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+              {(cedeResults || []).map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  className="card"
+                  style={{
+                    textAlign: "left",
+                    padding: 12,
+                    borderRadius: 14,
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "center",
+                    cursor: "pointer",
+                    opacity: cedeBusy ? 0.7 : 1,
+                  }}
+                  onClick={() => transferSpot({ matchId: cedeOpenFor, toUserId: u.id })}
+                  disabled={cedeBusy}
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt={u.name || u.handle || "user"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>🦍</div>
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 950, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {u.name || "Usuario"}
+                    </div>
+                    <div className="meta" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      @{u.handle || String(u.id).slice(0, 6)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+              {cedeQuery.trim().length >= 3 && (cedeResults || []).length === 0 ? (
+                <div className="meta" style={{ opacity: 0.75 }}>No hay resultados.</div>
+              ) : null}
+            </div>
+
+            <div className="gpRow" style={{ marginTop: 14, justifyContent: "flex-end" }}>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)} disabled={cedeBusy}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* =========================
+          MODAL: INVITAR JUGADORES
+      ========================= */}
+      {inviteOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setInviteOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Invitar jugadores</div>
+              <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <label className="gpLabel">Busca (3+ letras)</label>
+              <input
+                className="gpInput"
+                value={inviteQuery}
+                onChange={(e) => setInviteQuery(e.target.value)}
+                placeholder="Ej: ana / @antonio"
+              />
+              <div className="meta" style={{ marginTop: 6 }}>Puedes seleccionar hasta 10.</div>
+            </div>
+
+            {inviteSelected.length ? (
+              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {inviteSelected.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className="gpChip"
+                    onClick={() => setInviteSelected((prev) => prev.filter((x) => x.id !== u.id))}
+                    title="Quitar"
+                  >
+                    @{u.handle || u.name || String(u.id).slice(0, 6)} ✕
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+              {(inviteResults || []).map((u) => {
+                const already = inviteSelected.some((x) => x.id === u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className="card"
+                    style={{
+                      textAlign: "left",
+                      padding: 12,
+                      borderRadius: 14,
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      cursor: "pointer",
+                      opacity: already ? 0.55 : 1,
+                    }}
+                    onClick={() => {
+                      if (already) return;
+                      setInviteSelected((prev) => (prev.length >= 10 ? prev : [...prev, u]));
+                    }}
+                    disabled={already || inviteBusy}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+                      {u.avatar_url ? (
+                        <img src={u.avatar_url} alt={u.name || u.handle || "user"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>🦍</div>
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 950, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {u.name || "Usuario"}
+                      </div>
+                      <div className="meta" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        @{u.handle || String(u.id).slice(0, 6)}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="gpRow" style={{ marginTop: 14, justifyContent: "space-between" }}>
+              <div className="meta">{inviteSelected.length}/10 seleccionados</div>
+
+              <div className="gpRow">
+                <button
+                  className="btn"
+                  onClick={() => sendInvites({ matchId: inviteOpenFor, userIds: inviteSelected.map((x) => x.id) })}
+                  disabled={inviteBusy || inviteSelected.length === 0}
+                >
+                  {inviteBusy ? "Enviando…" : "Enviar invitaciones"}
+                </button>
+                <button className="btn ghost" onClick={() => setInviteOpenFor(null)} disabled={inviteBusy}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* REQUESTS MODAL */}
       {requestsOpenFor ? (
         <div className="gpModalOverlay" onClick={() => setRequestsOpenFor(null)}>
-          <div className="gpModal" onClick={(e) => e.stopPropagation()}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
-              <h2 className="gpH2">Solicitudes pendientes</h2>
-              <button className="gpBtn gpBtnGhost" onClick={() => setRequestsOpenFor(null)}>
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Solicitudes pendientes</div>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
                 Cerrar
               </button>
             </div>
@@ -818,18 +1226,27 @@ export default function MatchesPage() {
                   return (
                     <div
                       key={r.id}
-                      className="gpCard"
-                      style={{ padding: 12, borderRadius: 14, display: "flex", justifyContent: "space-between", gap: 10 }}
+                      className="card"
+                      style={{
+                        padding: 12,
+                        borderRadius: 14,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        alignItems: "center",
+                      }}
                     >
                       <div>
                         <div style={{ fontWeight: 950 }}>{name}</div>
-                        <div style={{ fontSize: 12, opacity: 0.75 }}>{new Date(r.created_at).toLocaleString("es-ES")}</div>
+                        <div className="meta" style={{ marginTop: 4 }}>
+                          {new Date(r.created_at).toLocaleString("es-ES")}
+                        </div>
                       </div>
                       <div className="gpRow">
-                        <button className="gpBtn" onClick={() => handleApprove(r.id)}>
+                        <button className="btn" onClick={() => handleApprove(r.id)}>
                           ✅ Aprobar
                         </button>
-                        <button className="gpBtn gpBtnGhost" onClick={() => handleReject(r.id)}>
+                        <button className="btn ghost" onClick={() => handleReject(r.id)}>
                           ❌ Rechazar
                         </button>
                       </div>
@@ -845,17 +1262,17 @@ export default function MatchesPage() {
       {/* CREATE MODAL */}
       {openCreate ? (
         <div className="gpModalOverlay" onClick={() => setOpenCreate(false)}>
-          <div className="gpModal" onClick={(e) => e.stopPropagation()}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
-              <h2 className="gpH2">Crear partido</h2>
-              <button className="gpBtn gpBtnGhost" onClick={() => setOpenCreate(false)}>
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Crear partido</div>
+              <button className="btn ghost" onClick={() => setOpenCreate(false)}>
                 Cerrar
               </button>
             </div>
 
-            <div className="gpRow" style={{ gap: 12, alignItems: "flex-start" }}>
-              <div style={{ flex: 1, minWidth: 240, position: "relative" }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Club</div>
+            <div className="gpGrid2" style={{ marginTop: 10 }}>
+              <div style={{ gridColumn: "1 / -1", position: "relative" }}>
+                <label className="gpLabel">Club (escribe 2–3 letras y elige)</label>
                 <input
                   className="gpInput"
                   value={clubQuery}
@@ -870,35 +1287,70 @@ export default function MatchesPage() {
                 />
 
                 {showClubSuggest && clubSuggestions.length ? (
-                  <div className="gpSuggest">
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: "calc(100% + 6px)",
+                      background: "#fff",
+                      border: "1px solid rgba(0,0,0,.12)",
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      boxShadow: "0 18px 60px rgba(0,0,0,.18)",
+                      zIndex: 9999,
+                    }}
+                  >
                     {clubSuggestions.map((c) => (
-                      <button key={c.id} className="gpSuggestBtn" onClick={() => pickClub(c)} type="button">
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => pickClub(c)}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          border: 0,
+                          background: "transparent",
+                          padding: "10px 12px",
+                          fontWeight: 900,
+                          cursor: "pointer",
+                        }}
+                      >
                         {c.name}
                       </button>
                     ))}
                   </div>
                 ) : null}
+
+                {form.clubName && !form.clubId ? (
+                  <div style={{ marginTop: 8, fontSize: 12, color: "crimson", fontWeight: 800 }}>
+                    Selecciona el club de la lista (para evitar errores).
+                  </div>
+                ) : null}
               </div>
 
-              <div style={{ width: 170 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Fecha</div>
+              <div>
+                <label className="gpLabel">Fecha</label>
                 <input className="gpInput" type="date" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} />
               </div>
 
-              <div style={{ width: 140 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Hora</div>
+              <div>
+                <label className="gpLabel">Hora</label>
                 <input className="gpInput" type="time" value={form.time} onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))} />
               </div>
-            </div>
 
-            <div className="gpRow" style={{ gap: 12, marginTop: 12 }}>
-              <div style={{ width: 170 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Duración (min)</div>
-                <input className="gpInput" type="number" value={form.durationMin} onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))} />
+              <div>
+                <label className="gpLabel">Duración (min)</label>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.durationMin}
+                  onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))}
+                />
               </div>
 
-              <div style={{ width: 170 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Nivel</div>
+              <div>
+                <label className="gpLabel">Nivel</label>
                 <select className="gpInput" value={form.level} onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}>
                   <option value="bajo">Bajo</option>
                   <option value="medio">Medio</option>
@@ -906,8 +1358,8 @@ export default function MatchesPage() {
                 </select>
               </div>
 
-              <div style={{ width: 190 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Ya sois</div>
+              <div>
+                <label className="gpLabel">Ya sois</label>
                 <select className="gpInput" value={form.alreadyPlayers} onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}>
                   <option value={1}>1 (solo yo)</option>
                   <option value={2}>2</option>
@@ -915,19 +1367,24 @@ export default function MatchesPage() {
                 </select>
               </div>
 
-              <div style={{ width: 170 }}>
-                <div style={{ fontWeight: 900, fontSize: 12, opacity: 0.7, marginBottom: 6 }}>Precio/jugador</div>
-                <input className="gpInput" type="number" value={form.pricePerPlayer} onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))} placeholder="(opcional)" />
+              <div>
+                <label className="gpLabel">Precio/jugador (opcional)</label>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.pricePerPlayer}
+                  onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))}
+                />
               </div>
             </div>
 
             {saveError ? <div style={{ marginTop: 10, color: "#dc2626", fontWeight: 900 }}>{saveError}</div> : null}
 
             <div className="gpRow" style={{ marginTop: 14 }}>
-              <button className="gpBtn" onClick={handleCreate} disabled={saving}>
+              <button className="btn" onClick={handleCreate} disabled={saving || !!(form.clubName && !form.clubId)}>
                 {saving ? "Creando…" : "Crear partido"}
               </button>
-              <button className="gpBtn gpBtnGhost" onClick={() => setOpenCreate(false)} disabled={saving}>
+              <button className="btn ghost" onClick={() => setOpenCreate(false)} disabled={saving}>
                 Cancelar
               </button>
             </div>
@@ -938,10 +1395,10 @@ export default function MatchesPage() {
       {/* CHAT MODAL */}
       {chatOpenFor ? (
         <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
-          <div className="gpModal" onClick={(e) => e.stopPropagation()}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
-              <h2 className="gpH2">Chat</h2>
-              <button className="gpBtn gpBtnGhost" onClick={() => setChatOpenFor(null)}>
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Chat</div>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
                 Cerrar
               </button>
             </div>
@@ -951,8 +1408,8 @@ export default function MatchesPage() {
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
                 {(chatItems || []).map((it) => (
-                  <div key={it.id} className="gpCard" style={{ padding: 10 }}>
-                    <div style={{ fontSize: 12, opacity: 0.65, fontWeight: 900 }}>
+                  <div key={it.id} className="card" style={{ padding: 10 }}>
+                    <div className="meta" style={{ fontWeight: 900 }}>
                       {it.user_id?.slice?.(0, 6)}… · {new Date(it.created_at).toLocaleString("es-ES")}
                     </div>
                     <div style={{ marginTop: 6, fontSize: 14, fontWeight: 800 }}>{it.message}</div>
@@ -964,7 +1421,7 @@ export default function MatchesPage() {
             <textarea className="gpTextarea" value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Escribe…" />
 
             <div className="gpRow" style={{ marginTop: 10 }}>
-              <button className="gpBtn" onClick={handleSendChat} disabled={!chatText.trim()}>
+              <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>
                 Enviar
               </button>
             </div>

@@ -98,8 +98,8 @@ function MapEvents({ onZoom, onMove, onClick }) {
       const c = e.target.getCenter();
       onMove?.({ lat: c.lat, lng: c.lng });
     },
-    click(e) {
-      onClick?.(e);
+    click() {
+      onClick?.();
     },
   });
   return null;
@@ -146,7 +146,7 @@ export default function MapPage() {
   // ✅ Modo vista: /mapa?view=list  => lista primero y mapa plegado
   const viewMode = useMemo(() => {
     const sp = new URLSearchParams(location.search);
-    return (sp.get("view") || "").toLowerCase(); // "list" | ""
+    return (sp.get("view") || "").toLowerCase();
   }, [location.search]);
 
   const isListView = viewMode === "list";
@@ -154,19 +154,19 @@ export default function MapPage() {
   // ✅ mapa abierto/cerrado (en list view empieza cerrado)
   const [mapOpen, setMapOpen] = useState(!isListView);
 
-  // ✅ si cambia la URL, ajustamos modo
   useEffect(() => {
     setMapOpen(!isListView);
   }, [isListView]);
 
-  const [sheetOpen, setSheetOpen] = useState(true);
+  // ✅ Lista en overlay (modal)
+  const [listOpen, setListOpen] = useState(false);
 
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  const [todayClassesByClub, setTodayClassesByClub] = useState(() => new Map()); // club_id -> { freeCount, totalCount }
-  const [mapTheme, setMapTheme] = useState("light"); // "light" | "dark"
+  const [todayClassesByClub, setTodayClassesByClub] = useState(() => new Map());
+  const [mapTheme, setMapTheme] = useState("light");
 
   const [matches, setMatches] = useState([]);
 
@@ -176,7 +176,7 @@ export default function MapPage() {
   const [selectedClubId, setSelectedClubId] = useState("");
 
   const [zoom, setZoom] = useState(11);
-  const [mapCenter, setMapCenter] = useState({ lat: 36.7213, lng: -4.4214 }); // Málaga
+  const [mapCenter, setMapCenter] = useState({ lat: 36.7213, lng: -4.4214 });
 
   const [userPos, setUserPos] = useState(null);
   const [locBusy, setLocBusy] = useState(false);
@@ -196,7 +196,7 @@ export default function MapPage() {
   });
 
   const mapRef = useRef(null);
-  const mapBoxRef = useRef(null); // ✅ para scroll al mapa
+  const mapBoxRef = useRef(null);
   const [flyToPos, setFlyToPos] = useState(null);
 
   function persistFav(nextSet) {
@@ -305,7 +305,6 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ REALTIME
   useEffect(() => {
     const unsub = subscribeMatchesRealtime(() => {
       loadMatches();
@@ -315,7 +314,6 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ al abrir el mapa, invalidamos tamaño para Leaflet
   useEffect(() => {
     if (!mapOpen) return;
     const t = setTimeout(() => {
@@ -325,6 +323,10 @@ export default function MapPage() {
     }, 80);
     return () => clearTimeout(t);
   }, [mapOpen]);
+
+  useEffect(() => {
+    if (listOpen) setShowSuggest(false);
+  }, [listOpen]);
 
   const clubsWithCoords = useMemo(() => {
     return (clubs || []).filter((c) => Number.isFinite(c?.lat) && Number.isFinite(c?.lng));
@@ -383,7 +385,6 @@ export default function MapPage() {
     return [36.7213, -4.4214];
   }, [sortedList]);
 
-  /* ✅ SUGERENCIAS */
   const suggestions = useMemo(() => {
     const q = normText(query);
     if (!q || q.length < 2) return [];
@@ -416,7 +417,6 @@ export default function MapPage() {
     return [...cities, ...clubsS].slice(0, 10);
   }, [query, clubsWithCoords]);
 
-  /* ✅ clustering */
   const clusterItems = useMemo(() => {
     const list = sortedList;
 
@@ -496,8 +496,7 @@ export default function MapPage() {
 
         setLocBusy(false);
       },
-      (e) => {
-        console.error(e);
+      () => {
         alert("No pude obtener tu ubicación. Revisa permisos del navegador.");
         setLocBusy(false);
       },
@@ -513,11 +512,8 @@ export default function MapPage() {
     setNearOnly(false);
     setFavOnly(false);
 
-    if (mapRef.current) {
-      mapRef.current.setView(defaultCenter, 11);
-    } else {
-      setFlyToPos({ lat: 36.7213, lng: -4.4214 });
-    }
+    if (mapRef.current) mapRef.current.setView(defaultCenter, 11);
+    else setFlyToPos({ lat: 36.7213, lng: -4.4214 });
   }
 
   function flyToSafe(lat, lng, z = 14) {
@@ -567,31 +563,16 @@ export default function MapPage() {
     const q = normText(query);
     if (q && q.length >= 2) {
       const top = suggestions?.[0];
-
       if (top?.type === "club") {
         setSelectedClubId(top.clubId);
         setSelectedCity("");
         flyToSafe(top.lat, top.lng, 14);
         return;
       }
-
       if (top?.type === "city") {
         setSelectedCity(top.city);
         setSelectedClubId("");
-        if (centerByCity(top.city)) return;
-      }
-
-      const hit = clubsWithCoords.find((c) => {
-        const name = normText(c?.name);
-        const city = normText(c?.city);
-        const address = normText(c?.address);
-        return name.includes(q) || city.includes(q) || address.includes(q);
-      });
-
-      if (hit) {
-        setSelectedClubId(String(hit.id || ""));
-        setSelectedCity("");
-        flyToSafe(hit.lat, hit.lng, 14);
+        centerByCity(top.city);
         return;
       }
     }
@@ -627,8 +608,6 @@ export default function MapPage() {
 
     return map;
   }, [matches]);
-
-  const listMaxHeight = sheetOpen ? "52vh" : "0px";
 
   return (
     <div className="page gpMapPage">
@@ -672,29 +651,27 @@ export default function MapPage() {
               {locBusy ? "Ubicando…" : "📍 Mi ubicación"}
             </button>
 
+            {/* ✅ Cerca de mí (verde cuando está ON) */}
             <button
               type="button"
-              className={`gpChipBtn ${nearOnly ? "isOn" : ""}`}
+              className={`btn gpMapBtn ${nearOnly ? "isOn" : "ghost"}`}
               onClick={() => {
                 if (!userPos) requestMyLocation({ centerMap: false });
                 setNearOnly((v) => !v);
               }}
               title="Filtra clubs a 20 km de tu ubicación"
             >
-              <span className="gpChipIcon" aria-hidden="true">📍</span>
-              <span className="gpChipText">Cerca de mí {nearKm} km</span>
-              <span className="gpChipDot" aria-hidden="true" />
+              📍 Cerca de mí {nearKm} km
             </button>
 
+            {/* ✅ Favoritos (verde cuando está ON) */}
             <button
               type="button"
-              className={`gpChipBtn ${favOnly ? "isOn" : ""}`}
+              className={`btn gpMapBtn ${favOnly ? "isOn" : "ghost"}`}
               onClick={() => setFavOnly((v) => !v)}
               title="Mostrar solo mis clubs favoritos"
             >
-              <span className="gpChipIcon" aria-hidden="true">{favOnly ? "⭐" : "☆"}</span>
-              <span className="gpChipText">Favoritos{favIds.size ? ` (${favIds.size})` : ""}</span>
-              <span className="gpChipDot" aria-hidden="true" />
+              {favOnly ? "⭐" : "☆"} Favoritos{favIds.size ? ` (${favIds.size})` : ""}
             </button>
           </div>
 
@@ -716,6 +693,12 @@ export default function MapPage() {
               }}
             />
 
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+              <button type="button" className="btn ghost gpMapBtn" onClick={() => setListOpen(true)}>
+                Clubs ({sortedList.length})
+              </button>
+            </div>
+
             {showSuggest && suggestions.length > 0 ? (
               <div
                 style={{
@@ -723,12 +706,14 @@ export default function MapPage() {
                   left: 0,
                   right: 0,
                   top: "calc(100% + 6px)",
-                  background: "#fff",
-                  border: "1px solid rgba(0,0,0,0.12)",
+                  background: "rgba(16,18,22,0.98)",
+                  color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: 12,
                   overflow: "hidden",
-                  boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.55)",
                   zIndex: 9999,
+                  backdropFilter: "blur(10px)",
                 }}
               >
                 {suggestions.map((s, idx) => (
@@ -758,11 +743,12 @@ export default function MapPage() {
                       border: "0",
                       background: "transparent",
                       cursor: "pointer",
+                      color: "inherit",
                     }}
                   >
                     <div style={{ fontWeight: 800, fontSize: 13 }}>
                       {s.label}
-                      <span style={{ marginLeft: 8, fontWeight: 700, opacity: 0.55, fontSize: 12 }}>
+                      <span style={{ marginLeft: 8, fontWeight: 700, opacity: 0.7, fontSize: 12 }}>
                         {s.type === "city" ? "Ciudad" : "Club"}
                       </span>
                     </div>
@@ -795,9 +781,9 @@ export default function MapPage() {
                 marginTop: 12,
                 borderRadius: 16,
                 overflow: "hidden",
-                border: "1px solid rgba(0,0,0,0.12)",
+                border: "1px solid rgba(255,255,255,0.10)",
                 height: 420,
-                background: "#fff",
+                background: "rgba(255,255,255,0.06)",
               }}
             >
               <MapContainer
@@ -878,9 +864,7 @@ export default function MapPage() {
 
                               {c.address ? <div style={{ opacity: 0.65, marginTop: 4 }}>{c.address}</div> : null}
 
-                              {dist != null ? (
-                                <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div>
-                              ) : null}
+                              {dist != null ? <div style={{ opacity: 0.7, marginTop: 6 }}>A {dist.toFixed(1)} km de ti</div> : null}
                             </div>
 
                             <button
@@ -945,9 +929,7 @@ export default function MapPage() {
 
                             <button
                               className="gpBtn gpBtnPrimary"
-                              onClick={() =>
-                                navigate(`/partidos?create=1&clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)
-                              }
+                              onClick={() => navigate(`/partidos?create=1&clubId=${clubId}&clubName=${encodeURIComponent(c.name)}`)}
                             >
                               Crear partido
                             </button>
@@ -961,144 +943,112 @@ export default function MapPage() {
             </div>
           ) : null}
 
-          <div
-            className="gpMapListPanel"
-            style={{
-              marginTop: 14,
-              borderRadius: 16,
-              border: "1px solid rgba(0,0,0,0.08)",
-              background: "#fff",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.06)",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              className="gpMapListHeader"
-              role="button"
-              onClick={() => setSheetOpen((v) => !v)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "12px 12px",
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-            >
-              <div className="gpMapSheetHandle" />
-              <div style={{ fontWeight: 950 }}>Clubs ({sortedList.length})</div>
-              <div style={{ opacity: 0.7, fontWeight: 900 }}>{sheetOpen ? "⏷" : "⏶"}</div>
-            </div>
+          {listOpen ? (
+            <div className="gpModalOverlay" role="dialog" aria-label="Lista de clubs" onClick={() => setListOpen(false)} style={{ zIndex: 99999 }}>
+              <div
+                className="gpModalCard"
+                onClick={(e) => e.stopPropagation()}
+                style={{ width: "min(920px, 96vw)", maxHeight: "86vh", overflow: "hidden" }}
+              >
+                <div className="gpModalHeader" style={{ marginBottom: 6 }}>
+                  <div style={{ fontWeight: 950 }}>Clubs ({sortedList.length})</div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <button type="button" className="btn ghost" onClick={() => setListOpen(false)}>
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
 
-            <div
-              className="gpMapListBody"
-              style={{
-                display: sheetOpen ? "block" : "none",
-                maxHeight: listMaxHeight,
-                overflowY: "auto",
-                padding: 12,
-                WebkitOverflowScrolling: "touch",
-              }}
-            >
-              {loading ? (
-                <div style={{ opacity: 0.7 }}>Cargando clubs…</div>
-              ) : sortedList.length === 0 ? (
-                <div style={{ opacity: 0.7 }}>No se encontraron clubs.</div>
-              ) : (
-                <div style={{ display: "grid", gap: 10 }}>
-                  {sortedList.map((c) => {
-                    const clubId = String(c?.id || "");
-                    const isFav = favIds.has(clubId);
-                    const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
+                <div style={{ maxHeight: "76vh", overflow: "auto", paddingRight: 2 }}>
+                  {loading ? (
+                    <div style={{ opacity: 0.75, padding: 12 }}>Cargando clubs…</div>
+                  ) : sortedList.length === 0 ? (
+                    <div style={{ opacity: 0.75, padding: 12 }}>No se encontraron clubs.</div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {sortedList.map((c) => {
+                        const clubId = String(c?.id || "");
+                        const isFav = favIds.has(clubId);
+                        const dist = userPos ? haversineKm(userPos, { lat: c.lat, lng: c.lng }) : null;
 
-                    return (
-                      <div
-                        key={clubId || c.name}
-                        className="card"
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: 12,
-                        }}
-                      >
-                        <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
-                          <button
-                            type="button"
-                            className="btn ghost"
-                            onClick={() => toggleFav(clubId)}
-                            title={isFav ? "Quitar favorito" : "Guardar favorito"}
-                            style={{ height: 34, minWidth: 44, padding: "0 12px" }}
+                        return (
+                          <div
+                            key={clubId || c.name}
+                            className="card"
+                            style={{
+                              padding: 12,
+                              borderRadius: 14,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
                           >
-                            {isFav ? "⭐" : "☆"}
-                          </button>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+                              <button
+                                type="button"
+                                className="btn ghost"
+                                onClick={() => toggleFav(clubId)}
+                                title={isFav ? "Quitar favorito" : "Guardar favorito"}
+                                style={{ height: 34, minWidth: 44, padding: "0 12px" }}
+                              >
+                                {isFav ? "⭐" : "☆"}
+                              </button>
 
-                          <div style={{ minWidth: 0 }}>
-                            <div
-                              style={{
-                                fontWeight: 950,
-                                fontSize: 14,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {c.name}
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 950, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {c.name}
+                                </div>
+                                <div style={{ opacity: 0.75, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {c.city}
+                                  {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
+                                </div>
+                              </div>
                             </div>
-                            <div
-                              style={{
-                                opacity: 0.75,
-                                fontSize: 13,
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                              }}
-                            >
-                              {c.city}
-                              {dist != null ? ` · ${dist.toFixed(1)} km` : ""}
+
+                            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                              <button
+                                className="btn ghost"
+                                type="button"
+                                onClick={() => navigate(`/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)}
+                              >
+                                Partidos
+                              </button>
+
+                              <button
+                                className="btn"
+                                type="button"
+                                onClick={() =>
+                                  navigate(`/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)
+                                }
+                              >
+                                Crear
+                              </button>
+
+                              <button
+                                className="btn ghost"
+                                type="button"
+                                onClick={() => {
+                                  setListOpen(false);
+                                  flyToSafe(c.lat, c.lng, 14);
+                                }}
+                              >
+                                Ver
+                              </button>
                             </div>
                           </div>
-                        </div>
-
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                          <button
-                            className="btn ghost"
-                            type="button"
-                            onClick={() =>
-                              navigate(`/partidos?clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)
-                            }
-                          >
-                            Partidos
-                          </button>
-
-                          <button
-                            className="btn"
-                            type="button"
-                            onClick={() =>
-                              navigate(`/partidos?create=1&clubId=${encodeURIComponent(c.id)}&clubName=${encodeURIComponent(c.name)}`)
-                            }
-                          >
-                            Crear
-                          </button>
-
-                          <button className="btn ghost" type="button" onClick={() => flyToSafe(c.lat, c.lng, 14)}>
-                            Ver
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div style={{ marginTop: 18, opacity: 0.6, fontSize: 12 }}>
-            ruta: {location.pathname}{location.search} · zoom: {zoom} · centro: {mapCenter.lat.toFixed(3)},{mapCenter.lng.toFixed(3)}
+            ruta: {location.pathname}
+            {location.search} · zoom: {zoom} · centro: {mapCenter.lat.toFixed(3)},{mapCenter.lng.toFixed(3)}
           </div>
         </div>
       </div>

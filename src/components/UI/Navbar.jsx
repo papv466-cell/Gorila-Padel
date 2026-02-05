@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../services/supabaseClient";
 
-export default function Navbar() {
+export default function Navbar({ showBack = false, onBack }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,7 +19,7 @@ export default function Navbar() {
     []
   );
 
-  // ✅ Si cambias de ruta, cerramos el panel móvil (sin hacks raros)
+  // ✅ Si cambias de ruta, cerramos el panel móvil
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
@@ -38,6 +38,18 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <div className="navLeft">
+        {showBack ? (
+          <button
+            type="button"
+            className="navBackBtn"
+            onClick={onBack}
+            aria-label="Atrás"
+            title="Atrás"
+          >
+            <span aria-hidden="true">←</span>
+          </button>
+        ) : null}
+
         <img className="navLogo" src="/imglogog.png" alt="Gorila Pádel" />
         <div className="navBrand">Gorila Pádel</div>
       </div>
@@ -49,7 +61,6 @@ export default function Navbar() {
             key={l.to}
             to={l.to}
             className={({ isActive }) => `navLink ${isActive ? "active" : ""}`}
-            end={l.to === "/mapa"}
           >
             {l.label}
           </NavLink>
@@ -58,7 +69,6 @@ export default function Navbar() {
 
       {/* Derecha: Salir + burger en móvil */}
       <div className="navRight">
-        {/* ✅ Salir con look idéntico a navLink */}
         <button type="button" className="navLink navLinkBtn" onClick={onLogout}>
           Salir
         </button>
@@ -78,7 +88,12 @@ export default function Navbar() {
 
       {/* Mobile panel */}
       {open ? (
-        <div className="navMobilePanel" role="dialog" aria-label="Menú" onClick={() => setOpen(false)}>
+        <div
+          className="navMobilePanel"
+          role="dialog"
+          aria-label="Menú"
+          onClick={() => setOpen(false)}
+        >
           <div className="navMobilePanelInner" onClick={(e) => e.stopPropagation()}>
             {links.map((l) => (
               <NavLink
@@ -86,13 +101,11 @@ export default function Navbar() {
                 to={l.to}
                 className={({ isActive }) => `navMobileLink ${isActive ? "active" : ""}`}
                 onClick={() => setOpen(false)}
-                end={l.to === "/mapa"}
               >
                 {l.label}
               </NavLink>
             ))}
 
-            {/* ✅ Salir en móvil con el mismo estilo que los links del panel */}
             <button type="button" className="navMobileLink navLinkBtn" onClick={onLogout}>
               Salir
             </button>
