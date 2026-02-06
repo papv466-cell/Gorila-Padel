@@ -39,17 +39,74 @@ function toDateInputValue(d = new Date()) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+// ✅ parse robusto para fechas que pueden venir como:
+// - "2026-02-10T19:00:00Z"
+// - "2026-02-10T19:00:00"
+// - "2026-02-10 19:00:00"
+// - Date object
+function safeParseDate(value) {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null;
+  }
+
+  const s = String(value);
+
+  // Caso: "YYYY-MM-DD ..." o "YYYY-MM-DDT..."
+  // Extraemos YMD si existe
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m && m[1]) {
+    // Creamos Date con componentes (local) para evitar parse ambiguo
+    const [y, mo, d] = m[1].split("-").map(Number);
+    const dt = new Date(y, mo - 1, d, 0, 0, 0, 0);
+    return Number.isFinite(dt.getTime()) ? dt : null;
+  }
+
+  // Fallback: intento normal
+  const dt = new Date(s);
+  return Number.isFinite(dt.getTime()) ? dt : null;
+}
+
+// ✅ Construcción segura en LOCAL (Madrid) sin parse ambiguo de strings
 function combineDateTimeToISO(dateStr, timeStr) {
-  const [hh, mm] = String(timeStr || "19:00")
-    .split(":")
-    .map((x) => Number(x));
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setHours(Number.isFinite(hh) ? hh : 19, Number.isFinite(mm) ? mm : 0, 0, 0);
-  return d.toISOString();
+  const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
+  const [hh, mm] = String(timeStr || "19:00").split(":").map((n) => Number(n));
+
+  const now = new Date();
+  const dt = new Date(
+    Number.isFinite(y) ? y : now.getFullYear(),
+    Number.isFinite(m) ? m - 1 : now.getMonth(),
+    Number.isFinite(d) ? d : now.getDate(),
+    Number.isFinite(hh) ? hh : 19,
+    Number.isFinite(mm) ? mm : 0,
+    0,
+    0
+  );
+
+  // Guardamos ISO UTC (timestamptz friendly)
+  return dt.toISOString();
+}
+
+// ✅ Clave día local robusta desde start_at (sin depender de new Date(string))
+function localYMDFromStartAt(startAt) {
+  if (!startAt) return "";
+
+  const s = String(startAt);
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m && m[1]) return m[1];
+
+  const dt = safeParseDate(startAt);
+  if (!dt) return "";
+  return toDateInputValue(dt);
 }
 
 function sortByStartAtAsc(list) {
-  return [...(list || [])].sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+  return [...(list || [])].sort((a, b) => {
+    const da = safeParseDate(a.start_at);
+    const db = safeParseDate(b.start_at);
+    return (da?.getTime?.() || 0) - (db?.getTime?.() || 0);
+  });
 }
 
 function upsertMatchSorted(prev, match) {
@@ -76,9 +133,11 @@ function uniqById(list) {
   return out;
 }
 
-function formatWhen(iso) {
+function formatWhen(startAt) {
   try {
-    return new Date(iso).toLocaleString("es-ES", {
+    const dt = safeParseDate(startAt);
+    if (!dt) return String(startAt || "");
+    return dt.toLocaleString("es-ES", {
       weekday: "short",
       day: "2-digit",
       month: "2-digit",
@@ -87,7 +146,7 @@ function formatWhen(iso) {
       minute: "2-digit",
     });
   } catch {
-    return String(iso || "");
+    return String(startAt || "");
   }
 }
 
@@ -113,7 +172,8 @@ export default function MatchesPage() {
 
   const openChatFromUrl = qs.get("openChat") || "";
   const openRequestsParam = qs.get("openRequests") || "";
-  const openChatFromStorage = (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
+  const openChatFromStorage =
+    (typeof window !== "undefined" && window.sessionStorage?.getItem?.("openChat")) || "";
   const openChatParam = openChatFromUrl || openChatFromStorage || "";
 
   const showPushButton = !!session;
@@ -163,7 +223,30 @@ export default function MatchesPage() {
 
   /* Push button state */
   const [pushBusy, setPushBusy] = useState(false);
+  // ✅ Asegurar suscripción push al tener sesión (app cerrada)
+// Esto repara el caso típico: endpoint viejo / SW actualizado / suscripción caducada
+useEffect(() => {
+  if (!session?.user?.id) return;
 
+  let cancelled = false;
+
+  (async () => {
+    try {
+      await ensurePushSubscription();
+      // NO toast aquí: no molestamos al usuario
+    } catch (e) {
+      // No rompemos nada si falla; solo debug opcional
+      if (!cancelled && qs.get("debug") === "1") {
+        console.log("🔔 ensurePushSubscription falló:", e);
+      }
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [session?.user?.id]);
   /* Clubs suggest */
   const [clubsSheet, setClubsSheet] = useState([]);
   const [clubQuery, setClubQuery] = useState("");
@@ -179,6 +262,15 @@ export default function MatchesPage() {
     alreadyPlayers: 1,
     pricePerPlayer: "",
   });
+
+  // ✅ Abrir modal Crear SINCRONIZANDO el día con el calendario de arriba
+  function openCreateModal() {
+    setOpenCreate(true);
+    setForm((prev) => ({
+      ...prev,
+      date: selectedDay || todayISO,
+    }));
+  }
 
   // evita setState after unmount
   const aliveRef = useRef(true);
@@ -277,26 +369,69 @@ export default function MatchesPage() {
   }, [authReady]);
 
   /* realtime */
-  useEffect(() => {
-    const unsub1 = subscribeMatchesRealtime((payload) => {
+  /* realtime (matches + requests + chat) */
+useEffect(() => {
+  const myUid = session?.user?.id ? String(session.user.id) : "";
+
+  const unsub1 = subscribeMatchesRealtime((payload) => {
+    const t = payload?.eventType;
+    const row = payload?.new || payload?.old;
+    if (!row?.id) return;
+
+    if (t === "DELETE") setItems((prev) => removeMatch(prev, row.id));
+    else setItems((prev) => upsertMatchSorted(prev, row));
+  });
+
+  // ✅ Solicitudes realtime + toast
+  const unsub2 = subscribeJoinRequestsRealtime((payload) => {
+    try {
       const t = payload?.eventType;
-      const row = payload?.new || payload?.old;
-      if (!row?.id) return;
+      const row = payload?.new || null;
 
-      if (t === "DELETE") setItems((prev) => removeMatch(prev, row.id));
-      else setItems((prev) => upsertMatchSorted(prev, row));
-    });
+      // Nota: no sabemos el schema exacto, pero normalmente hay match_id y user_id
+      // Si es INSERT, avisamos (sin romper nada si faltan campos)
+      if (t === "INSERT") {
+        toast.success("📥 Nueva solicitud para un partido");
+      }
+    } catch {}
 
-    const unsub2 = subscribeJoinRequestsRealtime(() => load());
-    const unsub3 = subscribeAllMatchMessagesRealtime(() => load());
+    // Mantener comportamiento actual
+    load();
+  });
 
-    return () => {
-      unsub1?.();
-      unsub2?.();
-      unsub3?.();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ✅ Mensajes realtime + toast
+  const unsub3 = subscribeAllMatchMessagesRealtime((payload) => {
+    try {
+      const t = payload?.eventType;
+      const row = payload?.new || null;
+
+      // Normalmente match_id + user_id
+      const msgFrom = row?.user_id ? String(row.user_id) : "";
+      const matchId = row?.match_id ? String(row.match_id) : "";
+
+      // Evitar “notificarte a ti mismo”
+      const isMine = myUid && msgFrom && myUid === msgFrom;
+
+      // Si el chat NO está abierto en ese match, mostramos toast
+      if (t === "INSERT" && !isMine) {
+        if (!chatOpenFor || String(chatOpenFor) !== matchId) {
+          toast.success("💬 Nuevo mensaje en un partido");
+        }
+      }
+    } catch {}
+
+    // Mantener comportamiento actual
+    load();
+  });
+
+  return () => {
+    unsub1?.();
+    unsub2?.();
+    unsub3?.();
+  };
+  // OJO: dependencias necesarias para que el toast y chatOpenFor funcionen bien
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [session?.user?.id, chatOpenFor]);
 
   /* ✅ Push dentro de la app abierta (SW → window event) */
   useEffect(() => {
@@ -362,11 +497,11 @@ export default function MatchesPage() {
       ...prev,
       clubId: clubIdParam || prev.clubId,
       clubName: clubNameParam || prev.clubName,
-      date: prev.date || todayISO,
+      date: selectedDay || prev.date || todayISO,
     }));
     setClubQuery(clubNameParam || "");
     setShowClubSuggest(false);
-  }, [createParam, clubIdParam, clubNameParam, authReady, session, todayISO]);
+  }, [createParam, clubIdParam, clubNameParam, authReady, session, todayISO, selectedDay]);
 
   /* Lists */
   const filteredList = useMemo(() => {
@@ -375,7 +510,7 @@ export default function MatchesPage() {
     if (clubIdParam) list = list.filter((m) => String(m.club_id) === String(clubIdParam));
 
     if (selectedDay) {
-      list = list.filter((m) => toDateInputValue(new Date(m.start_at)) === selectedDay);
+      list = list.filter((m) => localYMDFromStartAt(m.start_at) === selectedDay);
     }
 
     return list;
@@ -407,7 +542,7 @@ export default function MatchesPage() {
 
       if (!isCreator && myStatus !== "approved") continue;
 
-      const startMs = new Date(m.start_at).getTime();
+      const startMs = safeParseDate(m.start_at)?.getTime?.();
       const durMin = Number(m.duration_min) || 90;
       const endMs = Number.isFinite(startMs) ? startMs + durMin * 60 * 1000 : NaN;
       if (!Number.isFinite(endMs)) continue;
@@ -430,15 +565,35 @@ export default function MatchesPage() {
   // Calendar helpers (para la strip de días)
   // =========
   function addDays(dateStr, deltaDays) {
-    const d = new Date(`${dateStr}T00:00:00`);
-    d.setDate(d.getDate() + deltaDays);
-    return toDateInputValue(d);
+    const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
+    const now = new Date();
+    const base = new Date(
+      Number.isFinite(y) ? y : now.getFullYear(),
+      Number.isFinite(m) ? m - 1 : now.getMonth(),
+      Number.isFinite(d) ? d : now.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
+    base.setDate(base.getDate() + deltaDays);
+    return toDateInputValue(base);
   }
 
   function fmtDayLabel(dateStr) {
     try {
-      const d = new Date(`${dateStr}T00:00:00`);
-      return d.toLocaleDateString("es-ES", { weekday: "short" });
+      const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
+      const now = new Date();
+      const dt = new Date(
+        Number.isFinite(y) ? y : now.getFullYear(),
+        Number.isFinite(m) ? m - 1 : now.getMonth(),
+        Number.isFinite(d) ? d : now.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      return dt.toLocaleDateString("es-ES", { weekday: "short" });
     } catch {
       return "";
     }
@@ -457,7 +612,8 @@ export default function MatchesPage() {
 
     const map = {};
     for (const m of list || []) {
-      const k = toDateInputValue(new Date(m.start_at));
+      const k = localYMDFromStartAt(m.start_at);
+      if (!k) continue;
       map[k] = (map[k] || 0) + 1;
     }
     return map;
@@ -556,25 +712,23 @@ export default function MatchesPage() {
 
   async function sendInvites({ matchId, userIds }) {
     if (!session) return goLogin();
-  
+
     const uniq = Array.from(new Set((userIds || []).map(String).filter(Boolean))).slice(0, 10);
     if (!matchId || uniq.length === 0) return;
-  
+
     setInviteBusy(true);
     try {
-      // 1) Traer ya invitados (solo esos ids)
       const { data: existing, error: exErr } = await supabase
         .from("match_invites")
         .select("to_user_id")
         .eq("match_id", matchId)
         .in("to_user_id", uniq);
-  
+
       if (exErr) throw exErr;
-  
+
       const existingSet = new Set((existing || []).map((r) => String(r.to_user_id)));
       const toInsert = uniq.filter((id) => !existingSet.has(String(id)));
-  
-      // 2) Si no hay nada nuevo, avisamos y salimos sin petar
+
       if (toInsert.length === 0) {
         toast.success("Ya estaban invitados ✅");
         setInviteOpenFor(null);
@@ -583,17 +737,16 @@ export default function MatchesPage() {
         setInviteSelected([]);
         return;
       }
-  
-      // 3) Insertar solo los nuevos
+
       const payload = toInsert.map((to) => ({
         match_id: matchId,
         from_user_id: session.user.id,
         to_user_id: to,
       }));
-  
+
       const { error } = await supabase.from("match_invites").insert(payload);
       if (error) throw error;
-  
+
       toast.success(`Invitaciones enviadas ✅ (${toInsert.length})`);
       setInviteOpenFor(null);
       setInviteQuery("");
@@ -691,7 +844,8 @@ export default function MatchesPage() {
       const startAtISO = combineDateTimeToISO(form.date, form.time);
 
       if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista (para evitar errores).");
+      if (!String(form.clubId || "").trim())
+        throw new Error("Selecciona el club de la lista (para evitar errores).");
 
       await createMatch({
         clubId: form.clubId,
@@ -702,6 +856,9 @@ export default function MatchesPage() {
         alreadyPlayers: Number(form.alreadyPlayers) || 1,
         pricePerPlayer: form.pricePerPlayer,
       });
+
+      // ✅ ir directo al día creado
+      setSelectedDay(form.date);
 
       setOpenCreate(false);
       toast.success("Partido creado");
@@ -832,7 +989,7 @@ export default function MatchesPage() {
                 </div>
               ) : null}
 
-              <button className="btn" onClick={() => setOpenCreate(true)}>
+              <button className="btn" onClick={openCreateModal}>
                 ➕ Crear
               </button>
 
@@ -866,7 +1023,6 @@ export default function MatchesPage() {
                   {/* ROSTER (UI) */}
                   <div className="gpRoster">
                     <div className="gpTeam">
-                      {/* Team A - Slot 1: creador */}
                       <div className="gpSlot">
                         {creatorAvatar ? (
                           <img className="gpSlotImg" src={creatorAvatar} alt={creatorName} />
@@ -881,7 +1037,6 @@ export default function MatchesPage() {
                         </div>
                       </div>
 
-                      {/* Team A - Slot 2: vacío (por ahora UI) */}
                       <div className="gpSlot gpSlotEmpty">
                         <div className="gpGorila">🦍</div>
                         <div className="gpSlotMeta">Falta jugador…</div>
@@ -1025,9 +1180,7 @@ export default function MatchesPage() {
         </div>
       </div>
 
-      {/* =========================
-          MODAL: CEDER PLAZA
-      ========================= */}
+      {/* MODAL: CEDER */}
       {cedeOpenFor ? (
         <div className="gpModalOverlay" onClick={() => setCedeOpenFor(null)}>
           <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
@@ -1099,9 +1252,7 @@ export default function MatchesPage() {
         </div>
       ) : null}
 
-      {/* =========================
-          MODAL: INVITAR JUGADORES
-      ========================= */}
+      {/* MODAL: INVITAR */}
       {inviteOpenFor ? (
         <div className="gpModalOverlay" onClick={() => setInviteOpenFor(null)}>
           <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
@@ -1331,12 +1482,22 @@ export default function MatchesPage() {
 
               <div>
                 <label className="gpLabel">Fecha</label>
-                <input className="gpInput" type="date" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} />
+                <input
+                  className="gpInput"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
               </div>
 
               <div>
                 <label className="gpLabel">Hora</label>
-                <input className="gpInput" type="time" value={form.time} onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))} />
+                <input
+                  className="gpInput"
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
+                />
               </div>
 
               <div>
@@ -1351,7 +1512,11 @@ export default function MatchesPage() {
 
               <div>
                 <label className="gpLabel">Nivel</label>
-                <select className="gpInput" value={form.level} onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}>
+                <select
+                  className="gpInput"
+                  value={form.level}
+                  onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}
+                >
                   <option value="bajo">Bajo</option>
                   <option value="medio">Medio</option>
                   <option value="alto">Alto</option>
@@ -1360,7 +1525,11 @@ export default function MatchesPage() {
 
               <div>
                 <label className="gpLabel">Ya sois</label>
-                <select className="gpInput" value={form.alreadyPlayers} onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}>
+                <select
+                  className="gpInput"
+                  value={form.alreadyPlayers}
+                  onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}
+                >
                   <option value={1}>1 (solo yo)</option>
                   <option value={2}>2</option>
                   <option value={3}>3</option>
@@ -1418,7 +1587,12 @@ export default function MatchesPage() {
               </div>
             )}
 
-            <textarea className="gpTextarea" value={chatText} onChange={(e) => setChatText(e.target.value)} placeholder="Escribe…" />
+            <textarea
+              className="gpTextarea"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Escribe…"
+            />
 
             <div className="gpRow" style={{ marginTop: 10 }}>
               <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>

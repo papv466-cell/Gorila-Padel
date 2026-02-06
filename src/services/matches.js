@@ -59,16 +59,18 @@ async function callApi(path, { method = "POST", session, body } = {}) {
 /* =========================
    LISTAR PARTIDOS (futuros)
 ========================= */
-export async function fetchMatches({ limit = 500 } = {}) {
+export async function fetchMatches({ limit = 400 } = {}) {
+  // Trae partidos recientes + futuros (sin excluir por "now" UTC/local)
+  // Si luego quieres optimizar, se puede filtrar por rango (ej. últimos 30 días),
+  // pero ahora prioridad: que no desaparezcan al crear.
   const { data, error } = await supabase
     .from("matches")
     .select("*")
-    .gte("start_at", startOfTodayISO())
     .order("start_at", { ascending: true })
     .limit(limit);
 
   if (error) throw error;
-  return data ?? [];
+  return Array.isArray(data) ? data : [];
 }
 
 /* =========================
