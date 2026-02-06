@@ -11,6 +11,7 @@ import SplashPage from "./pages/SplashPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProfilePage from "./pages/ProfilePage";
+import AuthConfirmPage from './pages/AuthConfirmPage';
 
 import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
@@ -194,6 +195,8 @@ export default function App() {
               </RequireAuth>
             }
           />
+
+          <Route path="/auth/confirm" element={<AuthConfirmPage />} />
 
           <Route
             path="/inclusivos"

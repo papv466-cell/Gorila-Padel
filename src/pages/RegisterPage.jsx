@@ -194,7 +194,18 @@ export default function RegisterPage() {
                 overflowY: 'auto',
                 paddingRight: '10px'
               }}>
-                <form className="authForm" onSubmit={handleRegister}>
+                <form 
+  className="authForm" 
+  onSubmit={handleRegister}
+  style={{
+    maxHeight: '80vh',
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    display: 'block',
+    paddingRight: '15px',
+    marginBottom: '20px'
+  }}
+>
                   <label className="authLabel">
                     Apodo (único)
                     <input
