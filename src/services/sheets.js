@@ -7,8 +7,11 @@
 
  const CACHE_KEY = 'gp:clubs';
  const CACHE_TTL = 1000 * 60 * 60 * 24; // 24 horas
- 
- export async function fetchClubsFromSheet() {
+ /**
+ * Obtiene clubs desde Google Sheets
+ * Ahora usa un endpoint seguro en vez de llamar directamente
+ */
+ export async function fetchClubsFromGoogleSheet() {
    // Primero intentar cargar desde cache
    try {
      const cached = localStorage.getItem(CACHE_KEY);
