@@ -1,7 +1,7 @@
 // src/services/matches.js
 import { supabase } from "./supabaseClient";
 import { sanitizeString, validateLevel, validateDuration, validatePlayers } from "../utils/validation";
-import { combineDateTime } from "../utils/dates";
+
 /* =========================
    Utils
 ========================= */
@@ -61,9 +61,6 @@ async function callApi(path, { method = "POST", session, body } = {}) {
    LISTAR PARTIDOS (futuros)
 ========================= */
 export async function fetchMatches({ limit = 400 } = {}) {
-  // Trae partidos recientes + futuros (sin excluir por "now" UTC/local)
-  // Si luego quieres optimizar, se puede filtrar por rango (ej. últimos 30 días),
-  // pero ahora prioridad: que no desaparezcan al crear.
   const { data, error } = await supabase
     .from("matches")
     .select("*")
@@ -104,27 +101,39 @@ export async function fetchLatestChatTimes(matchIds = []) {
    CREAR PARTIDO
 ========================= */
 export async function createMatch(data) {
-  // Validar datos antes de insertar
+  console.log('🔍 createMatch recibió:', data);
+  
+  // Validar nombre del club
   const clubName = sanitizeString(data.clubName, 200);
   if (!clubName) {
     throw new Error('El nombre del club es obligatorio');
   }
   
+  // Validar otros campos
   const level = validateLevel(data.level);
   const durationMin = validateDuration(data.durationMin);
-  const playersNeeded = validatePlayers(data.playersNeeded);
+  const playersNeeded = validatePlayers(data.alreadyPlayers || 1);
   
-  // Validar fecha/hora
-  const startAt = combineDateTime(data.date, data.time);
+  // ✅ CORRECCIÓN: El formulario envía startAtISO, no date/time separados
+  const startAt = data.startAtISO;
+  
+  console.log('🔍 startAt recibido:', startAt);
+  
   if (!startAt) {
     throw new Error('Fecha y hora son obligatorias');
   }
   
   // Verificar que la fecha sea futura
   const startDate = new Date(startAt);
+  if (!startDate || !Number.isFinite(startDate.getTime())) {
+    throw new Error('Fecha inválida');
+  }
+  
   if (startDate <= new Date()) {
     throw new Error('La fecha debe ser futura');
   }
+
+  console.log('✅ Validación OK, insertando en BD...');
 
   const { data: row, error } = await supabase
     .from("matches")
@@ -134,8 +143,10 @@ export async function createMatch(data) {
       level,
       duration_min: durationMin,
       players_needed: playersNeeded,
+      reserved_spots: playersNeeded, // ✅ Añadido para compatibilidad
       start_at: startAt,
       notes: sanitizeString(data.notes || '', 500),
+      price_per_player: data.pricePerPlayer ? Number(data.pricePerPlayer) : null,
       is_inclusive: Boolean(data.isInclusive),
       created_by_user: data.userId,
     })
@@ -144,9 +155,10 @@ export async function createMatch(data) {
 
   if (error) {
     console.error("[CREATE_MATCH_ERROR]", error);
-    throw new Error("No se pudo crear el partido");
+    throw new Error(error.message || "No se pudo crear el partido");
   }
 
+  console.log('✅ Partido creado:', row);
   return row;
 }
 
@@ -350,7 +362,6 @@ export async function fetchMatchMessages(matchId, opts = {}) {
   return data ?? [];
 }
 
-// ✅ acepta { matchId, text } o { matchId, message }
 export async function sendMatchMessage({ matchId, text, message } = {}) {
   if (!matchId) throw new Error("Falta matchId");
 
@@ -374,7 +385,6 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 
   if (insErr) throw insErr;
 
-  // ✅ Push chat (NO rompe si falla)
   try {
     const out = await callApi("/api/push-chat", {
       session,

@@ -296,11 +296,17 @@ export default function MatchesPage() {
   /* initial clubs (sheet) */
   useEffect(() => {
     fetchClubsFromGoogleSheet()
-      .then((rows) => setClubsSheet(Array.isArray(rows) ? rows : []))
-      .catch(() => setClubsSheet([]));
+      .then((rows) => {
+        console.log('🏟️ Clubs cargados:', rows.length);
+        setClubsSheet(Array.isArray(rows) ? rows : []);
+      })
+      .catch((err) => {
+        console.error('❌ Error cargando clubs:', err);
+        setClubsSheet([]);
+      });
   }, []);
 
-  // ✅ helper: “estoy dentro” leyendo match_players sin romper según schema
+  // ✅ helper: "estoy dentro" leyendo match_players sin romper según schema
   async function fetchInPlayersMap(matchIds, uid) {
     const out = {};
     if (!uid || !matchIds?.length) return out;
@@ -427,7 +433,7 @@ export default function MatchesPage() {
       if (!aliveRef.current) return;
       setMyReqStatus(my || {});
 
-      // mapa “estoy dentro”
+      // mapa "estoy dentro"
       try {
         const uid = session?.user?.id ? String(session.user.id) : "";
         const map = await fetchInPlayersMap(ids, uid);
@@ -613,7 +619,7 @@ export default function MatchesPage() {
       const myStatus = myReqStatus?.[m.id] || null;
 
       if (debug) {
-        console.log("match", m.id, { myStatus, iAmInPlayers, isCreator });
+        console.log("match", m.id, { myStatus, isCreator });
       }
       
       if (!isCreator && myStatus !== "approved") continue;
@@ -635,7 +641,7 @@ export default function MatchesPage() {
     }
 
     unscheduleEventWarnings((key) => key.startsWith("match:") && !desired.has(key));
-  }, [authReady, session?.user?.id, visibleList, myReqStatus]);
+  }, [authReady, session?.user?.id, visibleList, myReqStatus, debug]);
 
   // =========
   // Calendar helpers
@@ -899,13 +905,28 @@ export default function MatchesPage() {
   /* Create helpers */
   const clubSuggestions = useMemo(() => {
     const q = (clubQuery || "").trim().toLowerCase();
-    if (!q) return [];
-    return (clubsSheet || []).filter((c) => String(c?.name || "").toLowerCase().includes(q)).slice(0, 10);
+    if (!q || q.length < 2) return [];
+    
+    console.log('🔍 Buscando clubs con query:', q);
+    console.log('📋 Total clubs disponibles:', clubsSheet.length);
+    
+    const results = (clubsSheet || [])
+      .filter((c) => {
+        const name = String(c?.name || "").toLowerCase();
+        const matches = name.includes(q);
+        if (matches) console.log('✅ Match:', c.name);
+        return matches;
+      })
+      .slice(0, 10);
+    
+    console.log('📊 Resultados encontrados:', results.length);
+    return results;
   }, [clubQuery, clubsSheet]);
 
   function pickClub(c) {
     const id = String(c?.id ?? "");
     const name = String(c?.name ?? "");
+    console.log('✅ Club seleccionado:', { id, name });
     setForm((prev) => ({ ...prev, clubId: id, clubName: name }));
     setClubQuery(name);
     setShowClubSuggest(false);
@@ -920,8 +941,21 @@ export default function MatchesPage() {
 
       const startAtISO = combineDateTimeToISO(form.date, form.time);
 
-      if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista (para evitar errores).");
+      console.log('🔍 Validando formulario:', {
+        clubName: form.clubName,
+        clubId: form.clubId,
+        date: form.date,
+        time: form.time,
+        startAtISO,
+      });
+
+      if (!String(form.clubName || "").trim()) {
+        throw new Error("Pon el nombre del club.");
+      }
+      
+      if (!String(form.clubId || "").trim()) {
+        throw new Error("Selecciona el club de la lista (para evitar errores).");
+      }
 
       await createMatch({
         clubId: form.clubId,
@@ -931,13 +965,26 @@ export default function MatchesPage() {
         level: form.level,
         alreadyPlayers: Number(form.alreadyPlayers) || 1,
         pricePerPlayer: form.pricePerPlayer,
+        userId: session.user.id,
       });
 
       setSelectedDay(form.date);
       setOpenCreate(false);
-      toast.success("Partido creado");
+      setForm({
+        clubName: "",
+        clubId: "",
+        date: todayISO,
+        time: "19:00",
+        durationMin: 90,
+        level: "medio",
+        alreadyPlayers: 1,
+        pricePerPlayer: "",
+      });
+      setClubQuery("");
+      toast.success("Partido creado ✅");
       await load();
     } catch (e) {
+      console.error('❌ Error al crear partido:', e);
       setSaveError(e?.message || "No se pudo crear el partido");
       toast.error(e?.message || "No se pudo crear el partido");
     } finally {
@@ -1204,19 +1251,19 @@ export default function MatchesPage() {
                         </button>
                       ) : null}
 
-                            {session && !isCreator && (myStatus === "approved" || iAmInPlayers) ? (
-                              <button
-                                type="button"
-                                className="btn ghost gpIconBtn"
-                                onClick={() => {
-                                  setCedeOpenFor(m.id);
-                                  setCedeQuery("");
-                                  setCedeResults([]);
-                                }}
-                              >
-                                🫱 Ceder
-                              </button>
-                            ) : null}
+                      {session && !isCreator && (myStatus === "approved" || iAmInPlayers) ? (
+                        <button
+                          type="button"
+                          className="btn ghost gpIconBtn"
+                          onClick={() => {
+                            setCedeOpenFor(m.id);
+                            setCedeQuery("");
+                            setCedeResults([]);
+                          }}
+                        >
+                          🫱 Ceder
+                        </button>
+                      ) : null}
 
                       {session && isCreator ? (
                         <button
@@ -1593,19 +1640,21 @@ export default function MatchesPage() {
                   placeholder="Escribe 2–3 letras…"
                 />
 
-                {showClubSuggest && clubSuggestions.length ? (
+                {showClubSuggest && clubSuggestions.length > 0 ? (
                   <div
                     style={{
                       position: "absolute",
                       left: 0,
                       right: 0,
                       top: "calc(100% + 6px)",
-                      background: "#fff",
-                      border: "1px solid rgba(0,0,0,.12)",
+                      background: "rgba(16,18,22,0.98)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.12)",
                       borderRadius: 14,
                       overflow: "hidden",
-                      boxShadow: "0 18px 60px rgba(0,0,0,.18)",
+                      boxShadow: "0 18px 60px rgba(0,0,0,0.55)",
                       zIndex: 9999,
+                      backdropFilter: "blur(10px)",
                     }}
                   >
                     {clubSuggestions.map((c) => (
@@ -1621,6 +1670,13 @@ export default function MatchesPage() {
                           padding: "10px 12px",
                           fontWeight: 900,
                           cursor: "pointer",
+                          color: "inherit",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "transparent";
                         }}
                       >
                         {c.name}
