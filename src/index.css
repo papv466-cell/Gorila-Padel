@@ -4020,3 +4020,227 @@ html, body{
 .gpMatchesPage .btn.ghost.gpIconBtn{
   padding: 10px 12px !important;
 }
+/* ===== Matches cards PRO ===== */
+.gpMatchesGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.gpMatchCard {
+  border-radius: 22px;
+  padding: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+}
+
+.gpHeadline {
+  font-size: 22px;
+  font-weight: 1000;
+  margin-top: 10px;
+}
+
+.gpCaption {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.gpChip {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.10);
+  font-weight: 900;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gpDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+  margin: 14px 0;
+}
+
+.gpActionBar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn.gpIconBtn {
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-weight: 950;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+}
+
+.btn.gpIconBtn:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 14px;
+  font-weight: 950;
+}
+
+.btn.ghost {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.btn.danger {
+  background: rgba(220,38,38,0.14);
+  border: 1px solid rgba(220,38,38,0.35);
+}
+
+/* ===== Roster más premium ===== */
+.gpRoster {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.gpTeam {
+  display: grid;
+  gap: 10px;
+}
+
+.gpVs {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.gpSlot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.gpSlotImg {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.08);
+}
+
+.gpSlotText {
+  min-width: 0;
+}
+
+.gpSlotName {
+  font-weight: 1000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gpSlotMeta {
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 900;
+}
+
+.gpSlotEmpty .gpSlotName {
+  display: none;
+}
+
+/* móvil */
+@media (max-width: 720px) {
+  .gpRoster {
+    grid-template-columns: 1fr;
+  }
+  .gpVs {
+    margin: 0 auto;
+  }
+}
+/* ===== Scroll snap (tipo TikTok) para partidos ===== */
+.gpMatchesSnapWrap {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gpMatchesHeaderSticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 14px 14px 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.92), rgba(0,0,0,0.55), rgba(0,0,0,0));
+  backdrop-filter: blur(10px);
+}
+
+.gpMatchesSnapList {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px 18px;
+  display: grid;
+  gap: 14px;
+}
+
+/* cada card “ocupa pantalla” y engancha */
+.gpMatchSnapCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: calc(100vh - 88px); /* header sticky */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* opcional: esconder scrollbar */
+.gpMatchesSnapList::-webkit-scrollbar { width: 0; height: 0; }
+.gpMatchesSnapList { scrollbar-width: none; }
+/* ===== Scroll snap (tipo TikTok) para partidos ===== */
+.gpMatchesSnapWrap {
+  /* altura dinámica móvil */
+  height: 100dvh;
+}
+
+.gpMatchesSnapList {
+  max-height: calc(100dvh - 240px); /* deja sitio al header/calendario */
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* cada card engancha */
+.gpMatchSnapCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* opcional: scrollbar invisible */
+.gpMatchesSnapList::-webkit-scrollbar { width: 0; height: 0; }
+.gpMatchesSnapList { scrollbar-width: none; }

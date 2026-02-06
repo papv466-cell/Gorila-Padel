@@ -120,19 +120,12 @@ export default async function handler(req, res) {
         );
         sent++;
       } catch (e) {
-        const statusCode = e?.statusCode || e?.status || null;
-        errors.push({
-          statusCode,
-          message: String(e?.message || e),
-          endpoint_head: String(s.endpoint || "").slice(0, 60),
+        console.error('[PUSH_JOIN_ERROR]', e);
+        
+        return res.status(500).json({ 
+          ok: false, 
+          error: 'Error al enviar notificación'
         });
-
-        // si está muerta, la borramos
-        if (statusCode === 410) {
-          try {
-            await supabase.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
-          } catch {}
-        }
       }
     }
 

@@ -612,6 +612,10 @@ export default function MatchesPage() {
       const isCreator = uid && String(m.created_by_user) === uid;
       const myStatus = myReqStatus?.[m.id] || null;
 
+      if (debug) {
+        console.log("match", m.id, { myStatus, iAmInPlayers, isCreator });
+      }
+      
       if (!isCreator && myStatus !== "approved") continue;
 
       const startMs = safeParseDate(m.start_at)?.getTime?.();
@@ -1070,8 +1074,8 @@ export default function MatchesPage() {
               ) : null}
             </div>
           </div>
-
-          <ul className="gpMatchesGrid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          <div className="gpMatchesSnapWrap">
+          <ul className="gpMatchesGrid gpMatchesSnapList" style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {visibleList.map((m) => {
               const myStatus = myReqStatus?.[m.id] || null;
               const isCreator = !!(session?.user?.id && String(m.created_by_user) === String(session.user.id));
@@ -1123,7 +1127,7 @@ export default function MatchesPage() {
               };
 
               return (
-                <li key={m.id} className="gpMatchCard">
+                <li key={m.id} className="gpMatchCard gpMatchSnapCard">
                   {/* ROSTER (UI + REAL) */}
                   <div className="gpRoster">
                     <div className="gpTeam">
@@ -1200,19 +1204,19 @@ export default function MatchesPage() {
                         </button>
                       ) : null}
 
-                      {session && !isCreator && iAmInPlayers ? (
-                        <button
-                          type="button"
-                          className="btn ghost gpIconBtn"
-                          onClick={() => {
-                            setCedeOpenFor(m.id);
-                            setCedeQuery("");
-                            setCedeResults([]);
-                          }}
-                        >
-                          🫱 Ceder
-                        </button>
-                      ) : null}
+                            {session && !isCreator && (myStatus === "approved" || iAmInPlayers) ? (
+                              <button
+                                type="button"
+                                className="btn ghost gpIconBtn"
+                                onClick={() => {
+                                  setCedeOpenFor(m.id);
+                                  setCedeQuery("");
+                                  setCedeResults([]);
+                                }}
+                              >
+                                🫱 Ceder
+                              </button>
+                            ) : null}
 
                       {session && isCreator ? (
                         <button
@@ -1291,7 +1295,8 @@ export default function MatchesPage() {
                 </li>
               );
             })}
-          </ul>
+           </ul>
+          </div>
 
           {status.error ? (
             <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div>

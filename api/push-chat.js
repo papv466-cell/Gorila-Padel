@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     if (!VAPID_PUBLIC || !VAPID_PRIVATE)
       return res.status(500).send("Missing VAPID public/private keys");
 
-    webpush.setVapidDetails("mailto:admin@gorila.app", VAPID_PUBLIC, VAPID_PRIVATE);
+    webpush.setVapidDetails("mailto:papv466@gmail.com", VAPID_PUBLIC, VAPID_PRIVATE);
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
@@ -119,21 +119,13 @@ export default async function handler(req, res) {
         );
         sent++;
       } catch (e) {
-        const statusCode = e?.statusCode || e?.status || null;
-
-        errors.push({
-          statusCode,
-          message: String(e?.message || e),
-          user_id: s.user_id,
-          endpoint: s.endpoint?.slice?.(0, 60) + "...",
+        // No exponer detalles del error
+        console.error('[PUSH_CHAT_ERROR]', e);
+        
+        return res.status(500).json({ 
+          ok: false, 
+          error: 'Error al enviar notificaciones'
         });
-
-        // ✅ BORRAR TAMBIÉN EN 403 (FCM suele dar 403 cuando esa sub ya no vale)
-        if (statusCode === 410 || statusCode === 403) {
-          try {
-            await supabase.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
-          } catch {}
-        }
       }
     }
 

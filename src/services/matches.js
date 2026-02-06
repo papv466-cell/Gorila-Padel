@@ -1,6 +1,7 @@
 // src/services/matches.js
 import { supabase } from "./supabaseClient";
-
+import { sanitizeString, validateLevel, validateDuration, validatePlayers } from "../utils/validation";
+import { combineDateTime } from "../utils/dates";
 /* =========================
    Utils
 ========================= */
@@ -102,36 +103,51 @@ export async function fetchLatestChatTimes(matchIds = []) {
 /* =========================
    CREAR PARTIDO
 ========================= */
-export async function createMatch({
-  clubId,
-  clubName,
-  startAtISO,
-  durationMin = 90,
-  level = "medio",
-  alreadyPlayers = 1,
-  pricePerPlayer = null,
-} = {}) {
-  const session = await getSessionOrThrow();
-
-  const payload = {
-    club_id: String(clubId ?? "").trim(),
-    club_name: String(clubName ?? "").trim(),
-    start_at: startAtISO,
-    duration_min: Number(durationMin) || 90,
-    level,
-    created_by_user: session.user.id,
-    reserved_spots: Math.min(3, Math.max(1, Number(alreadyPlayers) || 1)),
-    spots_total: 4,
-  };
-
-  if (pricePerPlayer != null && String(pricePerPlayer).trim() !== "") {
-    payload.price_per_player = Number(pricePerPlayer);
+export async function createMatch(data) {
+  // Validar datos antes de insertar
+  const clubName = sanitizeString(data.clubName, 200);
+  if (!clubName) {
+    throw new Error('El nombre del club es obligatorio');
+  }
+  
+  const level = validateLevel(data.level);
+  const durationMin = validateDuration(data.durationMin);
+  const playersNeeded = validatePlayers(data.playersNeeded);
+  
+  // Validar fecha/hora
+  const startAt = combineDateTime(data.date, data.time);
+  if (!startAt) {
+    throw new Error('Fecha y hora son obligatorias');
+  }
+  
+  // Verificar que la fecha sea futura
+  const startDate = new Date(startAt);
+  if (startDate <= new Date()) {
+    throw new Error('La fecha debe ser futura');
   }
 
-  const { data, error } = await supabase.from("matches").insert(payload).select("*").single();
-  if (error) throw error;
+  const { data: row, error } = await supabase
+    .from("matches")
+    .insert({
+      club_id: data.clubId || null,
+      club_name: clubName,
+      level,
+      duration_min: durationMin,
+      players_needed: playersNeeded,
+      start_at: startAt,
+      notes: sanitizeString(data.notes || '', 500),
+      is_inclusive: Boolean(data.isInclusive),
+      created_by_user: data.userId,
+    })
+    .select()
+    .single();
 
-  return data;
+  if (error) {
+    console.error("[CREATE_MATCH_ERROR]", error);
+    throw new Error("No se pudo crear el partido");
+  }
+
+  return row;
 }
 
 /* =========================
