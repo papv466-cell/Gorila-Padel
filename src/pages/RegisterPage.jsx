@@ -189,18 +189,22 @@ export default function RegisterPage() {
           </div>
 
           {/* ✅ FORM (tu form igual) */}
-          <div style={{ padding: 18 }}>
-            <form className="authForm" onSubmit={handleRegister}>
-              <label className="authLabel">
-                Apodo (único)
-                <input
-                  className="authInput"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder="Ej: teresa39"
-                  autoComplete="nickname"
-                />
-              </label>
+          <div style={{
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                paddingRight: '10px'
+              }}>
+                <form className="authForm" onSubmit={handleRegister}>
+                  <label className="authLabel">
+                    Apodo (único)
+                    <input
+                      className="authInput"
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value)}
+                      placeholder="Ej: teresa39"
+                      autoComplete="nickname"
+                    />
+                  </label>
 
               <label className="authLabel">
                 Sexo
