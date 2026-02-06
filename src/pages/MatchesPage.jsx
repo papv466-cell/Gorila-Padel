@@ -39,36 +39,24 @@ function toDateInputValue(d = new Date()) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// ✅ parse robusto para fechas que pueden venir como:
-// - "2026-02-10T19:00:00Z"
-// - "2026-02-10T19:00:00"
-// - "2026-02-10 19:00:00"
-// - Date object
+// ✅ parse robusto para fechas
 function safeParseDate(value) {
   if (!value) return null;
-
-  if (value instanceof Date) {
-    return Number.isFinite(value.getTime()) ? value : null;
-  }
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
 
   const s = String(value);
-
-  // Caso: "YYYY-MM-DD ..." o "YYYY-MM-DDT..."
-  // Extraemos YMD si existe
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (m && m[1]) {
-    // Creamos Date con componentes (local) para evitar parse ambiguo
+  if (m?.[1]) {
     const [y, mo, d] = m[1].split("-").map(Number);
     const dt = new Date(y, mo - 1, d, 0, 0, 0, 0);
     return Number.isFinite(dt.getTime()) ? dt : null;
   }
 
-  // Fallback: intento normal
   const dt = new Date(s);
   return Number.isFinite(dt.getTime()) ? dt : null;
 }
 
-// ✅ Construcción segura en LOCAL (Madrid) sin parse ambiguo de strings
+// ✅ Construcción segura LOCAL → ISO UTC
 function combineDateTimeToISO(dateStr, timeStr) {
   const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
   const [hh, mm] = String(timeStr || "19:00").split(":").map((n) => Number(n));
@@ -84,21 +72,17 @@ function combineDateTimeToISO(dateStr, timeStr) {
     0
   );
 
-  // Guardamos ISO UTC (timestamptz friendly)
   return dt.toISOString();
 }
 
-// ✅ Clave día local robusta desde start_at (sin depender de new Date(string))
+// ✅ Clave día local robusta desde start_at
 function localYMDFromStartAt(startAt) {
   if (!startAt) return "";
-
   const s = String(startAt);
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (m && m[1]) return m[1];
-
+  if (m?.[1]) return m[1];
   const dt = safeParseDate(startAt);
-  if (!dt) return "";
-  return toDateInputValue(dt);
+  return dt ? toDateInputValue(dt) : "";
 }
 
 function sortByStartAtAsc(list) {
@@ -224,30 +208,7 @@ export default function MatchesPage() {
 
   /* Push button state */
   const [pushBusy, setPushBusy] = useState(false);
-  // ✅ Asegurar suscripción push al tener sesión (app cerrada)
-// Esto repara el caso típico: endpoint viejo / SW actualizado / suscripción caducada
-useEffect(() => {
-  if (!session?.user?.id) return;
 
-  let cancelled = false;
-
-  (async () => {
-    try {
-      await ensurePushSubscription();
-      // NO toast aquí: no molestamos al usuario
-    } catch (e) {
-      // No rompemos nada si falla; solo debug opcional
-      if (!cancelled && qs.get("debug") === "1") {
-        console.log("🔔 ensurePushSubscription falló:", e);
-      }
-    }
-  })();
-
-  return () => {
-    cancelled = true;
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [session?.user?.id]);
   /* Clubs suggest */
   const [clubsSheet, setClubsSheet] = useState([]);
   const [clubQuery, setClubQuery] = useState("");
@@ -308,12 +269,85 @@ useEffect(() => {
     };
   }, []);
 
+  // ✅ Asegurar suscripción push al tener sesión (silencioso)
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await ensurePushSubscription();
+      } catch (e) {
+        if (!cancelled && debug) console.log("🔔 ensurePushSubscription falló:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, debug]);
+
   /* initial clubs (sheet) */
   useEffect(() => {
     fetchClubsFromGoogleSheet()
       .then((rows) => setClubsSheet(Array.isArray(rows) ? rows : []))
       .catch(() => setClubsSheet([]));
   }, []);
+
+  // ✅ helper: “estoy dentro” leyendo match_players sin romper según schema
+  async function fetchInPlayersMap(matchIds, uid) {
+    const out = {};
+
+    if (!uid || !matchIds?.length) return out;
+
+    // Variantes típicas que tienes en BD
+    const uidNoDashes = String(uid).replace(/-/g, "");
+    const candidatePlayerIds = Array.from(
+      new Set([String(uid), `u_${uid}`, `u_${uidNoDashes}`].filter(Boolean))
+    );
+
+    // 1) Intento por player_uuid (si existe)
+    try {
+      const { data, error } = await supabase
+        .from("match_players")
+        .select("match_id")
+        .in("match_id", matchIds)
+        .eq("player_uuid", String(uid));
+
+      if (!error) {
+        for (const r of data || []) out[String(r.match_id)] = true;
+        return out;
+      }
+
+      // si el error es “no existe columna”, seguimos al fallback
+      const msg = String(error?.message || "");
+      if (!msg.toLowerCase().includes('column "player_uuid"')) {
+        // si es otro error, salimos a fallback igualmente
+      }
+    } catch {
+      // seguimos al fallback
+    }
+
+    // 2) Fallback por player_id (text)
+    try {
+      const { data, error } = await supabase
+        .from("match_players")
+        .select("match_id, player_id")
+        .in("match_id", matchIds)
+        .in("player_id", candidatePlayerIds);
+
+      if (!error) {
+        for (const r of data || []) out[String(r.match_id)] = true;
+      }
+    } catch {
+      // nada
+    }
+
+    return out;
+  }
 
   /* load matches + status */
   async function load() {
@@ -327,31 +361,20 @@ useEffect(() => {
       setItems(sortByStartAtAsc(unique));
 
       const ids = unique.map((m) => m.id);
+
+      // Mis requests (approved/pending/etc)
       const my = await fetchMyRequestsForMatchIds(ids);
       if (!aliveRef.current) return;
       setMyReqStatus(my || {});
 
-      // ✅ saber si yo estoy dentro vía match_players (fuente real)
-try {
-  const uid = session?.user?.id ? String(session.user.id) : "";
-  if (uid && ids.length) {
-    const { data, error } = await supabase
-      .from("match_players")
-      .select("match_id, player_id")
-      .in("match_id", ids)
-      .eq("player_id", uid);
-
-    if (!error) {
-      const map = {};
-      for (const r of data || []) map[String(r.match_id)] = true;
-      if (aliveRef.current) setInPlayersByMatchId(map);
-    }
-  } else {
-    setInPlayersByMatchId({});
-  }
-} catch {
-  setInPlayersByMatchId({});
-}
+      // ✅ mapa “estoy dentro” real
+      try {
+        const uid = session?.user?.id ? String(session.user.id) : "";
+        const map = await fetchInPlayersMap(ids, uid);
+        if (aliveRef.current) setInPlayersByMatchId(map || {});
+      } catch {
+        if (aliveRef.current) setInPlayersByMatchId({});
+      }
 
       const counts = await fetchApprovedCounts(ids);
       if (!aliveRef.current) return;
@@ -361,31 +384,7 @@ try {
       if (!aliveRef.current) return;
       setLatestChatTsByMatch(latest || {});
 
-      // ✅ dentro real por match_players.player_uuid (NUEVO)
-try {
-  const uid = session?.user?.id ? String(session.user.id) : "";
-  const ids2 = unique.map((m) => m.id);
-  if (uid && ids2.length) {
-    const { data, error } = await supabase
-      .from("match_players")
-      .select("match_id")
-      .in("match_id", ids2)
-      .eq("player_uuid", uid);
-
-    if (!error) {
-      const map = {};
-      for (const r of data || []) map[String(r.match_id)] = true;
-      if (aliveRef.current) setInPlayersByMatchId(map);
-    } else {
-      setInPlayersByMatchId({});
-    }
-  } else {
-    setInPlayersByMatchId({});
-  }
-} catch {
-  setInPlayersByMatchId({});
-}
-      // ✅ perfiles para pintar avatar del creador en la card (solo UI)
+      // ✅ perfiles para pintar avatar del creador (solo UI)
       try {
         const creatorIds = Array.from(
           new Set((unique || []).map((m) => m?.created_by_user).filter(Boolean).map(String))
@@ -413,72 +412,30 @@ try {
     if (!authReady) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady]);
+  }, [authReady, session?.user?.id]);
 
   /* realtime */
-  /* realtime (matches + requests + chat) */
-useEffect(() => {
-  const myUid = session?.user?.id ? String(session.user.id) : "";
-
-  const unsub1 = subscribeMatchesRealtime((payload) => {
-    const t = payload?.eventType;
-    const row = payload?.new || payload?.old;
-    if (!row?.id) return;
-
-    if (t === "DELETE") setItems((prev) => removeMatch(prev, row.id));
-    else setItems((prev) => upsertMatchSorted(prev, row));
-  });
-
-  // ✅ Solicitudes realtime + toast
-  const unsub2 = subscribeJoinRequestsRealtime((payload) => {
-    try {
+  useEffect(() => {
+    const unsub1 = subscribeMatchesRealtime((payload) => {
       const t = payload?.eventType;
-      const row = payload?.new || null;
+      const row = payload?.new || payload?.old;
+      if (!row?.id) return;
 
-      // Nota: no sabemos el schema exacto, pero normalmente hay match_id y user_id
-      // Si es INSERT, avisamos (sin romper nada si faltan campos)
-      if (t === "INSERT") {
-        toast.success("📥 Nueva solicitud para un partido");
-      }
-    } catch {}
+      if (t === "DELETE") setItems((prev) => removeMatch(prev, row.id));
+      else setItems((prev) => upsertMatchSorted(prev, row));
+    });
 
-    // Mantener comportamiento actual
-    load();
-  });
+    // mantenemos comportamiento: refrescar
+    const unsub2 = subscribeJoinRequestsRealtime(() => load());
+    const unsub3 = subscribeAllMatchMessagesRealtime(() => load());
 
-  // ✅ Mensajes realtime + toast
-  const unsub3 = subscribeAllMatchMessagesRealtime((payload) => {
-    try {
-      const t = payload?.eventType;
-      const row = payload?.new || null;
-
-      // Normalmente match_id + user_id
-      const msgFrom = row?.user_id ? String(row.user_id) : "";
-      const matchId = row?.match_id ? String(row.match_id) : "";
-
-      // Evitar “notificarte a ti mismo”
-      const isMine = myUid && msgFrom && myUid === msgFrom;
-
-      // Si el chat NO está abierto en ese match, mostramos toast
-      if (t === "INSERT" && !isMine) {
-        if (!chatOpenFor || String(chatOpenFor) !== matchId) {
-          toast.success("💬 Nuevo mensaje en un partido");
-        }
-      }
-    } catch {}
-
-    // Mantener comportamiento actual
-    load();
-  });
-
-  return () => {
-    unsub1?.();
-    unsub2?.();
-    unsub3?.();
-  };
-  // OJO: dependencias necesarias para que el toast y chatOpenFor funcionen bien
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [session?.user?.id, chatOpenFor]);
+    return () => {
+      unsub1?.();
+      unsub2?.();
+      unsub3?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]);
 
   /* ✅ Push dentro de la app abierta (SW → window event) */
   useEffect(() => {
@@ -493,8 +450,10 @@ useEffect(() => {
       if (debug) console.log("📩 gp:push", p);
     };
 
-    window.addEventListener("gp:push", onPush);
-    return () => window.removeEventListener("gp:push", onPush);
+    if (typeof window !== "undefined") {
+      window.addEventListener("gp:push", onPush);
+      return () => window.removeEventListener("gp:push", onPush);
+    }
   }, [toast, debug]);
 
   /* auto-open chat from url/storage */
@@ -609,7 +568,7 @@ useEffect(() => {
   }, [authReady, session?.user?.id, visibleList, myReqStatus]);
 
   // =========
-  // Calendar helpers (para la strip de días)
+  // Calendar helpers
   // =========
   function addDays(dateStr, deltaDays) {
     const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
@@ -861,6 +820,7 @@ useEffect(() => {
     try {
       await deleteMatch(matchId);
       toast.success("Partido eliminado");
+      await load();
     } catch (e) {
       toast.error(e?.message || "No se pudo eliminar el partido");
     }
@@ -891,8 +851,7 @@ useEffect(() => {
       const startAtISO = combineDateTimeToISO(form.date, form.time);
 
       if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId || "").trim())
-        throw new Error("Selecciona el club de la lista (para evitar errores).");
+      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista (para evitar errores).");
 
       await createMatch({
         clubId: form.clubId,
@@ -904,9 +863,7 @@ useEffect(() => {
         pricePerPlayer: form.pricePerPlayer,
       });
 
-      // ✅ ir directo al día creado
       setSelectedDay(form.date);
-
       setOpenCreate(false);
       toast.success("Partido creado");
       await load();
@@ -1050,12 +1007,14 @@ useEffect(() => {
 
           <ul className="gpMatchesGrid" style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {visibleList.map((m) => {
+              const myStatus = myReqStatus?.[m.id] || null;
+              const isCreator = !!(session?.user?.id && String(m.created_by_user) === String(session.user.id));
+
               const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
               const left = Math.max(0, 4 - occupied);
+
               const iAmInPlayers = !!inPlayersByMatchId?.[String(m.id)];
               const iAmInside = isCreator || iAmInPlayers || myStatus === "approved" || myStatus === "pending";
-              const myStatus = myReqStatus[m.id] || null;
-              const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
 
               // ✅ creador (solo UI)
               const creatorId = m.created_by_user ? String(m.created_by_user) : "";
@@ -1114,11 +1073,31 @@ useEffect(() => {
                   </div>
 
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-                    {myStatus === "approved" ? <span className="meta" style={{ fontWeight: 950 }}>✅ Estás dentro</span> : null}
-                    {myStatus === "pending" ? <span className="meta" style={{ fontWeight: 950 }}>⏳ Pendiente</span> : null}
-                    {myStatus === "rejected" ? <span className="meta" style={{ fontWeight: 950 }}>❌ Rechazado</span> : null}
-                    {isCreator ? <span className="meta" style={{ fontWeight: 950 }}>👑 Eres creador</span> : null}
-                    {latestChatTsByMatch[m.id] ? <span className="meta" style={{ fontWeight: 950 }}>💬 Chat activo</span> : null}
+                    {myStatus === "approved" ? (
+                      <span className="meta" style={{ fontWeight: 950 }}>
+                        ✅ Estás dentro
+                      </span>
+                    ) : null}
+                    {myStatus === "pending" ? (
+                      <span className="meta" style={{ fontWeight: 950 }}>
+                        ⏳ Pendiente
+                      </span>
+                    ) : null}
+                    {myStatus === "rejected" ? (
+                      <span className="meta" style={{ fontWeight: 950 }}>
+                        ❌ Rechazado
+                      </span>
+                    ) : null}
+                    {isCreator ? (
+                      <span className="meta" style={{ fontWeight: 950 }}>
+                        👑 Eres creador
+                      </span>
+                    ) : null}
+                    {latestChatTsByMatch[m.id] ? (
+                      <span className="meta" style={{ fontWeight: 950 }}>
+                        💬 Chat activo
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="gpDivider" />
@@ -1206,13 +1185,13 @@ useEffect(() => {
                         </button>
                       ) : null}
 
-                      {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
+                      {session && !isCreator && iAmInside ? (
                         <button className="btn ghost" onClick={() => handleLeave(m.id)}>
                           Salir
                         </button>
                       ) : null}
 
-                      {session && !isCreator && iAmInside ? (
+                      {session && isCreator ? (
                         <button className="btn danger" onClick={() => handleDelete(m.id)}>
                           🗑️ Eliminar
                         </button>
@@ -1224,7 +1203,9 @@ useEffect(() => {
             })}
           </ul>
 
-          {status.error ? <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div> : null}
+          {status.error ? (
+            <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div>
+          ) : null}
         </div>
       </div>
 
@@ -1269,11 +1250,25 @@ useEffect(() => {
                   onClick={() => transferSpot({ matchId: cedeOpenFor, toUserId: u.id })}
                   disabled={cedeBusy}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+                  <div
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
                     {u.avatar_url ? (
-                      <img src={u.avatar_url} alt={u.name || u.handle || "user"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img
+                        src={u.avatar_url}
+                        alt={u.name || u.handle || "user"}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>🦍</div>
+                      <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>
+                        🦍
+                      </div>
                     )}
                   </div>
                   <div style={{ minWidth: 0 }}>
@@ -1287,7 +1282,9 @@ useEffect(() => {
                 </button>
               ))}
               {cedeQuery.trim().length >= 3 && (cedeResults || []).length === 0 ? (
-                <div className="meta" style={{ opacity: 0.75 }}>No hay resultados.</div>
+                <div className="meta" style={{ opacity: 0.75 }}>
+                  No hay resultados.
+                </div>
               ) : null}
             </div>
 
@@ -1319,7 +1316,9 @@ useEffect(() => {
                 onChange={(e) => setInviteQuery(e.target.value)}
                 placeholder="Ej: ana / @antonio"
               />
-              <div className="meta" style={{ marginTop: 6 }}>Puedes seleccionar hasta 10.</div>
+              <div className="meta" style={{ marginTop: 6 }}>
+                Puedes seleccionar hasta 10.
+              </div>
             </div>
 
             {inviteSelected.length ? (
@@ -1362,11 +1361,25 @@ useEffect(() => {
                     }}
                     disabled={already || inviteBusy}
                   >
-                    <div style={{ width: 44, height: 44, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.06)" }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        background: "rgba(255,255,255,0.06)",
+                      }}
+                    >
                       {u.avatar_url ? (
-                        <img src={u.avatar_url} alt={u.name || u.handle || "user"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img
+                          src={u.avatar_url}
+                          alt={u.name || u.handle || "user"}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>🦍</div>
+                        <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", fontWeight: 1000 }}>
+                          🦍
+                        </div>
                       )}
                     </div>
                     <div style={{ minWidth: 0 }}>
