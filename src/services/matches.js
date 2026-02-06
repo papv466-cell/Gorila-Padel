@@ -145,7 +145,7 @@ export async function createMatch(data) {
       players_needed: playersNeeded,
       reserved_spots: playersNeeded, // ✅ Añadido para compatibilidad
       start_at: startAt,
-      notes: sanitizeString(data.notes || '', 500),
+      // notes: sanitizeString(data.notes || '', 500),
       price_per_player: data.pricePerPlayer ? Number(data.pricePerPlayer) : null,
       created_by_user: data.userId,
     })
