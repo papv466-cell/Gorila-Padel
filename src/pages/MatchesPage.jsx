@@ -185,6 +185,7 @@ export default function MatchesPage() {
 
   const [myReqStatus, setMyReqStatus] = useState({});
   const [approvedCounts, setApprovedCounts] = useState({});
+  const [inPlayersByMatchId, setInPlayersByMatchId] = useState({});
   const [latestChatTsByMatch, setLatestChatTsByMatch] = useState({});
 
   /* Requests modal (creator) */
@@ -330,6 +331,28 @@ useEffect(() => {
       if (!aliveRef.current) return;
       setMyReqStatus(my || {});
 
+      // ✅ saber si yo estoy dentro vía match_players (fuente real)
+try {
+  const uid = session?.user?.id ? String(session.user.id) : "";
+  if (uid && ids.length) {
+    const { data, error } = await supabase
+      .from("match_players")
+      .select("match_id, player_id")
+      .in("match_id", ids)
+      .eq("player_id", uid);
+
+    if (!error) {
+      const map = {};
+      for (const r of data || []) map[String(r.match_id)] = true;
+      if (aliveRef.current) setInPlayersByMatchId(map);
+    }
+  } else {
+    setInPlayersByMatchId({});
+  }
+} catch {
+  setInPlayersByMatchId({});
+}
+
       const counts = await fetchApprovedCounts(ids);
       if (!aliveRef.current) return;
       setApprovedCounts(counts || {});
@@ -338,6 +361,30 @@ useEffect(() => {
       if (!aliveRef.current) return;
       setLatestChatTsByMatch(latest || {});
 
+      // ✅ dentro real por match_players.player_uuid (NUEVO)
+try {
+  const uid = session?.user?.id ? String(session.user.id) : "";
+  const ids2 = unique.map((m) => m.id);
+  if (uid && ids2.length) {
+    const { data, error } = await supabase
+      .from("match_players")
+      .select("match_id")
+      .in("match_id", ids2)
+      .eq("player_uuid", uid);
+
+    if (!error) {
+      const map = {};
+      for (const r of data || []) map[String(r.match_id)] = true;
+      if (aliveRef.current) setInPlayersByMatchId(map);
+    } else {
+      setInPlayersByMatchId({});
+    }
+  } else {
+    setInPlayersByMatchId({});
+  }
+} catch {
+  setInPlayersByMatchId({});
+}
       // ✅ perfiles para pintar avatar del creador en la card (solo UI)
       try {
         const creatorIds = Array.from(
@@ -1005,7 +1052,8 @@ useEffect(() => {
             {visibleList.map((m) => {
               const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
               const left = Math.max(0, 4 - occupied);
-
+              const iAmInPlayers = !!inPlayersByMatchId?.[String(m.id)];
+              const iAmInside = isCreator || iAmInPlayers || myStatus === "approved" || myStatus === "pending";
               const myStatus = myReqStatus[m.id] || null;
               const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
 
@@ -1083,7 +1131,7 @@ useEffect(() => {
                         </button>
                       ) : null}
 
-                      {session && !isCreator && (myStatus === "approved" || myStatus === "pending") ? (
+                      {session && !isCreator && iAmInPlayers ? (
                         <button
                           type="button"
                           className="btn ghost gpIconBtn"
@@ -1112,7 +1160,7 @@ useEffect(() => {
                         </button>
                       ) : null}
 
-                      {session && (isCreator || myStatus === "approved" || myStatus === "pending") ? (
+                      {session && iAmInside ? (
                         <button className="btn ghost gpIconBtn" onClick={() => openChat(m.id)}>
                           💬 Chat
                         </button>
@@ -1164,7 +1212,7 @@ useEffect(() => {
                         </button>
                       ) : null}
 
-                      {session && isCreator ? (
+                      {session && !isCreator && iAmInside ? (
                         <button className="btn danger" onClick={() => handleDelete(m.id)}>
                           🗑️ Eliminar
                         </button>
