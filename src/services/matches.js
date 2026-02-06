@@ -147,7 +147,6 @@ export async function createMatch(data) {
       start_at: startAt,
       notes: sanitizeString(data.notes || '', 500),
       price_per_player: data.pricePerPlayer ? Number(data.pricePerPlayer) : null,
-      is_inclusive: Boolean(data.isInclusive),
       created_by_user: data.userId,
     })
     .select()
