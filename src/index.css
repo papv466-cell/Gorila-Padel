@@ -4263,3 +4263,18 @@ input[type="date"].gpInput::-webkit-calendar-picker-indicator {
   opacity: 1;
   display: block;
 }
+/* Icono calendario visible (negro) */
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(1); /* ⭐ Invierte el color (de blanco a negro) */
+}
+
+/* Si tu fondo es claro, usa esto en su lugar: */
+/* 
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(0);
+}
+*/
