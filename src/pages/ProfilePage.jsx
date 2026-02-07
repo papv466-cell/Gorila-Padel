@@ -230,47 +230,65 @@ export default function ProfilePage() {
 
   async function save(payloadOverride = null) {
     if (!session?.user) return;
-
+  
     setErr(null);
-
+  
     const cleanHandle = String(form.handle || "")
       .trim()
       .replace(/\s+/g, " ")
       .replace(/^\@+/, "");
-
+  
     const cleanName = String(form.name || "")
       .trim()
       .replace(/\s+/g, " ");
-
+  
     if (!cleanHandle || cleanHandle.length < 3) {
       setErr("El apodo debe tener al menos 3 caracteres.");
       return;
     }
-
+  
     const finalName = cleanName || cleanHandle;
-
-    const payload =
-      payloadOverride || {
-        name: finalName,
-        handle: cleanHandle,
-        sex: form.sex,
-        level: form.level,
-        handedness: form.handedness,
-        birthdate: form.birthdate || null,
-        avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl,
-      };
-
+  
+    const payload = payloadOverride || {
+      name: finalName,
+      handle: cleanHandle,
+      sex: form.sex,
+      level: form.level,
+      handedness: form.handedness,
+      birthdate: form.birthdate || null,
+      avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl,
+    };
+  
     try {
       setSaving(true);
-
-      const { error } = await supabase
+  
+      // 1️⃣ Actualizar profiles (tabla privada)
+      const { error: err1 } = await supabase
         .from("profiles")
         .update(payload)
         .eq("id", session.user.id);
-
-      if (error) throw error;
-
-      setForm((p) => ({ ...p, name: finalName, handle: cleanHandle }));
+  
+      if (err1) throw err1;
+  
+      // 2️⃣ Actualizar profiles_public (tabla pública) ⭐ CRÍTICO
+      const { error: err2 } = await supabase
+        .from("profiles_public")
+        .update({
+          name: payload.name,
+          handle: payload.handle,
+          avatar_url: payload.avatar_url,
+        })
+        .eq("id", session.user.id);
+  
+      if (err2) throw err2;
+  
+      setForm((p) => ({ 
+        ...p, 
+        name: finalName, 
+        handle: cleanHandle,
+        avatar_url: payload.avatar_url 
+      }));
+      
       toast?.success?.("Perfil guardado ✅");
     } catch (e) {
       const msg = e?.message || "No se pudo guardar";
@@ -278,67 +296,6 @@ export default function ProfilePage() {
       toast?.error?.(msg);
     } finally {
       setSaving(false);
-    }
-  }
-
-  function useDefaultGorilla() {
-    setForm((p) => ({ ...p, avatar_url: defaultAvatarUrl }));
-    toast?.info?.("Avatar gorila aplicado. Dale a Guardar.");
-  }
-
-  async function uploadAvatarFile(file) {
-    if (!session?.user?.id) return;
-    if (!file) return;
-
-    const isImage = file.type?.startsWith("image/");
-    if (!isImage) {
-      toast?.error?.("Sube una imagen (JPG/PNG/WebP).");
-      return;
-    }
-    const maxMb = 5;
-    if (file.size > maxMb * 1024 * 1024) {
-      toast?.error?.(`Máximo ${maxMb}MB.`);
-      return;
-    }
-
-    try {
-      setUploading(true);
-      setErr(null);
-
-      const ext = (file.name.split(".").pop() || "png").toLowerCase();
-      const path = `${session.user.id}/${Date.now()}.${ext}`;
-
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
-        upsert: true,
-        contentType: file.type,
-      });
-
-      if (upErr) throw upErr;
-
-      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-      const publicUrl = pub?.publicUrl;
-
-      if (!publicUrl) throw new Error("No se pudo obtener la URL pública.");
-
-      setForm((p) => ({ ...p, avatar_url: publicUrl }));
-
-      await save({
-        name: String(form.name || "").trim().replace(/\s+/g, " ") || String(form.handle || "").trim(),
-        handle: String(form.handle || "").trim().replace(/\s+/g, " ").replace(/^\@+/, ""),
-        sex: form.sex,
-        level: form.level,
-        handedness: form.handedness,
-        birthdate: form.birthdate || null,
-        avatar_url: publicUrl,
-      });
-
-      toast?.success?.("Foto subida ✅");
-    } catch (e) {
-      const msg = e?.message || "Error subiendo la foto";
-      setErr(msg);
-      toast?.error?.(msg);
-    } finally {
-      setUploading(false);
     }
   }
 
