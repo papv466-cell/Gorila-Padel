@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
+import './MatchesPage.css';
 
 import {
   createMatch,

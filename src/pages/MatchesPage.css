@@ -1,0 +1,416 @@
+/* MatchesPage.css - Diseño Pro/Deportivo */
+
+.gpMatchesPage {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+    min-height: 100vh;
+  }
+  
+  .pageHeader {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(116, 184, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .pageTitle {
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: -0.5px;
+  }
+  
+  .pageMeta {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  
+  /* Acciones y controles */
+  .gpActions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    align-items: center;
+  }
+  
+  /* Calendario horizontal */
+  .gpCalendarStrip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  
+  .gpCalendarStrip::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .gpDayPill {
+    min-width: 60px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    backdrop-filter: blur(10px);
+  }
+  
+  .gpDayPill:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(116, 184, 0, 0.3);
+    transform: translateY(-2px);
+  }
+  
+  .gpDayPill.isActive {
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    border-color: transparent;
+    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+  }
+  
+  .gpDow {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+  }
+  
+  .gpDom {
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  
+  .gpDot {
+    width: 6px;
+    height: 6px;
+    background: #74B800;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 8px;
+  }
+  
+  .gpDot.isOff {
+    background: transparent;
+  }
+  
+  /* Segmented control */
+  .gpSegmented {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .gpSegmented button {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .gpSegmented button.isActive {
+    background: #74B800;
+    color: #000;
+  }
+  
+  /* Botones principales */
+  .btn {
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .btn:not(.ghost):not(.danger) {
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(116, 184, 0, 0.3);
+  }
+  
+  .btn:not(.ghost):not(.danger):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.5);
+  }
+  
+  .btn.ghost {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .btn.ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .btn.danger {
+    background: rgba(220, 38, 38, 0.1);
+    color: #ff4444;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Grid de partidos */
+  .gpMatchesSnapWrap {
+    padding: 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gpMatchesGrid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+  
+  /* Tarjeta de partido - REDISEÑO COMPLETO */
+  .gpMatchCard {
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%);
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  
+  .gpMatchCard:hover {
+    transform: translateY(-4px);
+    border-color: rgba(116, 184, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(116, 184, 0, 0.2);
+  }
+  
+  /* Roster de jugadores */
+  .gpRoster {
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(116, 184, 0, 0.08) 0%, rgba(155, 232, 0, 0.05) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .gpTeam {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .gpSlot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s;
+  }
+  
+  .gpSlot:hover {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(116, 184, 0, 0.2);
+  }
+  
+  .gpSlotEmpty {
+    opacity: 0.5;
+  }
+  
+  .gpSlotImg {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: rgba(116, 184, 0, 0.1);
+    border: 2px solid rgba(116, 184, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  
+  .gpSlotText {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .gpSlotName {
+    font-weight: 800;
+    font-size: 14px;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .gpSlotMeta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  
+  .gpVs {
+    text-align: center;
+    font-weight: 900;
+    font-size: 18px;
+    color: #74B800;
+    padding: 16px 0;
+    letter-spacing: 2px;
+  }
+  
+  /* Info del partido */
+  .gpHeadline {
+    padding: 20px 24px 12px;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  
+  .gpCaption {
+    padding: 0 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .gpChip {
+    padding: 6px 12px;
+    background: rgba(116, 184, 0, 0.1);
+    border: 1px solid rgba(116, 184, 0, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9BE800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .gpDivider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    margin: 20px 24px;
+  }
+  
+  /* Barra de acciones */
+  .gpActionBar {
+    padding: 0 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .gpActionLeft,
+  .gpActionRight {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .gpIconBtn {
+    padding: 10px 16px;
+    font-size: 13px;
+    flex: 1;
+    min-width: fit-content;
+    justify-content: center;
+  }
+  
+  /* Meta badges */
+  .meta {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: inline-block;
+  }
+  
+  /* Input de fecha */
+  .gpInput[type="date"] {
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  
+  .gpInput[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .gpMatchesGrid {
+      grid-template-columns: 1fr;
+    }
+    
+    .gpActions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .gpCalendarStrip {
+      order: -1;
+    }
+  }
+  
+  /* Animaciones */
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .gpMatchCard {
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+  }
+  
+  .gpMatchCard:nth-child(1) { animation-delay: 0.05s; }
+  .gpMatchCard:nth-child(2) { animation-delay: 0.1s; }
+  .gpMatchCard:nth-child(3) { animation-delay: 0.15s; }
+  .gpMatchCard:nth-child(4) { animation-delay: 0.2s; }
