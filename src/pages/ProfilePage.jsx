@@ -242,18 +242,17 @@ export default function ProfilePage() {
   
     console.log("📝 Guardando:", { cleanName, cleanHandle });
   
-    // ✅ ARREGLADO: Permitir que handle esté vacío si hay nombre
     if (!cleanHandle && !cleanName) {
       setErr("Debes poner al menos un nombre o apodo.");
       console.log("❌ Faltan nombre y handle");
       return;
     }
   
-    // Si no hay handle, usar el nombre como handle
     const finalHandle = cleanHandle || cleanName.toLowerCase().replace(/\s+/g, "");
     const finalName = cleanName || cleanHandle;
   
-    const payload = payloadOverride || {
+    const payload = {
+      id: session.user.id, // ⭐ IMPORTANTE: Añadir ID para upsert
       name: finalName,
       handle: finalHandle,
       sex: form.sex,
@@ -261,6 +260,7 @@ export default function ProfilePage() {
       handedness: form.handedness,
       birthdate: form.birthdate || null,
       avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl,
+      ...(payloadOverride || {})
     };
   
     console.log("📦 Payload:", payload);
@@ -271,8 +271,7 @@ export default function ProfilePage() {
       console.log("1️⃣ Actualizando profiles...");
       const { data: data1, error: err1 } = await supabase
         .from("profiles")
-        .update(payload)
-        .eq("id", session.user.id);
+        .upsert(payload, { onConflict: 'id' }); // ⭐ UPSERT en lugar de UPDATE
   
       console.log("✅ profiles response:", { data: data1, error: err1 });
       if (err1) throw err1;
@@ -280,12 +279,12 @@ export default function ProfilePage() {
       console.log("2️⃣ Actualizando profiles_public...");
       const { data: data2, error: err2 } = await supabase
         .from("profiles_public")
-        .update({
+        .upsert({ // ⭐ UPSERT en lugar de UPDATE
+          id: session.user.id,
           name: payload.name,
           handle: payload.handle,
           avatar_url: payload.avatar_url,
-        })
-        .eq("id", session.user.id);
+        }, { onConflict: 'id' });
   
       console.log("✅ profiles_public response:", { data: data2, error: err2 });
       if (err2) throw err2;
