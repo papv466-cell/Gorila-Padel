@@ -4281,3 +4281,11 @@ input[type="date"].gpInput::-webkit-calendar-picker-indicator {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 2V5M14 2V5M3 8H17M4 4H16C16.5523 4 17 4.44772 17 5V17C17 17.5523 16.5523 18 16 18H4C3.44772 18 3 17.5523 3 17V5C3 4.44772 3.44772 4 4 4Z' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 }
+/* Icono calendario negro y visible */
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) brightness(0);
+  opacity: 1;
+  width: 24px;
+  height: 24px;
+}
