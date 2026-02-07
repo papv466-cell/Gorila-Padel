@@ -509,7 +509,8 @@ export default function ProfilePage() {
                   className="gpInput" 
                   type="date" 
                   value={form.birthdate || ""} 
-                  onChange={(e) => setForm((p) => ({ ...p, birthdate: e.target.value }))} 
+                  onChange={(e) => setForm((p) => ({ ...p, birthdate: e.target.value }))}
+                  placeholder=""
                 />
               </div>
             </div>

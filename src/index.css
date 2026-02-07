@@ -4212,10 +4212,12 @@ html, body{
 .gpMatchSnapCard {
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  min-height: calc(100vh - 88px); /* header sticky */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+
+  /* ✅ tarjeta normal (NO gigante) */
+  min-height: auto;
+  height: auto;
+
+  display: block;
 }
 
 /* opcional: esconder scrollbar */
@@ -4244,3 +4246,20 @@ html, body{
 /* opcional: scrollbar invisible */
 .gpMatchesSnapList::-webkit-scrollbar { width: 0; height: 0; }
 .gpMatchesSnapList { scrollbar-width: none; }
+/* deja un margen para que el snap no corte la card con el header */
+.gpMatchesSnapList {
+  scroll-padding-top: 10px;
+}
+/* Forzar calendario en inputs de fecha */
+input[type="date"].gpInput {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  min-height: 44px;
+}
+
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  display: block;
+}
