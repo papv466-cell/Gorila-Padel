@@ -1,9 +1,4 @@
-// src/pages/MatchesPage.jsx - VERSIÓN CORREGIDA COMPLETA
-// ✅ Botón Invitar visible para creadores
-// ✅ Avatares sincronizados correctamente
-// ✅ Iconos gorila mejorados y únicos
-// ✅ CSS mobile-first optimizado
-
+// src/pages/MatchesPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
@@ -285,8 +280,6 @@ export default function MatchesPage() {
         for (const r of data || []) out[String(r.match_id)] = true;
         return out;
       }
-      const msg = String(error?.message || "").toLowerCase();
-      if (!msg.includes('column "player_uuid"')) {}
     } catch {}
     try {
       const { data, error } = await supabase
@@ -311,9 +304,6 @@ export default function MatchesPage() {
         .in("match_id", matchIds);
       if (!error && Array.isArray(data)) {
         rows = data.map((r) => ({ match_id: r.match_id, user_id: r.player_uuid })).filter((r) => r.user_id);
-      } else {
-        const msg = String(error?.message || "").toLowerCase();
-        if (!msg.includes('column "player_uuid"')) {}
       }
     } catch {}
     if (!rows.length) {
@@ -401,6 +391,7 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!authReady) return;
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady, session?.user?.id]);
 
   useEffect(() => {
@@ -418,6 +409,7 @@ export default function MatchesPage() {
       unsub2?.();
       unsub3?.();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.id]);
 
   useEffect(() => {
@@ -446,6 +438,7 @@ export default function MatchesPage() {
       window.sessionStorage?.removeItem?.("openChat");
     } catch {}
     openChat(openChatParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openChatParam, authReady, session]);
 
   useEffect(() => {
@@ -456,6 +449,7 @@ export default function MatchesPage() {
       return;
     }
     openRequests(openRequestsParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequestsParam, authReady, session]);
 
   useEffect(() => {
@@ -746,24 +740,18 @@ export default function MatchesPage() {
   const clubSuggestions = useMemo(() => {
     const q = (clubQuery || "").trim().toLowerCase();
     if (!q || q.length < 2) return [];
-    console.log('🔍 Buscando clubs con query:', q);
-    console.log('📋 Total clubs disponibles:', clubsSheet.length);
     const results = (clubsSheet || [])
       .filter((c) => {
         const name = String(c?.name || "").toLowerCase();
-        const matches = name.includes(q);
-        if (matches) console.log('✅ Match:', c.name);
-        return matches;
+        return name.includes(q);
       })
       .slice(0, 10);
-    console.log('📊 Resultados encontrados:', results.length);
     return results;
   }, [clubQuery, clubsSheet]);
 
   function pickClub(c) {
     const id = String(c?.id ?? "");
     const name = String(c?.name ?? "");
-    console.log('✅ Club seleccionado:', { id, name });
     setForm((prev) => ({ ...prev, clubId: id, clubName: name }));
     setClubQuery(name);
     setShowClubSuggest(false);
@@ -775,18 +763,11 @@ export default function MatchesPage() {
       setSaveError(null);
       setSaving(true);
       const startAtISO = combineDateTimeToISO(form.date, form.time);
-      console.log('🔍 Validando formulario:', {
-        clubName: form.clubName,
-        clubId: form.clubId,
-        date: form.date,
-        time: form.time,
-        startAtISO,
-      });
       if (!String(form.clubName || "").trim()) {
         throw new Error("Pon el nombre del club.");
       }
       if (!String(form.clubId || "").trim()) {
-        throw new Error("Selecciona el club de la lista (para evitar errores).");
+        throw new Error("Selecciona el club de la lista.");
       }
       await createMatch({
         clubId: form.clubId,
@@ -814,7 +795,6 @@ export default function MatchesPage() {
       toast.success("Partido creado ✅");
       await load();
     } catch (e) {
-      console.error('❌ Error al crear partido:', e);
       setSaveError(e?.message || "No se pudo crear el partido");
       toast.error(e?.message || "No se pudo crear el partido");
     } finally {
@@ -892,7 +872,7 @@ export default function MatchesPage() {
             </div>
 
             <div className="gpActions">
-              <div className="gpCalendarStrip" role="tablist" aria-label="Calendario de partidos">
+              <div className="gpCalendarStrip">
                 {calendarDays.map((d) => {
                   const isActive = d === selectedDay;
                   const count = dayCounts[d] || 0;
@@ -902,7 +882,6 @@ export default function MatchesPage() {
                       type="button"
                       className={`gpDayPill ${isActive ? "isActive" : ""}`}
                       onClick={() => setSelectedDay(d)}
-                      title={count ? `${count} partido(s)` : "Sin partidos"}
                     >
                       <div className="gpDow">{fmtDayLabel(d)}</div>
                       <div className="gpDom">{d.slice(8, 10)}</div>
@@ -981,9 +960,7 @@ export default function MatchesPage() {
                       {avatar ? (
                         <img className="gpSlotImg" src={avatar} alt={name} />
                       ) : (
-                        <div className="gpSlotImg">
-                          🦍
-                        </div>
+                        <div className="gpSlotImg">🦍</div>
                       )}
                       <div className="gpSlotText">
                         <div className="gpSlotName">{prof ? name : ""}</div>
@@ -1001,9 +978,7 @@ export default function MatchesPage() {
                           {creatorAvatar ? (
                             <img className="gpSlotImg" src={creatorAvatar} alt={creatorName} />
                           ) : (
-                            <div className="gpSlotImg">
-                              🦍
-                            </div>
+                            <div className="gpSlotImg">🦍</div>
                           )}
                           <div className="gpSlotText">
                             <div className="gpSlotName">{creatorName}</div>
@@ -1145,7 +1120,367 @@ export default function MatchesPage() {
         </div>
       </div>
 
-      {/* MODALES (sin cambios, demasiado largo) */}
+      {/* MODAL: CEDER */}
+      {cedeOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setCedeOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Ceder plaza</div>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <label className="gpLabel">Escribe 3+ letras</label>
+              <input
+                className="gpInput"
+                value={cedeQuery}
+                onChange={(e) => setCedeQuery(e.target.value)}
+                placeholder="nombre o @handle"
+              />
+            </div>
+
+            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+              {(cedeResults || []).map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  className="card"
+                  style={{ textAlign: "left", padding: 12, cursor: "pointer" }}
+                  onClick={() => transferSpot({ matchId: cedeOpenFor, toUserId: u.id })}
+                  disabled={cedeBusy}
+                >
+                  <div style={{ fontWeight: 950 }}>{u.name || "Usuario"}</div>
+                  <div className="meta">@{u.handle || String(u.id).slice(0, 6)}</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="gpRow" style={{ marginTop: 14, justifyContent: "flex-end" }}>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)} disabled={cedeBusy}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* MODAL: INVITAR */}
+      {inviteOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setInviteOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Invitar jugadores</div>
+              <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <label className="gpLabel">Busca (3+ letras)</label>
+              <input
+                className="gpInput"
+                value={inviteQuery}
+                onChange={(e) => setInviteQuery(e.target.value)}
+                placeholder="nombre o @handle"
+              />
+            </div>
+
+            {inviteSelected.length ? (
+              <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {inviteSelected.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className="gpChip"
+                    onClick={() => setInviteSelected((prev) => prev.filter((x) => x.id !== u.id))}
+                  >
+                    @{u.handle || u.name} ✕
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
+              {(inviteResults || []).map((u) => {
+                const already = inviteSelected.some((x) => x.id === u.id);
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    className="card"
+                    style={{ textAlign: "left", padding: 12, cursor: "pointer", opacity: already ? 0.5 : 1 }}
+                    onClick={() => {
+                      if (already) return;
+                      setInviteSelected((prev) => (prev.length >= 10 ? prev : [...prev, u]));
+                    }}
+                    disabled={already || inviteBusy}
+                  >
+                    <div style={{ fontWeight: 950 }}>{u.name || "Usuario"}</div>
+                    <div className="meta">@{u.handle || String(u.id).slice(0, 6)}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="gpRow" style={{ marginTop: 14, justifyContent: "space-between" }}>
+              <div className="meta">{inviteSelected.length}/10</div>
+              <div className="gpRow">
+                <button
+                  className="btn"
+                  onClick={() => sendInvites({ matchId: inviteOpenFor, userIds: inviteSelected.map((x) => x.id) })}
+                  disabled={inviteBusy || inviteSelected.length === 0}
+                >
+                  {inviteBusy ? "Enviando…" : "Enviar"}
+                </button>
+                <button className="btn ghost" onClick={() => setInviteOpenFor(null)} disabled={inviteBusy}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* MODAL: SOLICITUDES */}
+      {requestsOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setRequestsOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Solicitudes pendientes</div>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            {pendingBusy ? (
+              <div style={{ marginTop: 12 }}>Cargando…</div>
+            ) : pending.length === 0 ? (
+              <div style={{ marginTop: 12, opacity: 0.75 }}>No hay solicitudes pendientes.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                {pending.map((r) => {
+                  const p = profilesById?.[String(r.user_id)] || null;
+                  const name = p?.name || p?.handle || String(r.user_id).slice(0, 6) + "…";
+                  return (
+                    <div key={r.id} className="card" style={{ padding: 12, display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 950 }}>{name}</div>
+                        <div className="meta">{new Date(r.created_at).toLocaleString("es-ES")}</div>
+                      </div>
+                      <div className="gpRow">
+                        <button className="btn" onClick={() => handleApprove(r.id)}>
+                          ✅ Aprobar
+                        </button>
+                        <button className="btn ghost" onClick={() => handleReject(r.id)}>
+                          ❌ Rechazar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* MODAL: CREAR */}
+      {openCreate ? (
+        <div className="gpModalOverlay" onClick={() => setOpenCreate(false)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Crear partido</div>
+              <button className="btn ghost" onClick={() => setOpenCreate(false)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="gpGrid2" style={{ marginTop: 10 }}>
+              <div style={{ gridColumn: "1 / -1", position: "relative" }}>
+                <label className="gpLabel">Club</label>
+                <input
+                  className="gpInput"
+                  value={clubQuery}
+                  onChange={(e) => {
+                    setClubQuery(e.target.value);
+                    setShowClubSuggest(true);
+                    setForm((prev) => ({ ...prev, clubName: e.target.value, clubId: "" }));
+                  }}
+                  onFocus={() => setShowClubSuggest(true)}
+                  placeholder="Escribe 2-3 letras…"
+                />
+
+                {showClubSuggest && clubSuggestions.length > 0 ? (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: "calc(100% + 6px)",
+                      background: "rgba(16,18,22,0.98)",
+                      color: "#fff",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      zIndex: 9999,
+                    }}
+                  >
+                    {clubSuggestions.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => pickClub(c)}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          border: 0,
+                          background: "transparent",
+                          padding: "10px 12px",
+                          fontWeight: 900,
+                          cursor: "pointer",
+                          color: "inherit",
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {form.clubName && !form.clubId ? (
+                  <div style={{ marginTop: 8, fontSize: 12, color: "crimson", fontWeight: 800 }}>
+                    Selecciona el club de la lista.
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <label className="gpLabel">Fecha</label>
+                <input
+                  className="gpInput"
+                  type="date"
+                  value={form.date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="gpLabel">Hora</label>
+                <input
+                  className="gpInput"
+                  type="time"
+                  value={form.time}
+                  onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="gpLabel">Duración (min)</label>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.durationMin}
+                  onChange={(e) => setForm((prev) => ({ ...prev, durationMin: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="gpLabel">Nivel</label>
+                <select
+                  className="gpInput"
+                  value={form.level}
+                  onChange={(e) => setForm((prev) => ({ ...prev, level: e.target.value }))}
+                >
+                  <option value="bajo">Bajo</option>
+                  <option value="medio">Medio</option>
+                  <option value="alto">Alto</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="gpLabel">Ya sois</label>
+                <select
+                  className="gpInput"
+                  value={form.alreadyPlayers}
+                  onChange={(e) => setForm((prev) => ({ ...prev, alreadyPlayers: e.target.value }))}
+                >
+                  <option value={1}>1 (solo yo)</option>
+                  <option value={2}>2</option>
+                  <option value={3}>3</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="gpLabel">Precio/jugador (opcional)</label>
+                <input
+                  className="gpInput"
+                  type="number"
+                  value={form.pricePerPlayer}
+                  onChange={(e) => setForm((prev) => ({ ...prev, pricePerPlayer: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {saveError ? (
+              <div style={{ marginTop: 10, color: "#dc2626", fontWeight: 900 }}>{saveError}</div>
+            ) : null}
+
+            <div className="gpRow" style={{ marginTop: 14 }}>
+              <button className="btn" onClick={handleCreate} disabled={saving || !!(form.clubName && !form.clubId)}>
+                {saving ? "Creando…" : "Crear partido"}
+              </button>
+              <button className="btn ghost" onClick={() => setOpenCreate(false)} disabled={saving}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* MODAL: CHAT */}
+      {chatOpenFor ? (
+        <div className="gpModalOverlay" onClick={() => setChatOpenFor(null)}>
+          <div className="gpModalCard" onClick={(e) => e.stopPropagation()}>
+            <div className="gpModalHeader">
+              <div style={{ fontWeight: 950, fontSize: 16 }}>Chat</div>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
+                Cerrar
+              </button>
+            </div>
+
+            {chatLoading ? (
+              <div style={{ marginTop: 12 }}>Cargando…</div>
+            ) : (
+              <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                {(chatItems || []).map((it) => (
+                  <div key={it.id} className="card" style={{ padding: 10 }}>
+                    <div className="meta" style={{ fontWeight: 900 }}>
+                      {it.user_id?.slice?.(0, 6)}… · {new Date(it.created_at).toLocaleString("es-ES")}
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 14, fontWeight: 800 }}>{it.message}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <textarea
+              className="gpTextarea"
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Escribe…"
+              style={{ marginTop: 12 }}
+            />
+
+            <div className="gpRow" style={{ marginTop: 10 }}>
+              <button className="btn" onClick={handleSendChat} disabled={!chatText.trim()}>
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
