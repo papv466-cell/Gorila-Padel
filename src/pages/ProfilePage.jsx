@@ -224,26 +224,32 @@ export default function ProfilePage() {
   }, [navigate, toast]);
 
   async function save(payloadOverride = null) {
-    if (!session?.user) return;
-
+    if (!session?.user) {
+      console.log("❌ No hay sesión");
+      return;
+    }
+  
     setErr(null);
-
+  
     const cleanHandle = String(form.handle || "")
       .trim()
       .replace(/\s+/g, " ")
       .replace(/^\@+/, "");
-
+  
     const cleanName = String(form.name || "")
       .trim()
       .replace(/\s+/g, " ");
-
+  
+    console.log("📝 Guardando:", { cleanName, cleanHandle });
+  
     if (!cleanHandle || cleanHandle.length < 3) {
       setErr("El apodo debe tener al menos 3 caracteres.");
+      console.log("❌ Handle muy corto");
       return;
     }
-
+  
     const finalName = cleanName || cleanHandle;
-
+  
     const payload = payloadOverride || {
       name: finalName,
       handle: cleanHandle,
@@ -253,20 +259,23 @@ export default function ProfilePage() {
       birthdate: form.birthdate || null,
       avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl,
     };
-
+  
+    console.log("📦 Payload:", payload);
+  
     try {
       setSaving(true);
-
-      // 1️⃣ Actualizar profiles
-      const { error: err1 } = await supabase
+  
+      console.log("1️⃣ Actualizando profiles...");
+      const { data: data1, error: err1 } = await supabase
         .from("profiles")
         .update(payload)
         .eq("id", session.user.id);
-
+  
+      console.log("✅ profiles response:", { data: data1, error: err1 });
       if (err1) throw err1;
-
-      // 2️⃣ Actualizar profiles_public
-      const { error: err2 } = await supabase
+  
+      console.log("2️⃣ Actualizando profiles_public...");
+      const { data: data2, error: err2 } = await supabase
         .from("profiles_public")
         .update({
           name: payload.name,
@@ -274,18 +283,21 @@ export default function ProfilePage() {
           avatar_url: payload.avatar_url,
         })
         .eq("id", session.user.id);
-
+  
+      console.log("✅ profiles_public response:", { data: data2, error: err2 });
       if (err2) throw err2;
-
+  
       setForm((p) => ({
         ...p,
         name: finalName,
         handle: cleanHandle,
         avatar_url: payload.avatar_url
       }));
-
+  
+      console.log("🎉 Guardado exitoso!");
       toast?.success?.("Perfil guardado ✅");
     } catch (e) {
+      console.error("❌ Error al guardar:", e);
       const msg = e?.message || "No se pudo guardar";
       setErr(msg);
       toast?.error?.(msg);
