@@ -242,17 +242,20 @@ export default function ProfilePage() {
   
     console.log("📝 Guardando:", { cleanName, cleanHandle });
   
-    if (!cleanHandle || cleanHandle.length < 3) {
-      setErr("El apodo debe tener al menos 3 caracteres.");
-      console.log("❌ Handle muy corto");
+    // ✅ ARREGLADO: Permitir que handle esté vacío si hay nombre
+    if (!cleanHandle && !cleanName) {
+      setErr("Debes poner al menos un nombre o apodo.");
+      console.log("❌ Faltan nombre y handle");
       return;
     }
   
+    // Si no hay handle, usar el nombre como handle
+    const finalHandle = cleanHandle || cleanName.toLowerCase().replace(/\s+/g, "");
     const finalName = cleanName || cleanHandle;
   
     const payload = payloadOverride || {
       name: finalName,
-      handle: cleanHandle,
+      handle: finalHandle,
       sex: form.sex,
       level: form.level,
       handedness: form.handedness,
@@ -290,7 +293,7 @@ export default function ProfilePage() {
       setForm((p) => ({
         ...p,
         name: finalName,
-        handle: cleanHandle,
+        handle: finalHandle,
         avatar_url: payload.avatar_url
       }));
   
@@ -305,7 +308,6 @@ export default function ProfilePage() {
       setSaving(false);
     }
   }
-
   function useDefaultGorilla() {
     setForm((p) => ({ ...p, avatar_url: defaultAvatarUrl }));
     toast?.info?.("Avatar gorila aplicado. Dale a Guardar.");
