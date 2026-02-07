@@ -610,7 +610,7 @@ export default function MapPage() {
   }, [matches]);
 
   return (
-    <div className="page gpMapPage">
+    <div className="page pageWithHeader gpMapPage">
       <div className="pageWrap">
         <div className="container">
           <div className="pageHeader">

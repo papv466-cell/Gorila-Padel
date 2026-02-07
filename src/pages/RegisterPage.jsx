@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import { Link, useNavigate } from "react-router-dom";
-
+import '../styles/Auth.css';
 export default function RegisterPage() {
   const navigate = useNavigate();
 
