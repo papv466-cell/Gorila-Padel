@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const [err, setErr] = useState(null);
 
   const [form, setForm] = useState({
-    name: "", // ✅ nombre visible (para profes)
+    name: "",
     handle: "",
     sex: "X",
     level: "medio",
@@ -43,9 +43,8 @@ export default function ProfilePage() {
 
   const shownAvatar = (form.avatar_url || "").trim() || defaultAvatarUrl;
 
-  // -------------------- FAVORITOS --------------------
   const [favLoading, setFavLoading] = useState(false);
-  const [favorites, setFavorites] = useState([]); // rows enriquecidas
+  const [favorites, setFavorites] = useState([]);
 
   async function loadFavorites(uid) {
     if (!uid) {
@@ -56,7 +55,6 @@ export default function ProfilePage() {
     try {
       setFavLoading(true);
 
-      // 1) favoritos
       const { data: favs, error: e1 } = await supabase
         .from("teacher_favorites")
         .select("teacher_id, notify_morning, notify_afternoon, created_at")
@@ -73,7 +71,6 @@ export default function ProfilePage() {
 
       const ids = favRows.map((f) => String(f.teacher_id)).filter(Boolean);
 
-      // 2) perfiles de profes (name + handle para fallback)
       const { data: profs, error: e2 } = await supabase
         .from("profiles")
         .select("id, name, handle, avatar_url")
@@ -81,7 +78,6 @@ export default function ProfilePage() {
 
       if (e2) throw e2;
 
-      // 3) teacher_public (zona/precio)
       const { data: pubs, error: e3 } = await supabase
         .from("teacher_public")
         .select("teacher_id, zone, price_base")
@@ -174,7 +170,6 @@ export default function ProfilePage() {
     }
   }
 
-  // -------------------- CARGA PERFIL --------------------
   useEffect(() => {
     let alive = true;
 
@@ -226,29 +221,29 @@ export default function ProfilePage() {
     return () => {
       alive = false;
     };
-  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [navigate, toast]);
 
   async function save(payloadOverride = null) {
     if (!session?.user) return;
-  
+
     setErr(null);
-  
+
     const cleanHandle = String(form.handle || "")
       .trim()
       .replace(/\s+/g, " ")
       .replace(/^\@+/, "");
-  
+
     const cleanName = String(form.name || "")
       .trim()
       .replace(/\s+/g, " ");
-  
+
     if (!cleanHandle || cleanHandle.length < 3) {
       setErr("El apodo debe tener al menos 3 caracteres.");
       return;
     }
-  
+
     const finalName = cleanName || cleanHandle;
-  
+
     const payload = payloadOverride || {
       name: finalName,
       handle: cleanHandle,
@@ -258,19 +253,19 @@ export default function ProfilePage() {
       birthdate: form.birthdate || null,
       avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl,
     };
-  
+
     try {
       setSaving(true);
-  
-      // 1️⃣ Actualizar profiles (tabla privada)
+
+      // 1️⃣ Actualizar profiles
       const { error: err1 } = await supabase
         .from("profiles")
         .update(payload)
         .eq("id", session.user.id);
-  
+
       if (err1) throw err1;
-  
-      // 2️⃣ Actualizar profiles_public (tabla pública) ⭐ CRÍTICO
+
+      // 2️⃣ Actualizar profiles_public
       const { error: err2 } = await supabase
         .from("profiles_public")
         .update({
@@ -279,16 +274,16 @@ export default function ProfilePage() {
           avatar_url: payload.avatar_url,
         })
         .eq("id", session.user.id);
-  
+
       if (err2) throw err2;
-  
-      setForm((p) => ({ 
-        ...p, 
-        name: finalName, 
+
+      setForm((p) => ({
+        ...p,
+        name: finalName,
         handle: cleanHandle,
-        avatar_url: payload.avatar_url 
+        avatar_url: payload.avatar_url
       }));
-      
+
       toast?.success?.("Perfil guardado ✅");
     } catch (e) {
       const msg = e?.message || "No se pudo guardar";
@@ -296,6 +291,73 @@ export default function ProfilePage() {
       toast?.error?.(msg);
     } finally {
       setSaving(false);
+    }
+  }
+
+  function useDefaultGorilla() {
+    setForm((p) => ({ ...p, avatar_url: defaultAvatarUrl }));
+    toast?.info?.("Avatar gorila aplicado. Dale a Guardar.");
+  }
+
+  async function uploadAvatarFile(file) {
+    if (!session?.user?.id) return;
+    if (!file) return;
+
+    const isImage = file.type?.startsWith("image/");
+    if (!isImage) {
+      toast?.error?.("Sube una imagen (JPG/PNG/WebP).");
+      return;
+    }
+
+    const maxMb = 5;
+    if (file.size > maxMb * 1024 * 1024) {
+      toast?.error?.(`Máximo ${maxMb}MB.`);
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setErr(null);
+
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `${session.user.id}/${Date.now()}.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, {
+          upsert: true,
+          contentType: file.type,
+        });
+
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(path);
+
+      const publicUrl = pub?.publicUrl;
+
+      if (!publicUrl) throw new Error("No se pudo obtener la URL pública.");
+
+      setForm((p) => ({ ...p, avatar_url: publicUrl }));
+
+      await save({
+        name: String(form.name || "").trim().replace(/\s+/g, " ") || String(form.handle || "").trim(),
+        handle: String(form.handle || "").trim().replace(/\s+/g, " ").replace(/^\@+/, ""),
+        sex: form.sex,
+        level: form.level,
+        handedness: form.handedness,
+        birthdate: form.birthdate || null,
+        avatar_url: publicUrl,
+      });
+
+      toast?.success?.("Foto subida ✅");
+    } catch (e) {
+      const msg = e?.message || "Error subiendo la foto";
+      setErr(msg);
+      toast?.error?.(msg);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -315,16 +377,7 @@ export default function ProfilePage() {
     <div className="page">
       <div className="pageWrap">
         <div className="container">
-          <div
-            className="pageHeader"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
+          <div className="pageHeader" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
             <div>
               <h1 className="pageTitle">Perfil</h1>
               <div className="pageMeta">Tu información de Gorila Pádel</div>
@@ -339,7 +392,6 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          {/* PERFIL */}
           <div className="card" style={{ maxWidth: 720, marginTop: 14 }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
               <img
@@ -434,7 +486,12 @@ export default function ProfilePage() {
 
               <div>
                 <label className="gpLabel">Cumpleaños (opcional)</label>
-                <input className="gpInput" type="date" value={form.birthdate || ""} onChange={(e) => setForm((p) => ({ ...p, birthdate: e.target.value }))} />
+                <input 
+                  className="gpInput" 
+                  type="date" 
+                  value={form.birthdate || ""} 
+                  onChange={(e) => setForm((p) => ({ ...p, birthdate: e.target.value }))} 
+                />
               </div>
             </div>
 
@@ -450,12 +507,11 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* ⭐ FAVORITOS */}
           <div ref={favRef} className="card" style={{ maxWidth: 720, marginTop: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
               <div>
                 <div style={{ fontWeight: 950, fontSize: 16 }}>⭐ Mis profes favoritos</div>
-                <div style={{ fontSize: 13, opacity: 0.75 }}>Gestiona avisos por franja y entra rápido a sus perfiles.</div>
+                <div style={{ fontSize: 13, opacity: 0.75 }}>Gestiona avisos por franja.</div>
               </div>
 
               <button className="btn ghost" onClick={() => loadFavorites(session?.user?.id)} disabled={favLoading}>
@@ -467,7 +523,7 @@ export default function ProfilePage() {
               <div style={{ marginTop: 12, opacity: 0.75 }}>Cargando favoritos…</div>
             ) : favorites.length === 0 ? (
               <div style={{ marginTop: 12, opacity: 0.75 }}>
-                Aún no tienes favoritos. Entra a un profe y pulsa ⭐ “Añadir a favoritos”.
+                Aún no tienes favoritos.
               </div>
             ) : (
               <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
@@ -496,12 +552,12 @@ export default function ProfilePage() {
                           <div>
                             <div style={{ fontWeight: 950 }}>{teacherName}</div>
                             <div style={{ fontSize: 13, opacity: 0.8 }}>
-                              📍 {zone} · 💶 Base: {price}
+                              📍 {zone} · 💶 {price}
                             </div>
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                           <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
                             <input
                               type="checkbox"
@@ -523,7 +579,7 @@ export default function ProfilePage() {
                           </label>
 
                           <button className="btn ghost" onClick={() => navigate(`/profesores/${f.teacher_id}`)}>
-                            Ver perfil
+                            Ver
                           </button>
 
                           <button className="btn ghost" onClick={() => removeFavorite(f.teacher_id)} disabled={favLoading}>
@@ -536,10 +592,6 @@ export default function ProfilePage() {
                 })}
               </div>
             )}
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 12, opacity: 0.7 }}>
-            *Más adelante aquí meteremos “Notificaciones”, “Clases” y “Tienda”.
           </div>
         </div>
       </div>
