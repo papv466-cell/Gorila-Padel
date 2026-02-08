@@ -2,14 +2,17 @@
 /* Mobile-first, profesional, moderno */
 
 .authPage {
-    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-    position: relative;
-    overflow-x: hidden;
+    overflow: hidden;
   }
   
   .authPage::before {
@@ -30,34 +33,26 @@
   
   .authContainer {
     width: 100%;
-    max-width: 440px;
+    max-width: 380px;
+    max-height: calc(100vh - 40px);
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
-    padding: 32px 24px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     position: relative;
     z-index: 1;
-    animation: slideUp 0.4s ease-out;
-  }
-  
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   
   .authLogo {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 24px;
-    border-radius: 24px;
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    margin: 20px auto 16px;
+    border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(116, 184, 0, 0.3);
   }
@@ -69,29 +64,33 @@
   }
   
   .authTitle {
-    font-size: 28px;
+    flex-shrink: 0;
+    font-size: 24px;
     font-weight: 900;
     color: #fff;
     text-align: center;
-    margin-bottom: 8px;
+    margin: 0 24px 6px;
     letter-spacing: -0.5px;
   }
   
   .authSubtitle {
-    font-size: 14px;
+    flex-shrink: 0;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.6);
     text-align: center;
-    margin-bottom: 32px;
+    margin: 0 24px 20px;
     line-height: 1.5;
   }
   
   .authForm {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 24px 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-height: 60vh;
-    overflow-y: auto;
-    padding-right: 8px;
+    gap: 14px;
+    -webkit-overflow-scrolling: touch;
   }
   
   .authForm::-webkit-scrollbar {
@@ -106,7 +105,8 @@
   .authFormGroup {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+    flex-shrink: 0;
   }
   
   .authLabel {
@@ -296,5 +296,36 @@
     .authForm {
       max-height: none;
       overflow-y: visible;
+    }
+  }
+  
+  /* Responsive mobile */
+  @media (max-width: 480px) {
+    .authContainer {
+      max-width: 100%;
+      max-height: calc(100vh - 32px);
+      padding: 0;
+      border-radius: 20px;
+    }
+  
+    .authLogo {
+      width: 80px;
+      height: 80px;
+      margin: 16px auto 12px;
+    }
+  
+    .authTitle {
+      font-size: 20px;
+      margin: 0 20px 4px;
+    }
+  
+    .authSubtitle {
+      font-size: 12px;
+      margin: 0 20px 16px;
+    }
+  
+    .authForm {
+      padding: 0 20px 20px;
+      gap: 12px;
     }
   }
