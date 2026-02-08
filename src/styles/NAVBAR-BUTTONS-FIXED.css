@@ -54,13 +54,14 @@
   display: none !important;
 }
 
-/* ✅ Input fecha VISIBLE con indicador verde */
+/* ✅ Input fecha VISIBLE con indicador verde cuando hay partidos */
 .gpMatchesPage .gpRow {
   padding: 0 !important;
   gap: 6px !important;
   margin: 0 !important;
   display: flex !important;
   align-items: center !important;
+  position: relative !important;
 }
 
 .gpMatchesPage .gpRow > div:first-child {
@@ -75,12 +76,27 @@
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.15) !important;
   color: #fff !important;
+  position: relative !important;
 }
 
-/* Indicador verde cuando hay partidos */
+/* Indicador verde cuando hay partidos ese día */
 .gpMatchesPage .gpRow .gpInput.hasMatches {
   border: 2px solid #74B800 !important;
-  box-shadow: 0 0 8px rgba(116, 184, 0, 0.3) !important;
+  box-shadow: 0 0 12px rgba(116, 184, 0, 0.4) !important;
+  background: rgba(116, 184, 0, 0.1) !important;
+}
+
+/* Círculo verde pequeño como indicador alternativo */
+.gpMatchesPage .gpRow .gpInput.hasMatches::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 2px !important;
+  right: 2px !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: #74B800 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 4px rgba(116, 184, 0, 0.8) !important;
 }
 
 /* ✅ Segmented VISIBLE */
@@ -132,130 +148,131 @@
   background: #000 !important;
 }
 
-/* Cards compactas */
+/* Cards ULTRA COMPACTAS (50% más pequeñas) */
 .gpMatchesGrid {
-  gap: 4px !important;
+  gap: 3px !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
 .gpMatchCard {
-  padding: 6px !important;
+  padding: 4px !important;
   margin-bottom: 0 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
 }
 
-/* Roster compacto */
+/* Roster mini */
 .gpRoster {
-  margin-bottom: 4px !important;
-  gap: 3px !important;
+  margin-bottom: 2px !important;
+  gap: 2px !important;
 }
 
 .gpTeam {
-  gap: 3px !important;
+  gap: 2px !important;
 }
 
 .gpSlot {
-  gap: 4px !important;
-  padding: 3px !important;
-  border-radius: 6px !important;
+  gap: 2px !important;
+  padding: 2px !important;
+  border-radius: 4px !important;
 }
 
 .gpSlotImg {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 14px !important;
-  border-radius: 6px !important;
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 11px !important;
+  border-radius: 4px !important;
 }
 
 .gpSlotName {
-  font-size: 10px !important;
+  font-size: 8px !important;
   font-weight: 800 !important;
-  line-height: 1.1 !important;
+  line-height: 1 !important;
 }
 
 .gpSlotMeta {
-  font-size: 8px !important;
+  font-size: 6px !important;
   line-height: 1 !important;
   opacity: 0.6 !important;
 }
 
 .gpVs {
-  font-size: 11px !important;
-  width: 28px !important;
-  height: 28px !important;
-  padding: 4px !important;
-  border-radius: 6px !important;
+  font-size: 9px !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 2px !important;
+  border-radius: 4px !important;
   font-weight: 900 !important;
 }
 
-/* Headline */
+/* Headline mini */
 .gpHeadline {
-  font-size: 12px !important;
+  font-size: 10px !important;
   font-weight: 900 !important;
-  margin-bottom: 3px !important;
+  margin-bottom: 2px !important;
   line-height: 1.1 !important;
-  padding: 0 4px !important;
+  padding: 0 3px !important;
 }
 
-/* Caption */
+/* Caption mini */
 .gpCaption {
-  gap: 3px !important;
-  margin-bottom: 3px !important;
-  padding: 0 4px !important;
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+  padding: 0 3px !important;
   flex-wrap: wrap !important;
 }
 
 .gpChip {
-  font-size: 8px !important;
-  padding: 2px 4px !important;
-  border-radius: 4px !important;
+  font-size: 6px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
   white-space: nowrap !important;
 }
 
-/* Meta badges */
+/* Meta badges mini */
 .gpMatchCard .meta {
-  font-size: 8px !important;
-  padding: 2px 4px !important;
-  border-radius: 4px !important;
+  font-size: 6px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
 }
 
-/* Divider */
+/* Divider fino */
 .gpDivider {
-  margin: 4px 0 !important;
+  margin: 2px 0 !important;
   opacity: 0.3 !important;
 }
 
-/* Action bar */
+/* Action bar mini */
 .gpActionBar {
-  padding: 0 4px 4px !important;
-  gap: 4px !important;
+  padding: 0 3px 3px !important;
+  gap: 2px !important;
   flex-wrap: wrap !important;
 }
 
 .gpActionLeft,
 .gpActionRight {
-  gap: 3px !important;
+  gap: 2px !important;
   flex-wrap: wrap !important;
 }
 
 .gpIconBtn {
-  font-size: 9px !important;
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+}
+
+.gpActionRight .btn {
+  font-size: 8px !important;
   padding: 3px 5px !important;
   border-radius: 5px !important;
   white-space: nowrap !important;
 }
 
-.gpActionRight .btn {
-  font-size: 10px !important;
-  padding: 4px 6px !important;
-  border-radius: 6px !important;
-  white-space: nowrap !important;
-}
-
 .gpActionRight .btn.danger {
-  padding: 3px 5px !important;
+  padding: 2px 4px !important;
+  font-size: 7px !important;
 }
 
 /* Media queries */
