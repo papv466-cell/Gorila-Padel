@@ -1144,6 +1144,219 @@ export default function MatchesPage() {
 
       {/* MODALES (sin cambios, continúan igual) */}
       {/* ... resto de modales ... */}
+      {/* MODAL CREAR PARTIDO */}
+      {openCreate && (
+        <div className="modal" onClick={() => setOpenCreate(false)} style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: '#1a1a1a',
+            borderRadius: '20px',
+            padding: '24px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(116, 184, 0, 0.2)'
+          }}>
+            <h2 style={{ color: '#74B800', marginBottom: '20px', fontSize: '22px', fontWeight: 900 }}>
+              ➕ Crear Partido
+            </h2>
+            
+            {saveError && (
+              <div style={{ 
+                background: 'rgba(220, 38, 38, 0.2)', 
+                padding: '12px', 
+                borderRadius: '10px',
+                color: '#ff6b6b',
+                marginBottom: '16px',
+                fontSize: '13px',
+                fontWeight: 700
+              }}>
+                {saveError}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  Club *
+                </label>
+                <input
+                  type="text"
+                  value={clubQuery}
+                  onChange={(e) => {
+                    setClubQuery(e.target.value);
+                    setShowClubSuggest(true);
+                  }}
+                  placeholder="Buscar club..."
+                  disabled={saving}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                {showClubSuggest && clubSuggestions.length > 0 && (
+                  <div style={{
+                    background: '#2a2a2a',
+                    borderRadius: '10px',
+                    marginTop: '8px',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    {clubSuggestions.map((c, idx) => (
+                      <div
+                        key={c.id || idx}
+                        onClick={() => pickClub(c)}
+                        style={{
+                          padding: '12px',
+                          cursor: 'pointer',
+                          borderBottom: idx < clubSuggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                          color: '#fff',
+                          fontSize: '14px',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.background = 'rgba(116, 184, 0, 0.1)'}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                      >
+                        {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm({...form, date: e.target.value})}
+                    disabled={saving}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                    Hora
+                  </label>
+                  <input
+                    type="time"
+                    value={form.time}
+                    onChange={(e) => setForm({...form, time: e.target.value})}
+                    disabled={saving}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  Nivel
+                </label>
+                <select
+                  value={form.level}
+                  onChange={(e) => setForm({...form, level: e.target.value})}
+                  disabled={saving}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <option value="iniciacion" style={{ background: '#1a1a1a' }}>Iniciación</option>
+                  <option value="medio" style={{ background: '#1a1a1a' }}>Medio</option>
+                  <option value="alto" style={{ background: '#1a1a1a' }}>Alto</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                <button
+                  onClick={handleCreate}
+                  disabled={saving}
+                  style={{
+                    flex: 1,
+                    padding: '14px',
+                    borderRadius: '12px',
+                    background: saving ? 'rgba(116, 184, 0, 0.5)' : 'linear-gradient(135deg, #74B800 0%, #9BE800 100%)',
+                    color: '#000',
+                    fontWeight: 900,
+                    border: 'none',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    fontSize: '15px',
+                    boxShadow: '0 4px 12px rgba(116, 184, 0, 0.3)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {saving ? '⏳ Creando...' : '✅ Crear Partido'}
+                </button>
+                <button
+                  onClick={() => setOpenCreate(false)}
+                  disabled={saving}
+                  style={{
+                    padding: '14px 20px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.08)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    fontSize: '15px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  ❌
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
