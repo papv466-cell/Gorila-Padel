@@ -856,6 +856,7 @@ async function handleCreate() {
     }
   }
 
+
   async function handleSendChat() {
     if (!chatOpenFor) return;
     try {
@@ -881,6 +882,19 @@ async function handleCreate() {
     });
     return () => unsub?.();
   }, [chatOpenFor]);
+
+  useEffect(() => {
+    const inputFecha = document.querySelector('.gpRow .gpInput[type="date"]');
+    if (!inputFecha || !selectedDay) return;
+    
+    const partidosEseDia = dayCounts[selectedDay] || 0;
+    
+    if (partidosEseDia > 0) {
+      inputFecha.classList.add('hasMatches');
+    } else {
+      inputFecha.classList.remove('hasMatches');
+    }
+  }, [selectedDay, dayCounts]);
 
   return (
     <div className="page pageWithHeader gpMatchesPage">
