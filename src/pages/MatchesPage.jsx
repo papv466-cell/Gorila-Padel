@@ -873,59 +873,6 @@ export default function MatchesPage() {
             </div>
           </div>
 
-          {/* ⬇️ ACTIONS - FUERA DEL HEADER */}
-          <div className="gpActions">
-            <div className="gpCalendarStrip">
-              {calendarDays.map((d) => {
-                const isActive = d === selectedDay;
-                const count = dayCounts[d] || 0;
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    className={`gpDayPill ${isActive ? "isActive" : ""}`}
-                    onClick={() => setSelectedDay(d)}
-                  >
-                    <div className="gpDow">{fmtDayLabel(d)}</div>
-                    <div className="gpDom">{d.slice(8, 10)}</div>
-                    {count ? <div className="gpDot" /> : <div className="gpDot isOff" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="gpRow">
-              <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.75 }}>Día:</div>
-              <input
-                className="gpInput"
-                type="date"
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(e.target.value)}
-              />
-            </div>
-
-            {!isClubFilter ? (
-              <div className="gpSegmented">
-                <button className={viewMode === "mine" ? "isActive" : ""} onClick={() => setViewMode("mine")}>
-                  Los míos
-                </button>
-                <button className={viewMode === "all" ? "isActive" : ""} onClick={() => setViewMode("all")}>
-                  Todos
-                </button>
-              </div>
-            ) : null}
-
-            <button className="btn" onClick={openCreateModal}>
-              ➕ Crear
-            </button>
-
-            {showPushButton ? (
-              <button className="btn ghost" onClick={handleEnablePush} disabled={pushBusy}>
-                {pushBusy ? "Activando…" : "🔔 Push"}
-              </button>
-            ) : null}
-          </div>
-
           {/* ⬇️ GRID SCROLLEABLE */}
           <div className="gpMatchesSnapWrap">
             <ul className="gpMatchesGrid">
