@@ -2,13 +2,14 @@ import { useMemo, useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import { Link, useNavigate } from "react-router-dom";
 import '../styles/Auth.css';
+
 export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [handle, setHandle] = useState("");
   const [sex, setSex] = useState("X");
-  const [handedness, setHandedness] = useState("right"); // right | left | both
-  const [birthdate, setBirthdate] = useState(""); // "YYYY-MM-DD" (opcional)
+  const [handedness, setHandedness] = useState("right");
+  const [birthdate, setBirthdate] = useState("");
   const [level, setLevel] = useState("medio");
 
   const [email, setEmail] = useState("");
@@ -19,7 +20,6 @@ export default function RegisterPage() {
   const [error, setError] = useState(null);
   const [ok, setOk] = useState(null);
 
-  // ✅ handle limpio
   const cleanHandle = useMemo(() => {
     return String(handle || "")
       .trim()
@@ -27,14 +27,12 @@ export default function RegisterPage() {
       .replace(/^\@+/, "");
   }, [handle]);
 
-  // ✅ avatar por defecto (si existen los ficheros)
   const defaultAvatarUrl = useMemo(() => {
     if (sex === "F") return "/avatars/gorila-f.png";
     if (sex === "M") return "/avatars/gorila-m.png";
     return "/avatars/gorila-o.png";
   }, [sex]);
 
-  // ✅ birthdate normalizado a YYYY-MM-DD o null
   const birthdateValue = useMemo(() => {
     const v = String(birthdate || "").trim();
     if (!v) return null;
@@ -68,7 +66,6 @@ export default function RegisterPage() {
     try {
       setBusy(true);
 
-      // 1) Pre-check apodo
       const { data: existing, error: exErr } = await supabase
         .from("profiles")
         .select("id")
@@ -80,7 +77,6 @@ export default function RegisterPage() {
         return setError("Ese apodo ya existe. Prueba otro.");
       }
 
-      // 2) SignUp + metadata (trigger crea perfil)
       const { error: err } = await supabase.auth.signUp({
         email: em,
         password: pw,
@@ -110,38 +106,62 @@ export default function RegisterPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: "#0b0f0c",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: "16px",
+        overflow: 'hidden'
       }}
     >
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        {/* ✅ LOGO CENTRADO */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+      <div 
+        style={{ 
+          width: "100%", 
+          maxWidth: 420,
+          maxHeight: 'calc(100vh - 32px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* LOGO FIJO */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          marginBottom: 12,
+          flexShrink: 0
+        }}>
           <img
             src="/imglogog.png"
             alt="Gorila Pádel"
-            style={{ height: 56, width: "auto", display: "block" }}
+            style={{ height: 48, width: "auto", display: "block" }}
           />
         </div>
 
-        {/* ✅ CARD */}
+        {/* CARD CON SCROLL */}
         <div
-          className="authCard"
           style={{
             borderRadius: 20,
-            overflow: "hidden",
             border: "1px solid rgba(255,255,255,0.12)",
             background: "rgba(255,255,255,0.06)",
             boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
-            position: "relative",
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            flex: 1
           }}
         >
-          {/* ✅ HERO con gorila detrás */}
-          <div style={{ position: "relative", height: 250 }}>
+          {/* HERO FIJO */}
+          <div style={{ 
+            position: "relative", 
+            height: 200,
+            flexShrink: 0
+          }}>
             <img
               src="/brand/register-gorila.png"
               alt="Gorila"
@@ -156,7 +176,6 @@ export default function RegisterPage() {
               }}
             />
 
-            {/* oscurecer para legibilidad */}
             <div
               style={{
                 position: "absolute",
@@ -166,7 +185,6 @@ export default function RegisterPage() {
               }}
             />
 
-            {/* título centrado abajo */}
             <div
               style={{
                 position: "absolute",
@@ -175,152 +193,151 @@ export default function RegisterPage() {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "flex-end",
-                paddingBottom: 18,
+                paddingBottom: 16,
                 textAlign: "center",
               }}
             >
-              <h1 style={{ color: "white", fontSize: 26, fontWeight: 900, margin: 0 }}>
+              <h1 style={{ color: "white", fontSize: 22, fontWeight: 900, margin: 0 }}>
                 Crear cuenta
               </h1>
-              <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 13, margin: "6px 0 0 0" }}>
-                Apodo + datos básicos para que todo funcione (ceder plaza, valoraciones, clases…).
+              <p style={{ 
+                color: "rgba(255,255,255,0.82)", 
+                fontSize: 12, 
+                margin: "4px 16px 0",
+                lineHeight: 1.3
+              }}>
+                Apodo + datos básicos para que todo funcione
               </p>
             </div>
           </div>
 
-          {/* ✅ FORM (tu form igual) */}
-          <div style={{
-                maxHeight: '85vh',
-                overflowY: 'auto',
-                paddingRight: '10px'
-              }}>
-                <form 
-                      className="authForm" 
-                      onSubmit={handleRegister}
-                      style={{
-                        maxHeight: '80vh',
-                        overflowY: 'auto',
-                        paddingRight: '10px',
-                        paddingBottom: '20px'
-                      }}
-                    >
-                  <label className="authLabel">
-                    Apodo (único)
-                    <input
-                      className="authInput"
-                      value={handle}
-                      onChange={(e) => setHandle(e.target.value)}
-                      placeholder="Ej: teresa39"
-                      autoComplete="nickname"
-                    />
-                  </label>
+          {/* ⭐ FORM CON SCROLL ⭐ */}
+          <form 
+            onSubmit={handleRegister}
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <label className="authLabel">
+              Apodo (único)
+              <input
+                className="authInput"
+                value={handle}
+                onChange={(e) => setHandle(e.target.value)}
+                placeholder="Ej: teresa39"
+                autoComplete="nickname"
+              />
+            </label>
 
-              <label className="authLabel">
-                Sexo
-                <select className="authInput" value={sex} onChange={(e) => setSex(e.target.value)}>
-                  <option value="F">Mujer</option>
-                  <option value="M">Hombre</option>
-                  <option value="X">Otro</option>
-                </select>
-              </label>
+            <label className="authLabel">
+              Sexo
+              <select className="authInput" value={sex} onChange={(e) => setSex(e.target.value)}>
+                <option value="F">Mujer</option>
+                <option value="M">Hombre</option>
+                <option value="X">Otro</option>
+              </select>
+            </label>
 
-              <label className="authLabel">
-                Mano
-                <select
-                  className="authInput"
-                  value={handedness}
-                  onChange={(e) => setHandedness(e.target.value)}
-                >
-                  <option value="right">Derecha</option>
-                  <option value="left">Izquierda</option>
-                  <option value="both">Ambas</option>
-                </select>
-              </label>
-
-              <label className="authLabel">
-                Nivel
-                <select className="authInput" value={level} onChange={(e) => setLevel(e.target.value)}>
-                  <option value="iniciacion">Iniciación</option>
-                  <option value="medio">Medio</option>
-                  <option value="alto">Alto</option>
-                </select>
-              </label>
-
-              <label className="authLabel">
-                Fecha de nacimiento (opcional)
-                <input
-                  className="authInput"
-                  type="date"
-                  value={birthdate}
-                  onChange={(e) => setBirthdate(e.target.value)}
-                />
-              </label>
-
-              <label className="authLabel">
-                Email
-                <input
-                  className="authInput"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  autoComplete="email"
-                />
-              </label>
-
-              <label className="authLabel">
-                Contraseña
-                <input
-                  className="authInput"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="mínimo 6 caracteres"
-                  autoComplete="new-password"
-                />
-              </label>
-
-              <label className="authLabel">
-                Repite la contraseña
-                <input
-                  className="authInput"
-                  type="password"
-                  value={password2}
-                  onChange={(e) => setPassword2(e.target.value)}
-                  placeholder="repite la contraseña"
-                  autoComplete="new-password"
-                />
-              </label>
-
-              {error ? <div className="authError">{error}</div> : null}
-              {ok ? <div className="authOk">{ok}</div> : null}
-
-              {/* ✅ Botón: dejamos el mismo, pero lo hacemos más “hero” */}
-              <button
-                className="authBtn"
-                type="submit"
-                disabled={busy}
-                style={{
-                  width: "100%",
-                  borderRadius: 14,
-                  padding: "12px 14px",
-                  fontWeight: 900,
-                  marginTop: 10,
-                }}
+            <label className="authLabel">
+              Mano
+              <select
+                className="authInput"
+                value={handedness}
+                onChange={(e) => setHandedness(e.target.value)}
               >
-                {busy ? "Creando…" : "Entrar"}
-              </button>
-            </form>
+                <option value="right">Derecha</option>
+                <option value="left">Izquierda</option>
+                <option value="both">Ambas</option>
+              </select>
+            </label>
 
-            <div className="authFooter" style={{ marginTop: 14, textAlign: "center" }}>
-              <span>¿Ya tienes cuenta?</span>{" "}
-              <Link className="authLink" to="/login">
+            <label className="authLabel">
+              Nivel
+              <select className="authInput" value={level} onChange={(e) => setLevel(e.target.value)}>
+                <option value="iniciacion">Iniciación</option>
+                <option value="medio">Medio</option>
+                <option value="alto">Alto</option>
+              </select>
+            </label>
+
+            <label className="authLabel">
+              Fecha de nacimiento (opcional)
+              <input
+                className="authInput"
+                type="date"
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
+              />
+            </label>
+
+            <label className="authLabel">
+              Email
+              <input
+                className="authInput"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                autoComplete="email"
+              />
+            </label>
+
+            <label className="authLabel">
+              Contraseña
+              <input
+                className="authInput"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="mínimo 6 caracteres"
+                autoComplete="new-password"
+              />
+            </label>
+
+            <label className="authLabel">
+              Repite la contraseña
+              <input
+                className="authInput"
+                type="password"
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
+                placeholder="repite la contraseña"
+                autoComplete="new-password"
+              />
+            </label>
+
+            {error && <div className="authError">{error}</div>}
+            {ok && <div className="authOk">{ok}</div>}
+
+            <button
+              className="authBtn"
+              type="submit"
+              disabled={busy}
+              style={{
+                width: "100%",
+                borderRadius: 14,
+                padding: "12px 14px",
+                fontWeight: 900,
+                marginTop: 10,
+              }}
+            >
+              {busy ? "Creando…" : "Registrar"}
+            </button>
+
+            <div style={{ marginTop: 8, textAlign: "center", fontSize: 13 }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)' }}>¿Ya tienes cuenta?</span>{" "}
+              <Link style={{ color: '#74B800', fontWeight: 700, textDecoration: 'none' }} to="/login">
                 Entrar
               </Link>
             </div>
-          </div>
-
-        
+          </form>
         </div>
       </div>
     </div>
