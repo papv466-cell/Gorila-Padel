@@ -279,3 +279,594 @@ html, body {
   width: 0;
   display: none;
 }
+/* GlobalFixes.css - Safe Area + Layout Mobile */
+
+/* ========== SAFE AREA (iOS notch) ========== */
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    
+    --navbar-height: 52px;
+    --header-height: 44px;
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* ========== NAVBAR FIJO ========== */
+  .siteHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--navbar-height) + var(--safe-top));
+    padding-top: var(--safe-top);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: var(--navbar-height);
+  }
+  
+  .headerLogo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  
+  .headerLogoImg {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+  
+  .headerLogoText {
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+  
+  .headerLogoText span {
+    color: #74B800;
+  }
+  
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .headerButton {
+    padding: 7px 11px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  .menuToggle {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .menuToggle span {
+    width: 16px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    display: block;
+  }
+  
+  .menuToggle.isOpen span:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+  
+  .menuToggle.isOpen span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .menuToggle.isOpen span:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+  
+  /* ========== PÁGINAS CON NAVBAR ========== */
+  .page.pageWithHeader {
+    padding-top: calc(var(--navbar-height) + var(--safe-top));
+    padding-bottom: calc(20px + var(--safe-bottom));
+    min-height: 100vh;
+  }
+  
+  /* ========== PARTIDOS PAGE ESPECÍFICO ========== */
+  .gpMatchesPage {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .gpMatchesPage .pageHeader {
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--safe-top));
+    z-index: 50;
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .gpMatchesPage .pageTitle {
+    font-size: 18px;
+    font-weight: 900;
+    margin: 0 0 2px 0;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 10px;
+    opacity: 0.5;
+  }
+  
+  .gpMatchesPage .gpActions {
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--safe-top) + 48px);
+    z-index: 45;
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  /* ⭐ OCULTAR calendario visual de días */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
+  .gpMatchesPage .gpMatchesSnapWrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ========== ARREGLO BOTONES CENTRADOS ========== */
+  .gpActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .gpActions > * {
+    width: 100%;
+  }
+  
+  .gpRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .gpSegmented {
+    display: flex;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .gpActions .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 120px;
+  }
+  
+  /* ========== CARDS AJUSTADAS ========== */
+  .gpMatchCard {
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  .gpActionBar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .gpActionLeft,
+  .gpActionRight {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  
+  .gpActionLeft .btn,
+  .gpActionRight .btn {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    max-width: 160px;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* ========== CALENDARIO HORIZONTAL ========== */
+  .gpCalendarStrip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0 8px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+  }
+  
+  .gpCalendarStrip::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .gpDayPill {
+    flex-shrink: 0;
+    min-width: 56px;
+  }
+  
+  /* ========== MODALES RESPONSIVOS ========== */
+  .gpModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 20px);
+    overflow-y: auto;
+  }
+  
+  .gpModalCard {
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 40px);
+    overflow-y: auto;
+    background: rgba(20, 20, 20, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 20px;
+    margin: auto;
+  }
+  
+  /* ========== AUTH PAGES ========== */
+  .authPage {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    overflow: hidden; /* ⭐ Página NO hace scroll */
+  }
+  
+  .authContainer {
+    max-width: 360px;
+    width: 100%;
+    max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 32px);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden; /* ⭐ Container no hace scroll */
+  }
+  
+  /* Logo FIJO (no hace scroll) */
+  .authLogo {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    margin: 20px auto 16px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(116, 184, 0, 0.3);
+  }
+  
+  .authLogo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Título y subtítulo FIJOS */
+  .authTitle {
+    flex-shrink: 0;
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    margin: 0 24px 6px;
+    letter-spacing: -0.5px;
+  }
+  
+  .authSubtitle {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    margin: 0 24px 16px;
+    line-height: 1.4;
+  }
+  
+  /* ⭐ FORMULARIO CON SCROLL */
+  .authForm {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 24px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .authForm::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .authForm::-webkit-scrollbar-thumb {
+    background: rgba(116, 184, 0, 0.5);
+    border-radius: 4px;
+  }
+  
+  /* Inputs y selects */
+  .authInput,
+  .authSelect {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  
+  .authInput:focus,
+  .authSelect:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #74B800;
+    box-shadow: 0 0 0 3px rgba(116, 184, 0, 0.15);
+  }
+  
+  /* Form group spacing */
+  .authFormGroup {
+    margin-bottom: 12px;
+  }
+  
+  .authFormGroup:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Botones */
+  .authButton {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 16px;
+    box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3);
+    letter-spacing: 0.3px;
+  }
+  
+  .authButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .authSecondaryButton {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+  }
+  
+  .authLink {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .authLink a {
+    color: #74B800;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  
+  .authError {
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #ff6b6b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+  
+  /* ========== MENÚ MÓVIL ========== */
+  .mobileMenu {
+    top: calc(var(--navbar-height) + var(--safe-top));
+    padding-top: 20px;
+    padding-bottom: calc(var(--safe-bottom) + 20px);
+  }
+  
+  .mobileMenuOverlay {
+    top: calc(var(--navbar-height) + var(--safe-top));
+  }
+  
+  /* ========== RESPONSIVE ========== */
+  @media (min-width: 640px) {
+    .gpMatchCard {
+      max-width: 100%;
+    }
+    
+    .gpActionBar {
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    
+    .gpActionLeft,
+    .gpActionRight {
+      flex: 1;
+      max-width: 50%;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    :root {
+      --navbar-height: 72px;
+    }
+    
+    .gpMatchesPage .pageHeader {
+      padding: 16px 24px;
+    }
+    
+    .gpMatchesPage .gpActions {
+      padding: 16px 24px;
+    }
+  }
+  
+  /* ========== SCROLL SUAVE ========== */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gpMatchesSnapWrap::-webkit-scrollbar {
+    width: 0;
+    display: none;
+  }
+  
+  /* ========== AJUSTES ADICIONALES ========== */
+  
+  /* Botones compactos */
+  .gpActions .btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  
+  /* Segmented centrado */
+  .gpActions .gpSegmented {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  
+  /* Row centrado */
+  .gpActions .gpRow {
+    justify-content: center;
+  }
+  
+  /* Input date compacto */
+  .gpActions .gpInput[type="date"] {
+    max-width: 160px;
+  }
+  
+  /* Ocultar calendario visual */
+  .gpCalendarStrip {
+    display: none !important;
+  }
