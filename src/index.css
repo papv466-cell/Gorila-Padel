@@ -1,7 +1,10 @@
 /* =========================
    Global Padel — index.css (LIMPIO)
    ========================= */
+/* src/index.css */
+@import './styles/GlobalFixes.css';
 
+/* ... resto del CSS ... */
 /* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
 
