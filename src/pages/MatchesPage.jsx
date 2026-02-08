@@ -757,6 +757,8 @@ export default function MatchesPage() {
     setShowClubSuggest(false);
   }
 
+// REEMPLAZA handleCreate() completa con esta versión mejorada:
+
 async function handleCreate() {
   if (!session) return goLogin();
   try {
@@ -794,15 +796,26 @@ async function handleCreate() {
     setClubQuery("");
     toast.success("Partido creado ✅");
     
+    // Recargar todo
     await load();
     
+    // CRÍTICO: Refrescar perfil del usuario actual
     try {
-      const profs = await fetchProfilesByIds([session.user.id]);
-      if (aliveRef.current) {
-        setRosterProfilesById(prev => ({ ...prev, ...profs }));
+      const { data: profile, error } = await supabase
+        .from("profiles_public")
+        .select("id, name, handle, avatar_url")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (!error && profile && aliveRef.current) {
+        console.log('✅ Perfil cargado:', profile);
+        setRosterProfilesById(prev => ({ 
+          ...prev, 
+          [String(session.user.id)]: profile 
+        }));
       }
     } catch (e) {
-      console.log('No se pudo refrescar perfil:', e);
+      console.log('⚠️ No se pudo refrescar perfil:', e);
     }
     
   } catch (e) {

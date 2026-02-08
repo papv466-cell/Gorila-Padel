@@ -375,3 +375,18 @@ body {
   isolation: isolate !important;
   transform: translateZ(0) !important;
 }
+
+/* ========== CALENDARIO VISIBLE ========== */
+.gpCalendarStrip {
+  display: flex !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  padding: 8px 0 !important;
+  -webkit-overflow-scrolling: touch !important;
+  margin-bottom: 8px !important;
+}
+
+.gpDayPill {
+  flex-shrink: 0 !important;
+  min-width: 56px !important;
+}
