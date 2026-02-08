@@ -166,34 +166,39 @@
     top: calc(var(--navbar-height) + var(--safe-top));
     z-index: 50;
     flex-shrink: 0;
-    padding: 10px 16px;
+    padding: 8px 16px;
     background: rgba(0, 0, 0, 0.98);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   
   .gpMatchesPage .pageTitle {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 900;
     margin: 0 0 2px 0;
   }
   
   .gpMatchesPage .pageMeta {
-    font-size: 11px;
-    opacity: 0.6;
+    font-size: 10px;
+    opacity: 0.5;
   }
   
   .gpMatchesPage .gpActions {
     position: sticky;
-    top: calc(var(--navbar-height) + var(--safe-top) + 60px);
+    top: calc(var(--navbar-height) + var(--safe-top) + 50px);
     z-index: 45;
     flex-shrink: 0;
-    padding: 10px 16px;
+    padding: 8px 16px;
     background: rgba(0, 0, 0, 0.98);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
+  }
+  
+  /* ⭐ OCULTAR calendario visual de días */
+  .gpCalendarStrip {
+    display: none !important;
   }
   
   .gpMatchesPage .gpMatchesSnapWrap {
@@ -327,16 +332,30 @@
   .authPage {
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+    padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 20px);
     background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   
   .authContainer {
-    max-width: 380px;
+    max-width: 360px;
     width: 100%;
-    margin: 0 auto;
+    margin: 20px auto;
+  }
+  
+  .authForm {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  
+  .authInput,
+  .authSelect {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   /* ========== MENÚ MÓVIL ========== */
@@ -392,3 +411,34 @@
     width: 0;
     display: none;
   }
+  
+  /* ========== AJUSTES ADICIONALES ========== */
+  
+  /* Botones compactos */
+  .gpActions .btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  
+  /* Segmented centrado */
+  .gpActions .gpSegmented {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  
+  /* Row centrado */
+  .gpActions .gpRow {
+    justify-content: center;
+  }
+  
+  /* Input date compacto */
+  .gpActions .gpInput[type="date"] {
+    max-width: 160px;
+  }
+  
+  /* Ocultar calendario visual */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
