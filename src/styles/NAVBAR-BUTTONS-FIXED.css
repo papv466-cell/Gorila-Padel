@@ -302,18 +302,41 @@ body {
 /* ========== FIX BOTONES CLICKEABLES ========== */
 
 /* Asegurar que los botones son clickeables */
+.gpActions {
+  pointer-events: auto !important;
+  z-index: 45 !important;
+}
+
 .gpActions .btn {
   pointer-events: auto !important;
   cursor: pointer !important;
   z-index: 100 !important;
   position: relative !important;
+  touch-action: manipulation !important;
+  -webkit-tap-highlight-color: rgba(116, 184, 0, 0.3) !important;
 }
 
-.gpActions {
-  pointer-events: auto !important;
+.gpActions .btn:active {
+  transform: scale(0.98) !important;
 }
 
-/* Asegurar que el overlay no bloquea clicks */
+/* Asegurar que el grid no bloquea clicks en botones */
 .gpMatchesSnapWrap {
   pointer-events: auto !important;
+  z-index: 1 !important;
+}
+
+/* Asegurar que pageHeader no bloquea */
+.gpMatchesPage .pageHeader {
+  pointer-events: auto !important;
+  z-index: 50 !important;
+}
+
+/* Inputs también clickeables */
+.gpActions .gpInput,
+.gpActions .gpSegmented,
+.gpActions .gpSegmented button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  touch-action: manipulation !important;
 }
