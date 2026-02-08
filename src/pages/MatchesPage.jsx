@@ -757,50 +757,61 @@ export default function MatchesPage() {
     setShowClubSuggest(false);
   }
 
-  async function handleCreate() {
-    if (!session) return goLogin();
-    try {
-      setSaveError(null);
-      setSaving(true);
-      const startAtISO = combineDateTimeToISO(form.date, form.time);
-      if (!String(form.clubName || "").trim()) {
-        throw new Error("Pon el nombre del club.");
-      }
-      if (!String(form.clubId || "").trim()) {
-        throw new Error("Selecciona el club de la lista.");
-      }
-      await createMatch({
-        clubId: form.clubId,
-        clubName: form.clubName,
-        startAtISO,
-        durationMin: Number(form.durationMin) || 90,
-        level: form.level,
-        alreadyPlayers: Number(form.alreadyPlayers) || 1,
-        pricePerPlayer: form.pricePerPlayer,
-        userId: session.user.id,
-      });
-      setSelectedDay(form.date);
-      setOpenCreate(false);
-      setForm({
-        clubName: "",
-        clubId: "",
-        date: todayISO,
-        time: "19:00",
-        durationMin: 90,
-        level: "medio",
-        alreadyPlayers: 1,
-        pricePerPlayer: "",
-      });
-      setClubQuery("");
-      toast.success("Partido creado ✅");
-      await load();
-    } catch (e) {
-      setSaveError(e?.message || "No se pudo crear el partido");
-      toast.error(e?.message || "No se pudo crear el partido");
-    } finally {
-      setSaving(false);
+async function handleCreate() {
+  if (!session) return goLogin();
+  try {
+    setSaveError(null);
+    setSaving(true);
+    const startAtISO = combineDateTimeToISO(form.date, form.time);
+    if (!String(form.clubName || "").trim()) {
+      throw new Error("Pon el nombre del club.");
     }
+    if (!String(form.clubId || "").trim()) {
+      throw new Error("Selecciona el club de la lista.");
+    }
+    await createMatch({
+      clubId: form.clubId,
+      clubName: form.clubName,
+      startAtISO,
+      durationMin: Number(form.durationMin) || 90,
+      level: form.level,
+      alreadyPlayers: Number(form.alreadyPlayers) || 1,
+      pricePerPlayer: form.pricePerPlayer,
+      userId: session.user.id,
+    });
+    setSelectedDay(form.date);
+    setOpenCreate(false);
+    setForm({
+      clubName: "",
+      clubId: "",
+      date: todayISO,
+      time: "19:00",
+      durationMin: 90,
+      level: "medio",
+      alreadyPlayers: 1,
+      pricePerPlayer: "",
+    });
+    setClubQuery("");
+    toast.success("Partido creado ✅");
+    
+    await load();
+    
+    try {
+      const profs = await fetchProfilesByIds([session.user.id]);
+      if (aliveRef.current) {
+        setRosterProfilesById(prev => ({ ...prev, ...profs }));
+      }
+    } catch (e) {
+      console.log('No se pudo refrescar perfil:', e);
+    }
+    
+  } catch (e) {
+    setSaveError(e?.message || "No se pudo crear el partido");
+    toast.error(e?.message || "No se pudo crear el partido");
+  } finally {
+    setSaving(false);
   }
+}
 
   async function handleEnablePush() {
     if (!session) return goLogin();
@@ -874,20 +885,64 @@ export default function MatchesPage() {
           </div>
                     {/* ⬇️ ACTIONS - DESPUÉS DEL HEADER, ANTES DEL GRID */}
                     <div className="gpActions">
-            <div className="gpCalendarStrip" style={{ display: 'none' }}>
+                    <div className="gpCalendarStrip" style={{ 
+              display: 'flex',
+              gap: '6px',
+              overflowX: 'auto',
+              padding: '8px 0',
+              WebkitOverflowScrolling: 'touch'
+            }}>
               {calendarDays.map((d) => {
                 const isActive = d === selectedDay;
                 const count = dayCounts[d] || 0;
+                const hasMatches = count > 0;
+                
                 return (
                   <button
                     key={d}
                     type="button"
                     className={`gpDayPill ${isActive ? "isActive" : ""}`}
                     onClick={() => setSelectedDay(d)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '56px',
+                      padding: '8px 6px',
+                      borderRadius: '12px',
+                      background: isActive ? '#74B800' : 'rgba(255,255,255,0.05)',
+                      border: isActive ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.1)',
+                      color: isActive ? '#000' : '#fff',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      position: 'relative'
+                    }}
                   >
-                    <div className="gpDow">{fmtDayLabel(d)}</div>
-                    <div className="gpDom">{d.slice(8, 10)}</div>
-                    {count ? <div className="gpDot" /> : <div className="gpDot isOff" />}
+                    <div style={{ 
+                      fontSize: '10px', 
+                      fontWeight: 700,
+                      opacity: 0.75,
+                      textTransform: 'uppercase'
+                    }}>
+                      {fmtDayLabel(d)}
+                    </div>
+                    <div style={{ 
+                      fontSize: '16px', 
+                      fontWeight: 900,
+                      marginTop: '2px'
+                    }}>
+                      {d.slice(8, 10)}
+                    </div>
+                    {hasMatches && (
+                      <div style={{
+                        fontSize: '14px',
+                        marginTop: '2px',
+                        lineHeight: 1
+                      }}>
+                        🦍
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -1142,9 +1197,7 @@ export default function MatchesPage() {
         </div>
       </div>
 
-      {/* MODALES (sin cambios, continúan igual) */}
-      {/* ... resto de modales ... */}
-      {/* MODAL CREAR PARTIDO */}
+      
       {openCreate && (
         <div className="modal" onClick={() => setOpenCreate(false)} style={{
           position: 'fixed',
@@ -1313,6 +1366,58 @@ export default function MatchesPage() {
                   <option value="medio" style={{ background: '#1a1a1a' }}>Medio</option>
                   <option value="alto" style={{ background: '#1a1a1a' }}>Alto</option>
                 </select>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                    Duración (min)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.durationMin}
+                    onChange={(e) => setForm({...form, durationMin: parseInt(e.target.value) || 90})}
+                    disabled={saving}
+                    min="30"
+                    max="180"
+                    step="15"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                    Precio/jugador €
+                  </label>
+                  <input
+                    type="number"
+                    value={form.pricePerPlayer}
+                    onChange={(e) => setForm({...form, pricePerPlayer: e.target.value})}
+                    disabled={saving}
+                    placeholder="10"
+                    min="0"
+                    step="0.5"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
