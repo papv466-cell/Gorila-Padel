@@ -332,3 +332,46 @@ body {
   cursor: pointer !important;
   touch-action: manipulation !important;
 }
+/* ========== ELIMINAR OVERLAYS QUE BLOQUEAN CLICKS ========== */
+
+/* Asegurar que NADA está encima de los botones */
+.gpMatchesPage .pageWrap,
+.gpMatchesPage .container,
+.gpMatchesPage .pageHeader,
+.gpMatchesPage .gpActions {
+  isolation: auto !important;
+}
+
+/* Remover cualquier pseudo-elemento que pueda bloquear */
+.gpActions::before,
+.gpActions::after,
+.gpActions *::before,
+.gpActions *::after {
+  pointer-events: none !important;
+}
+
+/* Botones con z-index MÁXIMO */
+.gpActions .btn {
+  position: relative !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  isolation: isolate !important;
+}
+
+/* Asegurar que el container no tiene overlay */
+.gpMatchesPage .container {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* Remover cualquier transform que pueda crear stacking context */
+.gpMatchesPage *:not(.btn) {
+  transform: none !important;
+}
+
+/* gpActions debe estar en su propio stacking context */
+.gpActions {
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+}
