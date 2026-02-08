@@ -1,4 +1,4 @@
-/* ========== VERSIÓN FINAL - SIN CALENDARIO STRIP - MÁXIMO ESPACIO ========== */
+/* ========== VERSIÓN CORRECTA - SOLO QUITAR CALENDARIO STRIP ========== */
 
 /* Header compacto */
 .gpMatchesPage .pageHeader {
@@ -30,7 +30,7 @@
   line-height: 1 !important;
 }
 
-/* Actions SIN calendario strip */
+/* Actions SIN calendario strip - CON input fecha visible */
 .gpMatchesPage .gpActions {
   position: fixed !important;
   top: calc(46px + env(safe-area-inset-top, 0px) + 22px) !important;
@@ -38,90 +38,87 @@
   right: 0 !important;
   width: 100vw !important;
   z-index: 45 !important;
-  padding: 3px 8px !important;
+  padding: 4px 8px !important;
   margin: 0 !important;
   background: rgba(0, 0, 0, 0.98) !important;
   border-bottom: none !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 3px !important;
+  gap: 4px !important;
   backdrop-filter: blur(10px) !important;
-  height: 60px !important;
 }
 
-/* OCULTAR calendario strip */
-.gpCalendarStrip {
+/* ⚠️ SOLO ocultar el calendario STRIP (los días horizontales) */
+.gpMatchesPage .gpCalendarStrip {
   display: none !important;
 }
 
-/* Input fecha con círculo verde indicador */
-.gpRow {
+/* ✅ Input fecha VISIBLE con indicador verde */
+.gpMatchesPage .gpRow {
   padding: 0 !important;
   gap: 6px !important;
   margin: 0 !important;
-  height: 20px !important;
   display: flex !important;
   align-items: center !important;
 }
 
-.gpRow > div:first-child {
+.gpMatchesPage .gpRow > div:first-child {
   font-size: 10px !important;
   font-weight: 900 !important;
 }
 
-.gpRow .gpInput {
-  padding: 3px 6px !important;
-  font-size: 10px !important;
-  max-width: 130px !important;
+.gpMatchesPage .gpRow .gpInput {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
   border-radius: 6px !important;
-  height: 20px !important;
-  position: relative !important;
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  color: #fff !important;
 }
 
-/* Círculo verde para días con partidos (se añadirá con JS) */
-.gpInput.hasMatches {
+/* Indicador verde cuando hay partidos */
+.gpMatchesPage .gpRow .gpInput.hasMatches {
   border: 2px solid #74B800 !important;
-  box-shadow: 0 0 0 1px #74B800 !important;
+  box-shadow: 0 0 8px rgba(116, 184, 0, 0.3) !important;
 }
 
-/* Segmented */
-.gpSegmented {
+/* ✅ Segmented VISIBLE */
+.gpMatchesPage .gpSegmented {
   padding: 2px !important;
   gap: 2px !important;
   border-radius: 8px !important;
   margin: 0 !important;
-  height: 24px !important;
+  display: flex !important;
 }
 
-.gpSegmented button {
-  padding: 4px 8px !important;
+.gpMatchesPage .gpSegmented button {
+  padding: 5px 10px !important;
   font-size: 10px !important;
   font-weight: 800 !important;
   border-radius: 6px !important;
 }
 
-/* Botón Crear VISIBLE */
-.gpActions > .btn:not(.ghost) {
-  padding: 5px 10px !important;
-  font-size: 11px !important;
+/* ✅ Botón Crear VISIBLE */
+.gpMatchesPage .gpActions > .btn:not(.ghost) {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
   font-weight: 900 !important;
   border-radius: 8px !important;
   margin: 0 !important;
-  height: 24px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
 }
 
 /* Push oculto */
-.gpActions > .btn.ghost {
+.gpMatchesPage .gpActions > .btn.ghost {
   display: none !important;
 }
 
-/* Grid con MÁS espacio */
+/* Grid con espacio correcto */
 .gpMatchesSnapWrap {
   position: fixed !important;
-  top: calc(46px + env(safe-area-inset-top, 0px) + 22px + 60px) !important;
+  top: calc(46px + env(safe-area-inset-top, 0px) + 22px + 95px) !important;
   left: 0 !important;
   right: 0 !important;
   bottom: env(safe-area-inset-bottom, 0px) !important;
@@ -133,7 +130,7 @@
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* Cards MINI */
+/* Cards compactas */
 .gpMatchesGrid {
   gap: 4px !important;
   margin: 0 !important;
@@ -259,9 +256,8 @@
   padding: 3px 5px !important;
 }
 
-/* Media queries para diferentes tamaños */
+/* Media queries */
 @media (max-height: 700px) {
-  /* iPhone mini extra compacto */
   .gpMatchCard {
     padding: 5px !important;
   }
@@ -275,14 +271,9 @@
     width: 26px !important;
     height: 26px !important;
   }
-  
-  .gpHeadline {
-    font-size: 11px !important;
-  }
 }
 
 @media (min-height: 850px) {
-  /* iPhone Pro Max - más espacio */
   .gpMatchCard {
     padding: 8px !important;
   }
