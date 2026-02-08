@@ -307,3 +307,143 @@
     height: 30px !important;
   }
 }
+/* ========== CARDS ULTRA MINI - MITAD DE ALTURA ========== */
+
+.gpMatchesGrid {
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gpMatchCard {
+  padding: 3px !important;
+  margin-bottom: 0 !important;
+  border-radius: 5px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+
+/* Roster SUPER compacto */
+.gpRoster {
+  margin-bottom: 2px !important;
+  gap: 1px !important;
+}
+
+.gpTeam {
+  gap: 1px !important;
+}
+
+.gpSlot {
+  gap: 2px !important;
+  padding: 1px !important;
+  border-radius: 3px !important;
+}
+
+.gpSlotImg {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 9px !important;
+  border-radius: 3px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+}
+
+.gpSlotName {
+  font-size: 7px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+.gpSlotMeta {
+  font-size: 5px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+  display: none !important;
+}
+
+.gpVs {
+  font-size: 8px !important;
+  width: 16px !important;
+  height: 16px !important;
+  padding: 1px !important;
+  border-radius: 3px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+/* Headline mini */
+.gpHeadline {
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  margin-bottom: 1px !important;
+  line-height: 1 !important;
+  padding: 0 2px !important;
+}
+
+/* Caption SUPER mini */
+.gpCaption {
+  gap: 1px !important;
+  margin-bottom: 2px !important;
+  padding: 0 2px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpChip {
+  font-size: 5px !important;
+  padding: 1px 2px !important;
+  border-radius: 2px !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+/* Meta badges mini */
+.gpMatchCard .meta {
+  font-size: 5px !important;
+  padding: 1px 2px !important;
+  border-radius: 2px !important;
+  line-height: 1 !important;
+}
+
+/* Divider casi invisible */
+.gpDivider {
+  margin: 1px 0 !important;
+  opacity: 0.2 !important;
+}
+
+/* Action bar SUPER mini */
+.gpActionBar {
+  padding: 0 2px 2px !important;
+  gap: 1px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  gap: 1px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpIconBtn {
+  font-size: 6px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn.danger {
+  padding: 1px 3px !important;
+  font-size: 6px !important;
+}
+
+/* Ocultar elementos que ocupan espacio */
+.gpSlotMeta {
+  display: none !important;
+}
