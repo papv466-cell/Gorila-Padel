@@ -3,6 +3,7 @@
    ========================= */
 /* src/index.css */
 @import './styles/GlobalFixes.css';
+@import './styles/NAVBAR-BUTTONS-FIXED.css';
 
 /* ... resto del CSS ... */
 /* Reset base */
