@@ -7,8 +7,8 @@
     --safe-left: env(safe-area-inset-left, 0px);
     --safe-right: env(safe-area-inset-right, 0px);
     
-    --navbar-height: 60px;
-    --header-height: 56px;
+    --navbar-height: 56px;
+    --header-height: 48px;
   }
   
   * {
@@ -41,12 +41,109 @@
     top: 0;
     left: 0;
     right: 0;
-    height: var(--navbar-height);
+    height: calc(var(--navbar-height) + var(--safe-top));
     padding-top: var(--safe-top);
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(0, 0, 0, 0.98);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    height: var(--navbar-height);
+  }
+  
+  .headerLogo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  
+  .headerLogoImg {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  
+  .headerLogoText {
+    font-size: 16px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+  
+  .headerLogoText span {
+    color: #74B800;
+  }
+  
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .headerButton {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  .menuToggle {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .menuToggle span {
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+  
+  .menuToggle.isOpen span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+  
+  .menuToggle.isOpen span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .menuToggle.isOpen span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
   }
   
   /* ========== PÁGINAS CON NAVBAR ========== */
@@ -69,20 +166,34 @@
     top: calc(var(--navbar-height) + var(--safe-top));
     z-index: 50;
     flex-shrink: 0;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.95);
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.98);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   
+  .gpMatchesPage .pageTitle {
+    font-size: 20px;
+    font-weight: 900;
+    margin: 0 0 2px 0;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 11px;
+    opacity: 0.6;
+  }
+  
   .gpMatchesPage .gpActions {
     position: sticky;
-    top: calc(var(--navbar-height) + var(--safe-top) + 80px);
+    top: calc(var(--navbar-height) + var(--safe-top) + 60px);
     z-index: 45;
     flex-shrink: 0;
-    padding: 12px 16px;
-    background: #000;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.98);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   
   .gpMatchesPage .gpMatchesSnapWrap {
@@ -215,15 +326,17 @@
   /* ========== AUTH PAGES ========== */
   .authPage {
     min-height: 100vh;
-    padding-top: var(--safe-top);
-    padding-bottom: var(--safe-bottom);
-    padding-left: calc(var(--safe-left) + 20px);
-    padding-right: calc(var(--safe-right) + 20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
   }
   
   .authContainer {
-    max-width: 400px;
+    max-width: 380px;
     width: 100%;
+    margin: 0 auto;
   }
   
   /* ========== MENÚ MÓVIL ========== */
@@ -279,4 +392,3 @@
     width: 0;
     display: none;
   }
-  
