@@ -4,6 +4,8 @@
 /* src/index.css */
 @import './styles/GlobalFixes.css';
 @import './styles/NAVBAR-BUTTONS-FIXED.css';
+@import './styles/NAVBAR-BUTTONS-FIXED.css';
+@import './styles/MOBILE-COMPACT.css';
 
 /* ... resto del CSS ... */
 /* Reset base */
