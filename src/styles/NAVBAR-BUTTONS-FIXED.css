@@ -457,7 +457,7 @@
 
 .gpMatchCard{
   height: auto !important;
-  min-height: 100px !important;   /* o incluso quítalo si no quieres mínimo */
+  min-height: 50px !important;   /* o incluso quítalo si no quieres mínimo */
   overflow: auto !important;
   padding: 5px !important;        /* antes 6 */
 }
