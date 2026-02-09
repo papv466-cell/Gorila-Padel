@@ -447,158 +447,171 @@
 .gpSlotMeta {
   display: none !important;
 }
-/* ========== CARDS EXTREMADAMENTE MINI - MITAD DE ALTURA ========== */
+/* ========== CARDS TAMAÑO PERFECTO - INFO COMPLETA VISIBLE ========== */
 
 .gpMatchesGrid {
-  gap: 2px !important;
+  gap: 4px !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
 .gpMatchCard {
-  padding: 2px !important;
+  padding: 6px !important;
   margin-bottom: 0 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
-  max-height: 80px !important;
-  overflow: hidden !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+  min-height: 150px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-/* Roster SUPER SUPER compacto */
+/* Roster compacto pero legible */
 .gpRoster {
-  margin-bottom: 1px !important;
-  gap: 1px !important;
-  transform: scale(0.8) !important;
-  transform-origin: left top !important;
+  margin-bottom: 4px !important;
+  gap: 3px !important;
 }
 
 .gpTeam {
-  gap: 1px !important;
+  gap: 3px !important;
 }
 
 .gpSlot {
-  gap: 1px !important;
-  padding: 1px !important;
-  border-radius: 2px !important;
-  min-height: 14px !important;
+  gap: 3px !important;
+  padding: 2px !important;
+  border-radius: 5px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .gpSlotImg {
-  width: 14px !important;
-  height: 14px !important;
-  font-size: 8px !important;
-  border-radius: 2px !important;
-  min-width: 14px !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+  border-radius: 5px !important;
+  min-width: 24px !important;
   flex-shrink: 0 !important;
 }
 
 .gpSlotName {
-  font-size: 6px !important;
+  font-size: 9px !important;
   font-weight: 800 !important;
-  line-height: 1 !important;
+  line-height: 1.2 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
 .gpSlotMeta {
-  display: none !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+  white-space: nowrap !important;
 }
 
 .gpVs {
-  font-size: 7px !important;
-  width: 14px !important;
-  height: 14px !important;
+  font-size: 10px !important;
+  width: 24px !important;
+  height: 24px !important;
   padding: 0 !important;
-  border-radius: 2px !important;
+  border-radius: 5px !important;
   font-weight: 900 !important;
-  line-height: 14px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-}
-
-/* Headline MINI */
-.gpHeadline {
-  font-size: 8px !important;
-  font-weight: 900 !important;
-  margin: 1px 0 !important;
-  line-height: 1 !important;
-  padding: 0 2px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-/* Caption MINI */
-.gpCaption {
-  gap: 1px !important;
-  margin: 1px 0 !important;
-  padding: 0 2px !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-.gpChip {
-  font-size: 5px !important;
-  padding: 1px 2px !important;
-  border-radius: 2px !important;
-  white-space: nowrap !important;
-  line-height: 1 !important;
   flex-shrink: 0 !important;
 }
 
-/* Meta badges OCULTOS para ganar espacio */
+/* Headline legible */
+.gpHeadline {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  margin: 3px 0 !important;
+  line-height: 1.2 !important;
+  padding: 0 3px !important;
+}
+
+/* Caption con info completa */
+.gpCaption {
+  gap: 3px !important;
+  margin: 3px 0 !important;
+  padding: 0 3px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+.gpChip {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Meta badges visibles */
 .gpMatchCard > div[style*="display: flex"][style*="gap: 8"] {
-  display: none !important;
+  display: flex !important;
+  gap: 3px !important;
+  flex-wrap: wrap !important;
+  padding: 0 3px !important;
+  margin: 2px 0 !important;
 }
 
-/* Divider casi invisible */
+.gpMatchCard .meta {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+/* Divider visible */
 .gpDivider {
-  margin: 1px 0 !important;
-  opacity: 0.1 !important;
+  margin: 3px 0 !important;
+  opacity: 0.3 !important;
 }
 
-/* Action bar EXTREMADAMENTE compacta */
+/* Action bar con todos los botones visibles */
 .gpActionBar {
-  padding: 1px !important;
-  gap: 1px !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
+  padding: 3px !important;
+  gap: 3px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: auto !important;
 }
 
 .gpActionLeft,
 .gpActionRight {
-  gap: 1px !important;
-  flex-wrap: nowrap !important;
+  gap: 3px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
 }
 
 .gpIconBtn {
-  font-size: 5px !important;
-  padding: 1px 2px !important;
-  border-radius: 2px !important;
+  font-size: 8px !important;
+  padding: 3px 5px !important;
+  border-radius: 4px !important;
   white-space: nowrap !important;
-  line-height: 1.1 !important;
-  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .gpActionRight .btn {
-  font-size: 6px !important;
-  padding: 1px 3px !important;
-  border-radius: 3px !important;
+  font-size: 9px !important;
+  padding: 4px 7px !important;
+  border-radius: 5px !important;
   white-space: nowrap !important;
-  line-height: 1.1 !important;
-  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .gpActionRight .btn.danger {
-  padding: 1px 2px !important;
-  font-size: 5px !important;
+  padding: 3px 6px !important;
+  font-size: 8px !important;
 }
 
-/* Grid con MUCHO padding-bottom para ver última card */
+/* Grid con padding correcto */
 .gpMatchesSnapWrap {
   position: fixed !important;
   top: calc(46px + env(safe-area-inset-top, 0px) + 22px + 100px) !important;
@@ -607,9 +620,46 @@
   bottom: 0 !important;
   width: 100vw !important;
   margin: 0 !important;
-  padding: 2px 4px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+  padding: 4px 6px calc(100px + env(safe-area-inset-bottom, 0px)) !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   background: #000 !important;
+}
+
+/* Media queries para diferentes tamaños */
+@media (max-height: 700px) {
+  /* iPhone mini - cards un poco más pequeñas */
+  .gpMatchCard {
+    min-height: 140px !important;
+    padding: 5px !important;
+  }
+  
+  .gpSlotImg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  
+  .gpVs {
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
+
+@media (min-height: 850px) {
+  /* iPhone grande - cards más espaciosas */
+  .gpMatchCard {
+    min-height: 160px !important;
+    padding: 7px !important;
+  }
+  
+  .gpSlotImg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  
+  .gpVs {
+    width: 26px !important;
+    height: 26px !important;
+  }
 }
