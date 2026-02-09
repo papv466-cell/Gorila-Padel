@@ -977,3 +977,57 @@
 
 /* Meta fuera (altura abajo) */
 .gpSlotMeta{ display: none !important; }
+
+/* ===== ROSTER: izquierda pegada + VS centrado exacto ===== */
+.gpRoster{
+  width: 100% !important;
+  margin: 0 !important;                 /* quita empuje a la derecha */
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;  /* L | VS | R */
+  grid-template-rows: auto auto !important;        /* arriba/abajo */
+  grid-template-areas:
+    "a1 vs b1"
+    "a2 vs b2" !important;
+
+  column-gap: 10px !important;
+  row-gap: 1px !important;
+  align-items: center !important;
+}
+
+/* Teams “planos” para colocar slots en el grid */
+.gpTeam{ display: contents !important; }
+
+/* Izquierda: pegados al margen izquierdo */
+.gpTeam:first-of-type .gpSlot:nth-child(1){
+  grid-area: a1 !important;
+  justify-self: start !important;
+}
+.gpTeam:first-of-type .gpSlot:nth-child(2){
+  grid-area: a2 !important;
+  justify-self: start !important;
+}
+
+/* Derecha: pegados al margen derecho */
+.gpTeam:last-of-type .gpSlot:nth-child(1){
+  grid-area: b1 !important;
+  justify-self: end !important;
+}
+.gpTeam:last-of-type .gpSlot:nth-child(2){
+  grid-area: b2 !important;
+  justify-self: end !important;
+}
+
+/* VS justo en medio */
+.gpVs{
+  grid-area: vs !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
