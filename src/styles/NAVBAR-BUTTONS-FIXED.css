@@ -395,7 +395,7 @@
 
 .gpMatchCard{
   height: auto !important;
-  min-height: 50px !important;   /* o incluso quítalo si no quieres mínimo */
+  min-height: 40px !important;   /* o incluso quítalo si no quieres mínimo */
   overflow: auto !important;
   padding: 5px !important;        /* antes 6 */
 }
@@ -566,7 +566,7 @@
 @media (max-height: 700px) {
   /* iPhone mini - cards un poco más pequeñas */
   .gpMatchCard {
-    min-height: 50px !important;
+    min-height: 30px !important;
     padding: 5px !important;
   }
   
@@ -584,7 +584,7 @@
 @media (min-height: 850px) {
   /* iPhone grande - cards más espaciosas */
   .gpMatchCard {
-    min-height: 80px !important;
+    min-height: 50px !important;
     padding: 7px !important;
   }
   
