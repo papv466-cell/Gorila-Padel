@@ -684,3 +684,74 @@
 .gpSlotMeta{
   display: none !important;
 }
+/* ===== ROSTER MÁS CORTO + VS CENTRADO ===== */
+
+/* Contenedor roster: 3 filas (Team A / VS / Team B) */
+.gpRoster{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  align-items: center !important;
+  justify-items: center !important; /* centra todo horizontal */
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Cada equipo: 2 slots en horizontal (más corto) */
+.gpTeam{
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 2px !important;
+  align-items: center !important;
+}
+
+/* Slot ultra compacto */
+.gpSlot{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 2px !important;
+  padding: 1px 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar más pequeño */
+.gpSlotImg{
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  border-radius: 4px !important;
+}
+
+/* Nombre una sola línea, recorta */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Meta fuera para bajar altura */
+.gpSlotMeta{
+  display: none !important;
+}
+
+/* VS perfectamente centrado */
+.gpVs{
+  justify-self: center !important;
+  align-self: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
