@@ -755,3 +755,134 @@
   align-items: center !important;
   justify-content: center !important;
 }
+/* ===== AVATARES: más a la derecha + centrados + más juntos en vertical ===== */
+
+/* Card más corta (sin recortar contenido) */
+.gpMatchCard{
+  padding: 4px !important;     /* baja padding */
+  border-radius: 8px !important;
+}
+
+/* Roster: menos espacio vertical y desplazado a la derecha */
+.gpRoster{
+  display: grid !important;
+  grid-template-rows: auto auto auto !important;
+  gap: 1px !important;                 /* más juntos vertical */
+  margin-bottom: 1px !important;
+
+  width: max-content !important;       /* hace el bloque “compacto” */
+  margin-left: auto !important;        /* lo empuja a la derecha */
+  margin-right: 6px !important;        /* separa un pelín del borde */
+  justify-items: center !important;    /* centra dentro del bloque */
+}
+
+/* Teams: 2 columnas, muy juntos */
+.gpTeam{
+  display: grid !important;
+  grid-template-columns: auto auto !important; /* evita que se estiren */
+  gap: 2px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slot súper fino */
+.gpSlot{
+  padding: 0 !important;               /* recorta altura */
+  gap: 2px !important;
+  border-radius: 4px !important;
+}
+
+/* Avatar más pequeño */
+.gpSlotImg{
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  border-radius: 3px !important;
+}
+
+/* Nombre muy compacto (una línea) */
+.gpSlotName{
+  font-size: 6px !important;
+  line-height: 1 !important;
+  max-width: 70px !important;          /* evita que empuje el layout */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* VS centrado y pequeño */
+.gpVs{
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ===== RECORTE EXTRA DE ALTURA EN ELEMENTOS QUE SUMAN MUCHO ===== */
+.gpHeadline{
+  font-size: 9px !important;
+  margin: 1px 0 !important;
+  line-height: 1 !important;
+}
+
+.gpCaption{
+  gap: 1px !important;
+  margin: 1px 0 !important;
+  padding: 0 2px !important;
+}
+
+.gpChip{
+  font-size: 5px !important;
+  padding: 1px 2px !important;
+  line-height: 1 !important;
+}
+
+/* Divider mínimo */
+.gpDivider{
+  margin: 1px 0 !important;
+  opacity: 0.2 !important;
+}
+
+/* Action bar: una sola línea y compacta (sin scroll horizontal) */
+.gpActionBar{
+  padding: 1px 2px !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+.gpActionLeft,
+.gpActionRight{
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.gpIconBtn{
+  font-size: 0 !important;            /* oculta texto (solo iconos) */
+  padding: 2px 5px !important;
+  line-height: 1 !important;
+}
+
+/* Si tu icono es SVG o i, mantenlo visible */
+.gpIconBtn svg,
+.gpIconBtn i{
+  font-size: 14px !important;
+}
+
+/* Botón principal más corto */
+.gpActionRight .btn{
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  max-width: 40vw !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
