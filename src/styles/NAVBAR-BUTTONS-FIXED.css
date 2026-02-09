@@ -1057,3 +1057,29 @@
   box-sizing: border-box !important;
   overflow: hidden !important; /* por si algo interno se sale */
 }
+/* ===== FIX: botones de la card vuelven a funcionar ===== */
+
+/* 1) No recortes ni bloquees interacción en la card */
+.gpMatchCard{
+  overflow: visible !important;   /* en vez de hidden */
+}
+
+/* 2) La action bar debe estar por encima y clicable */
+.gpActionBar,
+.gpActionLeft,
+.gpActionRight,
+.gpIconBtn,
+.gpActionRight .btn{
+  position: relative !important;
+  z-index: 5 !important;
+  pointer-events: auto !important;
+}
+
+/* 3) Si algún overlay/pseudo-elemento tapa, lo desactivamos */
+.gpMatchCard::before,
+.gpMatchCard::after{
+  pointer-events: none !important;
+}
+/* Evita que el roster se quede por encima de la action bar */
+.gpRoster{ position: relative !important; z-index: 1 !important; }
+.gpActionBar{ z-index: 10 !important; }
