@@ -456,8 +456,10 @@
 }
 
 .gpMatchCard{
-  height: 120px !important;
-  overflow: hidden !important;
+  height: auto !important;
+  min-height: 100px !important;   /* o incluso quítalo si no quieres mínimo */
+  overflow: auto !important;
+  padding: 5px !important;        /* antes 6 */
 }
 
 /* Roster compacto pero legible */
@@ -658,3 +660,13 @@
     height: 26px !important;
   }
 }
+.gpHeadline { margin: 2px 0 !important; }  /* antes 3px */
+.gpCaption  { margin: 2px 0 !important; }  /* antes 3px */
+.gpDivider  { margin: 2px 0 !important; }  /* antes 3px */
+
+.gpRoster { margin-bottom: 3px !important; gap: 2px !important; } /* antes 4 y 3 */
+.gpTeam   { gap: 2px !important; } /* antes 3 */
+
+.gpActionBar { padding: 2px !important; gap: 2px !important; } /* antes 3 */
+.gpIconBtn { padding: 2px 4px !important; font-size: 8px !important; } /* baja un pelín */
+.gpActionRight .btn { padding: 3px 6px !important; font-size: 9px !important; } /* baja un pelín */
