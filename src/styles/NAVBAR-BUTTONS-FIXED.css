@@ -1031,3 +1031,29 @@
   align-items: center !important;
   justify-content: center !important;
 }
+/* ===== FIX: evitar que las cards se metan por la derecha ===== */
+
+/* el contenedor scrolleable: que no use 100vw real con padding raro */
+.gpMatchesSnapWrap{
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  box-sizing: border-box !important;
+  padding-left: 10px !important;     /* separa del borde */
+  padding-right: 10px !important;    /* separa del borde */
+}
+
+/* grid/list: que no empuje hacia fuera */
+.gpMatchesGrid{
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* card: que jamás supere el ancho disponible */
+.gpMatchCard{
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* por si algo interno se sale */
+}
