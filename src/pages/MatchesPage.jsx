@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
-import './MatchesPage.css';
+import "./MatchesPage.css";
 
 import {
   createMatch,
@@ -62,7 +62,8 @@ function combineDateTimeToISO(dateStr, timeStr) {
     Number.isFinite(d) ? d : now.getDate(),
     Number.isFinite(hh) ? hh : 19,
     Number.isFinite(mm) ? mm : 0,
-    0, 0
+    0,
+    0
   );
   return dt.toISOString();
 }
@@ -204,6 +205,13 @@ export default function MatchesPage() {
     pricePerPlayer: "",
   });
 
+  function closeAllModals() {
+    setChatOpenFor(null);
+    setRequestsOpenFor(null);
+    setInviteOpenFor(null);
+    setCedeOpenFor(null);
+  }
+
   function openCreateModal() {
     setOpenCreate(true);
     setForm((prev) => ({ ...prev, date: selectedDay || todayISO }));
@@ -212,7 +220,9 @@ export default function MatchesPage() {
   const aliveRef = useRef(true);
   useEffect(() => {
     aliveRef.current = true;
-    return () => { aliveRef.current = false; };
+    return () => {
+      aliveRef.current = false;
+    };
   }, []);
 
   function goLogin() {
@@ -248,17 +258,17 @@ export default function MatchesPage() {
         if (!cancelled && debug) console.log("🔔 ensurePushSubscription falló:", e);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [session?.user?.id, debug]);
 
   useEffect(() => {
     fetchClubsFromGoogleSheet()
       .then((rows) => {
-        console.log('🏟️ Clubs cargados:', rows.length);
         setClubsSheet(Array.isArray(rows) ? rows : []);
       })
-      .catch((err) => {
-        console.error('❌ Error cargando clubs:', err);
+      .catch(() => {
         setClubsSheet([]);
       });
   }, []);
@@ -267,9 +277,7 @@ export default function MatchesPage() {
     const out = {};
     if (!uid || !matchIds?.length) return out;
     const uidNoDashes = String(uid).replace(/-/g, "");
-    const candidatePlayerIds = Array.from(
-      new Set([String(uid), `u_${uid}`, `u_${uidNoDashes}`].filter(Boolean))
-    );
+    const candidatePlayerIds = Array.from(new Set([String(uid), `u_${uid}`, `u_${uidNoDashes}`].filter(Boolean)));
     try {
       const { data, error } = await supabase
         .from("match_players")
@@ -298,20 +306,14 @@ export default function MatchesPage() {
     if (!matchIds?.length) return {};
     let rows = [];
     try {
-      const { data, error } = await supabase
-        .from("match_players")
-        .select("match_id, player_uuid")
-        .in("match_id", matchIds);
+      const { data, error } = await supabase.from("match_players").select("match_id, player_uuid").in("match_id", matchIds);
       if (!error && Array.isArray(data)) {
         rows = data.map((r) => ({ match_id: r.match_id, user_id: r.player_uuid })).filter((r) => r.user_id);
       }
     } catch {}
     if (!rows.length) {
       try {
-        const { data, error } = await supabase
-          .from("match_players")
-          .select("match_id, player_id")
-          .in("match_id", matchIds);
+        const { data, error } = await supabase.from("match_players").select("match_id, player_id").in("match_id", matchIds);
         if (!error && Array.isArray(data)) {
           rows = data.map((r) => ({ match_id: r.match_id, user_id: r.player_id })).filter((r) => r.user_id);
         }
@@ -342,10 +344,13 @@ export default function MatchesPage() {
       if (!aliveRef.current) return;
       const unique = uniqById(list);
       setItems(sortByStartAtAsc(unique));
+
       const ids = unique.map((m) => m.id);
+
       const my = await fetchMyRequestsForMatchIds(ids);
       if (!aliveRef.current) return;
       setMyReqStatus(my || {});
+
       try {
         const uid = session?.user?.id ? String(session.user.id) : "";
         const map = await fetchInPlayersMap(ids, uid);
@@ -353,16 +358,17 @@ export default function MatchesPage() {
       } catch {
         if (aliveRef.current) setInPlayersByMatchId({});
       }
+
       const counts = await fetchApprovedCounts(ids);
       if (!aliveRef.current) return;
       setApprovedCounts(counts || {});
+
       const latest = await fetchLatestChatTimes(ids);
       if (!aliveRef.current) return;
       setLatestChatTsByMatch(latest || {});
+
       try {
-        const creatorIds = Array.from(
-          new Set((unique || []).map((m) => m?.created_by_user).filter(Boolean).map(String))
-        );
+        const creatorIds = Array.from(new Set((unique || []).map((m) => m?.created_by_user).filter(Boolean).map(String)));
         if (creatorIds.length) {
           const profs = await fetchProfilesByIds(creatorIds);
           if (aliveRef.current) setRosterProfilesById(profs || {});
@@ -372,6 +378,7 @@ export default function MatchesPage() {
       } catch {
         setRosterProfilesById({});
       }
+
       try {
         const roster = await fetchRosterProfilesByMatch(ids);
         if (aliveRef.current) setPlayersByMatchId(roster || {});
@@ -473,9 +480,7 @@ export default function MatchesPage() {
   const filteredList = useMemo(() => {
     let list = items;
     if (clubIdParam) list = list.filter((m) => String(m.club_id) === String(clubIdParam));
-    if (selectedDay) {
-      list = list.filter((m) => localYMDFromStartAt(m.start_at) === selectedDay);
-    }
+    if (selectedDay) list = list.filter((m) => localYMDFromStartAt(m.start_at) === selectedDay);
     return list;
   }, [items, clubIdParam, selectedDay]);
 
@@ -495,23 +500,15 @@ export default function MatchesPage() {
     const desired = new Set();
     for (const m of visibleList || []) {
       const isCreator = uid && String(m.created_by_user) === uid;
-      const myStatus = myReqStatus?.[m.id] || null;
-      if (debug) {
-        console.log("match", m.id, { myStatus, isCreator });
-      }
-      if (!isCreator && myStatus !== "approved") continue;
+      const myStatus2 = myReqStatus?.[m.id] || null;
+      if (!isCreator && myStatus2 !== "approved") continue;
       const startMs = safeParseDate(m.start_at)?.getTime?.();
       const durMin = Number(m.duration_min) || 90;
       const endMs = Number.isFinite(startMs) ? startMs + durMin * 60 * 1000 : NaN;
       if (!Number.isFinite(endMs)) continue;
       const key = `match:${m.id}`;
       desired.add(key);
-      scheduleEndWarningsForEvent({
-        key,
-        endMs,
-        warn5MinTimes: 2,
-        endTimes: 4,
-      });
+      scheduleEndWarningsForEvent({ key, endMs, warn5MinTimes: 2, endTimes: 4 });
     }
     unscheduleEventWarnings((key) => key.startsWith("match:") && !desired.has(key));
   }, [authReady, session?.user?.id, visibleList, myReqStatus, debug]);
@@ -523,7 +520,10 @@ export default function MatchesPage() {
       Number.isFinite(y) ? y : now.getFullYear(),
       Number.isFinite(m) ? m - 1 : now.getMonth(),
       Number.isFinite(d) ? d : now.getDate(),
-      0, 0, 0, 0
+      0,
+      0,
+      0,
+      0
     );
     base.setDate(base.getDate() + deltaDays);
     return toDateInputValue(base);
@@ -537,7 +537,10 @@ export default function MatchesPage() {
         Number.isFinite(y) ? y : now.getFullYear(),
         Number.isFinite(m) ? m - 1 : now.getMonth(),
         Number.isFinite(d) ? d : now.getDate(),
-        0, 0, 0, 0
+        0,
+        0,
+        0,
+        0
       );
       return dt.toLocaleDateString("es-ES", { weekday: "short" });
     } catch {
@@ -650,8 +653,10 @@ export default function MatchesPage() {
         .eq("match_id", matchId)
         .in("to_user_id", uniq);
       if (exErr) throw exErr;
+
       const existingSet = new Set((existing || []).map((r) => String(r.to_user_id)));
       const toInsert = uniq.filter((id) => !existingSet.has(String(id)));
+
       if (toInsert.length === 0) {
         toast.success("Ya estaban invitados ✅");
         setInviteOpenFor(null);
@@ -660,6 +665,7 @@ export default function MatchesPage() {
         setInviteSelected([]);
         return;
       }
+
       const payload = toInsert.map((to) => ({
         match_id: matchId,
         from_user_id: session.user.id,
@@ -667,6 +673,7 @@ export default function MatchesPage() {
       }));
       const { error } = await supabase.from("match_invites").insert(payload);
       if (error) throw error;
+
       toast.success(`Invitaciones enviadas ✅ (${toInsert.length})`);
       setInviteOpenFor(null);
       setInviteQuery("");
@@ -681,11 +688,14 @@ export default function MatchesPage() {
 
   async function openRequests(matchId) {
     try {
+      closeAllModals();
       setRequestsOpenFor(matchId);
       setPendingBusy(true);
+
       const rows = await fetchPendingRequests(matchId);
       setPending(Array.isArray(rows) ? rows : []);
-      const ids = (rows || []).map((r) => r.user_id);
+
+      const ids = (rows || []).map((r) => r.user_id).filter(Boolean);
       const profs = await fetchProfilesByIds(ids);
       setProfilesById(profs || {});
     } catch (e) {
@@ -701,6 +711,7 @@ export default function MatchesPage() {
       await approveRequest({ requestId });
       await openRequests(requestsOpenFor);
       toast.success("Aprobado");
+      await load();
     } catch (e) {
       toast.error(e?.message ?? "No se pudo aprobar");
     }
@@ -711,6 +722,7 @@ export default function MatchesPage() {
       await rejectRequest({ requestId });
       await openRequests(requestsOpenFor);
       toast.success("Rechazado");
+      await load();
     } catch (e) {
       toast.error(e?.message ?? "No se pudo rechazar");
     }
@@ -720,6 +732,7 @@ export default function MatchesPage() {
     try {
       await cancelMyJoin(matchId);
       toast.success("Has salido del partido");
+      await load();
     } catch (e) {
       toast.error(e?.message || "No se pudo salir del partido");
     }
@@ -740,13 +753,9 @@ export default function MatchesPage() {
   const clubSuggestions = useMemo(() => {
     const q = (clubQuery || "").trim().toLowerCase();
     if (!q || q.length < 2) return [];
-    const results = (clubsSheet || [])
-      .filter((c) => {
-        const name = String(c?.name || "").toLowerCase();
-        return name.includes(q);
-      })
+    return (clubsSheet || [])
+      .filter((c) => String(c?.name || "").toLowerCase().includes(q))
       .slice(0, 10);
-    return results;
   }, [clubQuery, clubsSheet]);
 
   function pickClub(c) {
@@ -757,74 +766,62 @@ export default function MatchesPage() {
     setShowClubSuggest(false);
   }
 
-// REEMPLAZA handleCreate() completa con esta versión mejorada:
-
-async function handleCreate() {
-  if (!session) return goLogin();
-  try {
-    setSaveError(null);
-    setSaving(true);
-    const startAtISO = combineDateTimeToISO(form.date, form.time);
-    if (!String(form.clubName || "").trim()) {
-      throw new Error("Pon el nombre del club.");
-    }
-    if (!String(form.clubId || "").trim()) {
-      throw new Error("Selecciona el club de la lista.");
-    }
-    await createMatch({
-      clubId: form.clubId,
-      clubName: form.clubName,
-      startAtISO,
-      durationMin: Number(form.durationMin) || 90,
-      level: form.level,
-      alreadyPlayers: Number(form.alreadyPlayers) || 1,
-      pricePerPlayer: form.pricePerPlayer,
-      userId: session.user.id,
-    });
-    setSelectedDay(form.date);
-    setOpenCreate(false);
-    setForm({
-      clubName: "",
-      clubId: "",
-      date: todayISO,
-      time: "19:00",
-      durationMin: 90,
-      level: "medio",
-      alreadyPlayers: 1,
-      pricePerPlayer: "",
-    });
-    setClubQuery("");
-    toast.success("Partido creado ✅");
-    
-    // Recargar todo
-    await load();
-    
-    // CRÍTICO: Refrescar perfil del usuario actual
+  async function handleCreate() {
+    if (!session) return goLogin();
     try {
-      const { data: profile, error } = await supabase
-        .from("profiles_public")
-        .select("id, name, handle, avatar_url")
-        .eq("id", session.user.id)
-        .single();
-      
-      if (!error && profile && aliveRef.current) {
-        console.log('✅ Perfil cargado:', profile);
-        setRosterProfilesById(prev => ({ 
-          ...prev, 
-          [String(session.user.id)]: profile 
-        }));
-      }
+      setSaveError(null);
+      setSaving(true);
+      const startAtISO = combineDateTimeToISO(form.date, form.time);
+
+      if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
+      if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista.");
+
+      await createMatch({
+        clubId: form.clubId,
+        clubName: form.clubName,
+        startAtISO,
+        durationMin: Number(form.durationMin) || 90,
+        level: form.level,
+        alreadyPlayers: Number(form.alreadyPlayers) || 1,
+        pricePerPlayer: form.pricePerPlayer,
+        userId: session.user.id,
+      });
+
+      setSelectedDay(form.date);
+      setOpenCreate(false);
+      setForm({
+        clubName: "",
+        clubId: "",
+        date: todayISO,
+        time: "19:00",
+        durationMin: 90,
+        level: "medio",
+        alreadyPlayers: 1,
+        pricePerPlayer: "",
+      });
+      setClubQuery("");
+      toast.success("Partido creado ✅");
+
+      await load();
+
+      // refresca perfil creador para roster
+      try {
+        const { data: profile, error } = await supabase
+          .from("profiles_public")
+          .select("id, name, handle, avatar_url")
+          .eq("id", session.user.id)
+          .single();
+        if (!error && profile && aliveRef.current) {
+          setRosterProfilesById((prev) => ({ ...prev, [String(session.user.id)]: profile }));
+        }
+      } catch {}
     } catch (e) {
-      console.log('⚠️ No se pudo refrescar perfil:', e);
+      setSaveError(e?.message || "No se pudo crear el partido");
+      toast.error(e?.message || "No se pudo crear el partido");
+    } finally {
+      setSaving(false);
     }
-    
-  } catch (e) {
-    setSaveError(e?.message || "No se pudo crear el partido");
-    toast.error(e?.message || "No se pudo crear el partido");
-  } finally {
-    setSaving(false);
   }
-}
 
   async function handleEnablePush() {
     if (!session) return goLogin();
@@ -842,6 +839,7 @@ async function handleCreate() {
 
   async function openChat(matchId) {
     try {
+      closeAllModals();
       setChatOpenFor(matchId);
       setChatItems([]);
       setChatText("");
@@ -855,7 +853,6 @@ async function handleCreate() {
       setChatLoading(false);
     }
   }
-
 
   async function handleSendChat() {
     if (!chatOpenFor) return;
@@ -886,21 +883,16 @@ async function handleCreate() {
   useEffect(() => {
     const inputFecha = document.querySelector('.gpRow .gpInput[type="date"]');
     if (!inputFecha || !selectedDay) return;
-    
     const partidosEseDia = dayCounts[selectedDay] || 0;
-    
-    if (partidosEseDia > 0) {
-      inputFecha.classList.add('hasMatches');
-    } else {
-      inputFecha.classList.remove('hasMatches');
-    }
+    if (partidosEseDia > 0) inputFecha.classList.add("hasMatches");
+    else inputFecha.classList.remove("hasMatches");
   }, [selectedDay, dayCounts]);
 
   return (
     <div className="page pageWithHeader gpMatchesPage">
       <div className="pageWrap">
         <div className="container">
-          {/* ⬇️ HEADER - SOLO TÍTULO */}
+          {/* HEADER */}
           <div className="pageHeader">
             <div>
               <h1 className="pageTitle">Partidos</h1>
@@ -910,20 +902,24 @@ async function handleCreate() {
               </div>
             </div>
           </div>
-                    {/* ⬇️ ACTIONS - DESPUÉS DEL HEADER, ANTES DEL GRID */}
-                    <div className="gpActions">
-                    <div className="gpCalendarStrip" style={{ 
-              display: 'flex',
-              gap: '6px',
-              overflowX: 'auto',
-              padding: '8px 0',
-              WebkitOverflowScrolling: 'touch'
-            }}>
+
+          {/* ACTIONS */}
+          <div className="gpActions">
+            <div
+              className="gpCalendarStrip"
+              style={{
+                display: "flex",
+                gap: "6px",
+                overflowX: "auto",
+                padding: "8px 0",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
               {calendarDays.map((d) => {
                 const isActive = d === selectedDay;
                 const count = dayCounts[d] || 0;
                 const hasMatches = count > 0;
-                
+
                 return (
                   <button
                     key={d}
@@ -931,45 +927,28 @@ async function handleCreate() {
                     className={`gpDayPill ${isActive ? "isActive" : ""}`}
                     onClick={() => setSelectedDay(d)}
                     style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      minWidth: '56px',
-                      padding: '8px 6px',
-                      borderRadius: '12px',
-                      background: isActive ? '#74B800' : 'rgba(255,255,255,0.05)',
-                      border: isActive ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.1)',
-                      color: isActive ? '#000' : '#fff',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      position: 'relative'
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minWidth: "56px",
+                      padding: "8px 6px",
+                      borderRadius: "12px",
+                      background: isActive ? "#74B800" : "rgba(255,255,255,0.05)",
+                      border: isActive ? "2px solid #74B800" : "1px solid rgba(255,255,255,0.1)",
+                      color: isActive ? "#000" : "#fff",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      position: "relative",
                     }}
                   >
-                    <div style={{ 
-                      fontSize: '10px', 
-                      fontWeight: 700,
-                      opacity: 0.75,
-                      textTransform: 'uppercase'
-                    }}>
+                    <div style={{ fontSize: "10px", fontWeight: 700, opacity: 0.75, textTransform: "uppercase" }}>
                       {fmtDayLabel(d)}
                     </div>
-                    <div style={{ 
-                      fontSize: '16px', 
-                      fontWeight: 900,
-                      marginTop: '2px'
-                    }}>
-                      {d.slice(8, 10)}
-                    </div>
-                    {hasMatches && (
-                      <div style={{
-                        fontSize: '14px',
-                        marginTop: '2px',
-                        lineHeight: 1
-                      }}>
-                        🦍
-                      </div>
-                    )}
+                    <div style={{ fontSize: "16px", fontWeight: 900, marginTop: "2px" }}>{d.slice(8, 10)}</div>
+                    {hasMatches ? (
+                      <div style={{ fontSize: "14px", marginTop: "2px", lineHeight: 1 }}>🦍</div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -977,12 +956,7 @@ async function handleCreate() {
 
             <div className="gpRow">
               <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.75 }}>Día:</div>
-              <input
-                className="gpInput"
-                type="date"
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(e.target.value)}
-              />
+              <input className="gpInput" type="date" value={selectedDay} onChange={(e) => setSelectedDay(e.target.value)} />
             </div>
 
             {!isClubFilter ? (
@@ -996,25 +970,18 @@ async function handleCreate() {
               </div>
             ) : null}
 
-            <button 
-              className="btn" 
+            <button
+              className="btn"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🎯 BOTÓN CREAR CLICKEADO');
                 openCreateModal();
               }}
               onTouchEnd={(e) => {
                 e.preventDefault();
-                console.log('👆 TOUCH detectado');
                 openCreateModal();
               }}
-              style={{
-                position: 'relative',
-                zIndex: 999999,
-                pointerEvents: 'auto',
-                touchAction: 'manipulation'
-              }}
+              style={{ position: "relative", zIndex: 999999, pointerEvents: "auto", touchAction: "manipulation" }}
             >
               ➕ Crear
             </button>
@@ -1026,17 +993,17 @@ async function handleCreate() {
             ) : null}
           </div>
 
-
-          {/* ⬇️ GRID SCROLLEABLE */}
+          {/* GRID */}
           <div className="gpMatchesSnapWrap">
             <ul className="gpMatchesGrid">
               {visibleList.map((m) => {
-                const myStatus = myReqStatus?.[m.id] || null;
+                const myStatus2 = myReqStatus?.[m.id] || null;
                 const isCreator = !!(session?.user?.id && String(m.created_by_user) === String(session.user.id));
                 const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
                 const left = Math.max(0, 4 - occupied);
+
                 const iAmInPlayers = !!inPlayersByMatchId?.[String(m.id)];
-                const iAmInside = isCreator || iAmInPlayers || myStatus === "approved" || myStatus === "pending";
+                const iAmInside = isCreator || iAmInPlayers || myStatus2 === "approved" || myStatus2 === "pending";
 
                 const creatorId = m.created_by_user ? String(m.created_by_user) : "";
                 const creatorProf = rosterProfilesById?.[creatorId] || null;
@@ -1046,10 +1013,7 @@ async function handleCreate() {
                   "Creador";
                 const creatorAvatar = creatorProf?.avatar_url || "";
 
-                const roster = (playersByMatchId?.[String(m.id)] || [])
-                  .filter((p) => String(p?.id || "") !== creatorId)
-                  .slice(0, 3);
-
+                const roster = (playersByMatchId?.[String(m.id)] || []).filter((p) => String(p?.id || "") !== creatorId).slice(0, 3);
                 const slotProfile = (idx) => roster[idx] || null;
 
                 const Slot = ({ prof, fallbackMeta }) => {
@@ -1058,17 +1022,14 @@ async function handleCreate() {
                     (prof?.handle && String(prof.handle).trim()) ||
                     "Jugador";
                   const avatar = prof?.avatar_url || "";
-
                   return (
                     <div className={`gpSlot ${prof ? "" : "gpSlotEmpty"}`}>
-                      {avatar ? (
-                        <img className="gpSlotImg" src={avatar} alt={name} />
-                      ) : (
-                        <div className="gpSlotImg">🦍</div>
-                      )}
+                      {avatar ? <img className="gpSlotImg" src={avatar} alt={name} /> : <div className="gpSlotImg">🦍</div>}
                       <div className="gpSlotText">
                         <div className="gpSlotName">{prof ? name : ""}</div>
-                        <div className="gpSlotMeta">{prof ? "@"+(prof?.handle || String(prof?.id||"").slice(0,6)) : fallbackMeta}</div>
+                        <div className="gpSlotMeta">
+                          {prof ? "@" + (prof?.handle || String(prof?.id || "").slice(0, 6)) : fallbackMeta}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1109,9 +1070,9 @@ async function handleCreate() {
                     </div>
 
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, padding: "0 16px" }}>
-                      {myStatus === "approved" ? <span className="meta">✅ Estás dentro</span> : null}
-                      {myStatus === "pending" ? <span className="meta">⏳ Pendiente</span> : null}
-                      {myStatus === "rejected" ? <span className="meta">❌ Rechazado</span> : null}
+                      {myStatus2 === "approved" ? <span className="meta">✅ Estás dentro</span> : null}
+                      {myStatus2 === "pending" ? <span className="meta">⏳ Pendiente</span> : null}
+                      {myStatus2 === "rejected" ? <span className="meta">❌ Rechazado</span> : null}
                       {isCreator ? <span className="meta">👑 Eres creador</span> : null}
                       {latestChatTsByMatch[m.id] ? <span className="meta">💬 Chat activo</span> : null}
                     </div>
@@ -1121,16 +1082,26 @@ async function handleCreate() {
                     <div className="gpActionBar">
                       <div className="gpActionLeft">
                         {isCreator ? (
-                          <button type="button" className="btn ghost gpIconBtn" onClick={() => openRequests(m.id)}>
-                            📥 Solicitudes
-                          </button>
-                        ) : null}
-
-                        {session && !isCreator && (myStatus === "approved" || iAmInPlayers) ? (
                           <button
                             type="button"
                             className="btn ghost gpIconBtn"
                             onClick={() => {
+                              setChatOpenFor(null);
+                              setInviteOpenFor(null);
+                              setCedeOpenFor(null);
+                              openRequests(m.id);
+                            }}
+                          >
+                            📥 Solicitudes
+                          </button>
+                        ) : null}
+
+                        {session && !isCreator && (myStatus2 === "approved" || iAmInPlayers) ? (
+                          <button
+                            type="button"
+                            className="btn ghost gpIconBtn"
+                            onClick={() => {
+                              closeAllModals();
                               setCedeOpenFor(m.id);
                               setCedeQuery("");
                               setCedeResults([]);
@@ -1145,6 +1116,7 @@ async function handleCreate() {
                             type="button"
                             className="btn ghost gpIconBtn"
                             onClick={() => {
+                              closeAllModals();
                               setInviteOpenFor(m.id);
                               setInviteQuery("");
                               setInviteResults([]);
@@ -1163,17 +1135,16 @@ async function handleCreate() {
                       </div>
 
                       <div className="gpActionRight">
-                        {!session ? (
-                          <button className="btn" onClick={goLogin}>Entrar</button>
-                        ) : null}
+                        {!session ? <button className="btn" onClick={goLogin}>Entrar</button> : null}
 
-                        {session && !isCreator && !myStatus && left > 0 ? (
+                        {session && !isCreator && !myStatus2 && left > 0 ? (
                           <button
                             className="btn"
                             onClick={async () => {
                               try {
                                 await requestJoin(m.id);
                                 toast.success("Solicitud enviada");
+                                await load();
                               } catch (e) {
                                 toast.error(e?.message || "No se pudo enviar la solicitud");
                               }
@@ -1183,13 +1154,14 @@ async function handleCreate() {
                           </button>
                         ) : null}
 
-                        {session && myStatus === "pending" ? (
+                        {session && myStatus2 === "pending" ? (
                           <button
                             className="btn ghost"
                             onClick={async () => {
                               try {
                                 await cancelMyJoin(m.id);
                                 toast.success("Solicitud cancelada");
+                                await load();
                               } catch (e) {
                                 toast.error(e?.message || "No se pudo cancelar");
                               }
@@ -1218,59 +1190,66 @@ async function handleCreate() {
             </ul>
           </div>
 
-          {status.error ? (
-            <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div>
-          ) : null}
+          {status.error ? <div style={{ marginTop: 12, color: "#dc2626", fontWeight: 900 }}>{status.error}</div> : null}
         </div>
       </div>
 
-      
+      {/* ===========================
+         MODAL: CREAR
+      =========================== */}
       {openCreate && (
-        <div className="modal" onClick={() => setOpenCreate(false)} style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.85)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '20px',
-          backdropFilter: 'blur(4px)'
-        }}>
-          <div onClick={(e) => e.stopPropagation()} style={{
-            background: '#1a1a1a',
-            borderRadius: '20px',
-            padding: '24px',
-            maxWidth: '500px',
-            width: '100%',
-            maxHeight: '85vh',
-            overflowY: 'auto',
-            border: '1px solid rgba(116, 184, 0, 0.2)'
-          }}>
-            <h2 style={{ color: '#74B800', marginBottom: '20px', fontSize: '22px', fontWeight: 900 }}>
-              ➕ Crear Partido
-            </h2>
-            
-            {saveError && (
-              <div style={{ 
-                background: 'rgba(220, 38, 38, 0.2)', 
-                padding: '12px', 
-                borderRadius: '10px',
-                color: '#ff6b6b',
-                marginBottom: '16px',
-                fontSize: '13px',
-                fontWeight: 700
-              }}>
+        <div
+          className="modal"
+          onClick={() => setOpenCreate(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10000,
+            padding: "20px",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#1a1a1a",
+              borderRadius: "20px",
+              padding: "24px",
+              maxWidth: "500px",
+              width: "100%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              border: "1px solid rgba(116, 184, 0, 0.2)",
+            }}
+          >
+            <h2 style={{ color: "#74B800", marginBottom: "20px", fontSize: "22px", fontWeight: 900 }}>➕ Crear Partido</h2>
+
+            {saveError ? (
+              <div
+                style={{
+                  background: "rgba(220, 38, 38, 0.2)",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  color: "#ff6b6b",
+                  marginBottom: "16px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                }}
+              >
                 {saveError}
               </div>
-            )}
+            ) : null}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
-                <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                   Club *
                 </label>
                 <input
@@ -1283,203 +1262,210 @@ async function handleCreate() {
                   placeholder="Buscar club..."
                   disabled={saving}
                   style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "#fff",
+                    fontSize: "14px",
+                    boxSizing: "border-box",
                   }}
                 />
-                {showClubSuggest && clubSuggestions.length > 0 && (
-                  <div style={{
-                    background: '#2a2a2a',
-                    borderRadius: '10px',
-                    marginTop: '8px',
-                    maxHeight: '200px',
-                    overflowY: 'auto',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}>
+                {showClubSuggest && clubSuggestions.length > 0 ? (
+                  <div
+                    style={{
+                      background: "#2a2a2a",
+                      borderRadius: "10px",
+                      marginTop: "8px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
                     {clubSuggestions.map((c, idx) => (
                       <div
                         key={c.id || idx}
                         onClick={() => pickClub(c)}
                         style={{
-                          padding: '12px',
-                          cursor: 'pointer',
-                          borderBottom: idx < clubSuggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                          color: '#fff',
-                          fontSize: '14px',
-                          transition: 'background 0.2s'
+                          padding: "12px",
+                          cursor: "pointer",
+                          borderBottom: idx < clubSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                          color: "#fff",
+                          fontSize: "14px",
+                          transition: "background 0.2s",
                         }}
-                        onMouseEnter={(e) => e.target.style.background = 'rgba(116, 184, 0, 0.1)'}
-                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
                       >
                         {c.name}
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                     Fecha
                   </label>
                   <input
                     type="date"
                     value={form.date}
-                    onChange={(e) => setForm({...form, date: e.target.value})}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
                     disabled={saving}
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                     Hora
                   </label>
                   <input
                     type="time"
                     value={form.time}
-                    onChange={(e) => setForm({...form, time: e.target.value})}
+                    onChange={(e) => setForm({ ...form, time: e.target.value })}
                     disabled={saving}
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                   Nivel
                 </label>
                 <select
                   value={form.level}
-                  onChange={(e) => setForm({...form, level: e.target.value})}
+                  onChange={(e) => setForm({ ...form, level: e.target.value })}
                   disabled={saving}
                   style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: '#fff',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "#fff",
+                    fontSize: "14px",
+                    boxSizing: "border-box",
                   }}
                 >
-                  <option value="iniciacion" style={{ background: '#1a1a1a' }}>Iniciación</option>
-                  <option value="medio" style={{ background: '#1a1a1a' }}>Medio</option>
-                  <option value="alto" style={{ background: '#1a1a1a' }}>Alto</option>
+                  <option value="iniciacion" style={{ background: "#1a1a1a" }}>
+                    Iniciación
+                  </option>
+                  <option value="medio" style={{ background: "#1a1a1a" }}>
+                    Medio
+                  </option>
+                  <option value="alto" style={{ background: "#1a1a1a" }}>
+                    Alto
+                  </option>
                 </select>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                     Duración (min)
                   </label>
                   <input
                     type="number"
                     value={form.durationMin}
-                    onChange={(e) => setForm({...form, durationMin: parseInt(e.target.value) || 90})}
+                    onChange={(e) => setForm({ ...form, durationMin: parseInt(e.target.value) || 90 })}
                     disabled={saving}
                     min="30"
                     max="180"
                     step="15"
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ color: '#fff', display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 700 }}>
+                  <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>
                     Precio/jugador €
                   </label>
                   <input
                     type="number"
                     value={form.pricePerPlayer}
-                    onChange={(e) => setForm({...form, pricePerPlayer: e.target.value})}
+                    onChange={(e) => setForm({ ...form, pricePerPlayer: e.target.value })}
                     disabled={saving}
                     placeholder="10"
                     min="0"
                     step="0.5"
                     style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: '#fff',
-                      fontSize: '14px',
-                      boxSizing: 'border-box'
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      color: "#fff",
+                      fontSize: "14px",
+                      boxSizing: "border-box",
                     }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+              <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
                 <button
                   onClick={handleCreate}
                   disabled={saving}
                   style={{
                     flex: 1,
-                    padding: '14px',
-                    borderRadius: '12px',
-                    background: saving ? 'rgba(116, 184, 0, 0.5)' : 'linear-gradient(135deg, #74B800 0%, #9BE800 100%)',
-                    color: '#000',
+                    padding: "14px",
+                    borderRadius: "12px",
+                    background: saving ? "rgba(116, 184, 0, 0.5)" : "linear-gradient(135deg, #74B800 0%, #9BE800 100%)",
+                    color: "#000",
                     fontWeight: 900,
-                    border: 'none',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    fontSize: '15px',
-                    boxShadow: '0 4px 12px rgba(116, 184, 0, 0.3)',
-                    transition: 'all 0.2s'
+                    border: "none",
+                    cursor: saving ? "not-allowed" : "pointer",
+                    fontSize: "15px",
+                    boxShadow: "0 4px 12px rgba(116, 184, 0, 0.3)",
+                    transition: "all 0.2s",
                   }}
                 >
-                  {saving ? '⏳ Creando...' : '✅ Crear Partido'}
+                  {saving ? "⏳ Creando..." : "✅ Crear Partido"}
                 </button>
+
                 <button
                   onClick={() => setOpenCreate(false)}
                   disabled={saving}
                   style={{
-                    padding: '14px 20px',
-                    borderRadius: '12px',
-                    background: 'rgba(255,255,255,0.08)',
-                    color: '#fff',
+                    padding: "14px 20px",
+                    borderRadius: "12px",
+                    background: "rgba(255,255,255,0.08)",
+                    color: "#fff",
                     fontWeight: 700,
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    fontSize: '15px',
-                    transition: 'all 0.2s'
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    cursor: saving ? "not-allowed" : "pointer",
+                    fontSize: "15px",
+                    transition: "all 0.2s",
                   }}
                 >
                   ❌
@@ -1489,216 +1475,432 @@ async function handleCreate() {
           </div>
         </div>
       )}
-      {chatOpenFor ? (
-  <div
-    className="modal"
-    onClick={() => setChatOpenFor(null)}
-    style={{
-      position: "fixed",
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      background: "rgba(0,0,0,0.65)",
-      zIndex: 30000,
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "center",
-      padding: 12,
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: "100%",
-        maxWidth: 640,
-        background: "#111",
-        borderRadius: 18,
-        border: "1px solid rgba(255,255,255,0.14)",
-        padding: 12,
-        maxHeight: "70vh",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-        <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
-        <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
-      </div>
 
-      <div style={{ marginTop: 10, height: "42vh", overflowY: "auto", paddingRight: 6 }}>
-        {chatLoading ? (
-          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
-        ) : chatItems.length === 0 ? (
-          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
-        ) : (
-          chatItems.map((it, idx) => (
-            <div
-              key={it.id || idx}
-              style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
-                {it.author_name || it.author || "Jugador"}
+      {/* ===========================
+         MODAL: CHAT
+      =========================== */}
+      {chatOpenFor ? (
+        <div
+          className="modal"
+          onClick={() => setChatOpenFor(null)}
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.65)",
+            zIndex: 30000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: 12,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 640,
+              background: "#111",
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.14)",
+              padding: 12,
+              maxHeight: "70vh",
+              overflow: "hidden",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
+                ❌
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10, height: "42vh", overflowY: "auto", paddingRight: 6 }}>
+              {chatLoading ? (
+                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
+              ) : chatItems.length === 0 ? (
+                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
+              ) : (
+                chatItems.map((it, idx) => (
+                  <div key={it.id || idx} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
+                      {it.author_name || it.author || "Jugador"}
+                    </div>
+                    <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>{it.message || it.text || ""}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <input
+                value={chatText}
+                onChange={(e) => setChatText(e.target.value)}
+                placeholder="Escribe…"
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+              <button className="btn" onClick={handleSendChat} style={{ fontWeight: 900 }}>
+                Enviar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ===========================
+         MODAL: SOLICITUDES
+      =========================== */}
+      {requestsOpenFor ? (
+        <div
+          className="modal"
+          onClick={() => setRequestsOpenFor(null)}
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.65)",
+            zIndex: 28000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: 12,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 640,
+              background: "#111",
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.14)",
+              padding: 12,
+              maxHeight: "70vh",
+              overflow: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontWeight: 900, color: "#74B800" }}>📥 Solicitudes</div>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
+                ❌
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              {pendingBusy ? (
+                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 800 }}>Cargando…</div>
+              ) : pending.length === 0 ? (
+                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 800 }}>No hay solicitudes pendientes.</div>
+              ) : (
+                pending.map((r) => {
+                  const pid = String(r.user_id || "");
+                  const p = profilesById?.[pid] || null;
+                  const name = (p?.name && String(p.name).trim()) || (p?.handle && String(p.handle).trim()) || pid.slice(0, 8);
+                  return (
+                    <div
+                      key={r.id}
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        borderRadius: 14,
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        background: "rgba(255,255,255,0.04)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                      }}
+                    >
+                      <div>
+                        <div style={{ color: "#fff", fontWeight: 900 }}>{name}</div>
+                        <div style={{ color: "#fff", opacity: 0.7, fontSize: 12 }}>@{p?.handle || pid.slice(0, 6)}</div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn" onClick={() => handleApprove(r.id)} style={{ fontWeight: 900 }}>
+                          Aprobar
+                        </button>
+                        <button className="btn ghost" onClick={() => handleReject(r.id)} style={{ fontWeight: 900 }}>
+                          Rechazar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ===========================
+         MODAL: INVITAR
+      =========================== */}
+      {inviteOpenFor ? (
+        <div
+          className="modal"
+          onClick={() => setInviteOpenFor(null)}
+          style={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.65)",
+            zIndex: 29000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: 12,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 640,
+              background: "#111",
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.14)",
+              padding: 12,
+              maxHeight: "70vh",
+              overflow: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontWeight: 900, color: "#74B800" }}>📣 Invitar</div>
+              <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>
+                ❌
+              </button>
+            </div>
+
+            <div style={{ marginTop: 10 }}>
+              <input
+                value={inviteQuery}
+                onChange={(e) => setInviteQuery(e.target.value)}
+                placeholder="Busca por nombre o @handle… (mín. 3 letras)"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+
+              {inviteSelected.length > 0 ? (
+                <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {inviteSelected.map((id) => (
+                    <button
+                      key={id}
+                      className="btn ghost"
+                      onClick={() => setInviteSelected((prev) => prev.filter((x) => x !== id))}
+                    >
+                      ✅ {String(id).slice(0, 8)} ✕
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              <div style={{ marginTop: 10 }}>
+                {inviteQuery.trim().length < 3 ? (
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Escribe al menos 3 letras para buscar.</div>
+                ) : inviteResults.length === 0 ? (
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Sin resultados.</div>
+                ) : (
+                  inviteResults.map((p) => {
+                    const pid = String(p.id);
+                    const name =
+                      (p?.name && String(p.name).trim()) ||
+                      (p?.handle && String(p.handle).trim()) ||
+                      pid.slice(0, 8);
+
+                    const selected = inviteSelected.includes(pid);
+
+                    return (
+                      <button
+                        key={pid}
+                        onClick={() => {
+                          setInviteSelected((prev) => {
+                            if (prev.includes(pid)) return prev.filter((x) => x !== pid);
+                            return [...prev, pid].slice(0, 10);
+                          });
+                        }}
+                        style={{
+                          width: "100%",
+                          textAlign: "left",
+                          marginTop: 8,
+                          padding: 12,
+                          borderRadius: 14,
+                          border: "1px solid rgba(255,255,255,0.10)",
+                          background: selected ? "rgba(116,184,0,0.18)" : "rgba(255,255,255,0.04)",
+                          color: "#fff",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div style={{ fontWeight: 900 }}>{selected ? "✅ " : ""}{name}</div>
+                        <div style={{ opacity: 0.75, fontSize: 12 }}>@{p?.handle || pid.slice(0, 6)}</div>
+                      </button>
+                    );
+                  })
+                )}
               </div>
-              <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>
-                {it.message || it.text || ""}
+
+              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                <button
+                  className="btn"
+                  disabled={inviteBusy || inviteSelected.length === 0}
+                  onClick={() => sendInvites({ matchId: inviteOpenFor, userIds: inviteSelected })}
+                  style={{ fontWeight: 900, flex: 1, opacity: inviteBusy || inviteSelected.length === 0 ? 0.6 : 1 }}
+                >
+                  {inviteBusy ? "Enviando…" : `Enviar invitaciones (${inviteSelected.length})`}
+                </button>
+
+                <button
+                  className="btn ghost"
+                  onClick={() => {
+                    setInviteQuery("");
+                    setInviteResults([]);
+                    setInviteSelected([]);
+                  }}
+                >
+                  Limpiar
+                </button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          </div>
+        </div>
+      ) : null}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-        <input
-          value={chatText}
-          onChange={(e) => setChatText(e.target.value)}
-          placeholder="Escribe…"
+      {/* ===========================
+         MODAL: CEDER PLAZA
+      =========================== */}
+      {cedeOpenFor ? (
+        <div
+          className="modal"
+          onClick={() => setCedeOpenFor(null)}
           style={{
-            flex: 1,
-            padding: "10px 12px",
-            borderRadius: 12,
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            color: "#fff",
-            outline: "none",
-            boxSizing: "border-box",
+            position: "fixed",
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            background: "rgba(0,0,0,0.65)",
+            zIndex: 26000,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            padding: 12,
           }}
-        />
-        <button className="btn" onClick={handleSendChat} style={{ fontWeight: 900 }}>
-          Enviar
-        </button>
-      </div>
-    </div>
-  </div>
-) : null}
-{requestsOpenFor ? (
-  <div
-    className="modal"
-    onClick={() => setRequestsOpenFor(null)}
-    style={{
-      position: "fixed",
-      left: 0, right: 0, top: 0, bottom: 0,
-      background: "rgba(0,0,0,0.65)",
-      zIndex: 28000,
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "center",
-      padding: 12,
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: "100%",
-        maxWidth: 640,
-        background: "#111",
-        borderRadius: 18,
-        border: "1px solid rgba(255,255,255,0.14)",
-        padding: 12,
-        maxHeight: "70vh",
-        overflow: "auto",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-        <div style={{ fontWeight: 900, color: "#74B800" }}>📥 Solicitudes</div>
-        <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>❌</button>
-      </div>
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 640,
+              background: "#111",
+              borderRadius: 18,
+              border: "1px solid rgba(255,255,255,0.14)",
+              padding: 12,
+              maxHeight: "70vh",
+              overflow: "auto",
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ fontWeight: 900, color: "#74B800" }}>🤝 Ceder plaza</div>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>
+                ❌
+              </button>
+            </div>
 
-      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
-        Partido: {String(requestsOpenFor)}
-      </div>
+            <div style={{ marginTop: 10 }}>
+              <input
+                value={cedeQuery}
+                onChange={(e) => setCedeQuery(e.target.value)}
+                placeholder="Busca a quién ceder (mín. 3 letras)…"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: 12,
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
 
-      {/* Aquí luego metemos la lista real de solicitudes */}
-    </div>
-  </div>
-) : null}
+              <div style={{ marginTop: 10 }}>
+                {cedeQuery.trim().length < 3 ? (
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Escribe al menos 3 letras para buscar.</div>
+                ) : cedeResults.length === 0 ? (
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Sin resultados.</div>
+                ) : (
+                  cedeResults.map((p) => {
+                    const pid = String(p.id);
+                    const name =
+                      (p?.name && String(p.name).trim()) ||
+                      (p?.handle && String(p.handle).trim()) ||
+                      pid.slice(0, 8);
 
-{inviteOpenFor ? (
-  <div
-    className="modal"
-    onClick={() => setInviteOpenFor(null)}
-    style={{
-      position: "fixed",
-      left: 0, right: 0, top: 0, bottom: 0,
-      background: "rgba(0,0,0,0.65)",
-      zIndex: 29000,
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "center",
-      padding: 12,
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: "100%",
-        maxWidth: 640,
-        background: "#111",
-        borderRadius: 18,
-        border: "1px solid rgba(255,255,255,0.14)",
-        padding: 12,
-        maxHeight: "70vh",
-        overflow: "auto",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-        <div style={{ fontWeight: 900, color: "#74B800" }}>📣 Invitar</div>
-        <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>❌</button>
-      </div>
+                    return (
+                      <div
+                        key={pid}
+                        style={{
+                          marginTop: 8,
+                          padding: 12,
+                          borderRadius: 14,
+                          border: "1px solid rgba(255,255,255,0.10)",
+                          background: "rgba(255,255,255,0.04)",
+                          color: "#fff",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 900 }}>{name}</div>
+                          <div style={{ opacity: 0.75, fontSize: 12 }}>@{p?.handle || pid.slice(0, 6)}</div>
+                        </div>
 
-      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
-        Partido: {String(inviteOpenFor)}
-      </div>
-
-      {/* Aquí luego metemos buscador + resultados + invitar */}
-    </div>
-  </div>
-) : null}
-
-{cedeOpenFor ? (
-  <div
-    className="modal"
-    onClick={() => setCedeOpenFor(null)}
-    style={{
-      position: "fixed",
-      left: 0, right: 0, top: 0, bottom: 0,
-      background: "rgba(0,0,0,0.65)",
-      zIndex: 27000,
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "center",
-      padding: 12,
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        width: "100%",
-        maxWidth: 640,
-        background: "#111",
-        borderRadius: 18,
-        border: "1px solid rgba(255,255,255,0.14)",
-        padding: 12,
-        maxHeight: "70vh",
-        overflow: "auto",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-        <div style={{ fontWeight: 900, color: "#74B800" }}>🤝 Ceder plaza</div>
-        <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>❌</button>
-      </div>
-
-      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
-        Partido: {String(cedeOpenFor)}
-      </div>
-
-      {/* Aquí luego metemos buscador + cesión */}
-    </div>
-  </div>
-) : null}
+                        <button
+                          className="btn"
+                          disabled={cedeBusy}
+                          onClick={() => transferSpot({ matchId: cedeOpenFor, toUserId: pid })}
+                          style={{ fontWeight: 900, opacity: cedeBusy ? 0.6 : 1 }}
+                        >
+                          {cedeBusy ? "Cediendo…" : "Ceder"}
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
