@@ -5,9 +5,9 @@
 @import './styles/GlobalFixes.css';
 @import './styles/NAVBAR-BUTTONS-FIXED.css';
 @import './styles/ULTRA-COMPACT.css';
-@import './styles/NAVBAR-BUTTONS-FIXED.css';
-@import './styles/MOBILE-COMPACT.css';
-@import './styles/CARDS-MINI-HEIGHT.css';  /* ← AÑADE ESTA LÍNEA */
+@import "./styles/NAVBAR-BUTTONS-FIXED.css";
+@import "./styles/MOBILE-COMPACT.css";
+@import "./styles/ULTRA-COMPACT.css";
 /* ... resto del CSS ... */
 /* Reset base */
 *, *::before, *::after { box-sizing: border-box; }
