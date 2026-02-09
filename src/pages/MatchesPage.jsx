@@ -1485,7 +1485,11 @@ async function handleCreate() {
                   ❌
                 </button>
               </div>
-              {chatOpenFor ? (
+            </div>
+          </div>
+        </div>
+      )}
+      {chatOpenFor ? (
   <div
     className="modal"
     onClick={() => setChatOpenFor(null)}
@@ -1567,10 +1571,6 @@ async function handleCreate() {
     </div>
   </div>
 ) : null}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
