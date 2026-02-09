@@ -618,3 +618,69 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+/* ===== ROSTER 2x2: dos arriba, dos abajo, VS en medio ===== */
+
+/* El roster se vuelve grid vertical: team1 / vs / team2 */
+.gpRoster{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Cada equipo: 2 columnas (A1 A2) y (B1 B2) */
+.gpTeam{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 2px !important;
+  align-items: center !important;
+}
+
+/* El VS centrado entre ambas filas */
+.gpVs{
+  justify-self: center !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slot súper compacto en horizontal */
+.gpSlot{
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 1px 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar pequeño */
+.gpSlotImg{
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  border-radius: 4px !important;
+}
+
+/* Nombre: una sola línea y recorta */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Meta fuera (para bajar altura) */
+.gpSlotMeta{
+  display: none !important;
+}
