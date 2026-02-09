@@ -460,7 +460,7 @@
   margin-bottom: 0 !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
-  min-height: 100px !important;
+  min-height: 60px !important;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -631,7 +631,7 @@
 @media (max-height: 700px) {
   /* iPhone mini - cards un poco más pequeñas */
   .gpMatchCard {
-    min-height: 90px !important;
+    min-height: 50px !important;
     padding: 5px !important;
   }
   
