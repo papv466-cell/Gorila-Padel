@@ -804,7 +804,6 @@ export default function MatchesPage() {
 
       await load();
 
-      // refresca perfil creador para roster
       try {
         const { data: profile, error } = await supabase
           .from("profiles_public")
@@ -946,9 +945,7 @@ export default function MatchesPage() {
                       {fmtDayLabel(d)}
                     </div>
                     <div style={{ fontSize: "16px", fontWeight: 900, marginTop: "2px" }}>{d.slice(8, 10)}</div>
-                    {hasMatches ? (
-                      <div style={{ fontSize: "14px", marginTop: "2px", lineHeight: 1 }}>🦍</div>
-                    ) : null}
+                    {hasMatches ? <div style={{ fontSize: "14px", marginTop: "2px", lineHeight: 1 }}>🦍</div> : null}
                   </button>
                 );
               })}
@@ -1013,7 +1010,10 @@ export default function MatchesPage() {
                   "Creador";
                 const creatorAvatar = creatorProf?.avatar_url || "";
 
-                const roster = (playersByMatchId?.[String(m.id)] || []).filter((p) => String(p?.id || "") !== creatorId).slice(0, 3);
+                const roster = (playersByMatchId?.[String(m.id)] || [])
+                  .filter((p) => String(p?.id || "") !== creatorId)
+                  .slice(0, 3);
+
                 const slotProfile = (idx) => roster[idx] || null;
 
                 const Slot = ({ prof, fallbackMeta }) => {
@@ -1086,9 +1086,7 @@ export default function MatchesPage() {
                             type="button"
                             className="btn ghost gpIconBtn"
                             onClick={() => {
-                              setChatOpenFor(null);
-                              setInviteOpenFor(null);
-                              setCedeOpenFor(null);
+                              closeAllModals();
                               openRequests(m.id);
                             }}
                           >
@@ -1368,15 +1366,9 @@ export default function MatchesPage() {
                     boxSizing: "border-box",
                   }}
                 >
-                  <option value="iniciacion" style={{ background: "#1a1a1a" }}>
-                    Iniciación
-                  </option>
-                  <option value="medio" style={{ background: "#1a1a1a" }}>
-                    Medio
-                  </option>
-                  <option value="alto" style={{ background: "#1a1a1a" }}>
-                    Alto
-                  </option>
+                  <option value="iniciacion" style={{ background: "#1a1a1a" }}>Iniciación</option>
+                  <option value="medio" style={{ background: "#1a1a1a" }}>Medio</option>
+                  <option value="alto" style={{ background: "#1a1a1a" }}>Alto</option>
                 </select>
               </div>
 
@@ -1513,9 +1505,7 @@ export default function MatchesPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
-              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>
-                ❌
-              </button>
+              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
             </div>
 
             <div style={{ marginTop: 10, height: "42vh", overflowY: "auto", paddingRight: 6 }}>
@@ -1529,7 +1519,9 @@ export default function MatchesPage() {
                     <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
                       {it.author_name || it.author || "Jugador"}
                     </div>
-                    <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>{it.message || it.text || ""}</div>
+                    <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>
+                      {it.message || it.text || ""}
+                    </div>
                   </div>
                 ))
               )}
@@ -1568,10 +1560,7 @@ export default function MatchesPage() {
           onClick={() => setRequestsOpenFor(null)}
           style={{
             position: "fixed",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
+            left: 0, right: 0, top: 0, bottom: 0,
             background: "rgba(0,0,0,0.65)",
             zIndex: 28000,
             display: "flex",
@@ -1596,9 +1585,7 @@ export default function MatchesPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div style={{ fontWeight: 900, color: "#74B800" }}>📥 Solicitudes</div>
-              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>
-                ❌
-              </button>
+              <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>❌</button>
             </div>
 
             <div style={{ marginTop: 10 }}>
@@ -1610,7 +1597,11 @@ export default function MatchesPage() {
                 pending.map((r) => {
                   const pid = String(r.user_id || "");
                   const p = profilesById?.[pid] || null;
-                  const name = (p?.name && String(p.name).trim()) || (p?.handle && String(p.handle).trim()) || pid.slice(0, 8);
+                  const name =
+                    (p?.name && String(p.name).trim()) ||
+                    (p?.handle && String(p.handle).trim()) ||
+                    pid.slice(0, 8);
+
                   return (
                     <div
                       key={r.id}
@@ -1657,10 +1648,7 @@ export default function MatchesPage() {
           onClick={() => setInviteOpenFor(null)}
           style={{
             position: "fixed",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
+            left: 0, right: 0, top: 0, bottom: 0,
             background: "rgba(0,0,0,0.65)",
             zIndex: 29000,
             display: "flex",
@@ -1685,9 +1673,7 @@ export default function MatchesPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div style={{ fontWeight: 900, color: "#74B800" }}>📣 Invitar</div>
-              <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>
-                ❌
-              </button>
+              <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>❌</button>
             </div>
 
             <div style={{ marginTop: 10 }}>
@@ -1723,9 +1709,13 @@ export default function MatchesPage() {
 
               <div style={{ marginTop: 10 }}>
                 {inviteQuery.trim().length < 3 ? (
-                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Escribe al menos 3 letras para buscar.</div>
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>
+                    Escribe al menos 3 letras para buscar.
+                  </div>
                 ) : inviteResults.length === 0 ? (
-                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Sin resultados.</div>
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>
+                    Sin resultados.
+                  </div>
                 ) : (
                   inviteResults.map((p) => {
                     const pid = String(p.id);
@@ -1757,8 +1747,12 @@ export default function MatchesPage() {
                           cursor: "pointer",
                         }}
                       >
-                        <div style={{ fontWeight: 900 }}>{selected ? "✅ " : ""}{name}</div>
-                        <div style={{ opacity: 0.75, fontSize: 12 }}>@{p?.handle || pid.slice(0, 6)}</div>
+                        <div style={{ fontWeight: 900 }}>
+                          {selected ? "✅ " : ""}{name}
+                        </div>
+                        <div style={{ opacity: 0.75, fontSize: 12 }}>
+                          @{p?.handle || pid.slice(0, 6)}
+                        </div>
                       </button>
                     );
                   })
@@ -1800,10 +1794,7 @@ export default function MatchesPage() {
           onClick={() => setCedeOpenFor(null)}
           style={{
             position: "fixed",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
+            left: 0, right: 0, top: 0, bottom: 0,
             background: "rgba(0,0,0,0.65)",
             zIndex: 26000,
             display: "flex",
@@ -1828,9 +1819,7 @@ export default function MatchesPage() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <div style={{ fontWeight: 900, color: "#74B800" }}>🤝 Ceder plaza</div>
-              <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>
-                ❌
-              </button>
+              <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>❌</button>
             </div>
 
             <div style={{ marginTop: 10 }}>
@@ -1852,9 +1841,13 @@ export default function MatchesPage() {
 
               <div style={{ marginTop: 10 }}>
                 {cedeQuery.trim().length < 3 ? (
-                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Escribe al menos 3 letras para buscar.</div>
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>
+                    Escribe al menos 3 letras para buscar.
+                  </div>
                 ) : cedeResults.length === 0 ? (
-                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>Sin resultados.</div>
+                  <div style={{ color: "#fff", opacity: 0.7, fontWeight: 700 }}>
+                    Sin resultados.
+                  </div>
                 ) : (
                   cedeResults.map((p) => {
                     const pid = String(p.id);
@@ -1881,7 +1874,9 @@ export default function MatchesPage() {
                       >
                         <div>
                           <div style={{ fontWeight: 900 }}>{name}</div>
-                          <div style={{ opacity: 0.75, fontSize: 12 }}>@{p?.handle || pid.slice(0, 6)}</div>
+                          <div style={{ opacity: 0.75, fontSize: 12 }}>
+                            @{p?.handle || pid.slice(0, 6)}
+                          </div>
                         </div>
 
                         <button
