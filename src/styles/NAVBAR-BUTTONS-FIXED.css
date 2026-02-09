@@ -460,7 +460,7 @@
   margin-bottom: 0 !important;
   border-radius: 8px !important;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
-  min-height: 150px !important;
+  min-height: 120px !important;
   display: flex !important;
   flex-direction: column !important;
 }
@@ -631,7 +631,7 @@
 @media (max-height: 700px) {
   /* iPhone mini - cards un poco más pequeñas */
   .gpMatchCard {
-    min-height: 140px !important;
+    min-height: 112px !important;
     padding: 5px !important;
   }
   
@@ -649,7 +649,7 @@
 @media (min-height: 850px) {
   /* iPhone grande - cards más espaciosas */
   .gpMatchCard {
-    min-height: 160px !important;
+    min-height: 128px !important;
     padding: 7px !important;
   }
   
