@@ -501,6 +501,7 @@ export default function MatchesPage() {
     for (const m of visibleList || []) {
       const isCreator = uid && String(m.created_by_user) === uid;
       const myStatus2 = myReqStatus?.[m.id] || null;
+      const myStatusNorm = String(myStatus2 || "").trim().toLowerCase();
       if (!isCreator && myStatus2 !== "approved") continue;
       const startMs = safeParseDate(m.start_at)?.getTime?.();
       const durMin = Number(m.duration_min) || 90;
