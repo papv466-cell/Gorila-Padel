@@ -886,3 +886,94 @@
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
+/* ===== QUITAR EL RECUADRO GRANDE (court/preview) ===== */
+/* Añadimos varios selectores típicos para pillarlo sí o sí */
+.gpMatchCard .gpCourt,
+.gpMatchCard .gpCourtWrap,
+.gpMatchCard .gpMiniCourt,
+.gpMatchCard .miniCourt,
+.gpMatchCard .court,
+.gpMatchCard .courtWrap,
+.gpMatchCard .courtPreview,
+.gpMatchCard .matchCourt,
+.gpMatchCard canvas,
+.gpMatchCard svg {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* ===== ROSTER COMO TU DIBUJO: 2 arriba / 2 abajo, VS centrado ===== */
+.gpRoster{
+  /* bloque compacto y un pelín a la derecha */
+  width: max-content !important;
+  margin-left: auto !important;
+  margin-right: 10px !important;
+
+  display: grid !important;
+  grid-template-columns: auto auto auto !important; /* A | VS | B */
+  grid-template-rows: auto auto !important;         /* arriba / abajo */
+  grid-template-areas:
+    "a1 vs b1"
+    "a2 vs b2" !important;
+
+  column-gap: 10px !important;
+  row-gap: 1px !important;          /* más juntos vertical */
+  align-items: center !important;
+  justify-items: center !important;
+}
+
+/* “Aplana” los teams para poder colocar slots en el grid */
+.gpTeam{ display: contents !important; }
+
+/* TEAM IZQ (primer team) */
+.gpTeam:first-of-type .gpSlot:nth-child(1){ grid-area: a1 !important; }
+.gpTeam:first-of-type .gpSlot:nth-child(2){ grid-area: a2 !important; }
+
+/* TEAM DER (segundo team) */
+.gpTeam:last-of-type .gpSlot:nth-child(1){ grid-area: b1 !important; }
+.gpTeam:last-of-type .gpSlot:nth-child(2){ grid-area: b2 !important; }
+
+/* VS centrado, ocupando las dos filas */
+.gpVs{
+  grid-area: vs !important;
+  align-self: center !important;
+  justify-self: center !important;
+
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slots compactos (para que el roster sea bajito) */
+.gpSlot{
+  padding: 0 !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar pequeño */
+.gpSlotImg{
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+}
+
+/* Nombre compacto, sin empujar ancho */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  max-width: 80px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Meta fuera (altura abajo) */
+.gpSlotMeta{ display: none !important; }
