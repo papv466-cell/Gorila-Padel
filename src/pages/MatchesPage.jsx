@@ -131,6 +131,7 @@ export default function MatchesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const normStatus = (s) => String(s || "").trim().toLowerCase();
 
   const [playersByMatchId, setPlayersByMatchId] = useState({});
   const [rosterProfilesById, setRosterProfilesById] = useState({});
@@ -486,9 +487,10 @@ export default function MatchesPage() {
 
   const myList = useMemo(() => {
     if (!session) return [];
+    const uid = String(session.user.id);
     return filteredList.filter((m) => {
-      const st = myReqStatus[m.id];
-      return m.created_by_user === session.user.id || st === "approved" || st === "pending";
+      const st = normStatus(myReqStatus?.[m.id]);
+      return String(m.created_by_user) === uid || st === "approved" || st === "pending";
     });
   }, [filteredList, myReqStatus, session]);
 
@@ -995,7 +997,8 @@ export default function MatchesPage() {
           <div className="gpMatchesSnapWrap">
             <ul className="gpMatchesGrid">
               {visibleList.map((m) => {
-                const myStatus2 = myReqStatus?.[m.id] || null;
+                const myStatusRaw = myReqStatus?.[m.id] ?? null;
+                const myStatus2 = normStatus(myStatusRaw); // ahora es "approved" / "pending" / "rejected" limpio
                 const isCreator = !!(session?.user?.id && String(m.created_by_user) === String(session.user.id));
                 const occupied = Math.min(4, (Number(m.reserved_spots) || 1) + (approvedCounts[m.id] || 0));
                 const left = Math.max(0, 4 - occupied);
@@ -1071,9 +1074,9 @@ export default function MatchesPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10, padding: "0 16px" }}>
-                      {myStatus2 === "approved" ? <span className="meta">✅ Estás dentro</span> : null}
-                      {myStatus2 === "pending" ? <span className="meta">⏳ Pendiente</span> : null}
-                      {myStatus2 === "rejected" ? <span className="meta">❌ Rechazado</span> : null}
+                    {myStatus2 === "approved" ? <span className="meta">✅ Estás dentro</span> : null}
+                    {myStatus2 === "pending" ? <span className="meta">⏳ Pendiente</span> : null}
+                    {myStatus2 === "rejected" ? <span className="meta">❌ Rechazado</span> : null}
                       {isCreator ? <span className="meta">👑 Eres creador</span> : null}
                       {latestChatTsByMatch[m.id] ? <span className="meta">💬 Chat activo</span> : null}
                     </div>
@@ -1095,20 +1098,20 @@ export default function MatchesPage() {
                           </button>
                         ) : null}
 
-                        {session && !isCreator && (myStatus2 === "approved" || iAmInPlayers) ? (
-                          <button
-                            type="button"
-                            className="btn ghost gpIconBtn"
-                            onClick={() => {
-                              closeAllModals();
-                              setCedeOpenFor(m.id);
-                              setCedeQuery("");
-                              setCedeResults([]);
-                            }}
-                          >
-                            🤝 Ceder
-                          </button>
-                        ) : null}
+                          {session && !isCreator && (myStatus2 === "approved" || iAmInPlayers) ? (
+                            <button
+                              type="button"
+                              className="btn ghost gpIconBtn"
+                              onClick={() => {
+                                closeAllModals();
+                                setCedeOpenFor(m.id);
+                                setCedeQuery("");
+                                setCedeResults([]);
+                              }}
+                            >
+                              🤝 Ceder
+                            </button>
+                          ) : null}
 
                         {session && isCreator ? (
                           <button
