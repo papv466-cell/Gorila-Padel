@@ -1571,6 +1571,134 @@ async function handleCreate() {
     </div>
   </div>
 ) : null}
+{requestsOpenFor ? (
+  <div
+    className="modal"
+    onClick={() => setRequestsOpenFor(null)}
+    style={{
+      position: "fixed",
+      left: 0, right: 0, top: 0, bottom: 0,
+      background: "rgba(0,0,0,0.65)",
+      zIndex: 28000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 12,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: 640,
+        background: "#111",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.14)",
+        padding: 12,
+        maxHeight: "70vh",
+        overflow: "auto",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 900, color: "#74B800" }}>📥 Solicitudes</div>
+        <button className="btn ghost" onClick={() => setRequestsOpenFor(null)}>❌</button>
+      </div>
+
+      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
+        Partido: {String(requestsOpenFor)}
+      </div>
+
+      {/* Aquí luego metemos la lista real de solicitudes */}
+    </div>
+  </div>
+) : null}
+
+{inviteOpenFor ? (
+  <div
+    className="modal"
+    onClick={() => setInviteOpenFor(null)}
+    style={{
+      position: "fixed",
+      left: 0, right: 0, top: 0, bottom: 0,
+      background: "rgba(0,0,0,0.65)",
+      zIndex: 29000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 12,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: 640,
+        background: "#111",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.14)",
+        padding: 12,
+        maxHeight: "70vh",
+        overflow: "auto",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 900, color: "#74B800" }}>📣 Invitar</div>
+        <button className="btn ghost" onClick={() => setInviteOpenFor(null)}>❌</button>
+      </div>
+
+      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
+        Partido: {String(inviteOpenFor)}
+      </div>
+
+      {/* Aquí luego metemos buscador + resultados + invitar */}
+    </div>
+  </div>
+) : null}
+
+{cedeOpenFor ? (
+  <div
+    className="modal"
+    onClick={() => setCedeOpenFor(null)}
+    style={{
+      position: "fixed",
+      left: 0, right: 0, top: 0, bottom: 0,
+      background: "rgba(0,0,0,0.65)",
+      zIndex: 27000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 12,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: 640,
+        background: "#111",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.14)",
+        padding: 12,
+        maxHeight: "70vh",
+        overflow: "auto",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 900, color: "#74B800" }}>🤝 Ceder plaza</div>
+        <button className="btn ghost" onClick={() => setCedeOpenFor(null)}>❌</button>
+      </div>
+
+      <div style={{ marginTop: 10, color: "#fff", opacity: 0.8, fontWeight: 700 }}>
+        Partido: {String(cedeOpenFor)}
+      </div>
+
+      {/* Aquí luego metemos buscador + cesión */}
+    </div>
+  </div>
+) : null}
     </div>
   );
 }
