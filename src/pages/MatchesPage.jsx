@@ -1485,6 +1485,88 @@ async function handleCreate() {
                   ❌
                 </button>
               </div>
+              {chatOpenFor ? (
+  <div
+    className="modal"
+    onClick={() => setChatOpenFor(null)}
+    style={{
+      position: "fixed",
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      background: "rgba(0,0,0,0.65)",
+      zIndex: 30000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 12,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "100%",
+        maxWidth: 640,
+        background: "#111",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.14)",
+        padding: 12,
+        maxHeight: "70vh",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
+        <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
+      </div>
+
+      <div style={{ marginTop: 10, height: "42vh", overflowY: "auto", paddingRight: 6 }}>
+        {chatLoading ? (
+          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
+        ) : chatItems.length === 0 ? (
+          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
+        ) : (
+          chatItems.map((it, idx) => (
+            <div
+              key={it.id || idx}
+              style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
+                {it.author_name || it.author || "Jugador"}
+              </div>
+              <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>
+                {it.message || it.text || ""}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+        <input
+          value={chatText}
+          onChange={(e) => setChatText(e.target.value)}
+          placeholder="Escribe…"
+          style={{
+            flex: 1,
+            padding: "10px 12px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+        <button className="btn" onClick={handleSendChat} style={{ fontWeight: 900 }}>
+          Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+) : null}
             </div>
           </div>
         </div>
