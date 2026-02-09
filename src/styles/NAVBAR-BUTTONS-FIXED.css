@@ -132,33 +132,11 @@
   display: none !important;
 }
 
-/* Grid usando position fixed con bottom para máximo espacio */
-.gpMatchesSnapWrap {
-  position: fixed !important;
-  top: calc(46px + env(safe-area-inset-top, 0px) + 22px + 100px) !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  margin: 0 !important;
-  padding: 4px 6px calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  background: #000 !important;
-}
-
 /* Cards ULTRA COMPACTAS (50% más pequeñas) */
 .gpMatchesGrid {
   gap: 3px !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* Roster mini */
-.gpRoster {
-  margin-bottom: 2px !important;
-  gap: 2px !important;
 }
 
 .gpTeam {
@@ -199,15 +177,6 @@
   font-weight: 900 !important;
 }
 
-/* Headline mini */
-.gpHeadline {
-  font-size: 10px !important;
-  font-weight: 900 !important;
-  margin-bottom: 2px !important;
-  line-height: 1.1 !important;
-  padding: 0 3px !important;
-}
-
 /* Caption mini */
 .gpCaption {
   gap: 2px !important;
@@ -227,13 +196,6 @@
 .gpDivider {
   margin: 2px 0 !important;
   opacity: 0.3 !important;
-}
-
-/* Action bar mini */
-.gpActionBar {
-  padding: 0 3px 3px !important;
-  gap: 2px !important;
-  flex-wrap: wrap !important;
 }
 
 .gpActionLeft,
@@ -266,12 +228,6 @@
   gap: 2px !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* Roster SUPER compacto */
-.gpRoster {
-  margin-bottom: 2px !important;
-  gap: 1px !important;
 }
 
 .gpTeam {
@@ -316,15 +272,6 @@
   line-height: 1 !important;
 }
 
-/* Headline mini */
-.gpHeadline {
-  font-size: 9px !important;
-  font-weight: 900 !important;
-  margin-bottom: 1px !important;
-  line-height: 1 !important;
-  padding: 0 2px !important;
-}
-
 /* Caption SUPER mini */
 .gpCaption {
   gap: 1px !important;
@@ -345,13 +292,6 @@
 .gpDivider {
   margin: 1px 0 !important;
   opacity: 0.2 !important;
-}
-
-/* Action bar SUPER mini */
-.gpActionBar {
-  padding: 0 2px 2px !important;
-  gap: 1px !important;
-  flex-wrap: wrap !important;
 }
 
 .gpActionLeft,
@@ -395,9 +335,9 @@
 
 .gpMatchCard{
   height: auto !important;
-  min-height: 40px !important;   /* o incluso quítalo si no quieres mínimo */
-  overflow: auto !important;
-  padding: 5px !important;        /* antes 6 */
+  min-height: unset !important;    /* o quítalo */
+  overflow: visible !important;
+  padding: 5px !important;
 }
 
 /* Roster compacto pero legible */
@@ -546,22 +486,6 @@
   font-size: 8px !important;
 }
 
-/* Grid con padding correcto */
-.gpMatchesSnapWrap {
-  position: fixed !important;
-  top: calc(46px + env(safe-area-inset-top, 0px) + 22px + 100px) !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  margin: 0 !important;
-  padding: 4px 6px calc(100px + env(safe-area-inset-bottom, 0px)) !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  background: #000 !important;
-}
-
 /* Media queries para diferentes tamaños */
 @media (max-height: 700px) {
   /* iPhone mini - cards un poco más pequeñas */
@@ -608,3 +532,89 @@
 .gpActionBar { padding: 2px !important; gap: 2px !important; } /* antes 3 */
 .gpIconBtn { padding: 2px 4px !important; font-size: 8px !important; } /* baja un pelín */
 .gpActionRight .btn { padding: 3px 6px !important; font-size: 9px !important; } /* baja un pelín */
+/* ====== LAYOUT FIX: altura exacta del listado en móvil ====== */
+:root{
+  --gp-safe-top: env(safe-area-inset-top, 0px);
+  --gp-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --gp-topbar: 46px;      /* tu barra superior fija */
+  --gp-header: 22px;      /* .pageHeader height */
+  --gp-actions: 100px;    /* AJUSTA a la altura REAL de gpActions (ver punto 2) */
+}
+
+/* Header */
+.gpMatchesPage .pageHeader{
+  height: var(--gp-header) !important;
+}
+
+/* Acciones */
+.gpMatchesPage .gpActions{
+  /* si quieres mantenerlo fixed, perfecto */
+}
+
+/* Listado: empieza justo debajo del header+acciones */
+.gpMatchesSnapWrap{
+  position: fixed !important;
+  top: calc(var(--gp-topbar) + var(--gp-safe-top) + var(--gp-header) + var(--gp-actions)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  padding: 6px 6px calc(12px + var(--gp-safe-bottom)) !important;
+}
+/* ===== ActionBar SIEMPRE 1 línea, sin scroll horizontal ===== */
+.gpActionBar{
+  display: flex !important;
+  flex-wrap: nowrap !important;         /* NO wrap */
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+
+.gpActionLeft,
+.gpActionRight{
+  display: flex !important;
+  flex-wrap: nowrap !important;         /* NO wrap */
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;              /* clave para que puedan encoger */
+}
+/* Botones que caben: encogen, sin romper el layout */
+.gpIconBtn,
+.gpActionRight .btn{
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex: 0 1 auto !important;            /* puede encoger */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+/* En móvil: los botones pequeños sin texto (solo icono) */
+@media (max-width: 420px){
+  .gpIconBtn{
+    padding: 2px 6px !important;
+    font-size: 0 !important;            /* oculta texto si lo hay */
+    line-height: 1 !important;
+  }
+  .gpIconBtn svg,
+  .gpIconBtn i{
+    font-size: 14px !important;         /* deja visible el icono */
+  }
+
+  /* Botón principal compacto y con texto corto */
+  .gpActionRight .btn{
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    max-width: 42vw !important;         /* para que no se coma todo */
+  }
+}
+.gpSlotName,
+.gpHeadline,
+.gpChip,
+.gpMatchCard .meta{
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
