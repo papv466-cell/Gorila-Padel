@@ -4294,3 +4294,6 @@ input[type="date"].gpInput::-webkit-calendar-picker-indicator {
   width: 24px;
   height: 24px;
 }
+@import './styles/NAVBAR-BUTTONS-FIXED.css';
+@import './styles/MOBILE-COMPACT.css';
+@import './styles/CARDS-MINI-HEIGHT.css';  /* ← AÑADE ESTA LÍNEA */
