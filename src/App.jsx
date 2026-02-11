@@ -178,14 +178,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-          <Route
-            path="/inclusivo"
-            element={
-              <RequireAuth session={session}>
-                <InclusivePage />
-              </RequireAuth>
-            }
-          />
 
           <Route
             path="/mapa"
