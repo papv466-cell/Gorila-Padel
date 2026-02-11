@@ -33,7 +33,7 @@ export default function PlayHubPage() {
               <div className="gpHubCardMeta">Para todos. Sin excusas.</div>
             </button>
 
-            <button className="gpHubCard" onClick={() => navigate("/partidos")}>
+            <button className="gpHubCard gpHubCardPrimary" onClick={() => navigate("/partidos")}>
               <div className="gpHubIcon">🎾</div>
               <div className="gpHubCardTitle">Partidos</div>
               <div className="gpHubCardMeta">Busca, únete o crea uno</div>

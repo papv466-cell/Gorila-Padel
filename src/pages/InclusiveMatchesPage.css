@@ -1,42 +1,64 @@
 /* src/pages/InclusiveMatchesPage.css */
 
-/* Header: 2 textos arriba en paralelo + 2 botones debajo */
-.gpIncHeader {
+/* Header: textos arriba (2 columnas) + botones abajo (izq/der) */
+.gpIncHeader{
     padding-bottom: 12px;
   }
   
-  /* fila 1: título izq + texto der */
-  .gpIncHeaderTop {
+  /* Arriba: título izq + meta der */
+  .gpIncHeaderTop{
     display: grid;
-    grid-template-columns: 1fr 1.25fr;
+    grid-template-columns: 0.95fr 1.35fr;
     gap: 12px;
-    align-items: start;      /* ✅ evita “aire arriba” raro */
+    align-items: start;
   }
   
-  /* Título potente pero controlado */
-  .gpIncTitle {
+  /* Título */
+  .gpIncTitle{
     margin: 0 !important;
-    line-height: 1.02;
+    line-height: 1.05;
     font-weight: 950;
-    font-size: clamp(26px, 7vw, 40px);
+    font-size: clamp(22px, 7vw, 34px);
   }
   
-  /* Texto gris alineado y compacto */
-  .gpIncMeta {
+  /* Meta a la derecha, extendida */
+  .gpIncMeta{
     margin: 0 !important;
-    opacity: 0.72;
-    line-height: 1.22;
+    opacity: 0.75;
+    line-height: 1.25;
     font-size: 12px;
-    max-width: 48ch;
+    max-width: none;      /* 👈 que no se “encoj*a” */
+    justify-self: stretch; /* 👈 ocupa la derecha */
   }
   
-  /* fila 2: botones SIEMPRE debajo, en columna */
-  .gpIncHeaderActions {
+  /* Debajo: botones en la misma fila, izq/der */
+  .gpIncHeaderActions{
     margin-top: 12px;
-    display: grid;
-    gap: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
   }
   
-  .gpIncHeaderActions .btn {
-    width: 100%;
+  /* Botones con ancho controlado */
+  .gpIncHeaderActions .btn{
+    width: auto;
+    min-width: 160px;
+  }
+  
+  /* En móvil muy estrecho: que bajen a columna */
+  @media (max-width: 420px){
+    .gpIncHeaderTop{
+      grid-template-columns: 1fr;
+    }
+  
+    .gpIncHeaderActions{
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .gpIncHeaderActions .btn{
+      width: 100%;
+      min-width: 0;
+    }
   }
