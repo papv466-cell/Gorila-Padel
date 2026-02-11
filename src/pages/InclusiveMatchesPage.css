@@ -62,3 +62,64 @@
       min-width: 0;
     }
   }
+  /* Header PRO: 2 columnas x 2 filas (como tu croquis) */
+.gpIncHeader{
+    padding-bottom: 12px;
+  }
+  
+  .gpIncGrid{
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;   /* texto más ancho, botones algo menos */
+    grid-template-areas:
+      "title   right"
+      "meta    create";
+    gap: 10px 12px;
+    align-items: start;
+  }
+  
+  .gpIncTitle{
+    grid-area: title;
+    margin: 0 !important;
+    line-height: 1.02;
+    font-weight: 950;
+    font-size: clamp(26px, 7vw, 40px);
+  }
+  
+  .gpIncMeta{
+    grid-area: meta;
+    margin: 0 !important;
+    opacity: 0.75;
+    line-height: 1.25;
+    font-size: 12px;
+    max-width: 56ch;      /* que “estire” hacia la derecha */
+  }
+  
+  .gpIncBtnRight{
+    grid-area: right;
+    justify-self: end;
+    width: 100%;
+  }
+  
+  .gpIncBtnCreate{
+    grid-area: create;
+    justify-self: end;
+    width: 100%;
+  }
+  
+  /* En móvil muy estrecho: pasa a 1 columna para que nunca se pise */
+  @media (max-width: 420px){
+    .gpIncGrid{
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "title"
+        "meta"
+        "right"
+        "create";
+    }
+  
+    .gpIncBtnRight,
+    .gpIncBtnCreate{
+      justify-self: stretch;
+      width: 100%;
+    }
+  }

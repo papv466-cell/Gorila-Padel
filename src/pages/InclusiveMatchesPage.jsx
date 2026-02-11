@@ -178,24 +178,32 @@ export default function InclusiveMatchesPage() {
           {/* ✅ COMO TU CROQUIS:
               - Arriba: título izq + meta der (paralelo)
               - Debajo: botones izq/der */}
-          <div className="pageHeader gpIncHeader">
-            <div className="gpIncHeaderTop">
-              <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
-              <div className="pageMeta gpIncMeta">
-                Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
-              </div>
-            </div>
+          {/* HEADER (2x2): titulo | Ir a Partidos  /  texto | Crear */}
+                <div className="pageHeader gpIncHeader">
+                  <div className="gpIncGrid">
+                    <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
 
-            <div className="gpIncHeaderActions">
-              <button className="btn ghost" type="button" onClick={() => navigate("/partidos")}>
-                Ir a Partidos
-              </button>
+                    <button
+                      className="btn ghost gpIncBtnRight"
+                      type="button"
+                      onClick={() => navigate("/partidos")}
+                    >
+                      Ir a Partidos
+                    </button>
 
-              <button className="btn" type="button" onClick={() => setOpenCreate(true)}>
-                + Crear partido inclusivo
-              </button>
-            </div>
-          </div>
+                    <div className="pageMeta gpIncMeta">
+                      Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
+                    </div>
+
+                    <button
+                      className="btn gpIncBtnCreate"
+                      type="button"
+                      onClick={() => setOpenCreate(true)}
+                    >
+                      + Crear partido inclusivo
+                    </button>
+                  </div>
+                </div>
 
           {/* filtros */}
           <div className="card" style={{ marginTop: 10 }}>
