@@ -1,3 +1,4 @@
+// src/pages/PlayHubPage.jsx
 import { useNavigate } from "react-router-dom";
 
 export default function PlayHubPage() {
@@ -20,7 +21,13 @@ export default function PlayHubPage() {
               <div className="gpHubCardMeta">Clubs + favoritos + cerca de mí</div>
             </button>
 
-            <button className="gpHubCard gpHubCardPrimary" onClick={() => navigate("/inclusivo")}>
+            {/* ✅ VA A LA ÚNICA PÁGINA DE INCLUSIVOS */}
+            <button
+              className="gpHubCard gpHubCardPrimary"
+              onClick={() => navigate("/inclusivos")}
+              // si prefieres abrir directamente el modal de crear:
+              // onClick={() => navigate("/inclusivos?create=1")}
+            >
               <div className="gpHubIcon">♿️</div>
               <div className="gpHubCardTitle">Juega Inclusivo</div>
               <div className="gpHubCardMeta">Para todos. Sin excusas.</div>
@@ -34,7 +41,9 @@ export default function PlayHubPage() {
           </div>
 
           <div className="gpHubBottom">
-            <button className="btn ghost" onClick={() => navigate("/")}>← Inicio</button>
+            <button className="btn ghost" onClick={() => navigate("/")}>
+              ← Inicio
+            </button>
           </div>
         </div>
       </div>

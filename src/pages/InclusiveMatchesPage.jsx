@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchInclusiveMatches, createInclusiveMatch, subscribeInclusiveRealtime } from "../services/inclusiveMatches";
-
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 const NEEDS = [
   { key: "wheelchair", label: "Silla de ruedas ♿" },
   { key: "blind", label: "Ceguera / baja visión 👁️" },
@@ -55,6 +56,36 @@ export default function InclusiveMatchesPage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    const create = searchParams.get("create") === "1";
+    const filter = (searchParams.get("filter") || "").trim();
+  
+    if (create) setOpenCreate(true);
+  
+    if (filter) {
+      // Mapea título -> need key
+      const map = {
+        "Silla de ruedas": "wheelchair",
+        "Ceguera / baja visión": "blind",
+        "Síndrome de Down": "down",
+        "Otra capacidad especial": "other",
+        "Sin capacidades espaciales (para mixtos)": "none",
+        "Solo mixtos": "__mixonly__",
+      };
+  
+      const k = map[filter];
+  
+      if (k === "__mixonly__") {
+        setMixAllowedOnly(true);
+        setSelectedNeeds(new Set());
+      } else if (k) {
+        setMixAllowedOnly(false);
+        setSelectedNeeds(new Set([k]));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     load();
@@ -284,7 +315,7 @@ export default function InclusiveMatchesPage() {
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Fecha y hora</label>
-                  <input className="gpInput" type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
+                  <input className="gpInput" type="datetime-local" step={900} value={startAt} onChange={(e) => setStartAt(e.target.value)} />
                 </div>
                 <div>
                   <label className="gpLabel">Duración (min)</label>

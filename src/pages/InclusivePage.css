@@ -1,386 +1,170 @@
-/* InclusivePage.css - Mobile first, profesional */
+/* InclusivePage.css — limpio, mobile first */
 
+/* Base */
 .gpInclusivePage {
-    background: #000;
-    min-height: 100vh;
-    color: #fff;
-  }
-  
-  .gpInclusivePage .pageHeader {
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.95);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  
-  .gpInclusivePage .pageTitle {
-    font-size: 20px;
-    font-weight: 900;
-    color: #74B800;
-    margin: 0 0 6px 0;
-    letter-spacing: -0.5px;
-  }
-  
-  .gpInclusivePage .pageMeta {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.4;
-    margin: 0;
-  }
-  
-  /* Actions */
-  .gpInclusiveActions {
-    padding: 12px 16px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    background: #000;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .gpInclusiveActions .btn {
-    flex: 1;
-    min-width: 140px;
-    padding: 10px 16px;
-    font-size: 13px;
-    justify-content: center;
-  }
-  
-  /* Grid de categorías */
-  .gpInclusiveGrid {
-    padding: 16px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  
-  .gpInclusiveCard {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    transition: all 0.2s ease;
-  }
-  
-  .gpInclusiveCard:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(116, 184, 0, 0.3);
-  }
-  
-  .gpInclusiveCardIcon {
-    font-size: 32px;
-    line-height: 1;
-  }
-  
-  .gpInclusiveCardTitle {
-    font-size: 15px;
-    font-weight: 900;
-    color: #fff;
-    letter-spacing: -0.3px;
-  }
-  
-  .gpInclusiveCardDesc {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.4;
-    margin-bottom: 4px;
-  }
-  
-  .gpInclusiveCard .btn {
-    margin-top: auto;
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  
-  /* Bottom */
-  .gpInclusiveBottom {
-    padding: 16px;
-    display: flex;
-    justify-content: center;
-  }
-  
-  /* Nota */
-  .gpInclusiveNote {
-    padding: 0 16px 20px;
-    text-align: center;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
-  }
-  
-  /* Responsive */
-  @media (min-width: 640px) {
-    .gpInclusiveGrid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (min-width: 1024px) {
-    .gpInclusivePage .pageHeader {
-      padding: 16px 24px;
-    }
-  
-    .gpInclusivePage .pageTitle {
-      font-size: 24px;
-    }
-  
-    .gpInclusiveActions {
-      padding: 16px 24px;
-    }
-  
-    .gpInclusiveGrid {
-      padding: 24px;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-  
-    .gpInclusiveCard {
-      padding: 20px;
-    }
-  }
-  /* ✅ HERO "Partidos inclusivos": que no empuje todo hacia abajo */
-.gpInclusiveHero {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin: 10px 0 14px;
-  padding: 0 2px;
+  background: #000;
+  min-height: 100vh;
+  color: #fff;
 }
 
-.gpInclusiveHero h1,
-.gpInclusiveHero .gpInclusiveTitle {
-  margin: 0;
-  line-height: 1.05;
-  font-weight: 900;
-  font-size: clamp(28px, 6vw, 44px);
-  overflow-wrap: anywhere;
-}
-
-.gpInclusiveHero .gpInclusiveSubtitle {
-  margin: 0;
-  opacity: 0.75;
-  font-weight: 700;
-  font-size: clamp(13px, 3.2vw, 16px);
-}
-
-.gpInclusiveContent {
-  margin-top: 12px;
-}
-/* ✅ FIX: el título "Partidos inclusivos" no debe ocupar media pantalla */
-.gpInclusivePage .pageHeader {
-  padding: 12px 16px !important;
-}
-
-.gpInclusivePage .pageTitle {
-  font-size: 20px !important;   /* <- aquí lo fijamos */
-  line-height: 1.15 !important;
-  margin: 0 0 6px 0 !important;
-}
-
-.gpInclusivePage .pageMeta {
-  margin: 0 !important;
-  font-size: 12px !important;
-  line-height: 1.35 !important;
-}
-
-/* ✅ por si algún estilo global mete márgenes gigantes al h1 */
-.gpInclusivePage h1 {
-  margin-block: 0 !important;
-}
-/* ===========================
-   FIX: espacio gigante arriba (iOS / pageWithHeader)
-   =========================== */
-
-/* Quita el offset global de pageWithHeader SOLO en esta página */
+/* ✅ Quita offsets globales SOLO en esta página (pageWithHeader suele meter padding-top) */
 .gpInclusivePage.pageWithHeader {
   padding-top: 0 !important;
 }
-
-/* Algunos layouts meten padding/margin arriba aquí */
 .gpInclusivePage .pageWrap,
 .gpInclusivePage .container {
   padding-top: 0 !important;
   margin-top: 0 !important;
 }
 
-/* Asegura que el header interno no se “caiga” hacia abajo */
-.gpInclusivePage .pageHeader {
-  padding-top: 12px !important;
-  margin-top: 0 !important;
-}
-
-/* (Por si hay un pseudo-hero global que mete altura arriba) */
-.gpInclusivePage::before,
-.gpInclusivePage .pageWrap::before,
-.gpInclusivePage .container::before {
-  content: none !important;
-  display: none !important;
-}
-/* ===========================
-   COMPACT HEADER (sin aire)
-   =========================== */
-
-/* Quita offsets globales SOLO aquí */
-.gpInclusivePage.pageWithHeader { padding-top: 0 !important; }
-.gpInclusivePage .pageWrap,
-.gpInclusivePage .container {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
-
-/* Header súper compacto */
-.gpInclusivePage .pageHeader{
-  padding: 10px 16px !important;          /* antes 12px */
+/* ✅ Header compacto (sin aire arriba/abajo) */
+.gpInclusiveHeader {
+  padding: 8px 16px 8px !important;
   margin: 0 !important;
-  background: rgba(0,0,0,0.95);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Título más pequeño y sin margen extra */
-.gpInclusivePage .pageTitle{
-  font-size: 18px !important;             /* antes 20px */
-  line-height: 1.05 !important;
-  margin: 0 0 4px 0 !important;
-  letter-spacing: -0.3px !important;
-}
-
-/* Texto de al lado (meta) más compacto */
-.gpInclusivePage .pageMeta{
-  font-size: 11px !important;             /* antes 12px */
-  line-height: 1.25 !important;
-  margin: 0 !important;
-  max-width: 38ch;                         /* evita que “respire” raro */
-}
-
-/* Si algún pseudo-elemento mete aire */
-.gpInclusivePage::before,
-.gpInclusivePage .pageWrap::before,
-.gpInclusivePage .container::before{
-  content: none !important;
-  display: none !important;
-}
-/* ============ FIX: sin aire arriba + botones visibles ============ */
-
-/* Quita cualquier padding/margen heredado arriba */
-.gpInclusivePage,
-.gpInclusivePage .pageWrap,
-.gpInclusivePage .container {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
-
-/* Header compacto y pegado arriba */
-.gpInclusivePage .pageHeader{
-  padding: 8px 16px 10px !important;
-  margin: 0 !important;
-}
-
-/* Título y meta más pequeños y apretados */
-.gpInclusivePage .pageTitle{
-  font-size: 17px !important;
-  line-height: 1.05 !important;
-  margin: 0 0 4px 0 !important;
-}
-
-.gpInclusivePage .pageMeta{
-  font-size: 11px !important;
-  line-height: 1.25 !important;
-  margin: 0 !important;
-}
-
-/* ✅ Baja los botones para que NUNCA queden detrás del header */
-.gpInclusiveActions{
-  margin-top: 14px !important;  /* 👈 ajusta aquí si quieres más/menos */
-  padding-top: 0 !important;
-}
-/* ============ FIX: botón "Crear" oculto detrás del hero ============ */
-
-/* Header más compacto todavía */
-.gpInclusivePage .pageHeader {
-  padding: 6px 16px 8px !important;
-  margin: 0 !important;
-}
-
-/* Título más pequeño y sin aire */
-.gpInclusivePage .pageTitle {
+.gpInclusiveTitle {
   font-size: 16px !important;
+  font-weight: 900;
+  color: #74B800;
   line-height: 1.05 !important;
-  margin: 0 0 3px 0 !important;
+  margin: 0 0 4px 0 !important;
+  letter-spacing: -0.3px;
 }
 
-/* Texto de apoyo más compacto */
-.gpInclusivePage .pageMeta {
+/* por si h1 tiene margins raros en Safari/iOS */
+.gpInclusivePage h1 {
+  margin-block: 0 !important;
+}
+
+.gpInclusiveMeta {
   font-size: 11px !important;
-  line-height: 1.2 !important;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.25 !important;
   margin: 0 !important;
+  max-width: 50ch;
 }
 
-/* 🔥 La clave: separar y "poner por encima" la zona de acciones */
+/* ✅ Botones: SIEMPRE visibles y debajo del header */
 .gpInclusiveActions {
-  position: relative !important;
-  z-index: 5 !important;
-  margin-top: 12px !important;
-  padding: 10px 16px 12px !important;
-}
-
-/* En móvil: SIEMPRE en columna para que no se esconda el primero */
-@media (max-width: 520px) {
-  .gpInclusiveActions {
-    flex-direction: column !important;
-    gap: 10px !important;
-  }
-
-  .gpInclusiveActions .btn {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-}
-/* ✅ Crear debajo de "Ir a Partidos" y siempre visible */
-.gpInclusiveCreateBelow{
-  padding: 0 16px 12px;
-}
-
-.gpInclusiveCreateBelow .btn{
-  width: 100%;
-}
-/* ============ FIX: header + botones siempre visibles ============ */
-
-/* Header más compacto */
-.gpInclusiveHeader{
-  padding: 6px 16px 6px !important;
-  margin: 0 !important;
-}
-
-.gpInclusiveTitle{
-  font-size: 16px !important;
-  line-height: 1.05 !important;
-  margin: 0 0 3px 0 !important;
-}
-
-.gpInclusiveMeta{
-  font-size: 11px !important;
-  line-height: 1.2 !important;
-  margin: 0 !important;
-}
-
-/* Zona acciones: separada del header */
-.gpInclusiveActions{
   padding: 10px 16px 0 !important;
   margin: 0 !important;
+  background: #000;
   position: relative;
-  z-index: 5;
+  z-index: 10;
 }
 
-/* ✅ Crear debajo de Ir a Partidos */
-.gpInclusiveCreateBelow{
+.gpInclusiveCreateBelow {
   padding: 10px 16px 12px !important;
   margin: 0 !important;
+  background: #000;
   position: relative;
-  z-index: 6;
+  z-index: 11;
 }
 
-.gpInclusiveCreateBelow .btn,
-.gpInclusiveActions .btn{
+.gpInclusiveActions .btn,
+.gpInclusiveCreateBelow .btn {
   width: 100%;
+  min-width: 0;
+  padding: 10px 16px;
+  font-size: 13px;
+  justify-content: center;
+}
+
+/* Grid */
+.gpInclusiveGrid {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.gpInclusiveCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.gpInclusiveCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(116, 184, 0, 0.3);
+}
+
+.gpInclusiveCardIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.gpInclusiveCardTitle {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.gpInclusiveCardDesc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.gpInclusiveCard .btn {
+  margin-top: auto;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* Bottom */
+.gpInclusiveBottom {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.gpInclusiveNote {
+  padding: 0 16px 20px;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+  .gpInclusiveGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gpInclusiveHeader {
+    padding: 12px 24px !important;
+  }
+
+  .gpInclusiveTitle {
+    font-size: 18px !important;
+  }
+
+  .gpInclusiveActions,
+  .gpInclusiveCreateBelow {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  .gpInclusiveGrid {
+    padding: 24px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .gpInclusiveCard {
+    padding: 20px;
+  }
 }
