@@ -1490,7 +1490,8 @@ export default function MatchesPage() {
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
-            padding: 14,
+            padding: 12,
+            overflow: "hidden", // ✅ NUEVO
           }}
         >
           <div
@@ -1502,8 +1503,9 @@ export default function MatchesPage() {
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
               padding: 12,
-              maxHeight: "80vh",
-              overflow: "auto",
+              maxHeight: "70vh",
+              overflow: "hidden",
+              overflowX: "hidden",      // ✅ NUEVO
               boxSizing: "border-box",
             }}
           >
@@ -1512,7 +1514,7 @@ export default function MatchesPage() {
               <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
             </div>
 
-            <div style={{ marginTop: 10, height: "42vh", overflowY: "auto", paddingRight: 6 }}>
+            <div style={{ marginTop: 10, height: "38vh", overflowY: "auto", paddingRight: 6 }}>
               {chatLoading ? (
                 <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
               ) : chatItems.length === 0 ? (
@@ -1531,13 +1533,15 @@ export default function MatchesPage() {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, width: "100%", boxSizing: "border-box" }}>
               <input
                 value={chatText}
                 onChange={(e) => setChatText(e.target.value)}
                 placeholder="Escribe…"
                 style={{
                   flex: 1,
+                  minWidth: 0,                // ✅ CLAVE: evita que empuje al botón fuera
+                  width: 0,                   // ✅ ayuda en iOS/Android con flex
                   padding: "10px 12px",
                   borderRadius: 12,
                   background: "rgba(255,255,255,0.08)",
@@ -1547,7 +1551,16 @@ export default function MatchesPage() {
                   boxSizing: "border-box",
                 }}
               />
-              <button className="btn" onClick={handleSendChat} style={{ fontWeight: 900 }}>
+              <button
+                className="btn"
+                onClick={handleSendChat}
+                style={{
+                  fontWeight: 900,
+                  flexShrink: 0,              // ✅ NO se encoge / no se va fuera
+                  whiteSpace: "nowrap",
+                  maxWidth: 120,
+                }}
+              >
                 Enviar
               </button>
             </div>
