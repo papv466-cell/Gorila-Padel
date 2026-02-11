@@ -15,7 +15,7 @@ export default function InclusivePage() {
   ];
 
   return (
-    <div className="page pageWithHeader gpInclusivePage">
+    <div className="page gpInclusivePage">
       <div className="pageWrap">
         <div className="container">
           <div className="pageHeader">

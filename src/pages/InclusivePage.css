@@ -260,3 +260,37 @@
   content: none !important;
   display: none !important;
 }
+/* ============ FIX: sin aire arriba + botones visibles ============ */
+
+/* Quita cualquier padding/margen heredado arriba */
+.gpInclusivePage,
+.gpInclusivePage .pageWrap,
+.gpInclusivePage .container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Header compacto y pegado arriba */
+.gpInclusivePage .pageHeader{
+  padding: 8px 16px 10px !important;
+  margin: 0 !important;
+}
+
+/* Título y meta más pequeños y apretados */
+.gpInclusivePage .pageTitle{
+  font-size: 17px !important;
+  line-height: 1.05 !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.gpInclusivePage .pageMeta{
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
+/* ✅ Baja los botones para que NUNCA queden detrás del header */
+.gpInclusiveActions{
+  margin-top: 14px !important;  /* 👈 ajusta aquí si quieres más/menos */
+  padding-top: 0 !important;
+}
