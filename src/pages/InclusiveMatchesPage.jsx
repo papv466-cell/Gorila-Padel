@@ -1,9 +1,9 @@
 // src/pages/InclusiveMatchesPage.jsx
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { fetchInclusiveMatches, createInclusiveMatch, subscribeInclusiveRealtime } from "../services/inclusiveMatches";
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchInclusiveMatches, createInclusiveMatch, subscribeInclusiveRealtime } from "../services/inclusiveMatches";
+
 const NEEDS = [
   { key: "wheelchair", label: "Silla de ruedas ♿" },
   { key: "blind", label: "Ceguera / baja visión 👁️" },
