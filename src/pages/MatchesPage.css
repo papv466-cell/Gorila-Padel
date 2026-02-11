@@ -589,3 +589,27 @@ html, body {
 .gpActions {
   min-width: 0;
 }
+/* ✅ Contraste: texto/iconos en verde (se ve sobre fondo ghost) */
+.gpActionBar .btn.ghost,
+.gpActionBar .btn.ghost.gpIconBtn {
+  color: #74B800 !important;
+  font-weight: 900;
+}
+
+/* Si el botón tiene emoji/icono dentro, también lo refuerza */
+.gpActionBar .btn.ghost.gpIconBtn {
+  letter-spacing: 0.2px;
+}
+
+/* Hover: más contraste aún */
+.gpActionBar .btn.ghost:hover,
+.gpActionBar .btn.ghost.gpIconBtn:hover {
+  color: #9BE800 !important;
+}
+
+/* Opcional: cuando está deshabilitado, que no engañe */
+.gpActionBar .btn.ghost:disabled,
+.gpActionBar .btn.ghost.gpIconBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
