@@ -1472,131 +1472,126 @@ export default function MatchesPage() {
         </div>
       )}
 
-        {/*  ===========================
-          MODAL: CHAT
-        =========================== */}
-        {chatOpenFor ? (
-          <div
-            className="modal"
-            onClick={() => setChatOpenFor(null)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.65)",
-              zIndex: 30000,
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              padding: 12,
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                // 🔒 CLAVE iOS: no usar 100% “puro”, mejor calc(100vw - padding)
-                width: "calc(100vw - 24px)",
-                maxWidth: 640,
+        {/* ===========================
+    MODAL: CHAT
+=========================== */}
+{chatOpenFor ? (
+  <div
+    className="modal gpModal"
+    onClick={() => setChatOpenFor(null)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.65)",
+      zIndex: 30000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 12,
+      paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+      boxSizing: "border-box",
+      overflow: "hidden",
+      overscrollBehavior: "contain",
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "min(640px, calc(100% - 24px))",
+        maxWidth: 640,
+        background: "#111",
+        borderRadius: 18,
+        border: "1px solid rgba(255,255,255,0.14)",
+        padding: 12,
+        boxSizing: "border-box",
+        maxHeight: "70vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        transform: "translateZ(0)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
+        <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
+        <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
+      </div>
 
-                background: "#111",
-                borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.14)",
-                padding: 12,
-                boxSizing: "border-box",
-
-                // ✅ altura estable sin desbordes raros
-                maxHeight: "70dvh",
-                overflow: "hidden",
-
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
-                <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
+      <div
+        style={{
+          marginTop: 10,
+          flex: "1 1 auto",
+          minHeight: 160,
+          overflowY: "auto",
+          paddingRight: 6,
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {chatLoading ? (
+          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
+        ) : chatItems.length === 0 ? (
+          <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
+        ) : (
+          chatItems.map((it, idx) => (
+            <div key={it.id || idx} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
+                {it.author_name || it.author || "Jugador"}
               </div>
-
-              <div
-                style={{
-                  marginTop: 10,
-                  flex: "1 1 auto",
-                  minHeight: 180,
-                  overflowY: "auto",
-                  paddingRight: 6,
-                  WebkitOverflowScrolling: "touch",
-                }}
-              >
-                {chatLoading ? (
-                  <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
-                ) : chatItems.length === 0 ? (
-                  <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
-                ) : (
-                  chatItems.map((it, idx) => (
-                    <div key={it.id || idx} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
-                        {it.author_name || it.author || "Jugador"}
-                      </div>
-                      <div style={{ color: "#fff", opacity: 0.9, fontSize: 13, overflowWrap: "anywhere" }}>
-                        {it.message || it.text || ""}
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div style={{ color: "#fff", opacity: 0.9, fontSize: 13, overflowWrap: "anywhere" }}>
+                {it.message || it.text || ""}
               </div>
-
-              {/* ✅ Barra de escribir FIJA y que no se salga */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendChat();
-                }}
-                style={{
-                  display: "flex",
-                  gap: 8,
-                  marginTop: 10,
-                  width: "100%",
-                  boxSizing: "border-box",
-                  flexShrink: 0,
-                }}
-              >
-                <input
-                  value={chatText}
-                  onChange={(e) => setChatText(e.target.value)}
-                  placeholder="Escribe…"
-                  style={{
-                    flex: "1 1 auto",
-                    minWidth: 0, // ✅ clave para que el input NO empuje al botón fuera
-                    padding: "10px 12px",
-                    borderRadius: 12,
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    color: "#fff",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-
-                <button
-                  type="submit"
-                  className="btn"
-                  style={{
-                    flex: "0 0 auto",
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                    minWidth: 92, // ✅ evita “desaparición” en iOS
-                    paddingLeft: 14,
-                    paddingRight: 14,
-                    fontWeight: 900,
-                  }}
-                >
-                  Enviar
-                </button>
-              </form>
             </div>
-          </div>
-        ) : null}
+          ))
+        )}
+      </div>
+
+      {/* Barra escribir: 100% fija y sin desbordar */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSendChat();
+        }}
+        style={{
+          marginTop: 10,
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
+          gap: 8,
+          width: "100%",
+          boxSizing: "border-box",
+          flexShrink: 0,
+        }}
+      >
+        <input
+          value={chatText}
+          onChange={(e) => setChatText(e.target.value)}
+          placeholder="Escribe…"
+          style={{
+            width: "100%",
+            minWidth: 0,
+            padding: "10px 12px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            color: "#fff",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+        <button
+          type="submit"
+          className="btn"
+          style={{
+            width: 96,
+            minWidth: 96,
+            whiteSpace: "nowrap",
+            fontWeight: 900,
+          }}
+        >
+          Enviar
+        </button>
+      </form>
+    </div>
+  </div>
+) : null}
 
       {/* ===========================
          MODAL: SOLICITUDES

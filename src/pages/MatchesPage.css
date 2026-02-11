@@ -533,3 +533,18 @@
   background: rgba(116, 184, 0, 0.32);
   border-color: rgba(116, 184, 0, 0.65);
 }
+/* 🔒 Evita cualquier desbordamiento horizontal (iOS/Android) */
+html, body {
+  overflow-x: hidden;
+}
+
+.gpMatchesPage,
+.pageWrap,
+.container {
+  overflow-x: hidden;
+}
+
+/* Si algún hijo se sale, que se recorte dentro */
+.gpMatchesPage * {
+  max-width: 100%;
+}
