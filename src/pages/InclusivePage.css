@@ -139,4 +139,52 @@
       padding: 20px;
     }
   }
-  
+  /* ✅ HERO "Partidos inclusivos": que no empuje todo hacia abajo */
+.gpInclusiveHero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 10px 0 14px;
+  padding: 0 2px;
+}
+
+.gpInclusiveHero h1,
+.gpInclusiveHero .gpInclusiveTitle {
+  margin: 0;
+  line-height: 1.05;
+  font-weight: 900;
+  font-size: clamp(28px, 6vw, 44px);
+  overflow-wrap: anywhere;
+}
+
+.gpInclusiveHero .gpInclusiveSubtitle {
+  margin: 0;
+  opacity: 0.75;
+  font-weight: 700;
+  font-size: clamp(13px, 3.2vw, 16px);
+}
+
+.gpInclusiveContent {
+  margin-top: 12px;
+}
+/* ✅ FIX: el título "Partidos inclusivos" no debe ocupar media pantalla */
+.gpInclusivePage .pageHeader {
+  padding: 12px 16px !important;
+}
+
+.gpInclusivePage .pageTitle {
+  font-size: 20px !important;   /* <- aquí lo fijamos */
+  line-height: 1.15 !important;
+  margin: 0 0 6px 0 !important;
+}
+
+.gpInclusivePage .pageMeta {
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+
+/* ✅ por si algún estilo global mete márgenes gigantes al h1 */
+.gpInclusivePage h1 {
+  margin-block: 0 !important;
+}
