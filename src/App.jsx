@@ -198,6 +198,8 @@ export default function App() {
               </RequireAuth>
             }
           />
+          
+          <Route path="/inclusivo" element={<Navigate to="/inclusivos" replace />} />
 
           <Route
             path="/partidos"

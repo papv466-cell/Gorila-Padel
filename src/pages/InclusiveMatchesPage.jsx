@@ -22,7 +22,8 @@ function fmtDate(esISO) {
 
 export default function InclusiveMatchesPage() {
   const navigate = useNavigate();
-
+  const [searchParams] = useSearchParams();
+  
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [matches, setMatches] = useState([]);
