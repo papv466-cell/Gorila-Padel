@@ -294,3 +294,45 @@
   margin-top: 14px !important;  /* 👈 ajusta aquí si quieres más/menos */
   padding-top: 0 !important;
 }
+/* ============ FIX: botón "Crear" oculto detrás del hero ============ */
+
+/* Header más compacto todavía */
+.gpInclusivePage .pageHeader {
+  padding: 6px 16px 8px !important;
+  margin: 0 !important;
+}
+
+/* Título más pequeño y sin aire */
+.gpInclusivePage .pageTitle {
+  font-size: 16px !important;
+  line-height: 1.05 !important;
+  margin: 0 0 3px 0 !important;
+}
+
+/* Texto de apoyo más compacto */
+.gpInclusivePage .pageMeta {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+/* 🔥 La clave: separar y "poner por encima" la zona de acciones */
+.gpInclusiveActions {
+  position: relative !important;
+  z-index: 5 !important;
+  margin-top: 12px !important;
+  padding: 10px 16px 12px !important;
+}
+
+/* En móvil: SIEMPRE en columna para que no se esconda el primero */
+@media (max-width: 520px) {
+  .gpInclusiveActions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .gpInclusiveActions .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
