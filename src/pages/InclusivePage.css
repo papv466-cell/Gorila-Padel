@@ -336,3 +336,11 @@
     min-width: 0 !important;
   }
 }
+/* ✅ Crear debajo de "Ir a Partidos" y siempre visible */
+.gpInclusiveCreateBelow{
+  padding: 0 16px 12px;
+}
+
+.gpInclusiveCreateBelow .btn{
+  width: 100%;
+}
