@@ -217,3 +217,46 @@
   content: none !important;
   display: none !important;
 }
+/* ===========================
+   COMPACT HEADER (sin aire)
+   =========================== */
+
+/* Quita offsets globales SOLO aquí */
+.gpInclusivePage.pageWithHeader { padding-top: 0 !important; }
+.gpInclusivePage .pageWrap,
+.gpInclusivePage .container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Header súper compacto */
+.gpInclusivePage .pageHeader{
+  padding: 10px 16px !important;          /* antes 12px */
+  margin: 0 !important;
+  background: rgba(0,0,0,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Título más pequeño y sin margen extra */
+.gpInclusivePage .pageTitle{
+  font-size: 18px !important;             /* antes 20px */
+  line-height: 1.05 !important;
+  margin: 0 0 4px 0 !important;
+  letter-spacing: -0.3px !important;
+}
+
+/* Texto de al lado (meta) más compacto */
+.gpInclusivePage .pageMeta{
+  font-size: 11px !important;             /* antes 12px */
+  line-height: 1.25 !important;
+  margin: 0 !important;
+  max-width: 38ch;                         /* evita que “respire” raro */
+}
+
+/* Si algún pseudo-elemento mete aire */
+.gpInclusivePage::before,
+.gpInclusivePage .pageWrap::before,
+.gpInclusivePage .container::before{
+  content: none !important;
+  display: none !important;
+}
