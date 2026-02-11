@@ -1472,101 +1472,131 @@ export default function MatchesPage() {
         </div>
       )}
 
-      {/* ===========================
-         MODAL: CHAT
-      =========================== */}
-      {chatOpenFor ? (
-        <div
-          className="modal"
-          onClick={() => setChatOpenFor(null)}
-          style={{
-            position: "fixed",
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            background: "rgba(0,0,0,0.65)",
-            zIndex: 30000,
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            padding: 12,
-            overflow: "hidden", // ✅ NUEVO
-          }}
-        >
+        /* ===========================
+          MODAL: CHAT
+        =========================== */
+        {chatOpenFor ? (
           <div
-            onClick={(e) => e.stopPropagation()}
+            className="modal"
+            onClick={() => setChatOpenFor(null)}
             style={{
-              width: "100%",
-              maxWidth: 640,
-              background: "#111",
-              borderRadius: 18,
-              border: "1px solid rgba(255,255,255,0.14)",
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.65)",
+              zIndex: 30000,
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
               padding: 12,
-              maxHeight: "70vh",
-              overflow: "hidden",
-              overflowX: "hidden",      // ✅ NUEVO
               boxSizing: "border-box",
+              overflow: "hidden",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-              <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
-              <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
-            </div>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                // 🔒 CLAVE iOS: no usar 100% “puro”, mejor calc(100vw - padding)
+                width: "calc(100vw - 24px)",
+                maxWidth: 640,
 
-            <div style={{ marginTop: 10, height: "38vh", overflowY: "auto", paddingRight: 6 }}>
-              {chatLoading ? (
-                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
-              ) : chatItems.length === 0 ? (
-                <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
-              ) : (
-                chatItems.map((it, idx) => (
-                  <div key={it.id || idx} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
-                      {it.author_name || it.author || "Jugador"}
-                    </div>
-                    <div style={{ color: "#fff", opacity: 0.9, fontSize: 13 }}>
-                      {it.message || it.text || ""}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                background: "#111",
+                borderRadius: 18,
+                border: "1px solid rgba(255,255,255,0.14)",
+                padding: 12,
+                boxSizing: "border-box",
 
-            <div style={{ display: "flex", gap: 8, marginTop: 10, width: "100%", boxSizing: "border-box" }}>
-              <input
-                value={chatText}
-                onChange={(e) => setChatText(e.target.value)}
-                placeholder="Escribe…"
+                // ✅ altura estable sin desbordes raros
+                maxHeight: "70dvh",
+                overflow: "hidden",
+
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                <div style={{ fontWeight: 900, color: "#74B800" }}>💬 Chat del partido</div>
+                <button className="btn ghost" onClick={() => setChatOpenFor(null)}>❌</button>
+              </div>
+
+              <div
                 style={{
-                  flex: 1,
-                  minWidth: 0,                // ✅ CLAVE: evita que empuje al botón fuera
-                  width: 0,                   // ✅ ayuda en iOS/Android con flex
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  color: "#fff",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-              <button
-                className="btn"
-                onClick={handleSendChat}
-                style={{
-                  fontWeight: 900,
-                  flexShrink: 0,              // ✅ NO se encoge / no se va fuera
-                  whiteSpace: "nowrap",
-                  maxWidth: 120,
+                  marginTop: 10,
+                  flex: "1 1 auto",
+                  minHeight: 180,
+                  overflowY: "auto",
+                  paddingRight: 6,
+                  WebkitOverflowScrolling: "touch",
                 }}
               >
-                Enviar
-              </button>
+                {chatLoading ? (
+                  <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Cargando…</div>
+                ) : chatItems.length === 0 ? (
+                  <div style={{ color: "#fff", opacity: 0.75, fontWeight: 700 }}>Aún no hay mensajes.</div>
+                ) : (
+                  chatItems.map((it, idx) => (
+                    <div key={it.id || idx} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>
+                        {it.author_name || it.author || "Jugador"}
+                      </div>
+                      <div style={{ color: "#fff", opacity: 0.9, fontSize: 13, overflowWrap: "anywhere" }}>
+                        {it.message || it.text || ""}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* ✅ Barra de escribir FIJA y que no se salga */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendChat();
+                }}
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginTop: 10,
+                  width: "100%",
+                  boxSizing: "border-box",
+                  flexShrink: 0,
+                }}
+              >
+                <input
+                  value={chatText}
+                  onChange={(e) => setChatText(e.target.value)}
+                  placeholder="Escribe…"
+                  style={{
+                    flex: "1 1 auto",
+                    minWidth: 0, // ✅ clave para que el input NO empuje al botón fuera
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    color: "#fff",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+
+                <button
+                  type="submit"
+                  className="btn"
+                  style={{
+                    flex: "0 0 auto",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                    minWidth: 92, // ✅ evita “desaparición” en iOS
+                    paddingLeft: 14,
+                    paddingRight: 14,
+                    fontWeight: 900,
+                  }}
+                >
+                  Enviar
+                </button>
+              </form>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
       {/* ===========================
          MODAL: SOLICITUDES
