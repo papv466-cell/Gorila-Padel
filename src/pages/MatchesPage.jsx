@@ -1335,6 +1335,7 @@ export default function MatchesPage() {
                   </label>
                   <input
                     type="time"
+                    step="900"
                     value={form.time}
                     onChange={(e) => setForm({ ...form, time: e.target.value })}
                     disabled={saving}

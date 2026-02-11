@@ -49,7 +49,7 @@ export default function InclusivePage() {
                 <div className="gpInclusiveCardDesc">{cat.description}</div>
                 <button
                   className="btn ghost"
-                  onClick={() => navigate(`/partidos?filter=${encodeURIComponent(cat.title)}`)}
+                  onClick={() => navigate(`/partidos?type=inclusive&filter=${encodeURIComponent(cat.title)}`)}
                 >
                   Ver partidos
                 </button>
