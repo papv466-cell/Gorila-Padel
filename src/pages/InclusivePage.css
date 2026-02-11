@@ -188,3 +188,32 @@
 .gpInclusivePage h1 {
   margin-block: 0 !important;
 }
+/* ===========================
+   FIX: espacio gigante arriba (iOS / pageWithHeader)
+   =========================== */
+
+/* Quita el offset global de pageWithHeader SOLO en esta página */
+.gpInclusivePage.pageWithHeader {
+  padding-top: 0 !important;
+}
+
+/* Algunos layouts meten padding/margin arriba aquí */
+.gpInclusivePage .pageWrap,
+.gpInclusivePage .container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Asegura que el header interno no se “caiga” hacia abajo */
+.gpInclusivePage .pageHeader {
+  padding-top: 12px !important;
+  margin-top: 0 !important;
+}
+
+/* (Por si hay un pseudo-hero global que mete altura arriba) */
+.gpInclusivePage::before,
+.gpInclusivePage .pageWrap::before,
+.gpInclusivePage .container::before {
+  content: none !important;
+  display: none !important;
+}
