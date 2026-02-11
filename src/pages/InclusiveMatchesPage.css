@@ -1,49 +1,42 @@
 /* src/pages/InclusiveMatchesPage.css */
 
-/* Header PRO: título y texto en paralelo + botones abajo */
-.gpIncHeader{
+/* Header: 2 textos arriba en paralelo + 2 botones debajo */
+.gpIncHeader {
     padding-bottom: 12px;
   }
   
-  /* fila 1: 2 columnas */
-  .gpIncHeaderTop{
+  /* fila 1: título izq + texto der */
+  .gpIncHeaderTop {
     display: grid;
-    grid-template-columns: 0.95fr 1.35fr;
+    grid-template-columns: 1fr 1.25fr;
     gap: 12px;
-    align-items: end;
+    align-items: start;      /* ✅ evita “aire arriba” raro */
   }
   
-  /* título un pelín más compacto */
-  .gpIncTitle{
+  /* Título potente pero controlado */
+  .gpIncTitle {
     margin: 0 !important;
-    line-height: 1.05;
+    line-height: 1.02;
     font-weight: 950;
-    font-size: clamp(24px, 7vw, 38px);
+    font-size: clamp(26px, 7vw, 40px);
   }
   
-  /* meta alineada, sin empujar */
-  .gpIncMeta{
+  /* Texto gris alineado y compacto */
+  .gpIncMeta {
     margin: 0 !important;
-    opacity: 0.75;
-    line-height: 1.25;
+    opacity: 0.72;
+    line-height: 1.22;
     font-size: 12px;
-    max-width: 44ch;
+    max-width: 48ch;
   }
   
-  /* fila 2: botones siempre debajo */
-  .gpIncHeaderActions{
+  /* fila 2: botones SIEMPRE debajo, en columna */
+  .gpIncHeaderActions {
     margin-top: 12px;
     display: grid;
     gap: 10px;
   }
   
-  .gpIncHeaderActions .btn{
+  .gpIncHeaderActions .btn {
     width: 100%;
-  }
-  
-  /* en pantallas grandes, botones en fila si quieres */
-  @media (min-width: 760px){
-    .gpIncHeaderActions{
-      grid-template-columns: 1fr 1fr;
-    }
   }
