@@ -1472,9 +1472,9 @@ export default function MatchesPage() {
         </div>
       )}
 
-        /* ===========================
+        {/*  ===========================
           MODAL: CHAT
-        =========================== */
+        =========================== */}
         {chatOpenFor ? (
           <div
             className="modal"
