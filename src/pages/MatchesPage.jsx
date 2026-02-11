@@ -1490,7 +1490,7 @@ export default function MatchesPage() {
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
-            padding: 12,
+            padding: 14,
           }}
         >
           <div
@@ -1502,8 +1502,8 @@ export default function MatchesPage() {
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
               padding: 12,
-              maxHeight: "70vh",
-              overflow: "hidden",
+              maxHeight: "80vh",
+              overflow: "auto",
               boxSizing: "border-box",
             }}
           >
@@ -1568,9 +1568,9 @@ export default function MatchesPage() {
             background: "rgba(0,0,0,0.65)",
             zIndex: 28000,
             display: "flex",
-            alignItems: "flex-end",
+            alignItems: "center",
             justifyContent: "center",
-            padding: 12,
+            padding: 16,
           }}
         >
           <div
@@ -1582,7 +1582,7 @@ export default function MatchesPage() {
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
               padding: 12,
-              maxHeight: "70vh",
+              maxHeight: "80vh",
               overflow: "auto",
               boxSizing: "border-box",
             }}
@@ -1656,7 +1656,7 @@ export default function MatchesPage() {
             background: "rgba(0,0,0,0.65)",
             zIndex: 29000,
             display: "flex",
-            alignItems: "flex-end",
+            alignItems: "center",
             justifyContent: "center",
             padding: 12,
           }}
@@ -1816,7 +1816,7 @@ export default function MatchesPage() {
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
               padding: 12,
-              maxHeight: "70vh",
+              maxHeight: "80vh",
               overflow: "auto",
               boxSizing: "border-box",
             }}
