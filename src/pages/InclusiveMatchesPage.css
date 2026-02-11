@@ -1,0 +1,49 @@
+/* src/pages/InclusiveMatchesPage.css */
+
+/* Header PRO: título y texto en paralelo + botones abajo */
+.gpIncHeader{
+    padding-bottom: 12px;
+  }
+  
+  /* fila 1: 2 columnas */
+  .gpIncHeaderTop{
+    display: grid;
+    grid-template-columns: 0.95fr 1.35fr;
+    gap: 12px;
+    align-items: end;
+  }
+  
+  /* título un pelín más compacto */
+  .gpIncTitle{
+    margin: 0 !important;
+    line-height: 1.05;
+    font-weight: 950;
+    font-size: clamp(24px, 7vw, 38px);
+  }
+  
+  /* meta alineada, sin empujar */
+  .gpIncMeta{
+    margin: 0 !important;
+    opacity: 0.75;
+    line-height: 1.25;
+    font-size: 12px;
+    max-width: 44ch;
+  }
+  
+  /* fila 2: botones siempre debajo */
+  .gpIncHeaderActions{
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
+  }
+  
+  .gpIncHeaderActions .btn{
+    width: 100%;
+  }
+  
+  /* en pantallas grandes, botones en fila si quieres */
+  @media (min-width: 760px){
+    .gpIncHeaderActions{
+      grid-template-columns: 1fr 1fr;
+    }
+  }

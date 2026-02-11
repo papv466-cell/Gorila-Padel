@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchInclusiveMatches, createInclusiveMatch, subscribeInclusiveRealtime } from "../services/inclusiveMatches";
+import "./InclusiveMatchesPage.css";
 
 const NEEDS = [
   { key: "wheelchair", label: "Silla de ruedas ♿" },
@@ -175,23 +176,27 @@ export default function InclusiveMatchesPage() {
     <div className="gpPage">
       <div className="gpWrap">
         <div className="container">
-          <div className="pageHeader">
-            <div>
-              <h1 className="pageTitle">Partidos inclusivos</h1>
-              <div className="pageMeta">
-                Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
+        <div className="pageHeader gpIncHeader">
+              {/* fila 1: título + meta en paralelo */}
+              <div className="gpIncHeaderTop">
+                <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
+
+                <div className="pageMeta gpIncMeta">
+                  Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
+                </div>
+              </div>
+
+              {/* fila 2: botones SIEMPRE debajo */}
+              <div className="gpIncHeaderActions">
+                <button className="btn" type="button" onClick={() => setOpenCreate(true)}>
+                  + Crear partido inclusivo
+                </button>
+
+                <button className="btn ghost" type="button" onClick={() => navigate("/partidos")}>
+                  Ir a Partidos
+                </button>
               </div>
             </div>
-
-            <div className="gpActions">
-              <button className="btn" type="button" onClick={() => setOpenCreate(true)}>
-                + Crear partido inclusivo
-              </button>
-              <button className="btn ghost" type="button" onClick={() => navigate("/partidos")}>
-                Ir a Partidos
-              </button>
-            </div>
-          </div>
 
           {/* filtros */}
           <div className="card" style={{ marginTop: 10 }}>
