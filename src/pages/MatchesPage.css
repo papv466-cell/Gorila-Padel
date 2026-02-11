@@ -548,3 +548,44 @@ html, body {
 .gpMatchesPage * {
   max-width: 100%;
 }
+/* ✅ iOS: evita el zoom automático en inputs (font-size debe ser >=16px) */
+.gpMatchesPage input,
+.gpMatchesPage select,
+.gpMatchesPage textarea {
+  font-size: 16px !important;
+}
+
+/* iOS: suaviza y evita saltos raros */
+.gpMatchesPage input,
+.gpMatchesPage textarea {
+  -webkit-text-size-adjust: 100%;
+}
+/* ✅ Corta cualquier scroll horizontal (la causa real del "se va a la derecha") */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.gpMatchesPage,
+.pageWrap,
+.container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Evita que algún hijo fuerce ancho (muy típico por flex + min-width) */
+.gpMatchesPage * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+/* ✅ en layouts flex, permite encoger hijos y evita overflow lateral */
+.gpActionBar,
+.gpActionLeft,
+.gpActionRight,
+.gpCaption,
+.gpRow,
+.gpActions {
+  min-width: 0;
+}

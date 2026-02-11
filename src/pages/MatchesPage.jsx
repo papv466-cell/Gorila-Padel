@@ -1498,8 +1498,10 @@ export default function MatchesPage() {
       onClick={(e) => e.stopPropagation()}
       style={{
         width: "min(640px, calc(100% - 24px))",
-        maxWidth: 640,
+        maxWidth: "min(640px, calc(100% - 24px))",
+        overflowX: "hidden",
         background: "#111",
+        transform: "translateZ(0)",
         borderRadius: 18,
         border: "1px solid rgba(255,255,255,0.14)",
         padding: 12,
@@ -1702,8 +1704,11 @@ export default function MatchesPage() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: "100%",
-              maxWidth: 640,
+              width: "min(640px, calc(100% - 24px))",
+              maxWidth: "min(640px, calc(100% - 24px))",
+              overflowX: "hidden",
+              background: "#111",
+              transform: "translateZ(0)",
               background: "#111",
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
