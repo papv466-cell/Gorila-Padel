@@ -344,3 +344,43 @@
 .gpInclusiveCreateBelow .btn{
   width: 100%;
 }
+/* ============ FIX: header + botones siempre visibles ============ */
+
+/* Header más compacto */
+.gpInclusiveHeader{
+  padding: 6px 16px 6px !important;
+  margin: 0 !important;
+}
+
+.gpInclusiveTitle{
+  font-size: 16px !important;
+  line-height: 1.05 !important;
+  margin: 0 0 3px 0 !important;
+}
+
+.gpInclusiveMeta{
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+/* Zona acciones: separada del header */
+.gpInclusiveActions{
+  padding: 10px 16px 0 !important;
+  margin: 0 !important;
+  position: relative;
+  z-index: 5;
+}
+
+/* ✅ Crear debajo de Ir a Partidos */
+.gpInclusiveCreateBelow{
+  padding: 10px 16px 12px !important;
+  margin: 0 !important;
+  position: relative;
+  z-index: 6;
+}
+
+.gpInclusiveCreateBelow .btn,
+.gpInclusiveActions .btn{
+  width: 100%;
+}

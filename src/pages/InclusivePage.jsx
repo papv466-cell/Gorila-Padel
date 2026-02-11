@@ -15,25 +15,32 @@ export default function InclusivePage() {
   ];
 
   return (
-    <div className="page gpInclusivePage">
+    <div className="page pageWithHeader gpInclusivePage">
       <div className="pageWrap">
         <div className="container">
-          <div className="pageHeader">
-            <h1 className="pageTitle">Partidos inclusivos</h1>
-            <p className="pageMeta">
+          {/* Header */}
+          <div className="pageHeader gpInclusiveHeader">
+            <h1 className="pageTitle gpInclusiveTitle">Partidos inclusivos</h1>
+            <p className="pageMeta gpInclusiveMeta">
               Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
             </p>
           </div>
 
+          {/* ✅ Botón "Ir a Partidos" (se queda aquí) */}
           <div className="gpInclusiveActions">
-            <button className="btn" onClick={() => navigate("/partidos?create=1&type=inclusive")}>
-              + Crear partido inclusivo
-            </button>
             <button className="btn ghost" onClick={() => navigate("/partidos")}>
               Ir a Partidos
             </button>
           </div>
 
+          {/* ✅ Botón "Crear" JUSTO debajo */}
+          <div className="gpInclusiveCreateBelow">
+            <button className="btn" onClick={() => navigate("/partidos?create=1&type=inclusive")}>
+              + Crear partido inclusivo
+            </button>
+          </div>
+
+          {/* Grid de categorías */}
           <div className="gpInclusiveGrid">
             {categories.map((cat, idx) => (
               <div key={idx} className="gpInclusiveCard">
@@ -50,12 +57,14 @@ export default function InclusivePage() {
             ))}
           </div>
 
+          {/* Botón volver */}
           <div className="gpInclusiveBottom">
             <button className="btn ghost" onClick={() => navigate(-1)}>
               ← Inicio
             </button>
           </div>
 
+          {/* Nota */}
           <div className="gpInclusiveNote">
             Mostrando: <strong>0 partido(s)</strong>
           </div>
