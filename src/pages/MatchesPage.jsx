@@ -1098,20 +1098,21 @@ export default function MatchesPage() {
                           </button>
                         ) : null}
 
-                          {session && !isCreator && (myStatus2 === "approved" || iAmInPlayers) ? (
-                            <button
-                              type="button"
-                              className="btn ghost gpIconBtn"
-                              onClick={() => {
-                                closeAllModals();
-                                setCedeOpenFor(m.id);
-                                setCedeQuery("");
-                                setCedeResults([]);
-                              }}
-                            >
-                              🤝 Ceder
-                            </button>
-                          ) : null}
+                          {/* ✅ Ceder (para creador y para jugadores dentro) */}
+                            {session && (isCreator || myStatus2 === "approved" || iAmInPlayers) ? (
+                              <button
+                                type="button"
+                                className="btn ghost gpIconBtn"
+                                onClick={() => {
+                                  closeAllModals();
+                                  setCedeOpenFor(m.id);
+                                  setCedeQuery("");
+                                  setCedeResults([]);
+                                }}
+                              >
+                                🤝 Ceder
+                              </button>
+                            ) : null}
 
                         {session && isCreator ? (
                           <button
