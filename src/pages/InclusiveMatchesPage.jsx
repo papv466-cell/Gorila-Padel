@@ -2,11 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "./InclusiveMatchesPage.css";
+
 import {
   fetchInclusiveMatches,
   createInclusiveMatch,
   subscribeInclusiveRealtime,
 } from "../services/inclusiveMatches";
+
+import { fetchClubsFromGoogleSheet } from "../services/sheets";
 
 const NEEDS = [
   { key: "wheelchair", label: "Silla de ruedas ♿" },
@@ -27,6 +30,14 @@ function fmtDate(esISO) {
   }
 }
 
+function normText(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export default function InclusiveMatchesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -34,6 +45,10 @@ export default function InclusiveMatchesPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [matches, setMatches] = useState([]);
+
+  // ✅ Clubs (para autocomplete)
+  const [clubs, setClubs] = useState([]);
+  const [clubsLoading, setClubsLoading] = useState(false);
 
   // filtros
   const [selectedNeeds, setSelectedNeeds] = useState(() => new Set());
@@ -51,6 +66,10 @@ export default function InclusiveMatchesPage() {
   const [mixAllowed, setMixAllowed] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  // ✅ estados autocomplete
+  const [clubSuggestOpen, setClubSuggestOpen] = useState(false);
+  const [citySuggestOpen, setCitySuggestOpen] = useState(false);
+
   async function load() {
     try {
       setLoading(true);
@@ -64,6 +83,24 @@ export default function InclusiveMatchesPage() {
       setLoading(false);
     }
   }
+
+  async function loadClubs() {
+    try {
+      setClubsLoading(true);
+      const rows = await fetchClubsFromGoogleSheet();
+      setClubs(Array.isArray(rows) ? rows : []);
+    } catch {
+      setClubs([]);
+    } finally {
+      setClubsLoading(false);
+    }
+  }
+
+  // ✅ carga clubs una vez (solo para autocomplete)
+  useEffect(() => {
+    loadClubs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // query params: ?create=1  y ?filter=...
   useEffect(() => {
@@ -126,6 +163,43 @@ export default function InclusiveMatchesPage() {
     return list;
   }, [matches, selectedNeeds, mixAllowedOnly]);
 
+  const clubSuggestions = useMemo(() => {
+    const q = normText(clubName);
+    if (!q || q.length < 2) return [];
+    return (clubs || [])
+      .filter((c) => normText(c?.name).includes(q))
+      .slice(0, 8)
+      .map((c) => ({
+        name: c.name,
+        city: c.city || "",
+      }));
+  }, [clubName, clubs]);
+
+  const citySuggestions = useMemo(() => {
+    const q = normText(city);
+    if (!q || q.length < 2) return [];
+
+    // ciudades únicas de clubs (y fallback de partidos)
+    const set = new Map();
+
+    for (const c of clubs || []) {
+      const cc = String(c?.city || "").trim();
+      if (!cc) continue;
+      const key = normText(cc);
+      if (!set.has(key)) set.set(key, cc);
+    }
+    for (const m of matches || []) {
+      const cc = String(m?.city || "").trim();
+      if (!cc) continue;
+      const key = normText(cc);
+      if (!set.has(key)) set.set(key, cc);
+    }
+
+    return Array.from(set.values())
+      .filter((x) => normText(x).includes(q))
+      .slice(0, 10);
+  }, [city, clubs, matches]);
+
   function toggleNeed(setter, currentSet, key) {
     const next = new Set(Array.from(currentSet));
     if (next.has(key)) next.delete(key);
@@ -138,14 +212,22 @@ export default function InclusiveMatchesPage() {
       setCreating(true);
       setErr(null);
 
-      if (!clubName.trim()) throw new Error("Escribe el nombre del club (aunque sea aproximado).");
+      const club = clubName.trim();
+      if (!club) throw new Error("Escribe el nombre del club (aunque sea aproximado).");
       if (!startAt) throw new Error("Selecciona fecha y hora.");
       if (!createNeeds.size) throw new Error("Elige al menos una opción de accesibilidad.");
 
+      // ⚠️ Aviso si la fecha se queda en pasado por error humano
+      const dt = new Date(startAt);
+      if (!Number.isFinite(dt.getTime())) throw new Error("Fecha inválida.");
+      if (dt.getTime() < Date.now() - 5 * 60 * 1000) {
+        throw new Error("La fecha/hora parece estar en el pasado. Cámbiala para que aparezca en la lista.");
+      }
+
       await createInclusiveMatch({
-        club_name: clubName.trim(),
+        club_name: club,
         city: city.trim(),
-        start_at: new Date(startAt).toISOString(),
+        start_at: dt.toISOString(),
         duration_min: Number(durationMin) || 90,
         level: level.trim() || "Intermedio",
         needs: Array.from(createNeeds),
@@ -165,7 +247,13 @@ export default function InclusiveMatchesPage() {
 
       await load();
     } catch (e) {
-      setErr(e?.message || "No pude crear el partido");
+      // ✅ error real, sin “misterios”
+      const msg =
+        e?.message ||
+        (typeof e === "string" ? e : "") ||
+        "No pude crear el partido";
+      console.error("Inclusive create error:", e);
+      setErr(msg);
     } finally {
       setCreating(false);
     }
@@ -175,35 +263,32 @@ export default function InclusiveMatchesPage() {
     <div className="gpPage">
       <div className="gpWrap">
         <div className="container">
-          {/* ✅ COMO TU CROQUIS:
-              - Arriba: título izq + meta der (paralelo)
-              - Debajo: botones izq/der */}
-          {/* HEADER (2x2): titulo | Ir a Partidos  /  texto | Crear */}
-                <div className="pageHeader gpIncHeader">
-                  <div className="gpIncGrid">
-                    <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
+          {/* HEADER 2x2 */}
+          <div className="pageHeader gpIncHeader">
+            <div className="gpIncGrid">
+              <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
 
-                    <button
-                      className="btn ghost gpIncBtnRight"
-                      type="button"
-                      onClick={() => navigate("/partidos")}
-                    >
-                      Ir a Partidos
-                    </button>
+              <button
+                className="btn ghost gpIncBtnRight"
+                type="button"
+                onClick={() => navigate("/partidos")}
+              >
+                Ir a Partidos
+              </button>
 
-                    <div className="pageMeta gpIncMeta">
-                      Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
-                    </div>
+              <div className="pageMeta gpIncMeta">
+                Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
+              </div>
 
-                    <button
-                      className="btn gpIncBtnCreate"
-                      type="button"
-                      onClick={() => setOpenCreate(true)}
-                    >
-                      + Crear partido inclusivo
-                    </button>
-                  </div>
-                </div>
+              <button
+                className="btn gpIncBtnCreate"
+                type="button"
+                onClick={() => setOpenCreate(true)}
+              >
+                + Crear partido inclusivo
+              </button>
+            </div>
+          </div>
 
           {/* filtros */}
           <div className="card" style={{ marginTop: 10 }}>
@@ -301,7 +386,7 @@ export default function InclusiveMatchesPage() {
 
       {/* modal crear */}
       {openCreate ? (
-        <div className="gpModalOverlay" onMouseDown={() => setOpenCreate(false)}>
+        <div className="gpModalOverlay" onMouseDown={() => { setOpenCreate(false); setClubSuggestOpen(false); setCitySuggestOpen(false); }}>
           <div className="gpModalCard" onMouseDown={(e) => e.stopPropagation()}>
             <div className="gpModalHeader">
               <div style={{ fontWeight: 950, fontSize: 16 }}>Crear partido inclusivo</div>
@@ -312,23 +397,85 @@ export default function InclusiveMatchesPage() {
 
             <div className="gpForm">
               <label className="gpLabel">Club (nombre)</label>
-              <input
-                className="gpInput"
-                value={clubName}
-                onChange={(e) => setClubName(e.target.value)}
-                placeholder="Ej: Inacua, Vals Sport..."
-              />
+
+              <div className="gpAutoWrap">
+                <input
+                  className="gpInput"
+                  value={clubName}
+                  onChange={(e) => {
+                    setClubName(e.target.value);
+                    setClubSuggestOpen(true);
+                  }}
+                  onFocus={() => setClubSuggestOpen(true)}
+                  onBlur={() => setTimeout(() => setClubSuggestOpen(false), 160)}
+                  placeholder={clubsLoading ? "Cargando clubs…" : "Ej: Inacua, Vals Sport..."}
+                />
+
+                {clubSuggestOpen && clubSuggestions.length > 0 ? (
+                  <div className="gpAutoList">
+                    {clubSuggestions.map((s, idx) => (
+                      <button
+                        key={`${s.name}-${idx}`}
+                        type="button"
+                        className="gpAutoItem"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setClubName(s.name);
+                          if (s.city) setCity(s.city);
+                          setClubSuggestOpen(false);
+                        }}
+                      >
+                        <div className="gpAutoTop">
+                          <span>{s.name}</span>
+                          <span style={{ opacity: 0.7 }}>{s.city || ""}</span>
+                        </div>
+                        <div className="gpAutoSub">Usar este club</div>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
 
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Ciudad</label>
-                  <input
-                    className="gpInput"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Ej: Málaga"
-                  />
+                  <div className="gpAutoWrap">
+                    <input
+                      className="gpInput"
+                      value={city}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setCitySuggestOpen(true);
+                      }}
+                      onFocus={() => setCitySuggestOpen(true)}
+                      onBlur={() => setTimeout(() => setCitySuggestOpen(false), 160)}
+                      placeholder="Ej: Málaga"
+                    />
+
+                    {citySuggestOpen && citySuggestions.length > 0 ? (
+                      <div className="gpAutoList">
+                        {citySuggestions.map((c, idx) => (
+                          <button
+                            key={`${c}-${idx}`}
+                            type="button"
+                            className="gpAutoItem"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setCity(c);
+                              setCitySuggestOpen(false);
+                            }}
+                          >
+                            <div className="gpAutoTop">
+                              <span>{c}</span>
+                              <span style={{ opacity: 0.7 }}>Ciudad</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
+
                 <div>
                   <label className="gpLabel">Nivel</label>
                   <input
@@ -343,7 +490,6 @@ export default function InclusiveMatchesPage() {
               <div className="gpGrid2">
                 <div>
                   <label className="gpLabel">Fecha y hora</label>
-                  {/* ✅ 00/15/30/45 */}
                   <input
                     className="gpInput"
                     type="datetime-local"
@@ -411,6 +557,7 @@ export default function InclusiveMatchesPage() {
                   Cancelar
                 </button>
               </div>
+
             </div>
           </div>
         </div>
