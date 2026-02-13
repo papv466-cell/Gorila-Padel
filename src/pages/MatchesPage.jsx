@@ -1512,7 +1512,6 @@ export default function MatchesPage() {
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        transform: "translateZ(0)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexShrink: 0 }}>
@@ -1711,7 +1710,6 @@ export default function MatchesPage() {
               overflowX: "hidden",
               background: "#111",
               transform: "translateZ(0)",
-              background: "#111",
               borderRadius: 18,
               border: "1px solid rgba(255,255,255,0.14)",
               padding: 12,

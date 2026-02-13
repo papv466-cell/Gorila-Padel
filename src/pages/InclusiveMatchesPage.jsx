@@ -10,17 +10,16 @@ import {
 
 // ✅ Imágenes (ajusta nombres si cambian)
 import imgWheelchair from "../assets/inclusive/wheelchair.png";
-import imgBlind from "../assets/inclusive/blind.png";
 import imgDown from "../assets/inclusive/down.png";
 import imgOther from "../assets/inclusive/other.png";
 import imgNone from "../assets/inclusive/none.png";
 
 const NEEDS = [
-  { key: "wheelchair", label: "Silla de ruedas", emoji: "♿", img: imgWheelchair },
-  { key: "blind", label: "Ceguera / baja visión", emoji: "👁️", img: imgBlind },
-  { key: "down", label: "Síndrome de Down", emoji: "🧩", img: imgDown },
-  { key: "other", label: "Otra capacidad especial", emoji: "🤝", img: imgOther },
-  { key: "none", label: "Mixtos (sin capacidades espaciales)", emoji: "🙂", img: imgNone },
+  { key: "wheelchair", label: "Silla de ruedas", img: "/inclusive/wheelchair.png" },
+  { key: "blind", label: "Ceguera / baja visión", img: "/inclusive/blind.png" },
+  { key: "down", label: "Síndrome de Down", img: "/inclusive/down.png" },
+  { key: "other", label: "Otra capacidad especial", img: "/inclusive/other.png" },
+  { key: "none", label: "Sin capacidades espaciales (para mixtos)", img: "/inclusive/mixed.png" },
 ];
 
 function fmtDate(esISO) {
