@@ -62,7 +62,7 @@ async function callApi(path, { method = "POST", session, body } = {}) {
 ========================= */
 export async function fetchMatches({ limit = 400 } = {}) {
   const { data, error } = await supabase
-    .from("matches")
+    .from("matches_v2")
     .select("*")
     .order("start_at", { ascending: true })
     .limit(limit);
@@ -136,7 +136,7 @@ export async function createMatch(data) {
   console.log('✅ Validación OK, insertando en BD...');
 
   const { data: row, error } = await supabase
-    .from("matches")
+    .from("matches_v2")
     .insert({
       club_id: data.clubId || null,
       club_name: clubName,
@@ -318,7 +318,7 @@ export async function rejectRequest({ requestId }) {
 ========================= */
 export async function fetchMatchesForClubPreview({ clubId, clubName, limit = 5 }) {
   let q = supabase
-    .from("matches")
+    .from("matches_v2")
     .select("id, club_id, club_name, start_at, duration_min, level")
     .gte("start_at", startOfTodayISO())
     .order("start_at", { ascending: true })
@@ -339,7 +339,7 @@ export async function deleteMatch(matchId) {
   if (!matchId) throw new Error("Falta matchId");
   await getSessionOrThrow();
 
-  const { error } = await supabase.from("matches").delete().eq("id", matchId);
+  const { error } = await supabase.from("matches_v2").delete().eq("id", matchId);
   if (error) throw error;
   return true;
 }
@@ -406,7 +406,7 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 export function subscribeMatchesRealtime(onChange) {
   const channel = supabase
     .channel("rt:matches")
-    .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, (payload) => {
+    .on("postgres_changes", { event: "*", schema: "public", table: "matches_v2" }, (payload) => {
       try {
         onChange?.(payload);
       } catch (e) {

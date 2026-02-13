@@ -613,3 +613,16 @@ html, body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* ✅ Asegura contraste también para “🤝 Ceder” */
+.gpActionBar .btn.ghost,
+.gpActionBar .btn.ghost.gpIconBtn,
+.gpActionBar .btn.ghost * {
+  color: #74B800 !important;
+}
+
+/* Hover más vivo */
+.gpActionBar .btn.ghost:hover,
+.gpActionBar .btn.ghost.gpIconBtn:hover,
+.gpActionBar .btn.ghost:hover * {
+  color: #9BE800 !important;
+}

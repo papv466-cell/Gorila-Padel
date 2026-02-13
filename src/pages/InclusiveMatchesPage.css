@@ -1,74 +1,190 @@
 /* src/pages/InclusiveMatchesPage.css */
 
-/* Header 2x2 */
+/* ===== HEADER (como tu croquis 2x2) ===== */
 .gpIncHeader { padding-bottom: 12px; }
+
 .gpIncGrid{
-  display:grid;
+  display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   grid-template-areas:
-    "title right"
-    "meta  create";
+    "title   right"
+    "meta    create";
   gap: 10px 12px;
   align-items: start;
 }
+
 .gpIncTitle{
-  grid-area:title;
-  margin:0 !important;
-  line-height:1.02;
-  font-weight:950;
-  font-size:clamp(26px,7vw,40px);
+  grid-area: title;
+  margin: 0 !important;
+  line-height: 1.02;
+  font-weight: 950;
+  font-size: clamp(26px, 7vw, 40px);
 }
+
 .gpIncMeta{
-  grid-area:meta;
-  margin:0 !important;
-  opacity:.75;
-  line-height:1.25;
-  font-size:12px;
+  grid-area: meta;
+  margin: 0 !important;
+  opacity: 0.75;
+  line-height: 1.25;
+  font-size: 12px;
   max-width: 60ch;
 }
-.gpIncBtnRight{ grid-area:right; justify-self:end; width:100%; }
-.gpIncBtnCreate{ grid-area:create; justify-self:end; width:100%; }
+
+.gpIncBtnRight{
+  grid-area: right;
+  justify-self: end;
+  width: 100%;
+}
+
+.gpIncBtnCreate{
+  grid-area: create;
+  justify-self: end;
+  width: 100%;
+}
 
 @media (max-width: 420px){
   .gpIncGrid{
-    grid-template-columns:1fr;
-    grid-template-areas: "title" "meta" "right" "create";
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "meta"
+      "right"
+      "create";
   }
-  .gpIncBtnRight,.gpIncBtnCreate{ justify-self:stretch; width:100%; }
+  .gpIncBtnRight, .gpIncBtnCreate{ width: 100%; }
 }
 
-/* Autocomplete */
-.gpAutoWrap{ position: relative; }
-.gpAutoList{
-  position:absolute;
-  left:0; right:0; top:calc(100% + 6px);
-  background: rgba(16,18,22,0.98);
-  border: 1px solid rgba(255,255,255,0.12);
+/* ===== Barra mini (sin “menú feo”) ===== */
+.gpIncMiniBar{
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.gpIncMiniBar .btn{ min-width: 140px; }
+.gpIncCount{
+  opacity: 0.75;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ===== Cards PRO ===== */
+.gpIncList{
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.gpIncMatchCard{
+  border-radius: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+}
+
+.gpIncMatchTop{
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.gpIncMatchTitle{
+  font-weight: 950;
+  font-size: 16px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.gpIncMatchSub{
+  margin-top: 6px;
+  opacity: 0.8;
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpIncPill{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.22);
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.gpIncPill.ok{ background: rgba(116,184,0,0.16); border-color: rgba(116,184,0,0.30); }
+.gpIncPill.warn{ background: rgba(255,170,0,0.12); border-color: rgba(255,170,0,0.22); }
+
+.gpIncWhen{
+  font-weight: 900;
+  opacity: 0.95;
+}
+
+.gpIncNotes{
+  margin-top: 10px;
+  opacity: 0.86;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* ===== Needs en “cuadraditos” con gorilas ===== */
+.gpIncNeedsGrid{
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 760px){
+  .gpIncNeedsGrid{ grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+.gpIncNeedTile{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+  padding: 10px 10px 9px;
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  text-align: center;
+  min-height: 88px;
+}
+
+.gpIncNeedImg{
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  overflow:hidden;
-  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
-  z-index: 9999;
-  backdrop-filter: blur(10px);
+  object-fit: cover;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.10);
 }
-.gpAutoItem{
-  width:100%;
-  text-align:left;
-  padding:10px 12px;
-  border:0;
-  background:transparent;
-  cursor:pointer;
-  color:#fff;
+
+.gpIncNeedLabel{
+  font-size: 11px;
+  font-weight: 900;
+  opacity: 0.9;
+  line-height: 1.1;
 }
-.gpAutoItem:hover{ background: rgba(255,255,255,0.06); }
-.gpAutoTop{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  font-weight:900;
-  font-size:13px;
+
+/* ===== Modal filtros (chips dentro de modal) ===== */
+.gpIncModalTitle{
+  font-weight: 950;
+  font-size: 16px;
 }
-.gpAutoSub{
-  margin-top:2px;
-  opacity:.75;
-  font-size:12px;
+
+.gpIncFilterHint{
+  margin-top: 8px;
+  opacity: 0.75;
+  font-size: 12px;
+  line-height: 1.25;
 }
