@@ -1,0 +1,290 @@
+/* ============================================
+   PRODUCT CARD
+   ============================================ */
+
+   .product-card {
+    background: var(--store-surface);
+    border: 1px solid var(--store-border);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  
+  .product-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--gorila-green);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  }
+  
+  /* ============================================
+     IMAGE CONTAINER
+     ============================================ */
+  
+  .product-image-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0a0a0a;
+    overflow: hidden;
+  }
+  
+  .product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .product-card:hover .product-image {
+    transform: scale(1.05);
+  }
+  
+  /* ============================================
+     BADGES
+     ============================================ */
+  
+  .product-badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 2;
+  }
+  
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .gorila-badge {
+    background: linear-gradient(135deg, var(--gorila-green) 0%, var(--gorila-green-dark) 100%);
+    color: #000;
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes badgePulse {
+    0%, 100% { box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(116, 184, 0, 0.6); }
+  }
+  
+  .discount-badge {
+    background: var(--accent-red);
+    color: white;
+  }
+  
+  .stock-badge {
+    background: rgba(255, 165, 0, 0.9);
+    color: white;
+  }
+  
+  .out-badge {
+    background: rgba(102, 102, 102, 0.9);
+    color: white;
+  }
+  
+  /* ============================================
+     ACTION BUTTONS
+     ============================================ */
+  
+  .product-actions {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+  }
+  
+  .product-card:hover .product-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .action-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  
+  .action-btn:hover {
+    transform: scale(1.1);
+    background: var(--gorila-green);
+  }
+  
+  .action-btn.favorite.active {
+    background: var(--accent-red);
+  }
+  
+  .action-btn.quick-add.adding {
+    background: var(--gorila-green);
+    animation: successPing 0.5s ease;
+  }
+  
+  @keyframes successPing {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* ============================================
+     PRODUCT INFO
+     ============================================ */
+  
+  .product-info {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  
+  .product-vendor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  
+  .vendor-name {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  
+  .vendor-verified {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    background: var(--gorila-green);
+    color: #000;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 900;
+  }
+  
+  .product-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 42px;
+  }
+  
+  .product-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+  
+  .rating-stars {
+    color: var(--accent-gold);
+    line-height: 1;
+  }
+  
+  .rating-count {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  
+  .product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: auto;
+  }
+  
+  .price-current {
+    font-size: 24px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    color: var(--gorila-green);
+  }
+  
+  .price-old {
+    font-size: 16px;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    font-weight: 400;
+  }
+  
+  .product-brand {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    padding-top: 8px;
+    border-top: 1px solid var(--store-border);
+  }
+  
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  
+  @media (max-width: 768px) {
+    .product-actions {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+  
+    .product-name {
+      font-size: 14px;
+      min-height: 38px;
+    }
+  
+    .price-current {
+      font-size: 20px;
+    }
+  
+    .price-old {
+      font-size: 14px;
+    }
+  }

@@ -1,0 +1,262 @@
+/* ========== ULTRA COMPACTO FINAL - SIN ESPACIO ROJO - CARDS PERFECTAS ========== */
+
+/* Header compacto */
+.gpMatchesPage .pageHeader {
+  position: fixed !important;
+  top: calc(46px + env(safe-area-inset-top, 0px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  z-index: 50 !important;
+  padding: 2px 10px 2px !important;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: none !important;
+}
+
+.gpMatchesPage .pageTitle {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.gpMatchesPage .pageMeta {
+  font-size: 9px !important;
+  opacity: 0.5 !important;
+  margin-top: 1px !important;
+  line-height: 1 !important;
+}
+
+/* Actions compactas SIN PADDING EXTRA */
+.gpMatchesPage .gpActions {
+  position: fixed !important;
+  top: calc(46px + env(safe-area-inset-top, 0px) + 28px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  z-index: 45 !important;
+  padding: 2px 6px 2px !important;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.98) !important;
+  border-bottom: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Calendario más pequeño */
+.gpCalendarStrip {
+  display: flex !important;
+  gap: 2px !important;
+  overflow-x: auto !important;
+  padding: 2px 0 !important;
+  margin: 0 !important;
+}
+
+.gpDayPill {
+  flex-shrink: 0 !important;
+  min-width: 38px !important;
+  padding: 2px 2px !important;
+  border-radius: 8px !important;
+}
+
+.gpDayPill > div:first-child {
+  font-size: 7px !important;
+  font-weight: 700 !important;
+  margin-bottom: 1px !important;
+}
+
+.gpDayPill > div:nth-child(2) {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  margin: 0 !important;
+}
+
+.gpDayPill > div:last-child {
+  font-size: 10px !important;
+  margin-top: 1px !important;
+}
+
+/* Input fecha compacto */
+.gpRow {
+  padding: 1px 0 !important;
+  gap: 4px !important;
+  margin: 0 !important;
+}
+
+.gpRow > div {
+  font-size: 10px !important;
+}
+
+.gpRow .gpInput {
+  padding: 3px 5px !important;
+  font-size: 10px !important;
+  max-width: 110px !important;
+  border-radius: 6px !important;
+}
+
+/* Segmented compacto */
+.gpSegmented {
+  padding: 2px !important;
+  gap: 2px !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+}
+
+.gpSegmented button {
+  padding: 4px 7px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  border-radius: 6px !important;
+}
+
+/* Botón Crear compacto */
+.gpActions > .btn:not(.ghost) {
+  padding: 5px 8px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+}
+
+/* Push oculto */
+.gpActions > .btn.ghost {
+  display: none !important;
+}
+
+/* Grid SIN PADDING - Pegado a botones */
+.gpMatchesSnapWrap {
+  position: fixed !important;
+  top: calc(46px + env(safe-area-inset-top, 0px) + 28px + 108px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: env(safe-area-inset-bottom, 0px) !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 6px 8px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Cards ULTRA COMPACTAS */
+.gpMatchesGrid {
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gpMatchCard {
+  padding: 6px !important;
+  margin-bottom: 0 !important;
+  border-radius: 8px !important;
+}
+
+/* Roster compacto */
+.gpRoster {
+  margin-bottom: 4px !important;
+  gap: 3px !important;
+}
+
+.gpTeam {
+  gap: 3px !important;
+}
+
+.gpSlot {
+  gap: 4px !important;
+  padding: 3px !important;
+}
+
+.gpSlotImg {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 14px !important;
+  border-radius: 6px !important;
+}
+
+.gpSlotName {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+}
+
+.gpSlotMeta {
+  font-size: 8px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+}
+
+.gpVs {
+  font-size: 11px !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+}
+
+/* Headline compacto */
+.gpHeadline {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  margin-bottom: 3px !important;
+  line-height: 1.1 !important;
+  padding: 0 4px !important;
+}
+
+/* Caption compacto */
+.gpCaption {
+  gap: 3px !important;
+  margin-bottom: 3px !important;
+  padding: 0 4px !important;
+}
+
+.gpChip {
+  font-size: 8px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+}
+
+/* Meta badges */
+.gpMatchCard .meta {
+  font-size: 8px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+}
+
+/* Divider fino */
+.gpDivider {
+  margin: 4px 0 !important;
+  opacity: 0.3 !important;
+}
+
+/* Action bar compacta */
+.gpActionBar {
+  padding: 0 4px 4px !important;
+  gap: 4px !important;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  gap: 3px !important;
+}
+
+.gpIconBtn {
+  font-size: 9px !important;
+  padding: 3px 5px !important;
+  border-radius: 5px !important;
+}
+
+.gpActionRight .btn {
+  font-size: 10px !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+}
+
+.gpActionRight .btn.danger {
+  padding: 3px 5px !important;
+}

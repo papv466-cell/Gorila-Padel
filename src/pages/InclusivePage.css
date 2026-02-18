@@ -1,0 +1,621 @@
+/* InclusivePage.css — limpio, mobile first */
+
+/* Base */
+.gpInclusivePage {
+  background: #000;
+  min-height: 100vh;
+  color: #fff;
+}
+
+/* ✅ Quita offsets globales SOLO en esta página (pageWithHeader suele meter padding-top) */
+.gpInclusivePage.pageWithHeader {
+  padding-top: 0 !important;
+}
+.gpInclusivePage .pageWrap,
+.gpInclusivePage .container {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* ✅ Header compacto (sin aire arriba/abajo) */
+.gpInclusiveHeader {
+  padding: 8px 16px 8px !important;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gpInclusiveTitle {
+  font-size: 16px !important;
+  font-weight: 900;
+  color: #74B800;
+  line-height: 1.05 !important;
+  margin: 0 0 4px 0 !important;
+  letter-spacing: -0.3px;
+}
+
+/* por si h1 tiene margins raros en Safari/iOS */
+.gpInclusivePage h1 {
+  margin-block: 0 !important;
+}
+
+.gpInclusiveMeta {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.25 !important;
+  margin: 0 !important;
+  max-width: 50ch;
+}
+
+/* ✅ Botones: SIEMPRE visibles y debajo del header */
+.gpInclusiveActions {
+  padding: 10px 16px 0 !important;
+  margin: 0 !important;
+  background: #000;
+  position: relative;
+  z-index: 10;
+}
+
+.gpInclusiveCreateBelow {
+  padding: 10px 16px 12px !important;
+  margin: 0 !important;
+  background: #000;
+  position: relative;
+  z-index: 11;
+}
+
+.gpInclusiveActions .btn,
+.gpInclusiveCreateBelow .btn {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 16px;
+  font-size: 13px;
+  justify-content: center;
+}
+
+/* Grid */
+.gpInclusiveGrid {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.gpInclusiveCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.gpInclusiveCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(116, 184, 0, 0.3);
+}
+
+.gpInclusiveCardIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.gpInclusiveCardTitle {
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.gpInclusiveCardDesc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.gpInclusiveCard .btn {
+  margin-top: auto;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+/* Bottom */
+.gpInclusiveBottom {
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.gpInclusiveNote {
+  padding: 0 16px 20px;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive */
+@media (min-width: 640px) {
+  .gpInclusiveGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gpInclusiveHeader {
+    padding: 12px 24px !important;
+  }
+
+  .gpInclusiveTitle {
+    font-size: 18px !important;
+  }
+
+  .gpInclusiveActions,
+  .gpInclusiveCreateBelow {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  .gpInclusiveGrid {
+    padding: 24px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .gpInclusiveCard {
+    padding: 20px;
+  }
+}
+/* ========== HEADER COMPACTO ========== */
+.gpIncHeader{
+  padding-bottom: 10px;
+}
+
+.gpIncGrid{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "title right"
+    "meta  create";
+  gap: 8px 10px;
+  align-items: start;
+}
+
+.gpIncTitle{
+  grid-area: title;
+  margin: 0 !important;
+  line-height: 1.05;
+  font-weight: 950;
+  font-size: clamp(22px, 7vw, 34px);
+}
+
+.gpIncMeta{
+  grid-area: meta;
+  margin: 0 !important;
+  opacity: 0.75;
+  line-height: 1.25;
+  font-size: 12px;
+  max-width: 60ch;
+}
+
+.gpIncBtn{
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  width: auto !important;
+  min-width: 170px;
+}
+
+.gpIncBtnRight{
+  grid-area: right;
+  justify-self: end;
+}
+
+.gpIncBtnCreate{
+  grid-area: create;
+  justify-self: end;
+}
+
+/* móvil estrecho: apila */
+@media (max-width: 460px){
+  .gpIncGrid{
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "meta"
+      "right"
+      "create";
+  }
+  .gpIncBtn{
+    width: 100% !important;
+    min-width: 0;
+  }
+}
+
+/* ========== FILTROS CON IMÁGENES ========== */
+.gpIncFiltersCard{
+  margin-top: 10px;
+  padding: 12px;
+}
+
+.gpIncFiltersTop{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.gpIncFiltersTitle{
+  font-weight: 950;
+  font-size: 14px;
+}
+
+.gpIncChips{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpIncChip{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.gpIncChip:hover{
+  background: rgba(255,255,255,0.07);
+}
+
+.gpIncChip.isOn{
+  background: rgba(116,184,0,0.22);
+  border-color: rgba(116,184,0,0.55);
+}
+
+.gpIncChipImg{
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.gpIncChipEmoji{
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.gpIncChipTxt{
+  white-space: nowrap;
+}
+
+/* ========== LISTA + CARDS TIPO PARTIDOS ========== */
+.gpIncList{
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.gpIncMatchCard{
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.gpIncMatchTop{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.gpIncClub{
+  font-weight: 950;
+  font-size: 16px;
+}
+
+.gpIncCity{
+  opacity: 0.7;
+  font-weight: 900;
+}
+
+.gpIncMetaLine{
+  margin-top: 6px;
+  opacity: 0.75;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* tags “cuadraditos” con imagen */
+.gpIncTags{
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpIncTag{
+  width: 92px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.gpIncTagImg{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.gpIncTagTxt{
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.05;
+  opacity: 0.95;
+}
+
+.gpIncNotes{
+  margin-top: 12px;
+  opacity: 0.85;
+  font-size: 13px;
+  line-height: 1.25;
+}
+/* ===== HEADER INCLUSIVOS: DESKTOP OK + MÓVIL CROQUIS ===== */
+
+.gpIncHeader { padding-bottom: 10px; }
+
+.gpIncGrid{
+  display:grid;
+  gap: 10px 12px;
+  align-items: start;
+
+  /* Desktop: tu layout se mantiene bonito */
+  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-areas:
+    "title  meta"
+    "create right"
+    "minibar minibar";
+}
+
+.gpIncTitle{
+  grid-area: title;
+  margin:0 !important;
+  line-height:1.05;
+  font-weight:950;
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.gpIncMeta{
+  grid-area: meta;
+  margin:0 !important;
+  opacity:0.75;
+  line-height:1.25;
+  font-size: 13px;
+  justify-self: stretch;
+}
+
+.gpIncBtnCreate{ grid-area: create; }
+.gpIncBtnRight{ grid-area: right; justify-self:end; }
+
+.gpIncMiniBar{
+  grid-area: minibar;
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items:center;
+  margin-top: 2px;
+}
+
+.gpIncCount{
+  opacity: 0.8;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+/* Texto del botón Crear (desktop vs móvil) */
+.gpIncCreateShort{ display:none; }
+.gpIncCreateLong{ display:inline; }
+
+
+/* ===== MÓVIL: EXACTO COMO TU CROQUIS ===== */
+@media (max-width: 520px){
+
+  /* 2 columnas fijas en móvil */
+  .gpIncGrid{
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "title   meta"
+      "create  right"
+      "create  minibar";
+    gap: 8px 10px;
+  }
+
+  /* Título más pequeño y arriba */
+  .gpIncTitle{
+    font-size: 32px;      /* baja tamaño */
+    line-height: 1.02;
+    margin-top: -2px !important;
+  }
+
+  /* Meta a la derecha arriba del todo */
+  .gpIncMeta{
+    font-size: 12px;
+    line-height: 1.22;
+    margin-top: 2px !important;
+  }
+
+  /* Botones: menos gigantes */
+  .gpIncBtnRight,
+  .gpIncBtnCreate{
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+
+  /* Crear partido: en móvil solo “Crear partido” */
+  .gpIncCreateLong{ display:none; }
+  .gpIncCreateShort{ display:inline; }
+
+  /* MiniBar: columna derecha debajo de Ir a Partidos */
+  .gpIncMiniBar{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    justify-items: stretch;
+    align-items: start;
+    margin-top: 0;
+  }
+
+  .gpIncMiniBtn{
+    width: 100%;
+    min-height: 42px;
+    border-radius: 16px;
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+
+  /* “Mostrando:” como pill bien compacta */
+  .gpIncCount{
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    font-size: 14px;
+    text-align: center;
+  }
+}
+@media (max-width: 520px){
+  .gpPage .pageHeader.gpIncHeader{ margin-top: -6px; }
+}
+/* ===== Ajuste final móvil: sin aire arriba + botones centrados ===== */
+@media (max-width: 520px){
+
+  /* 1) Quita el “aire” que viene del layout general */
+  .gpPage{ padding-top: 0 !important; }
+  .gpWrap{ padding-top: 0 !important; }
+  .container{ padding-top: 0 !important; }
+
+  /* Si tu layout mete margen/padding arriba del header */
+  .pageHeader.gpIncHeader{
+    margin-top: -18px !important;   /* sube el bloque */
+    padding-top: 0 !important;
+  }
+
+  /* 2) Botones centrados (no pegados a la derecha) */
+  .gpIncBtnRight,
+  .gpIncBtnCreate{
+    justify-self: center !important;  /* anula el end */
+    width: 92% !important;           /* centrado y bonito */
+    max-width: 420px;
+  }
+
+  /* MiniBar (Filtrar / Mostrando / Limpiar) centrada también */
+  .gpIncMiniBar{
+    justify-items: center !important;
+  }
+
+  .gpIncMiniBtn,
+  .gpIncCount{
+    width: 92% !important;
+    max-width: 420px;
+  }
+
+}
+/* ===== MOBILE FIX FINAL (compacto + pegado arriba + centrado) ===== */
+@media (max-width: 520px){
+
+  /* Quitar aire del layout global (pageWithHeader / safe-area) SOLO aquí */
+  .gpPage, .gpWrap, .container{
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Si tu app usa pageWithHeader en otras páginas, aquí lo neutralizamos */
+  .pageWithHeader{
+    padding-top: 0 !important;
+  }
+
+  /* Header de esta página: pegado arriba */
+  .pageHeader.gpIncHeader{
+    margin-top: -26px !important;   /* sube más (antes era -18) */
+    padding-top: 0 !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* Título y texto más pequeños */
+  .gpIncTitle{
+    font-size: 26px !important;
+    line-height: 1.02 !important;
+    margin: 0 !important;
+  }
+
+  .gpIncMeta{
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+    margin: 0 !important;
+    opacity: 0.75;
+  }
+
+  /* Pasa el grid a 1 columna en móvil (evita que se “metan” a la derecha) */
+  .gpIncGrid{
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "title"
+      "meta"
+      "create"
+      "right" !important;
+    gap: 8px !important;
+  }
+
+  /* Botones centrados y full width */
+  .gpIncBtnRight,
+  .gpIncBtnCreate{
+    justify-self: center !important;
+    width: 100% !important;
+    max-width: 520px !important;
+  }
+
+  /* MiniBar: en columna para que no se pisen */
+  .gpIncMiniBar{
+    margin-top: 8px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .gpIncMiniBar .btn{
+    width: 100% !important;
+  }
+
+  .gpIncCount{
+    text-align: center !important;
+    width: 100% !important;
+    opacity: 0.8;
+  }
+}

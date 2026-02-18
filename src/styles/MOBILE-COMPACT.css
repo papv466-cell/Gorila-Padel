@@ -1,0 +1,158 @@
+/* ========== DISEÑO ULTRA COMPACTO PARA MÓVIL ========== */
+
+/* Calendario más pequeño */
+.gpCalendarStrip {
+    display: flex !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    padding: 4px 0 !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .gpDayPill {
+    flex-shrink: 0 !important;
+    min-width: 44px !important;
+    padding: 4px 3px !important;
+    font-size: 10px !important;
+  }
+  
+  .gpDayPill .gpDow {
+    font-size: 8px !important;
+  }
+  
+  .gpDayPill .gpDom {
+    font-size: 14px !important;
+  }
+  
+  /* Input fecha más pequeño */
+  .gpRow {
+    padding: 4px 0 !important;
+  }
+  
+  .gpRow .gpInput {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    max-width: 130px !important;
+  }
+  
+  /* Botones Los míos/Todos más compactos */
+  .gpSegmented {
+    padding: 2px !important;
+    gap: 3px !important;
+  }
+  
+  .gpSegmented button {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  
+  /* Botón CREAR más pequeño */
+  .gpActions .btn {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+  }
+  
+  /* Botón Push más pequeño */
+  .gpActions .btn.ghost {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  
+  /* Sección gpActions más compacta */
+  .gpActions {
+    padding: 4px 10px 5px !important;
+    gap: 4px !important;
+  }
+  
+  /* ========== CARDS MÁS PEQUEÑAS ========== */
+  
+  .gpMatchCard {
+    padding: 10px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+  }
+  
+  /* Roster más pequeño */
+  .gpRoster {
+    margin-bottom: 8px !important;
+  }
+  
+  .gpSlot {
+    gap: 6px !important;
+  }
+  
+  .gpSlotImg {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 18px !important;
+    border-radius: 8px !important;
+  }
+  
+  .gpSlotName {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+  
+  .gpSlotMeta {
+    font-size: 10px !important;
+  }
+  
+  .gpVs {
+    font-size: 14px !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 6px !important;
+  }
+  
+  /* Título club más pequeño */
+  .gpHeadline {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    margin-bottom: 6px !important;
+  }
+  
+  /* Chips más pequeños */
+  .gpChip {
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+    border-radius: 6px !important;
+  }
+  
+  /* Meta badges más pequeños */
+  .meta {
+    font-size: 10px !important;
+    padding: 3px 6px !important;
+  }
+  
+  /* Divider más delgado */
+  .gpDivider {
+    margin: 8px 0 !important;
+  }
+  
+  /* Botones de acción más pequeños */
+  .gpActionBar {
+    padding: 0 8px 8px !important;
+    gap: 6px !important;
+  }
+  
+  .gpIconBtn {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+  
+  .gpActionRight .btn {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+  
+  /* Grid con más espacio arriba */
+  .gpMatchesSnapWrap {
+    padding-top: 8px !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  .gpMatchesGrid {
+    gap: 8px !important;
+  }

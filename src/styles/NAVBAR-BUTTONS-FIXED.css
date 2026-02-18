@@ -1,0 +1,1059 @@
+/* ========== VERSIÓN CORRECTA - SOLO QUITAR CALENDARIO STRIP ========== */
+
+/* Header compacto */
+.gpMatchesPage .pageHeader {
+  position: fixed !important;
+  top: calc(46px + env(safe-area-inset-top, 0px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  z-index: 50 !important;
+  padding: 2px 8px !important;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border-bottom: none !important;
+  height: 22px !important;
+}
+
+.gpMatchesPage .pageTitle {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+}
+
+.gpMatchesPage .pageMeta {
+  font-size: 8px !important;
+  opacity: 0.5 !important;
+  margin-top: 1px !important;
+  line-height: 1 !important;
+}
+
+/* Actions FIJAS (no se mueven con scroll) */
+.gpMatchesPage .gpActions {
+  position: fixed !important;
+  top: calc(46px + env(safe-area-inset-top, 0px) + 22px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  z-index: 45 !important;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+  background: rgba(0, 0, 0, 0.98) !important;
+  border-bottom: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  backdrop-filter: blur(10px) !important;
+  pointer-events: auto !important;
+}
+
+/* ⚠️ SOLO ocultar el calendario STRIP (los días horizontales) */
+.gpMatchesPage .gpCalendarStrip {
+  display: none !important;
+}
+
+/* ✅ Input fecha VISIBLE con indicador verde cuando hay partidos */
+.gpMatchesPage .gpRow {
+  padding: 0 !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.gpMatchesPage .gpRow > div:first-child {
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.gpMatchesPage .gpRow .gpInput {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  border-radius: 6px !important;
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  color: #fff !important;
+  position: relative !important;
+}
+
+/* Indicador verde cuando hay partidos ese día */
+.gpMatchesPage .gpRow .gpInput.hasMatches {
+  border: 2px solid #74B800 !important;
+  box-shadow: 0 0 12px rgba(116, 184, 0, 0.4) !important;
+  background: rgba(116, 184, 0, 0.1) !important;
+}
+
+/* Círculo verde pequeño como indicador alternativo */
+.gpMatchesPage .gpRow .gpInput.hasMatches::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 2px !important;
+  right: 2px !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: #74B800 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 4px rgba(116, 184, 0, 0.8) !important;
+}
+
+/* ✅ Segmented VISIBLE */
+.gpMatchesPage .gpSegmented {
+  padding: 2px !important;
+  gap: 2px !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  display: flex !important;
+}
+
+.gpMatchesPage .gpSegmented button {
+  padding: 5px 10px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  border-radius: 6px !important;
+}
+
+/* ✅ Botón Crear VISIBLE */
+.gpMatchesPage .gpActions > .btn:not(.ghost) {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Push oculto */
+.gpMatchesPage .gpActions > .btn.ghost {
+  display: none !important;
+}
+
+/* Cards ULTRA COMPACTAS (50% más pequeñas) */
+.gpMatchesGrid {
+  gap: 3px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gpTeam {
+  gap: 2px !important;
+}
+
+.gpSlot {
+  gap: 2px !important;
+  padding: 2px !important;
+  border-radius: 4px !important;
+}
+
+.gpSlotImg {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 11px !important;
+  border-radius: 4px !important;
+}
+
+.gpSlotName {
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+.gpSlotMeta {
+  font-size: 6px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+}
+
+.gpVs {
+  font-size: 9px !important;
+  width: 20px !important;
+  height: 20px !important;
+  padding: 2px !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* Caption mini */
+.gpCaption {
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+  padding: 0 3px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpChip {
+  font-size: 6px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
+  white-space: nowrap !important;
+}
+
+/* Divider fino */
+.gpDivider {
+  margin: 2px 0 !important;
+  opacity: 0.3 !important;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  gap: 2px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpIconBtn {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+}
+
+.gpActionRight .btn {
+  font-size: 8px !important;
+  padding: 3px 5px !important;
+  border-radius: 5px !important;
+  white-space: nowrap !important;
+}
+
+.gpActionRight .btn.danger {
+  padding: 2px 4px !important;
+  font-size: 7px !important;
+}
+/* ========== CARDS ULTRA MINI - MITAD DE ALTURA ========== */
+
+.gpMatchesGrid {
+  gap: 2px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gpTeam {
+  gap: 1px !important;
+}
+
+.gpSlot {
+  gap: 2px !important;
+  padding: 1px !important;
+  border-radius: 3px !important;
+}
+
+.gpSlotImg {
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 9px !important;
+  border-radius: 3px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+}
+
+.gpSlotName {
+  font-size: 7px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+.gpSlotMeta {
+  font-size: 5px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+  display: none !important;
+}
+
+.gpVs {
+  font-size: 8px !important;
+  width: 16px !important;
+  height: 16px !important;
+  padding: 1px !important;
+  border-radius: 3px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+
+/* Caption SUPER mini */
+.gpCaption {
+  gap: 1px !important;
+  margin-bottom: 2px !important;
+  padding: 0 2px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpChip {
+  font-size: 5px !important;
+  padding: 1px 2px !important;
+  border-radius: 2px !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+/* Divider casi invisible */
+.gpDivider {
+  margin: 1px 0 !important;
+  opacity: 0.2 !important;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  gap: 1px !important;
+  flex-wrap: wrap !important;
+}
+
+.gpIconBtn {
+  font-size: 6px !important;
+  padding: 1px 3px !important;
+  border-radius: 3px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn.danger {
+  padding: 1px 3px !important;
+  font-size: 6px !important;
+}
+
+/* Ocultar elementos que ocupan espacio */
+.gpSlotMeta {
+  display: none !important;
+}
+/* ========== CARDS TAMAÑO PERFECTO - INFO COMPLETA VISIBLE ========== */
+
+.gpMatchesGrid {
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.gpMatchCard{
+  height: auto !important;
+  min-height: unset !important;    /* o quítalo */
+  overflow: visible !important;
+  padding: 5px !important;
+}
+
+/* Roster compacto pero legible */
+.gpRoster {
+  margin-bottom: 4px !important;
+  gap: 3px !important;
+}
+
+.gpTeam {
+  gap: 3px !important;
+}
+
+.gpSlot {
+  gap: 3px !important;
+  padding: 2px !important;
+  border-radius: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.gpSlotImg {
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+  border-radius: 5px !important;
+  min-width: 24px !important;
+  flex-shrink: 0 !important;
+}
+
+.gpSlotName {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.gpSlotMeta {
+  font-size: 7px !important;
+  line-height: 1 !important;
+  opacity: 0.6 !important;
+  white-space: nowrap !important;
+}
+
+.gpVs {
+  font-size: 10px !important;
+  width: 24px !important;
+  height: 24px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
+  font-weight: 900 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Headline legible */
+.gpHeadline {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  margin: 3px 0 !important;
+  line-height: 1.2 !important;
+  padding: 0 3px !important;
+}
+
+/* Caption con info completa */
+.gpCaption {
+  gap: 3px !important;
+  margin: 3px 0 !important;
+  padding: 0 3px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+.gpChip {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Meta badges visibles */
+.gpMatchCard > div[style*="display: flex"][style*="gap: 8"] {
+  display: flex !important;
+  gap: 3px !important;
+  flex-wrap: wrap !important;
+  padding: 0 3px !important;
+  margin: 2px 0 !important;
+}
+
+.gpMatchCard .meta {
+  font-size: 7px !important;
+  padding: 2px 4px !important;
+  border-radius: 3px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+/* Divider visible */
+.gpDivider {
+  margin: 3px 0 !important;
+  opacity: 0.3 !important;
+}
+
+/* Action bar con todos los botones visibles */
+.gpActionBar {
+  padding: 3px !important;
+  gap: 3px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: auto !important;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  gap: 3px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+
+.gpIconBtn {
+  font-size: 8px !important;
+  padding: 3px 5px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn {
+  font-size: 9px !important;
+  padding: 4px 7px !important;
+  border-radius: 5px !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.gpActionRight .btn.danger {
+  padding: 3px 6px !important;
+  font-size: 8px !important;
+}
+
+/* Media queries para diferentes tamaños */
+@media (max-height: 700px) {
+  /* iPhone mini - cards un poco más pequeñas */
+  .gpMatchCard {
+    min-height: 30px !important;
+    padding: 5px !important;
+  }
+  
+  .gpSlotImg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  
+  .gpVs {
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
+
+@media (min-height: 850px) {
+  /* iPhone grande - cards más espaciosas */
+  .gpMatchCard {
+    min-height: 50px !important;
+    padding: 7px !important;
+  }
+  
+  .gpSlotImg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  
+  .gpVs {
+    width: 26px !important;
+    height: 26px !important;
+  }
+}
+.gpHeadline { margin: 2px 0 !important; }  /* antes 3px */
+.gpCaption  { margin: 2px 0 !important; }  /* antes 3px */
+.gpDivider  { margin: 2px 0 !important; }  /* antes 3px */
+
+.gpRoster { margin-bottom: 3px !important; gap: 2px !important; } /* antes 4 y 3 */
+.gpTeam   { gap: 2px !important; } /* antes 3 */
+
+.gpActionBar { padding: 2px !important; gap: 2px !important; } /* antes 3 */
+.gpIconBtn { padding: 2px 4px !important; font-size: 8px !important; } /* baja un pelín */
+.gpActionRight .btn { padding: 3px 6px !important; font-size: 9px !important; } /* baja un pelín */
+/* ====== LAYOUT FIX: altura exacta del listado en móvil ====== */
+:root{
+  --gp-safe-top: env(safe-area-inset-top, 0px);
+  --gp-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --gp-topbar: 46px;      /* tu barra superior fija */
+  --gp-header: 22px;      /* .pageHeader height */
+  --gp-actions: 100px;    /* AJUSTA a la altura REAL de gpActions (ver punto 2) */
+}
+
+/* Header */
+.gpMatchesPage .pageHeader{
+  height: var(--gp-header) !important;
+}
+
+/* Acciones */
+.gpMatchesPage .gpActions{
+  /* si quieres mantenerlo fixed, perfecto */
+}
+
+/* Listado: empieza justo debajo del header+acciones */
+.gpMatchesSnapWrap{
+  position: fixed !important;
+  top: calc(var(--gp-topbar) + var(--gp-safe-top) + var(--gp-header) + var(--gp-actions)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  padding: 6px 6px calc(12px + var(--gp-safe-bottom)) !important;
+}
+/* ===== ActionBar SIEMPRE 1 línea, sin scroll horizontal ===== */
+.gpActionBar{
+  display: flex !important;
+  flex-wrap: nowrap !important;         /* NO wrap */
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+}
+
+.gpActionLeft,
+.gpActionRight{
+  display: flex !important;
+  flex-wrap: nowrap !important;         /* NO wrap */
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;              /* clave para que puedan encoger */
+}
+/* Botones que caben: encogen, sin romper el layout */
+.gpIconBtn,
+.gpActionRight .btn{
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex: 0 1 auto !important;            /* puede encoger */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+/* En móvil: los botones pequeños sin texto (solo icono) */
+@media (max-width: 420px){
+  .gpIconBtn{
+    padding: 2px 6px !important;
+    font-size: 0 !important;            /* oculta texto si lo hay */
+    line-height: 1 !important;
+  }
+  .gpIconBtn svg,
+  .gpIconBtn i{
+    font-size: 14px !important;         /* deja visible el icono */
+  }
+
+  /* Botón principal compacto y con texto corto */
+  .gpActionRight .btn{
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+    max-width: 42vw !important;         /* para que no se coma todo */
+  }
+}
+.gpSlotName,
+.gpHeadline,
+.gpChip,
+.gpMatchCard .meta{
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+/* ===== ROSTER 2x2: dos arriba, dos abajo, VS en medio ===== */
+
+/* El roster se vuelve grid vertical: team1 / vs / team2 */
+.gpRoster{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Cada equipo: 2 columnas (A1 A2) y (B1 B2) */
+.gpTeam{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 2px !important;
+  align-items: center !important;
+}
+
+/* El VS centrado entre ambas filas */
+.gpVs{
+  justify-self: center !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slot súper compacto en horizontal */
+.gpSlot{
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 1px 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar pequeño */
+.gpSlotImg{
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  border-radius: 4px !important;
+}
+
+/* Nombre: una sola línea y recorta */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Meta fuera (para bajar altura) */
+.gpSlotMeta{
+  display: none !important;
+}
+/* ===== ROSTER MÁS CORTO + VS CENTRADO ===== */
+
+/* Contenedor roster: 3 filas (Team A / VS / Team B) */
+.gpRoster{
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  align-items: center !important;
+  justify-items: center !important; /* centra todo horizontal */
+  gap: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Cada equipo: 2 slots en horizontal (más corto) */
+.gpTeam{
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 2px !important;
+  align-items: center !important;
+}
+
+/* Slot ultra compacto */
+.gpSlot{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 2px !important;
+  padding: 1px 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar más pequeño */
+.gpSlotImg{
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  border-radius: 4px !important;
+}
+
+/* Nombre una sola línea, recorta */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+/* Meta fuera para bajar altura */
+.gpSlotMeta{
+  display: none !important;
+}
+
+/* VS perfectamente centrado */
+.gpVs{
+  justify-self: center !important;
+  align-self: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  font-size: 8px !important;
+  font-weight: 900 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* ===== AVATARES: más a la derecha + centrados + más juntos en vertical ===== */
+
+/* Card más corta (sin recortar contenido) */
+.gpMatchCard{
+  padding: 4px !important;     /* baja padding */
+  border-radius: 8px !important;
+}
+
+/* Roster: menos espacio vertical y desplazado a la derecha */
+.gpRoster{
+  display: grid !important;
+  grid-template-rows: auto auto auto !important;
+  gap: 1px !important;                 /* más juntos vertical */
+  margin-bottom: 1px !important;
+
+  width: max-content !important;       /* hace el bloque “compacto” */
+  margin-left: auto !important;        /* lo empuja a la derecha */
+  margin-right: 6px !important;        /* separa un pelín del borde */
+  justify-items: center !important;    /* centra dentro del bloque */
+}
+
+/* Teams: 2 columnas, muy juntos */
+.gpTeam{
+  display: grid !important;
+  grid-template-columns: auto auto !important; /* evita que se estiren */
+  gap: 2px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slot súper fino */
+.gpSlot{
+  padding: 0 !important;               /* recorta altura */
+  gap: 2px !important;
+  border-radius: 4px !important;
+}
+
+/* Avatar más pequeño */
+.gpSlotImg{
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  border-radius: 3px !important;
+}
+
+/* Nombre muy compacto (una línea) */
+.gpSlotName{
+  font-size: 6px !important;
+  line-height: 1 !important;
+  max-width: 70px !important;          /* evita que empuje el layout */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* VS centrado y pequeño */
+.gpVs{
+  width: 14px !important;
+  height: 14px !important;
+  font-size: 7px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ===== RECORTE EXTRA DE ALTURA EN ELEMENTOS QUE SUMAN MUCHO ===== */
+.gpHeadline{
+  font-size: 9px !important;
+  margin: 1px 0 !important;
+  line-height: 1 !important;
+}
+
+.gpCaption{
+  gap: 1px !important;
+  margin: 1px 0 !important;
+  padding: 0 2px !important;
+}
+
+.gpChip{
+  font-size: 5px !important;
+  padding: 1px 2px !important;
+  line-height: 1 !important;
+}
+
+/* Divider mínimo */
+.gpDivider{
+  margin: 1px 0 !important;
+  opacity: 0.2 !important;
+}
+
+/* Action bar: una sola línea y compacta (sin scroll horizontal) */
+.gpActionBar{
+  padding: 1px 2px !important;
+  gap: 4px !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+.gpActionLeft,
+.gpActionRight{
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+.gpIconBtn{
+  font-size: 0 !important;            /* oculta texto (solo iconos) */
+  padding: 2px 5px !important;
+  line-height: 1 !important;
+}
+
+/* Si tu icono es SVG o i, mantenlo visible */
+.gpIconBtn svg,
+.gpIconBtn i{
+  font-size: 14px !important;
+}
+
+/* Botón principal más corto */
+.gpActionRight .btn{
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-radius: 6px !important;
+  max-width: 40vw !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+/* ===== QUITAR EL RECUADRO GRANDE (court/preview) ===== */
+/* Añadimos varios selectores típicos para pillarlo sí o sí */
+.gpMatchCard .gpCourt,
+.gpMatchCard .gpCourtWrap,
+.gpMatchCard .gpMiniCourt,
+.gpMatchCard .miniCourt,
+.gpMatchCard .court,
+.gpMatchCard .courtWrap,
+.gpMatchCard .courtPreview,
+.gpMatchCard .matchCourt,
+.gpMatchCard canvas,
+.gpMatchCard svg {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* ===== ROSTER COMO TU DIBUJO: 2 arriba / 2 abajo, VS centrado ===== */
+.gpRoster{
+  /* bloque compacto y un pelín a la derecha */
+  width: max-content !important;
+  margin-left: auto !important;
+  margin-right: 10px !important;
+
+  display: grid !important;
+  grid-template-columns: auto auto auto !important; /* A | VS | B */
+  grid-template-rows: auto auto !important;         /* arriba / abajo */
+  grid-template-areas:
+    "a1 vs b1"
+    "a2 vs b2" !important;
+
+  column-gap: 10px !important;
+  row-gap: 1px !important;          /* más juntos vertical */
+  align-items: center !important;
+  justify-items: center !important;
+}
+
+/* “Aplana” los teams para poder colocar slots en el grid */
+.gpTeam{ display: contents !important; }
+
+/* TEAM IZQ (primer team) */
+.gpTeam:first-of-type .gpSlot:nth-child(1){ grid-area: a1 !important; }
+.gpTeam:first-of-type .gpSlot:nth-child(2){ grid-area: a2 !important; }
+
+/* TEAM DER (segundo team) */
+.gpTeam:last-of-type .gpSlot:nth-child(1){ grid-area: b1 !important; }
+.gpTeam:last-of-type .gpSlot:nth-child(2){ grid-area: b2 !important; }
+
+/* VS centrado, ocupando las dos filas */
+.gpVs{
+  grid-area: vs !important;
+  align-self: center !important;
+  justify-self: center !important;
+
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Slots compactos (para que el roster sea bajito) */
+.gpSlot{
+  padding: 0 !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+/* Avatar pequeño */
+.gpSlotImg{
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+}
+
+/* Nombre compacto, sin empujar ancho */
+.gpSlotName{
+  font-size: 7px !important;
+  line-height: 1 !important;
+  max-width: 80px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Meta fuera (altura abajo) */
+.gpSlotMeta{ display: none !important; }
+
+/* ===== ROSTER: izquierda pegada + VS centrado exacto ===== */
+.gpRoster{
+  width: 100% !important;
+  margin: 0 !important;                 /* quita empuje a la derecha */
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;  /* L | VS | R */
+  grid-template-rows: auto auto !important;        /* arriba/abajo */
+  grid-template-areas:
+    "a1 vs b1"
+    "a2 vs b2" !important;
+
+  column-gap: 10px !important;
+  row-gap: 1px !important;
+  align-items: center !important;
+}
+
+/* Teams “planos” para colocar slots en el grid */
+.gpTeam{ display: contents !important; }
+
+/* Izquierda: pegados al margen izquierdo */
+.gpTeam:first-of-type .gpSlot:nth-child(1){
+  grid-area: a1 !important;
+  justify-self: start !important;
+}
+.gpTeam:first-of-type .gpSlot:nth-child(2){
+  grid-area: a2 !important;
+  justify-self: start !important;
+}
+
+/* Derecha: pegados al margen derecho */
+.gpTeam:last-of-type .gpSlot:nth-child(1){
+  grid-area: b1 !important;
+  justify-self: end !important;
+}
+.gpTeam:last-of-type .gpSlot:nth-child(2){
+  grid-area: b2 !important;
+  justify-self: end !important;
+}
+
+/* VS justo en medio */
+.gpVs{
+  grid-area: vs !important;
+  justify-self: center !important;
+  align-self: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 10px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* ===== FIX: evitar que las cards se metan por la derecha ===== */
+
+/* el contenedor scrolleable: que no use 100vw real con padding raro */
+.gpMatchesSnapWrap{
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  box-sizing: border-box !important;
+  padding-left: 10px !important;     /* separa del borde */
+  padding-right: 10px !important;    /* separa del borde */
+}
+
+/* grid/list: que no empuje hacia fuera */
+.gpMatchesGrid{
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* card: que jamás supere el ancho disponible */
+.gpMatchCard{
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* por si algo interno se sale */
+}

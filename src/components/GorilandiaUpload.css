@@ -1,0 +1,306 @@
+/* ============================================
+   GORILANDIA UPLOAD - Modal de subida
+   ============================================ */
+
+   .upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .upload-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.2s ease;
+  }
+  
+  .upload-content {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    border: 2px solid rgba(116, 184, 0, 0.2);
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* ============================================
+     HEADER
+     ============================================ */
+  
+  .upload-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .upload-header h2 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  
+  .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+  }
+  
+  /* ============================================
+     FORM
+     ============================================ */
+  
+  .upload-form {
+    padding: 24px;
+  }
+  
+  /* Type selector */
+  .type-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .type-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: #ddd;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .type-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(116, 184, 0, 0.3);
+  }
+  
+  .type-btn.active {
+    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    border-color: #74B800;
+    color: white;
+    box-shadow: 0 4px 20px rgba(116, 184, 0, 0.3);
+  }
+  
+  /* File input */
+  .file-input-wrapper {
+    margin-bottom: 24px;
+  }
+  
+  .file-input {
+    display: none;
+  }
+  
+  .file-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 20px;
+    border: 2px dashed rgba(116, 184, 0, 0.3);
+    border-radius: 16px;
+    background: rgba(116, 184, 0, 0.05);
+    color: #74B800;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .file-label:hover {
+    border-color: #74B800;
+    background: rgba(116, 184, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .upload-icon {
+    font-size: 48px;
+    filter: drop-shadow(0 0 10px rgba(116, 184, 0, 0.3));
+  }
+  
+  /* Previews */
+  .previews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .preview-item {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+  }
+  
+  .preview-image,
+  .preview-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Caption */
+  .caption-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+  }
+  
+  .caption-input:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #74B800;
+    box-shadow: 0 0 20px rgba(116, 184, 0, 0.1);
+  }
+  
+  .caption-input::placeholder {
+    color: #666;
+  }
+  
+  /* Submit */
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(116, 184, 0, 0.3);
+  }
+  
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(116, 184, 0, 0.5);
+  }
+  
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+  
+  /* ============================================
+     SCROLLBAR
+     ============================================ */
+  
+  .upload-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .upload-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .upload-content::-webkit-scrollbar-thumb {
+    background: #74B800;
+    border-radius: 4px;
+  }
+  
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  
+  @media (max-width: 640px) {
+    .upload-modal {
+      padding: 0;
+    }
+  
+    .upload-content {
+      border-radius: 0;
+      max-height: 100vh;
+    }
+  
+    .upload-header {
+      padding: 16px 20px;
+    }
+  
+    .upload-form {
+      padding: 20px;
+    }
+  
+    .type-selector {
+      gap: 8px;
+    }
+  
+    .type-btn {
+      padding: 12px;
+      font-size: 14px;
+    }
+  
+    .file-label {
+      padding: 30px 16px;
+    }
+  
+    .upload-icon {
+      font-size: 36px;
+    }
+  
+    .previews-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }

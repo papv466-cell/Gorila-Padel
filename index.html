@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Gorila Pádel</title>
+
+    <meta name="theme-color" content="#0b0f14" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gorila Pádel" />
+    <link rel="icon" href="/favicon.ico?v=3" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+    <link rel="manifest" href="/manifest.webmanifest?v=3" />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- BOOT SPLASH: solo antes de React -->
+    <style>
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        gap: 12px;
+        background: #0b0f14;
+        color: #fff;
+        z-index: 999999;
+        text-align: center;
+        padding: 24px;
+      }
+      #boot-splash img {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.08);
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+      #boot-splash .boot-title {
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: 0.2px;
+      }
+      #boot-splash .boot-sub {
+        font-size: 13px;
+        opacity: 0.82;
+      }
+    </style>
+  </head>
+
+  <body>
+    
+    <div id="root"></div>
+
+    <!-- ✅ Fallback: si por lo que sea React no arranca, ocultamos el boot-splash igual -->
+    <script>
+      window.setTimeout(() => {
+        const el = document.getElementById("boot-splash");
+        if (el) el.remove();
+      }, 8000);
+    </script>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

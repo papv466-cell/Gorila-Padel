@@ -1,0 +1,103 @@
+/* ============================================
+   CART BUTTON FLOAT
+   ============================================ */
+
+   .cart-button-float {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--gorila-green) 0%, var(--gorila-green-dark) 100%);
+    border: none;
+    border-radius: 50%;
+    color: #000;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4), 0 0 0 0 rgba(116, 184, 0, 0.7);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999;
+    animation: cartFloat 3s ease-in-out infinite;
+  }
+  
+  @keyframes cartFloat {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+  
+  .cart-button-float:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(116, 184, 0, 0.6), 0 0 0 8px rgba(116, 184, 0, 0.2);
+    animation: none;
+  }
+  
+  .cart-button-float:active {
+    transform: translateY(-2px) scale(0.98);
+  }
+  
+  .cart-icon {
+    position: relative;
+    z-index: 1;
+    animation: cartShake 0.5s ease;
+  }
+  
+  @keyframes cartShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+  }
+  
+  .cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    background: #FF4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--store-bg);
+    animation: badgePop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  @keyframes badgePop {
+    0% {
+      transform: scale(0);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
+  /* Mobile */
+  @media (max-width: 768px) {
+    .cart-button-float {
+      width: 56px;
+      height: 56px;
+      bottom: 24px;
+      right: 24px;
+      font-size: 24px;
+    }
+  
+    .cart-badge {
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+    }
+  }

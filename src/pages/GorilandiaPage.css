@@ -1,0 +1,155 @@
+/* ============================================
+   GORILANDIA PAGE - Diseño único Red Social
+   ============================================ */
+
+   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Inter:wght@400;500;600&display=swap');
+
+   .gorilandia-page {
+     min-height: 100vh;
+     background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+     font-family: 'Inter', sans-serif;
+     padding-bottom: 120px;
+   }
+   
+   /* ============================================
+      HEADER
+      ============================================ */
+   
+   .gorilandia-header {
+     position: sticky;
+     top: 0;
+     z-index: 100;
+     background: rgba(0, 0, 0, 0.95);
+     backdrop-filter: blur(20px);
+     border-bottom: 2px solid #74B800;
+     padding: 16px 20px;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     box-shadow: 0 4px 20px rgba(116, 184, 0, 0.1);
+   }
+   
+   .gorilandia-logo {
+     font-family: 'Nunito', sans-serif;
+     font-weight: 900;
+     font-size: 26px;
+     margin: 0;
+     color: #fff;
+     text-shadow: 0 0 20px rgba(116, 184, 0, 0.5);
+     letter-spacing: -0.5px;
+   }
+   
+   .btn-upload {
+     background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+     color: white;
+     border: none;
+     padding: 12px 24px;
+     border-radius: 25px;
+     font-weight: 600;
+     font-size: 15px;
+     cursor: pointer;
+     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3);
+   }
+   
+   .btn-upload:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(116, 184, 0, 0.5);
+   }
+   
+   .btn-upload:active {
+     transform: translateY(0);
+   }
+   
+   /* ============================================
+      FEED
+      ============================================ */
+   
+   .gorilandia-feed {
+     max-width: 600px;
+     margin: 0 auto;
+     padding: 20px;
+   }
+   
+   .posts-container {
+     display: flex;
+     flex-direction: column;
+     gap: 24px;
+   }
+   
+   /* ============================================
+      LOADING & EMPTY STATES
+      ============================================ */
+   
+   .loading-state {
+     text-align: center;
+     padding: 60px 20px;
+     color: #999;
+   }
+   
+   .spinner {
+     width: 50px;
+     height: 50px;
+     border: 4px solid rgba(116, 184, 0, 0.1);
+     border-top-color: #74B800;
+     border-radius: 50%;
+     animation: spin 1s linear infinite;
+     margin: 0 auto 20px;
+   }
+   
+   @keyframes spin {
+     to { transform: rotate(360deg); }
+   }
+   
+   .empty-state {
+     text-align: center;
+     padding: 80px 20px;
+     color: #999;
+   }
+   
+   .empty-icon {
+     font-size: 80px;
+     display: block;
+     margin-bottom: 20px;
+     filter: grayscale(100%) opacity(0.3);
+   }
+   
+   .empty-state h2 {
+     color: #fff;
+     font-size: 24px;
+     margin-bottom: 12px;
+     font-weight: 700;
+   }
+   
+   .empty-state p {
+     font-size: 16px;
+     margin-bottom: 30px;
+     color: #888;
+   }
+   
+   /* ============================================
+      RESPONSIVE
+      ============================================ */
+   
+   @media (max-width: 640px) {
+     .gorilandia-header {
+       padding: 12px 16px;
+     }
+   
+     .gorilandia-logo {
+       font-size: 22px;
+     }
+   
+     .btn-upload {
+       padding: 10px 20px;
+       font-size: 14px;
+     }
+   
+     .gorilandia-feed {
+       padding: 16px;
+     }
+   
+     .posts-container {
+       gap: 20px;
+     }
+   }

@@ -1,0 +1,187 @@
+/* ============================================
+   PLAYHUB PAGE - PRO DESIGN
+   src/pages/PlayHubPage.css
+   ============================================ */
+
+/* Quick Stats */
+.gpHubStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gpStatCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 18px 16px;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gpStatCard:hover {
+  transform: translateY(-3px);
+  border-color: #74B800;
+  box-shadow: 0 8px 24px rgba(116, 184, 0, 0.2);
+  background: rgba(116, 184, 0, 0.05);
+}
+
+.gpStatValue {
+  font-size: 36px;
+  font-weight: 900;
+  font-family: 'Space Mono', monospace;
+  color: #74B800;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.gpStatLabel {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+}
+
+/* Header Animation */
+.gpHubHeader {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Grid Animation */
+.gpHubGrid {
+  animation: fadeInUp 0.7s ease-out;
+}
+
+/* Card Improvements */
+.gpHubCard {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.gpHubCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #74B800;
+  transform: scaleY(0);
+  transition: transform 0.3s;
+  z-index: 1;
+}
+
+.gpHubCard:hover {
+  transform: translateX(4px) translateY(-3px) !important;
+}
+
+.gpHubCard:hover::before {
+  transform: scaleY(1);
+}
+
+/* Floating Action Button */
+.gpFabCreate {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+  border: none;
+  border-radius: 50%;
+  color: #000;
+  font-size: 36px;
+  font-weight: 300;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  animation: fabPulse 3s ease-in-out infinite;
+}
+
+@keyframes fabPulse {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(116, 184, 0, 0.6);
+  }
+}
+
+.gpFabCreate:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 12px 36px rgba(116, 184, 0, 0.7);
+  animation: none;
+}
+
+.gpFabCreate:active {
+  transform: scale(0.95) rotate(90deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gpHubStats {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .gpStatCard {
+    padding: 14px 10px;
+  }
+
+  .gpStatValue {
+    font-size: 30px;
+  }
+
+  .gpStatLabel {
+    font-size: 10px;
+  }
+
+  .gpFabCreate {
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gpHubStats {
+    gap: 8px;
+  }
+
+  .gpStatCard {
+    padding: 12px 8px;
+  }
+
+  .gpStatValue {
+    font-size: 26px;
+  }
+
+  .gpFabCreate {
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+    bottom: 75px;
+  }
+}

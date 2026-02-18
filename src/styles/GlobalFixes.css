@@ -1,0 +1,1430 @@
+/* GlobalFixes.css - Safe Area + Layout Mobile */
+
+/* ========== SAFE AREA (iOS notch) ========== */
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    
+    --navbar-height: 48px;
+    --header-height: 40px;
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+  
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* ========== NAVBAR FIJO ========== */
+  .siteHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--navbar-height) + var(--safe-top));
+    padding-top: var(--safe-top);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: var(--navbar-height);
+  }
+  
+  .headerLogo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  
+  .headerLogoImg {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+  }
+  
+  .headerLogoText {
+    font-size: 15px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+  }
+  
+  .headerLogoText span {
+    color: #74B800;
+  }
+  
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .headerButton {
+    padding: 7px 11px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  .menuToggle {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .menuToggle span {
+    width: 16px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    display: block;
+  }
+  
+  .menuToggle.isOpen span:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+  
+  .menuToggle.isOpen span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .menuToggle.isOpen span:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+  
+  /* ========== PÁGINAS CON NAVBAR ========== */
+  .page.pageWithHeader {
+    padding-top: calc(var(--navbar-height) + var(--safe-top));
+    padding-bottom: calc(20px + var(--safe-bottom));
+    min-height: 100vh;
+  }
+  
+  /* ========== PARTIDOS PAGE ESPECÍFICO ========== */
+  .gpMatchesPage {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .gpMatchesPage .pageHeader {
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--safe-top));
+    z-index: 50;
+    flex-shrink: 0;
+    padding: 6px 16px;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .gpMatchesPage .pageHeader > div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  
+  .gpMatchesPage .pageTitle {
+    font-size: 16px;
+    font-weight: 900;
+    margin: 0;
+    display: inline;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 10px;
+    opacity: 0.5;
+    display: inline;
+    white-space: nowrap;
+  }
+  
+  .gpMatchesPage .gpActions {
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--safe-top) + 36px);
+    z-index: 45;
+    flex-shrink: 0;
+    padding: 6px 16px 8px;
+    background: rgba(0, 0, 0, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  /* Botones más compactos */
+  .gpActions .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  
+  /* Input date compacto */
+  .gpActions .gpInput[type="date"] {
+    padding: 6px 10px;
+    font-size: 12px;
+    max-width: 140px;
+  }
+  
+  /* Segmented compacto */
+  .gpActions .gpSegmented {
+    padding: 2px;
+    gap: 2px;
+  }
+  
+  .gpActions .gpSegmented button {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  /* ⭐ OCULTAR calendario visual de días */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
+  .gpMatchesPage .gpMatchesSnapWrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ========== ARREGLO BOTONES CENTRADOS ========== */
+  .gpActions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  
+  .gpActions > * {
+    width: 100%;
+  }
+  
+  .gpRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .gpSegmented {
+    display: flex;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  
+  .gpActions .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 120px;
+  }
+  
+  /* ========== CARDS AJUSTADAS ========== */
+  .gpMatchCard {
+    max-width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  .gpActionBar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .gpActionLeft,
+  .gpActionRight {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  
+  .gpActionLeft .btn,
+  .gpActionRight .btn {
+    flex: 1 1 calc(50% - 3px);
+    min-width: 0;
+    max-width: 160px;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* ========== CALENDARIO HORIZONTAL ========== */
+  .gpCalendarStrip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0 8px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+  }
+  
+  .gpCalendarStrip::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .gpDayPill {
+    flex-shrink: 0;
+    min-width: 56px;
+  }
+  
+  /* ========== MODALES RESPONSIVOS ========== */
+  .gpModalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 20px);
+    overflow-y: auto;
+  }
+  
+  .gpModalCard {
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 40px);
+    overflow-y: auto;
+    background: rgba(20, 20, 20, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 20px;
+    margin: auto;
+  }
+  
+  /* ========== AUTH PAGES ========== */
+  .authPage {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 16px);
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    overflow: hidden; /* ⭐ Página NO hace scroll */
+  }
+  
+  .authContainer {
+    max-width: 360px;
+    width: 100%;
+    max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 32px);
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden; /* ⭐ Container no hace scroll */
+  }
+  
+  /* Logo FIJO (no hace scroll) */
+  .authLogo {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    margin: 20px auto 16px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(116, 184, 0, 0.3);
+  }
+  
+  .authLogo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Título y subtítulo FIJOS */
+  .authTitle {
+    flex-shrink: 0;
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    margin: 0 24px 6px;
+    letter-spacing: -0.5px;
+  }
+  
+  .authSubtitle {
+    flex-shrink: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    margin: 0 24px 16px;
+    line-height: 1.4;
+  }
+  
+  /* ⭐ FORMULARIO CON SCROLL */
+  .authForm {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 24px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .authForm::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .authForm::-webkit-scrollbar-thumb {
+    background: rgba(116, 184, 0, 0.5);
+    border-radius: 4px;
+  }
+  
+  /* Inputs y selects */
+  .authInput,
+  .authSelect {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  
+  .authInput:focus,
+  .authSelect:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #74B800;
+    box-shadow: 0 0 0 3px rgba(116, 184, 0, 0.15);
+  }
+  
+  /* Form group spacing */
+  .authFormGroup {
+    margin-bottom: 12px;
+  }
+  
+  .authFormGroup:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Botones */
+  .authButton {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 16px;
+    box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3);
+    letter-spacing: 0.3px;
+  }
+  
+  .authButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .authSecondaryButton {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+  }
+  
+  .authLink {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .authLink a {
+    color: #74B800;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  
+  .authError {
+    background: rgba(220, 38, 38, 0.15);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #ff6b6b;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 12px;
+  }
+  
+  /* ========== MENÚ MÓVIL ========== */
+  .mobileMenu {
+    top: calc(var(--navbar-height) + var(--safe-top));
+    padding-top: 20px;
+    padding-bottom: calc(var(--safe-bottom) + 20px);
+  }
+  
+  .mobileMenuOverlay {
+    top: calc(var(--navbar-height) + var(--safe-top));
+  }
+  
+  /* ========== RESPONSIVE ========== */
+  @media (min-width: 640px) {
+    .gpMatchCard {
+      max-width: 100%;
+    }
+    
+    .gpActionBar {
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    
+    .gpActionLeft,
+    .gpActionRight {
+      flex: 1;
+      max-width: 50%;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    :root {
+      --navbar-height: 72px;
+    }
+    
+    .gpMatchesPage .pageHeader {
+      padding: 16px 24px;
+    }
+    
+    .gpMatchesPage .gpActions {
+      padding: 16px 24px;
+    }
+  }
+  
+  /* ========== SCROLL SUAVE ========== */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .gpMatchesSnapWrap::-webkit-scrollbar {
+    width: 0;
+    display: none;
+  }
+  
+  /* ========== AJUSTES ADICIONALES ========== */
+  
+  /* Botones compactos */
+  .gpActions .btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  
+  /* Segmented centrado */
+  .gpActions .gpSegmented {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  
+  /* Row centrado */
+  .gpActions .gpRow {
+    justify-content: center;
+  }
+  
+  /* Input date compacto */
+  .gpActions .gpInput[type="date"] {
+    max-width: 160px;
+  }
+  
+  /* Ocultar calendario visual */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
+  /* ========== ASEGURAR QUE NAVBAR ES FIJO ========== */
+  body {
+    padding-top: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .siteHeader {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  
+  /* Logo más compacto en navbar */
+  .headerLogoImg {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  
+  .headerLogoText {
+    font-size: 14px !important;
+  }
+  
+  /* Botón hamburguesa más pequeño */
+  .menuToggle {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  
+  .menuToggle span {
+    width: 15px !important;
+  }
+  
+  /* Botón salir más pequeño */
+  .headerButton {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+  }
+  /* ========== FIX DEFINITIVO NAVBAR ========== */
+  
+  /* Asegurar que body no tiene scroll horizontal */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  /* Navbar COMPLETAMENTE FIJO */
+  .siteHeader {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    transform: none !important;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    height: 48px !important;
+  }
+  
+  /* Logo compacto */
+  .headerLogo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerLogoImg {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+  }
+  
+  .headerLogoText {
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Botones navbar */
+  .headerActions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerButton {
+    padding: 6px 9px !important;
+    font-size: 11px !important;
+    border-radius: 7px !important;
+  }
+  
+  .menuToggle {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 7px !important;
+    gap: 3px !important;
+  }
+  
+  .menuToggle span {
+    width: 14px !important;
+    height: 2px !important;
+  }
+  
+  /* ========== PÁGINA PARTIDOS ========== */
+  
+  .gpMatchesPage {
+    padding-top: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Header compacto y sticky */
+  .gpMatchesPage .pageHeader {
+    position: sticky !important;
+    top: calc(48px + env(safe-area-inset-top, 0px)) !important;
+    z-index: 50 !important;
+    padding: 5px 12px !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-shrink: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  
+  .gpMatchesPage .pageHeader > div {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+  }
+  
+  .gpMatchesPage .pageTitle {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 9px !important;
+    opacity: 0.5 !important;
+  }
+  
+  /* Actions sticky pegado al header */
+  .gpMatchesPage .gpActions {
+    position: sticky !important;
+    top: calc(48px + env(safe-area-inset-top, 0px) + 32px) !important;
+    z-index: 45 !important;
+    padding: 6px 12px 8px !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+  
+  /* Botones más compactos */
+  .gpActions .btn {
+    padding: 7px 11px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+  }
+  
+  .gpActions .gpInput[type="date"] {
+    padding: 6px 9px !important;
+    font-size: 11px !important;
+    max-width: 130px !important;
+  }
+  
+  .gpActions .gpRow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 11px !important;
+  }
+  
+  .gpActions .gpSegmented {
+    padding: 2px !important;
+    gap: 2px !important;
+    max-width: 260px !important;
+    margin: 0 auto !important;
+  }
+  
+  .gpActions .gpSegmented button {
+    padding: 6px 11px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Grid de partidos - SOLO ESTO hace scroll */
+  .gpMatchesSnapWrap {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 12px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  .gpMatchesGrid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Ocultar calendario visual (ocupa espacio) */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  /* ========== FIX ULTRA DEFINITIVO - NAVBAR Y BOTONES FIXED ========== */
+
+/* Body sin scroll horizontal */
+html {
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    position: relative !important;
+  }
+  
+  /* Navbar FIXED (no sticky) */
+  .siteHeader {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 46px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    height: 46px !important;
+  }
+  
+  /* Logo ultra compacto */
+  .headerLogo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerLogoImg {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 5px !important;
+  }
+  
+  .headerLogoText {
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Botones navbar compactos */
+  .headerActions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerButton {
+    padding: 5px 8px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+  }
+  
+  .menuToggle {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    gap: 2px !important;
+  }
+  
+  .menuToggle span {
+    width: 13px !important;
+    height: 2px !important;
+  }
+  
+  /* ========== PÁGINA PARTIDOS ========== */
+  
+  .gpMatchesPage {
+    padding-top: 46px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    position: relative !important;
+  }
+  
+  /* Header FIXED (no sticky) */
+  .gpMatchesPage .pageHeader {
+    position: fixed !important;
+    top: 46px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 50 !important;
+    padding: 4px 10px !important;
+    margin: 0 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+  }
+  
+  .gpMatchesPage .pageHeader > div {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 5px !important;
+  }
+  
+  .gpMatchesPage .pageTitle {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 9px !important;
+    opacity: 0.5 !important;
+  }
+  
+  /* Actions FIXED (no sticky) pegado al header */
+  .gpMatchesPage .gpActions {
+    position: fixed !important;
+    top: 74px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 45 !important;
+    padding: 5px 10px 6px !important;
+    margin: 0 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+  }
+  
+  /* Botones ultra compactos */
+  .gpActions .btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 7px !important;
+    white-space: nowrap !important;
+  }
+  
+  .gpActions .gpInput[type="date"] {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    max-width: 120px !important;
+  }
+  
+  .gpActions .gpRow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    font-size: 10px !important;
+  }
+  
+  .gpActions .gpSegmented {
+    padding: 2px !important;
+    gap: 2px !important;
+    max-width: 250px !important;
+    margin: 0 auto !important;
+  }
+  
+  .gpActions .gpSegmented button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Grid de partidos - Con padding-top para no quedar debajo de botones */
+  .gpMatchesSnapWrap {
+    margin-top: 140px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  .gpMatchesGrid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Ocultar calendario visual */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
+  /* Container sin overflow */
+  .gpMatchesPage .pageWrap,
+  .gpMatchesPage .container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* ========== FIX ULTRA DEFINITIVO - NAVBAR Y BOTONES FIXED ========== */
+
+/* Body sin scroll horizontal */
+html {
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    position: relative !important;
+  }
+  
+  /* Navbar FIXED (no sticky) */
+  .siteHeader {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: calc(46px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    align-items: center !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+  }
+  
+  .siteHeader .headerInner {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    height: 46px !important;
+  }
+  
+  /* Logo ultra compacto */
+  .headerLogo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerLogoImg {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 5px !important;
+  }
+  
+  .headerLogoText {
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Botones navbar compactos */
+  .headerActions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .headerButton {
+    padding: 5px 8px !important;
+    font-size: 10px !important;
+    border-radius: 6px !important;
+  }
+  
+  .menuToggle {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    gap: 2px !important;
+  }
+  
+  .menuToggle span {
+    width: 13px !important;
+    height: 2px !important;
+  }
+  
+  /* ========== PÁGINA PARTIDOS ========== */
+  
+  .gpMatchesPage {
+    padding-top: calc(46px + env(safe-area-inset-top, 0px)) !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    position: relative !important;
+  }
+  
+  /* Header FIXED (no sticky) */
+  .gpMatchesPage .pageHeader {
+    position: fixed !important;
+    top: calc(46px + env(safe-area-inset-top, 0px)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 50 !important;
+    padding: 4px 10px !important;
+    margin: 0 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+  }
+  
+  .gpMatchesPage .pageHeader > div {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 5px !important;
+  }
+  
+  .gpMatchesPage .pageTitle {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+  }
+  
+  .gpMatchesPage .pageMeta {
+    font-size: 9px !important;
+    opacity: 0.5 !important;
+  }
+  
+  /* Actions FIXED (no sticky) pegado al header */
+  .gpMatchesPage .gpActions {
+    position: fixed !important;
+    top: calc(74px + env(safe-area-inset-top, 0px)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 45 !important;
+    padding: 5px 10px 6px !important;
+    margin: 0 !important;
+    background: rgba(0, 0, 0, 0.98) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    transform: translateZ(0) !important;
+  }
+  
+  /* Botones ultra compactos */
+  .gpActions .btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 7px !important;
+    white-space: nowrap !important;
+  }
+  
+  .gpActions .gpInput[type="date"] {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    max-width: 120px !important;
+  }
+  
+  .gpActions .gpRow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    font-size: 10px !important;
+  }
+  
+  .gpActions .gpSegmented {
+    padding: 2px !important;
+    gap: 2px !important;
+    max-width: 250px !important;
+    margin: 0 auto !important;
+  }
+  
+  .gpActions .gpSegmented button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+  }
+  
+  /* Grid de partidos - Con padding-top para no quedar debajo de botones */
+  .gpMatchesSnapWrap {
+    margin-top: 140px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  .gpMatchesGrid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* Ocultar calendario visual */
+  .gpCalendarStrip {
+    display: none !important;
+  }
+  
+  /* Container sin overflow */
+  .gpMatchesPage .pageWrap,
+  .gpMatchesPage .container {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* ===== HEADER GLOBAL: COMPACTO EN MÓVIL (solo iPhone/Android) ===== */
+@media (max-width: 520px) {
+  /* contenedor del header (ajusta nombres si difieren) */
+  .appHeader,
+  .gpHeader,
+  header,
+  .topbar {
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: 6px !important;
+  }
+
+  /* fila interna del header */
+  .appHeader .container,
+  .gpHeader .container,
+  header .container,
+  .topbar .container {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  /* logo + nombre */
+  .appHeader .brand,
+  .gpHeader .brand,
+  .topbar .brand,
+  .brand {
+    gap: 8px !important;
+  }
+
+  .brand img,
+  .gpLogo,
+  .brandLogo {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .brand .name,
+  .brandName,
+  .gpBrandName {
+    font-size: 15px !important;
+    line-height: 1 !important;
+  }
+
+  /* botones del header (Atrás / Salir / menú) */
+  .appHeader .btn,
+  .gpHeader .btn,
+  header .btn,
+  .topbar .btn,
+  .appHeader button,
+  .gpHeader button,
+  header button,
+  .topbar button {
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    min-height: 34px !important;
+  }
+
+  /* reduce altura total */
+  .appHeader,
+  .gpHeader,
+  header,
+  .topbar {
+    min-height: 52px !important;
+  }
+
+  /* IMPORTANTÍSIMO: quita “aire” superior del contenido si existe pageWithHeader */
+  .pageWithHeader,
+  .gpPage,
+  .page {
+    padding-top: 62px !important; /* antes seguramente era 80-100 */
+  }
+}
+  

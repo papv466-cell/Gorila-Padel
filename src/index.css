@@ -1,0 +1,5741 @@
+/* =========================
+   Global Padel — index.css (LIMPIO)
+   ========================= */
+/* src/index.css */
+@import './styles/GlobalFixes.css';
+@import './styles/NAVBAR-BUTTONS-FIXED.css';
+@import './styles/ULTRA-COMPACT.css';
+@import "./styles/MOBILE-COMPACT.css";
+
+/* ... resto del CSS ... */
+/* Reset base */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Links */
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Regla global OK */
+img { max-width: 100%; height: auto; }
+
+/* =========================
+   App shell
+   ========================= */
+   .appShell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .appMain {
+    flex: 1 1 auto;
+    min-height: 0; /* clave */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page {
+    flex: 1 1 auto;
+    min-height: 0; /* clave */
+    display: flex;
+    flex-direction: column;
+  }
+
+/* =========================
+   Navbar
+   ========================= */
+   .navbar{
+    height: 56px;
+    padding: 0 14px;
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* izquierda | centro | derecha */
+    align-items: center;
+    gap: 12px;
+  
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: #0b0f14;
+    color: #74B800;
+    flex: 0 0 56px;
+  }
+  
+  /* centro real */
+  .navTabs{
+    justify-self: center;
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  
+  /* derecha siempre visible */
+  .navRight{
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+
+.navLeft { display: flex; gap: 10px; min-width: 0; align-items: center; }
+.navLogo { width: 34px; height: 34px; object-fit: contain; border-radius: 10px; }
+.navBrand { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.navTabs { display: flex; gap: 8px; }
+.navLink {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #74B800;
+  font-size: 13px;
+}
+.navLink:hover { background: rgba(255,255,255,0.06); }
+.navLink.active {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+}
+.navRight { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 520px){
+  .navBrand { display: none; }
+}
+
+/* =========================
+   Botones
+   ========================= */
+.btn {
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  border-radius: 12px;
+  background: #74B800;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+.btn:hover { background: #74B800; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn.ghost { background: transparent; border-style: dashed; }
+
+/* layout ocupa toda la altura disponible */
+.layout {
+  flex: 1 1 auto;
+  min-height: 0; /* clave */
+  display: flex;
+}
+
+/* sidebar scrollea de forma independiente */
+.sidebar {
+  min-height: 0; /* clave */
+  overflow: auto; /* scroll aquí */
+  overscroll-behavior: contain; /* evita que el scroll “salte” al body */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* mapa NO debe forzar altura con vh */
+.mapArea {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.mapShell {
+  height: 100%;
+  min-height: 0;
+}
+
+/* =========================
+   Leaflet — FIX DEFINITIVO (tiles a cuadros)
+   ========================= */
+
+/* Leaflet necesita que sus imgs NO tengan max-width:100% */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Forzar tamaño tile (evita “mosaico raro”) */
+.leaflet-container img.leaflet-tile {
+  width: 256px !important;
+  height: 256px !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Popups */
+.leaflet-popup-content {
+  max-height: 260px;
+  overflow: auto;
+  margin: 12px 14px;
+  min-width: 220px;
+}
+.leaflet-popup-content-wrapper { border-radius: 12px; }
+
+/* =========================
+   Sidebar list
+   ========================= */
+.sidebar ul, .sidebar ol {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+.sidebar li { list-style: none; }
+.sidebar button { font: inherit; }
+
+/* Inputs / selects dentro sidebar */
+.sidebar input, .sidebar select {
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  padding: 10px 12px;
+  font: inherit;
+  background: #74B800;
+}
+
+/* =========================
+   ClubList — look pro
+   ========================= */
+.clubList { padding: 14px; }
+
+.clubListHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.clubListHint { font-size: 12px; opacity: .7; }
+
+.clubListItems {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clubListRow {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.clubCard {
+  width: 100%;
+  text-align: left;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #74B800;
+  cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+.clubCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.16);
+}
+
+.clubCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.clubName {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clubDistance { font-size: 12px; opacity: .75; white-space: nowrap; }
+.clubCity { margin-top: 4px; font-size: 12px; opacity: .78; }
+
+.clubFavBtn {
+  width: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #74B800;
+  cursor: pointer;
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.clubFavBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.16);
+}
+.clubFavBtn.isFav {
+  border-color: rgba(0,0,0,0.22);
+  background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.01));
+}
+
+/* =========================
+   Auth (Login/Register) — evita logo gigante
+   ========================= */
+.authWrapper {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: radial-gradient(
+      1200px 700px at 50% 30%,
+      rgba(255,255,255,0.08),
+      transparent 60%
+    ),
+    #0b0f14;
+}
+
+.authCard {
+  width: min(420px, 92vw);
+  background: #74B800;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  display: grid;
+  gap: 16px;
+}
+
+.authLogo{
+  width: 150px !important;
+  height: 150px !important;
+  max-width: 150px !important;
+  max-height: 150px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 18px !important;
+}
+
+.authTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: #111827;
+}
+
+.authSub {
+  margin: -6px 0 6px;
+  font-size: 13px;
+  text-align: center;
+  opacity: 0.75;
+  color: rgba(17,24,39,0.75);
+}
+
+.authForm { display: grid; gap: 10px; }
+
+.authLabel {
+  font-size: 12px;
+  display: grid;
+  gap: 6px;
+  color: #111827;
+}
+
+.authInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  font: inherit;
+}
+
+.authBtn {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: #0b0f14;
+  color: #74B800;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.authError {
+  font-size: 12px;
+  color: crimson;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.18);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.authFooter { text-align: center; font-size: 13px; opacity: 0.85; }
+.authLink { font-weight: 800; }
+
+/* =========================
+   Splash (React) — bonito y estable
+   ========================= */
+.splash {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0b0f14;
+  color: #74B800;
+  z-index: 999999;
+  text-align: center;
+  padding: 24px;
+}
+
+.splashInner {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  animation: gpSplashIn 500ms ease-out both;
+}
+
+.splashLogoImg {
+  width: 120px !important;
+  height: 120px !important;
+  object-fit: contain;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.08);
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
+
+.splashTitle {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.splashSub { font-size: 13px; opacity: .82; }
+
+@keyframes gpSplashIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================
+   Móvil: mapa arriba, lista abajo
+   ========================= */
+@media (max-width: 768px){
+  .layout { flex-direction: column; gap: 10px; }
+  .sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    max-height: 38vh;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .mapShell {
+    height: 52vh;
+    min-height: 280px;
+  }
+}
+.devBanner{
+  background: #f6ff3b;
+  color: #111;
+  padding: 10px 14px;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.pageWrap{
+  flex: 1;
+  min-height: 0;
+  padding: 18px 16px 28px;
+}
+
+.container{
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.pageHeader{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 10px 0 14px;
+}
+
+.pageTitle{
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.pageMeta{
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: .75;
+}
+/* ===== GP UI helpers ===== */
+.gpRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.gpActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.gpBadge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+}
+.gpBadge.ok { background: rgba(0, 200, 80, 0.12); }
+.gpBadge.warn { background: rgba(255, 190, 0, 0.14); }
+.gpBadge.bad { background: rgba(255, 0, 60, 0.10); }
+
+.gpModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.gpModalCard {
+  width: min(620px, 100%);
+  background: #74B800;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+.gpModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.gpForm { margin-top: 8px; }
+
+.gpLabel {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  margin: 10px 0 6px;
+}
+
+.gpInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.18);
+  outline: none;
+}
+
+.gpGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .gpGrid2 { grid-template-columns: 1fr; }
+}
+
+.gpSuggest {
+  margin-top: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gpSuggestItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: #74B800;
+  border: none;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+.gpSuggestItem:hover { background: rgba(0,0,0,0.04); }
+.gpSuggestItem:last-child { border-bottom: none; }
+
+.gpChatBox {
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 10px;
+  height: 260px;
+  overflow: auto;
+  background: rgba(0,0,0,0.02);
+}
+
+.gpChatMsg {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #74B800;
+  border: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 8px;
+}
+
+.gpTextarea {
+  width: 100%;
+  min-height: 80px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.18);
+}
+.gpChatBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  padding:12px;
+  height:320px;
+  overflow:auto;
+  background:#74B800;
+}
+
+.gpChatMsg{
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:12px;
+  padding:10px 12px;
+  background:#74B800;
+}
+
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pageWrap {
+  flex: 1;
+  overflow-y: auto;   /* <- clave */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* por si algún contenedor corta */
+.container {
+  overflow: visible;
+}
+/* ✅ Tarjeta partido más pro */
+.card {
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 16px;
+  background: #74B800;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  padding: 14px;
+}
+
+.gpCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta {
+  font-size: 13px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+.gpInfoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.gpInfoBox {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.gpInfoLabel {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.gpInfoValue {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.gpActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Botones */
+.btn {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #111;
+  color: #74B800;
+  font-weight: 800;
+  cursor: pointer;
+}
+.btn.ghost {
+  background: #74B800;
+  color: #111;
+}
+.btn.danger {
+  background: #b00020;
+  border-color: rgba(176,0,32,0.4);
+  color: #74B800;
+}
+
+/* Badges */
+.gpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+.gpBadge.ok { background: rgba(0,160,80,0.12); border: 1px solid rgba(0,160,80,0.25); }
+.gpBadge.warn { background: rgba(255,170,0,0.14); border: 1px solid rgba(255,170,0,0.30); }
+.gpBadge.bad { background: rgba(176,0,32,0.12); border: 1px solid rgba(176,0,32,0.25); }
+/* =========================
+   FIX SCROLL PÁGINAS (Partidos, etc)
+   ========================= */
+
+/* contenedor de páginas normales: scrollea dentro */
+.gpPage {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* este wrapper es el que debe poder scrollear */
+.gpWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 24px;
+}
+
+/* por si algún padre corta el overflow */
+.appMain, .page {
+  min-height: 0;
+}
+@media (max-width: 768px) {
+  .gpWrap {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+.authOk{
+  font-size: 12px;
+  color: #166534;
+  background: rgba(22,163,74,0.10);
+  border: 1px solid rgba(22,163,74,0.25);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.gpMarkerIcon {
+  transition: transform 0.15s ease;
+}
+
+.gpMarkerIcon:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+/* CLUSTERS (círculos con número) */
+.gpClusterIcon {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.gpClusterCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+
+  /* verde tipo “bola” */
+  background: #b7e63a;              /* verde vivo */
+  border: 2px solid rgba(0,0,0,0.85);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+}
+
+.gpClusterNumber {
+  font-weight: 950;
+  font-size: 14px;
+  color: #111;                      /* negro */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+}
+/* MARKER GORILA */
+.gpGorilaMarker {
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0.85);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22);
+  background: #74B800;                 /* por si el PNG trae transparencias */
+}
+
+/* BOTONES SOLO MAPA */
+.gpMapBtn {
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,0,0,0.12) !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+}
+
+.btn.ghost.gpMapBtn {
+  background: #74B800 !important;
+  border-style: solid !important; /* adiós punteado si existiera */
+}
+
+.btn.gpMapBtn:not(.ghost) {
+  box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+}
+
+/* marcador gorila: redondo, borde y recorte */
+.gpGorilaMarker {
+  width: 46px !important;
+  height: 46px !important;
+
+  border-radius: 999px !important;
+  overflow: hidden !important;
+
+  border: 2px solid rgba(0,0,0,0.85) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.22) !important;
+
+  background: #74B800 !important; /* por si hay transparencia */
+  object-fit: cover !important; /* para que recorte bien */
+}
+.gpChipBtn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:44px;
+  padding:0 14px;
+  border-radius:999px;
+
+  border:1px solid rgba(0,0,0,0.14);
+  background:#74B800;
+  color:#111;
+
+  font-weight:900;
+  letter-spacing:-0.2px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.08);
+
+  cursor:pointer;
+  user-select:none;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.gpChipBtn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px rgba(0,0,0,0.12);
+  border-color:rgba(0,0,0,0.22);
+}
+
+.gpChipBtn:active{
+  transform:translateY(0px);
+  box-shadow:0 10px 24px rgba(0,0,0,0.10);
+}
+
+.gpChipIcon{
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+
+  background:rgba(0,0,0,0.06);
+  border:1px solid rgba(0,0,0,0.08);
+  font-size:16px;
+}
+
+.gpChipText{
+  font-size:14px;
+}
+
+.gpChipDot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.12);
+  border:1px solid rgba(0,0,0,0.14);
+  margin-left:2px;
+}
+
+/* estado ON (verde gorila + más contraste) */
+.gpChipBtn.isOn{
+  background:#b7e63a;
+  border-color:rgba(0,0,0,0.55);
+  box-shadow:0 14px 34px rgba(0,0,0,0.14);
+}
+
+.gpChipBtn.isOn .gpChipIcon{
+  background:rgba(255,255,255,0.55);
+  border-color:rgba(0,0,0,0.18);
+}
+
+.gpChipBtn.isOn .gpChipDot{
+  background:#111;
+  border-color:rgba(0,0,0,0.75);
+}
+/* --- Botonera pro para popup del mapa --- */
+.gpPopupActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.gpBtn{
+  appearance:none;
+  border:1px solid rgba(0,0,0,0.14);
+  background:#74B800;
+  color:#111;
+  font-weight:900;
+  font-size:13px;
+  padding:10px 12px;
+  border-radius:14px;
+  cursor:pointer;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.gpBtn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 34px rgba(0,0,0,0.12);
+  border-color: rgba(0,0,0,0.22);
+}
+
+.gpBtn:active{
+  transform:translateY(0px) scale(0.99);
+}
+
+.gpBtnPrimary{
+  background:#111;
+  color:#74B800;
+  border-color:#111;
+}
+
+.gpBtnPrimary:hover{
+  background:#000;
+  border-color:#000;
+}
+
+.gpBtnSoft{
+  background:rgba(0,0,0,0.06);
+  border-color:rgba(0,0,0,0.10);
+}
+
+.gpBtnGreen{
+  background:#9BEF00; /* verde más oscuro pro */
+  color:#111;
+  border-color: rgba(0,0,0,0.25);
+}
+/* Hover pro en iconos del mapa */
+.leaflet-marker-icon{
+  transition: transform .12s ease, filter .12s ease;
+}
+
+.leaflet-marker-icon:hover{
+  transform: translateY(-2px) scale(1.05);
+  filter: drop-shadow(0 14px 24px rgba(0,0,0,0.25));
+}
+.gpClubIconWrap{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#74B800;
+  border:2px solid rgba(0,0,0,0.85);
+  box-shadow:0 12px 28px rgba(0,0,0,0.22);
+  position:relative;
+}
+
+.gpClubIconImg{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  border-radius:999px;
+}
+
+.gpFavStar{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#9BEF00;
+  border:2px solid #111;
+  font-size:12px;
+  box-shadow:0 10px 20px rgba(0,0,0,0.18);
+}
+/* ===== ICONO CLUB MAPA ===== */
+.gpClubIconWrap{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#74B800;
+  border:2px solid rgba(0,0,0,0.9);
+  box-shadow:0 14px 30px rgba(0,0,0,0.28);
+  position:relative;
+}
+
+.gpClubIconImg{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  border-radius:999px;
+}
+
+/* Hover suave */
+.leaflet-marker-icon:hover{
+  transform: translateY(-2px) scale(1.06);
+  filter: drop-shadow(0 16px 26px rgba(0,0,0,0.35));
+}
+
+/* ⭐ Favorito */
+.gpFavStar{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#8FE000; /* verde gorila más oscuro */
+  border:2px solid #111;
+  font-size:12px;
+  box-shadow:0 10px 22px rgba(0,0,0,0.25);
+}
+/* ===== ICONO CLUB MAPA ===== */
+.gpClubIconWrap{
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  overflow:hidden;
+  background:#74B800;
+  border:2px solid rgba(0,0,0,0.92);
+  box-shadow:0 14px 30px rgba(0,0,0,0.28);
+  position:relative;
+}
+
+.gpClubIconImg{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  border-radius:999px;
+  image-rendering: auto;
+}
+
+/* Ring según disponibilidad */
+.gpClubIconWrap.free{
+  outline: 3px solid #74B800; /* verde más oscuro “gorila” */
+  outline-offset: 2px;
+}
+.gpClubIconWrap.nofree{
+  outline: 3px solid rgba(17,17,17,0.20);
+  outline-offset: 2px;
+}
+
+/* Dot “hay clases libres hoy” */
+.gpFreeDot{
+  position:absolute;
+  left:-6px;
+  bottom:-6px;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background:#74B800; /* verde más oscuro */
+  border:2px solid #111;
+  box-shadow:0 10px 20px rgba(0,0,0,0.20);
+}
+
+/* ⭐ Favorito */
+.gpFavStar{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:22px;
+  height:22px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:#74B800; /* verde más oscuro */
+  border:2px solid #111;
+  font-size:12px;
+  box-shadow:0 10px 22px rgba(0,0,0,0.25);
+}
+
+/* Pulso (solo en clubs con clases libres) */
+.gpClubIconWrap.pulse::after{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:999px;
+  border:2px solid rgba(116,184,0,0.55);
+  animation: gpPulse 1.6s ease-out infinite;
+}
+
+@keyframes gpPulse{
+  0%   { transform: scale(0.92); opacity: 0.85; }
+  100% { transform: scale(1.20); opacity: 0; }
+}
+
+/* Hover suave */
+.leaflet-marker-icon:hover{
+  transform: translateY(-2px) scale(1.06);
+  filter: drop-shadow(0 16px 26px rgba(0,0,0,0.35));
+}
+
+/* ===== CLUSTERS ===== */
+.gpClusterIcon{
+  /* el divIcon ya lleva estilo inline, esto solo por si quieres ajustar global */
+}
+/* === MAP: marcador gorila redondo + nítido === */
+.gpGorilaMarker {
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(17, 17, 17, 0.9);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  background: transparent;
+}
+
+/* quita “halo” raro de imágenes leaflet */
+.gpGorilaMarker img {
+  border-radius: 999px !important;
+}
+
+/* === Cluster (ya lo pintas inline, pero esto ayuda por si leafet envuelve) === */
+.gpClusterIcon > div {
+  border-radius: 999px;
+}
+
+/* === Chips (Cerca de mí / Favoritos) más pro === */
+.gpChipBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #74B800;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+}
+
+.gpChipBtn.isOn {
+  border-color: rgba(0,0,0,0.22);
+  background: rgba(116, 184, 0, 0.20); /* verde gorila suave */
+}
+
+.gpChipIcon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+}
+
+.gpChipDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.10);
+}
+
+.gpChipBtn.isOn .gpChipDot {
+  background: #111;
+}
+
+/* === Popup acciones (si usas gpBtn / gpPopupActions) === */
+.gpPopupActions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gpBtn {
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 950;
+  cursor: pointer;
+  background: #111;
+  color: #74B800;
+}
+
+.gpBtnSoft {
+  background: rgba(0,0,0,0.06);
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.10);
+}
+
+.gpBtnPrimary {
+  background: #111;
+  color: #74B800;
+}
+/* =========================
+   MAP UI — DEFINITIVO (último bloque manda)
+   ========================= */
+
+/* Botones base (un solo estilo coherente) */
+.btn{
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #111;
+  color: #74B800;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+}
+.btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.14);
+}
+.btn:disabled{ opacity: .6; cursor: not-allowed; transform:none; }
+
+.btn.ghost{
+  background:#74B800;
+  color:#111;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+}
+
+/* Chips pro (Cerca / Favoritos) */
+.gpChipBtn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  height:44px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,0.14);
+  background:#74B800;
+  color:#111;
+  font-weight:950;
+  box-shadow:0 10px 24px rgba(0,0,0,0.08);
+  cursor:pointer;
+  user-select:none;
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+}
+.gpChipBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(0,0,0,0.12); border-color:rgba(0,0,0,0.22); }
+.gpChipBtn.isOn{
+  background:#74B800; /* verde gorila más oscuro */
+  border-color:rgba(0,0,0,0.55);
+}
+.gpChipBtn.isOn .gpChipText{ color:#111; }
+.gpChipBtn.isOn .gpChipDot{ background:#111; border-color:rgba(0,0,0,0.75); }
+
+.gpChipIcon{
+  width:28px;height:28px;border-radius:999px;
+  display:grid;place-items:center;
+  background:rgba(0,0,0,0.06);
+  border:1px solid rgba(0,0,0,0.08);
+}
+
+/* Icono gorila redondo y nítido */
+.gpGorilaMarker{
+  border-radius:999px !important;
+  overflow:hidden !important;
+  border:2px solid rgba(0,0,0,0.90) !important;
+  box-shadow:0 14px 30px rgba(0,0,0,0.28) !important;
+  background:#74B800 !important;
+}
+/* =========================
+   MAP — layout tipo app (mapa + bottom sheet)
+   ========================= */
+
+   .gpMapPage{
+    height: 100%;
+    min-height: 0;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+  
+  /* barra superior “sticky” */
+  .gpMapTop{
+    padding: 12px 16px 10px;
+    background: #74B800;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  
+  .gpMapTopBar{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  
+  .gpMapSearch{
+    position:relative;
+    margin-top:10px;
+  }
+  
+  .gpMapSuggest{
+    position:absolute;
+    left:0;
+    right:0;
+    top: calc(100% + 6px);
+    background:#74B800;
+    border:1px solid rgba(0,0,0,0.12);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,0.12);
+    z-index: 9999;
+  }
+  
+  /* mapa ocupa el hueco entre top y sheet */
+  .gpMapCanvas{
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+  }
+  
+  /* bottom sheet fijo */
+  .gpMapSheet{
+    flex: 0 0 auto;
+    background:#74B800;
+    border-top: 1px solid rgba(0,0,0,0.10);
+    box-shadow: 0 -18px 40px rgba(0,0,0,0.10);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    overflow:hidden;
+  }
+  
+  .gpMapSheetHeader{
+    padding: 10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  
+  .gpMapSheetBody{
+    max-height: 34vh;
+    overflow:auto;
+    padding: 12px;
+    display:grid;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  .gpMapDebug{
+    padding: 8px 14px;
+    font-size: 12px;
+    opacity: 0.55;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  
+  /* móvil: sheet un pelín más alto */
+  @media (max-width: 768px){
+    .gpMapTop{ padding: 10px 12px 8px; }
+    .gpMapSheetBody{ max-height: 42vh; }
+  }
+  /* Chip “Favoritos” más premium */
+.gpChipBtn{
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #74B800;
+}
+.gpChipBtn.isOn{
+  background: rgba(116,184,0,0.22);
+  border-color: rgba(0,0,0,0.22);
+}
+/* =========================
+   MAP PAGE — Sticky top + Bottom sheet móvil
+   ========================= */
+
+   .gpMapTopSticky{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #74B800;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  
+  /* suaviza la transición visual del sticky */
+  .gpMapTopSticky::after{
+    content:"";
+    display:block;
+    height: 0;
+  }
+  
+  /* Lista: “panel normal” en desktop */
+  .gpMapListPanel{
+    margin-top: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #74B800;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  
+  .gpMapListHeader{
+    padding: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-weight: 950;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  
+  .gpMapListBody{
+    max-height: 38vh;
+    overflow-y: auto;
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ===== MÓVIL: bottom sheet ===== */
+  @media (max-width: 768px){
+    /* el mapa gana altura y dejamos hueco para el sheet */
+    .gpMapMapWrap{
+      height: 54vh !important;
+    }
+  
+    .gpMapListPanel{
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 30;
+      border-radius: 18px;
+      box-shadow: 0 22px 60px rgba(0,0,0,0.18);
+    }
+  
+    .gpMapListHeader{
+      position: sticky;
+      top: 0;
+      background: #74B800;
+      z-index: 2;
+    }
+  
+    .gpMapSheetHandle{
+      width: 46px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.16);
+      margin: 10px auto 2px;
+    }
+  
+    .gpMapListBody{
+      max-height: 34vh;
+    }
+  }
+  /* =========================
+   NAVBAR responsive (hamburger)
+   ========================= */
+.navTabsDesktop { display: flex; gap: 8px; }
+.navMobileOnly { display: none; }
+
+.navBurger{
+  width: 44px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #74B800;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.navMobilePanel{
+  position: fixed;
+  inset: 56px 0 auto 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99999;
+  padding: 12px;
+}
+
+.navMobilePanelInner{
+  background: #0b0f14;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.navMobileLink{
+  display: block;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba#74B800;
+  font-weight: 800;
+}
+.navMobileLink.active{
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* móvil */
+@media (max-width: 768px){
+  .navTabsDesktop { display: none; }
+  .navMobileOnly { display: flex; align-items: center; }
+}
+/* =========================
+   PARTIDOS — responsive list
+   ========================= */
+
+/* Contenedor de cards: en desktop puede tener dos columnas si cabe */
+.gpMatchesGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* En móvil: una columna */
+@media (max-width: 820px){
+  .gpMatchesGrid{
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Botonera de cada partido: que no se salga */
+.gpActions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Info grid: 2 columnas en desktop, 1 en móvil */
+.gpInfoGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 520px){
+  .gpInfoGrid{
+    grid-template-columns: 1fr;
+  }
+}
+/* Hace que el <button> se vea EXACTAMENTE como los NavLink */
+.navLinkBtn{
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  border: 1px solid rgba(255,255,255,0.12); /* igual que .navLink */
+  cursor: pointer;
+}
+/* Botón "Salir" con el mismo look que los links del navbar */
+.navLinkBtn{
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+.navLinkBtn:hover{
+  text-decoration: none; /* evita subrayados raros si hereda de <a> */
+}
+/* Panel lista mapa (desktop normal) */
+.gpMapListPanel{
+  margin-top: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #74B800;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.gpMapListBody{
+  max-height: 38vh;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ✅ MÓVIL: bottom sheet */
+@media (max-width: 768px){
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 50;
+    border-radius: 18px;
+    box-shadow: 0 22px 60px rgba(0,0,0,0.18);
+  }
+
+  .gpMapListBody{
+    max-height: 34vh;
+  }
+
+  /* para que el mapa no quede tapado por la sheet */
+  .pageWrap{
+    padding-bottom: 220px; /* ajusta si quieres más/menos */
+  }
+}
+/* =========================
+   FIX NAVBAR: botón "Salir" igual que los links (sin fondo blanco)
+   PONER AL FINAL del index.css
+   ========================= */
+
+   .navLinkBtn{
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent !important; /* 🔥 mata el blanco del <button> */
+    color: inherit;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    padding: 7px 10px; /* igual que .navLink */
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  
+  .navLinkBtn:hover{
+    background: rgba(255,255,255,0.06) !important;
+    text-decoration: none;
+  }
+  
+  /* En el panel móvil, que el botón ocupe todo el ancho como los links */
+  button.navMobileLink.navLinkBtn{
+    width: 100%;
+    text-align: left;
+  }
+  /* =========================
+   MAP (solo esta página): lista bottom sheet en móvil + mapa visible
+   PONER AL FINAL del index.css
+   ========================= */
+
+@media (max-width: 768px){
+  /* Solo en la página del mapa: dejamos espacio para el panel fijo */
+  .gpMapPage .pageWrap{
+    padding-bottom: 240px; /* evita que el panel tape contenido */
+  }
+
+  /* El mapa gana altura real (tu CSS ya lo esperaba con gpMapMapWrap) */
+  .gpMapMapWrap{
+    height: 54vh !important;
+    min-height: 280px;
+  }
+
+  /* El panel ya lo tienes como fixed, subimos z-index para que se vea bien */
+  .gpMapListPanel{
+    z-index: 80;
+  }
+
+  /* El header queda sticky dentro del panel */
+  .gpMapListHeader{
+    position: sticky;
+    top: 0;
+    background: #74B800;
+    z-index: 2;
+  }
+}
+/* =========================
+   MAP — alturas responsive (para que el sheet funcione)
+   ========================= */
+
+/* Desktop */
+.gpMapMapWrap{
+  height: 420px;
+}
+
+/* Móvil: mapa más alto y proporcional */
+@media (max-width: 768px){
+  .gpMapMapWrap{
+    height: 54vh;
+    min-height: 280px;
+  }
+}
+/* Evita “zoom raro” o que algo se salga del viewport */
+.pageWrap, .container, .page, .appMain {
+  overflow-x: hidden;
+}
+/* Contenedor siempre respirable en móvil */
+.container{
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Importantísimo: en layouts flex, permite que el contenido encoja */
+.navLeft, .navRight, .navTabs, .pageHeader, .gpCardTop, .gpActions {
+  min-width: 0;
+}
+/* ===== MAP layering FIX (Leaflet vs bottom sheet) ===== */
+.gpMapMapWrap{
+  position: relative;
+  z-index: 1;
+}
+
+/* Leaflet a nivel base */
+.leaflet-container{
+  position: relative;
+  z-index: 1;
+}
+
+/* Panel/lista SIEMPRE por encima del mapa */
+.gpMapListPanel{
+  position: relative;
+  z-index: 2000;
+}
+
+@media (max-width: 768px){
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 3000; /* más alto que Leaflet */
+  }
+}
+@media (max-width: 768px){
+  /* para que el contenido no quede debajo del bottom sheet */
+  .pageWrap{
+    padding-bottom: 260px; /* sube/baja según el alto real del panel */
+  }
+
+  .gpMapListBody{
+    max-height: 34vh;
+    overflow: auto;
+  }
+}
+/* ===== AUTH: permitir scroll aunque el body esté bloqueado ===== */
+.authWrapper{
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100dvh; /* mejor que 100vh en iOS */
+}
+/* =========================
+   FIX GLOBAL MÓVIL (sin romper layout)
+   - Permite scroll real cuando hace falta (auth, forms)
+   - Evita “pantalla gigante” por overflow raro
+   ========================= */
+  
+  #root {
+    height: 100%;
+  }
+  
+  /* iOS safe areas */
+  .pageWrap {
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  }
+  /* =========================
+   MAP LIST: no desbordar en móvil
+   ========================= */
+
+.gpMapListPanel, .gpMapListBody, .card {
+  max-width: 100%;
+}
+
+.card {
+  min-width: 0;
+}
+
+.card > div {
+  min-width: 0;
+}
+
+/* Botones dentro de la card: que no empujen fuera */
+.card .btn {
+  max-width: 100%;
+}
+
+/* El bloque derecho de acciones: si no cabe, baja */
+@media (max-width: 520px){
+  .gpMapListBody .card{
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .gpMapListBody .card > div:last-child{
+    justify-content: flex-start !important;
+  }
+}
+/* Auth y formularios: que siempre puedan scrollear completos */
+.authWrapper {
+  min-height: 100dvh;
+}
+
+.authCard {
+  max-height: calc(100dvh - 44px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* =========================
+   FIX GLOBAL MÓVIL (NO ROMPER)
+   - Evita web gigante (junto al viewport)
+   - Evita pantallas cortadas (registro / crear partido)
+   ========================= */
+
+  
+  /* Que la app pueda scrollear dentro de pageWrap sin cortar contenido */
+  #root {
+    min-height: 100%;
+  }
+  /* =========================
+   MAPA vs LISTA (mobile)
+   - La lista SIEMPRE por encima
+   - El mapa no “se cuela” visualmente
+   ========================= */
+
+.gpMapListPanel{
+  background: #74B800;
+  position: relative;
+  z-index: 5;
+}
+
+/* Móvil: lista tipo bottom-sheet por encima del mapa */
+@media (max-width: 768px){
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999;           /* por encima de leaflet */
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* El mapa se queda “debajo” y no tapa la lista */
+  .leaflet-container{
+    z-index: 1;
+  }
+
+  /* IMPORTANTE: deja hueco para la lista fixed */
+  .pageWrap{
+    padding-bottom: 320px !important; /* ajusta 280-360 según te guste */
+  }
+
+  /* La lista no debe ocupar toda la pantalla */
+  .gpMapListBody{
+    max-height: 32vh !important; /* baja si la ves grande */
+  }
+}
+/* ===== BASE: App tipo shell (NO scroll en body) ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body{
+  overflow: hidden;                 /* clave */
+  -webkit-text-size-adjust: 100%;
+  background:#74B800;
+  color:#111827;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+}
+
+img { max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+/* =========================================================
+   GLOBAL PADEL — PATCH FINAL (NO ROMPE NADA)
+   PÉGALO AL FINAL DEL index.css
+   Objetivo: fixes de scroll + mapa + navbar + leaflet
+   Sin tocar estilos existentes de profes/clases/etc.
+   ========================================================= */
+
+/* 1) Evitar web “gigante” por overflow horizontal (muy seguro) */
+html, body { overflow-x: hidden; }
+#root, .appShell, .appMain, .page, .pageWrap, .container { overflow-x: hidden; }
+
+/* 2) Base flex: permite que los hijos puedan scrollear (muy seguro) */
+.appShell, .appMain, .page { min-height: 0; }
+
+/* 3) Scroll interno: si ya lo tienes, esto lo refuerza sin romper */
+.pageWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 4) AUTH: aunque el body esté bloqueado, login/registro siempre scrollean */
+.authWrapper{
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100dvh;
+}
+.authCard{
+  max-height: calc(100dvh - 44px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 5) Leaflet tiles “a cuadros”: evita que el reset global afecte al mapa */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg{
+  max-width: none !important;
+  max-height: none !important;
+}
+.leaflet-container{
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* 6) MAP: layering + alturas (sin romper estilos existentes) */
+
+/* El contenedor del mapa siempre “debajo” de overlays/paneles */
+.gpMapMapWrap{
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Leaflet base */
+.gpMapMapWrap .leaflet-container{
+  position: relative;
+  z-index: 1;
+}
+
+/* Lista/panel SIEMPRE por encima del mapa */
+.gpMapListPanel{
+  position: relative;
+  z-index: 3000;
+  max-width: 100%;
+}
+
+/* Desktop: altura estable para el mapa (no depende de vh) */
+@media (min-width: 769px){
+  .gpMapMapWrap{
+    height: 420px; /* tu valor actual, estable */
+  }
+}
+
+/* Móvil: mapa más alto + panel bottom-sheet sin tapar contenido */
+@media (max-width: 768px){
+  /* El mapa gana altura proporcional */
+  .gpMapMapWrap{
+    height: 54vh !important;
+    min-height: 280px;
+  }
+
+  /* El panel se vuelve bottom sheet fijo */
+  .gpMapListPanel{
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 9999; /* por encima de Leaflet */
+    border-radius: 18px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* El cuerpo de la lista NO puede crecer infinito */
+  .gpMapListBody{
+    max-height: 32vh !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Dejamos hueco para que el contenido no quede debajo del sheet */
+  .gpMapPage .pageWrap{
+    padding-bottom: 320px !important; /* ajusta 280–360 según tu gusto */
+  }
+}
+
+/* 7) NAVBAR: botón "Salir" idéntico a navLink (sin fondo blanco) */
+.navLinkBtn{
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.navLinkBtn:hover{
+  background: rgba(255,255,255,0.06) !important;
+  text-decoration: none;
+}
+button.navMobileLink.navLinkBtn{
+  width: 100%;
+  text-align: left;
+}
+
+/* 8) Inputs y cards dentro de lista/mapa: evitar desbordes raros en móvil */
+.gpMapListPanel, .gpMapListBody, .card{
+  max-width: 100%;
+}
+.card{ min-width: 0; }
+.card > div{ min-width: 0; }
+
+/* Botones dentro de card: nunca empujan fuera */
+.card .btn{
+  max-width: 100%;
+}
+
+/* Si tu card del listado del mapa era flex, en móvil apila sin romper */
+@media (max-width: 520px){
+  .gpMapListBody .card{
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .gpMapListBody .card > div:last-child{
+    justify-content: flex-start !important;
+  }
+}
+
+/* 9) iOS safe-area: evita que quede tapado abajo */
+.pageWrap{
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+/* =========================
+   MAP PAGE — PRO LAYOUT (NO ROMPER)
+   Desktop: lista lateral + mapa
+   Móvil: bottom sheet plegable
+   ========================= */
+
+   .gpMapMapWrap{
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  /* --- DESKTOP: side panel (si quieres mantenerlo así) --- */
+  @media (min-width: 769px){
+    .gpMapPage .container{
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+  
+    /* mapa a la derecha */
+    .gpMapMapWrap{
+      grid-column: 2;
+      height: calc(100dvh - 180px); /* ajusta si tu header ocupa más */
+      min-height: 520px;
+    }
+  
+    /* lista a la izquierda con scroll interno */
+    .gpMapListPanel{
+      grid-column: 1;
+      height: calc(100dvh - 180px);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+    }
+  
+    .gpMapListBody{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+  }
+  
+  /* --- MÓVIL: bottom sheet plegable --- */
+  @media (max-width: 768px){
+    .gpMapPage .container{
+      position: relative;
+    }
+  
+    /* mapa grande */
+    .gpMapMapWrap{
+      height: 56dvh !important;
+      min-height: 320px;
+      z-index: 1;
+    }
+  
+    /* panel como bottom sheet real */
+    .gpMapListPanel{
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 9999;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 22px 60px rgba(0,0,0,0.18);
+      background: #74B800;
+    }
+  
+    /* header clicable */
+    .gpMapListHeader{
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+  
+    .gpMapSheetHandle{
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.18);
+      margin: 0 auto;
+    }
+  
+    /* body en 2 estados */
+    .gpMapListBody.isOpen{
+      max-height: 55dvh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    .gpMapListBody.isClosed{
+      max-height: 18dvh;   /* 👈 aquí se ve “bien” (no enano) */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  
+    /* deja aire para que la sheet no tape clicks del mapa */
+    .gpMapPage .pageWrap{
+      padding-bottom: 260px !important;
+    }
+  }
+  /* =========================
+   GORILA HOME + HUB (PRO)
+   pegar al FINAL del CSS
+   ========================= */
+
+.gpHome { background: #0b0f0c; color: #74B800; }
+.gpHomeInner { padding-top: 26px; padding-bottom: 26px; }
+.gpHomeHero { text-align: left; margin-bottom: 18px; }
+.gpHomeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px; height: 54px;
+  border-radius: 16px;
+  background: rgba(116,184,0,0.18);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.gpHomeTitle { font-size: 28px; letter-spacing: .6px; margin: 0; }
+.gpHomeSub { margin: 8px 0 0; opacity: .9; max-width: 520px; }
+.gpHomeSub2 { opacity: .75; }
+
+.gpHomeActions { display: grid; gap: 12px; margin-top: 18px; }
+.gpBigCta {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+  border-radius: 18px;
+  padding: 14px 14px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #74B800;
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  transform: translateZ(0);
+}
+.gpBigCta:active { transform: scale(0.99); }
+.gpBigCtaEmoji {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: grid; place-items: center;
+  background: rgba(116,184,0,0.18);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 24px;
+}
+.gpBigCtaTitle { font-weight: 950; font-size: 18px; }
+.gpBigCtaMeta { opacity: .78; font-size: 13px; margin-top: 2px; }
+.gpBigCtaArrow { opacity: .75; font-weight: 900; font-size: 18px; text-align: right; }
+
+.gpBigCtaPlay { border-color: rgba(116,184,0,0.25); }
+.gpBigCtaLearn { border-color: rgba(116,184,0,0.18); }
+
+.gpHomeFooter { margin-top: 18px; opacity: .75; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+.gpHomeFooterDot { opacity: .45; }
+
+.gpHub { background: #0b0f0c; color: #74B800; }
+.gpHubHeader { padding-top: 16px; padding-bottom: 8px; }
+.gpHubKicker {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(116,184,0,0.16);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-weight: 900;
+  font-size: 12px;
+  opacity: .95;
+}
+.gpHubTitle { margin: 10px 0 0; font-size: 26px; font-weight: 950; }
+.gpHubSub { margin: 6px 0 0; opacity: .8; }
+
+.gpHubGrid { display: grid; gap: 12px; margin-top: 14px; }
+.gpHubCard {
+  width: 100%;
+  text-align: left;
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #74B800;
+  box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  cursor: pointer;
+}
+.gpHubCard:active { transform: scale(0.99); }
+.gpHubCardPrimary { border-color: rgba(116,184,0,0.28); background: rgba(116,184,0,0.10); }
+.gpHubIcon { font-size: 24px; margin-bottom: 8px; }
+.gpHubCardTitle { font-size: 16px; font-weight: 950; }
+.gpHubCardMeta { margin-top: 4px; font-size: 13px; opacity: .78; }
+.gpHubBottom { margin-top: 16px; display: flex; justify-content: flex-start; }
+
+.gpInclusive { background: #0b0f0c; color: #74B800 }
+.gpInclusiveInner { padding-top: 18px; padding-bottom: 26px; }
+.gpInclusiveBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 10px 12px;
+  background: rgba(116,184,0,0.16);
+  border: 1px solid rgba(116,184,0,0.22);
+  font-size: 18px;
+}
+.gpInclusiveTitle { margin: 10px 0 0; font-size: 24px; font-weight: 950; }
+.gpInclusiveSub { margin: 8px 0 0; opacity: .82; max-width: 560px; }
+
+.gpInclusiveCards { display: grid; gap: 10px; margin-top: 14px; }
+.gpMiniCard {
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.gpMiniCardTitle { font-weight: 950; }
+.gpMiniCardMeta { margin-top: 4px; opacity: .78; font-size: 13px; }
+
+.gpInclusiveBottom { margin-top: 16px; display: grid; gap: 10px; }
+/* =========================================================
+   GP THEME PATCH (SEGURO · NO ROMPE)
+   - Negro de fondo
+   - Botones verdes con texto blanco
+   - Cards tipo “Instagram” (oscuro, borde suave)
+   - Fix back button para NO tapar navbar
+   Pegar AL FINAL del index.css (y borrar el “GORILA THEME” viejo)
+   ========================================================= */
+
+/* Variables simples (sin pisar tu layout) */
+:root{
+  --gp-bg: #050505;
+  --gp-card: rgba(255,255,255,0.06);
+  --gp-card2: rgba(255,255,255,0.08);
+  --gp-border: rgba(255,255,255,0.12);
+  --gp-text: rgba(255,255,255,0.92);
+  --gp-muted: rgba(255,255,255,0.65);
+
+  --gp-green: #74B800;   /* tu verde */
+  --gp-green2:#5da100;   /* hover */
+  --gp-danger:#ef4444;
+}
+
+/* Fondo global NEGRO (sin tocar tu sistema de scroll interno) */
+html, body{
+  background: var(--gp-bg);
+  color: var(--gp-text);
+}
+
+/* Importante: NO fuerces verde en el body nunca más */
+body{
+  color: var(--gp-text);
+}
+
+/* Navbar: negro y verde, sin bugs tipo rgba#... */
+.navbar{
+  background: #0b0f14;
+  color: var(--gp-green);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.navLink{
+  color: var(--gp-text);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+.navLink.active{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* Cards “instagram” (oscuro) */
+.card,
+.authCard,
+.gpModalCard,
+.gpMapListPanel,
+.gpMapTop,
+.gpMapTopSticky{
+  background: var(--gp-card);
+  color: var(--gp-text);
+  border: 1px solid var(--gp-border);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  backdrop-filter: blur(10px);
+}
+
+/* Titulares visibles siempre */
+.pageTitle,
+.authTitle{
+  color: #fff;
+}
+.pageMeta,
+.authSub,
+.gpLabel,
+.authLabel{
+  color: var(--gp-muted);
+}
+
+/* Inputs oscuros (texto blanco visible) */
+input, select, textarea,
+.authInput, .gpInput, .gpTextarea{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--gp-border);
+  color: var(--gp-text);
+  border-radius: 14px;
+}
+input::placeholder, textarea::placeholder{
+  color: rgba(255,255,255,0.45);
+}
+
+/* Botones: VERDE + TEXTO BLANCO (coherente) */
+.btn,
+.gpBtn,
+.authBtn{
+  background: var(--gp-green);
+  color: #fff;
+  border: 1px solid rgba(0,0,0,0.25);
+  font-weight: 900;
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+  transition: transform .12s ease, filter .15s ease, box-shadow .12s ease;
+}
+.btn:hover,
+.gpBtn:hover,
+.authBtn:hover{
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+.btn:active,
+.gpBtn:active,
+.authBtn:active{
+  transform: translateY(0px);
+}
+.btn:disabled{
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Ghost: transparente (sin “recuadro verde” absurdo) */
+.btn.ghost,
+.gpBtnSoft{
+  background: transparent;
+  color: var(--gp-text);
+  border: 1px solid var(--gp-border);
+  box-shadow: none;
+}
+.btn.ghost:hover{
+  background: rgba(255,255,255,0.06);
+}
+
+/* Danger */
+.btn.danger{
+  background: var(--gp-danger);
+  color: #fff;
+  border-color: rgba(0,0,0,0.25);
+}
+
+/* Badges legibles */
+.gpBadge{
+  color: var(--gp-text);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+.gpBadge.ok{ background: rgba(34,197,94,0.14); }
+.gpBadge.warn{ background: rgba(245,158,11,0.16); }
+.gpBadge.bad{ background: rgba(239,68,68,0.14); }
+
+/* Chips: no verdes sólidos por defecto (solo cuando están ON) */
+.gpChipBtn{
+  background: rgba(255,255,255,0.06);
+  color: var(--gp-text);
+  border: 1px solid var(--gp-border);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+}
+.gpChipBtn.isOn{
+  background: rgba(116,184,0,0.22);
+  border-color: rgba(116,184,0,0.35);
+}
+.gpChipIcon{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* BACK BUTTON integrado: NO tapa el logo del navbar */
+.gpBackBtn{
+  position: fixed;
+  left: 14px;
+  top: 20px;              /* 👈 baja por debajo del navbar (56px + margen) */
+  z-index: 99;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(12,16,22,0.78);
+  color: #fff;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  user-select: none;
+}
+.gpBackBtnIcon{
+  font-weight: 950;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* En móvil, un pelín más abajo para no tocar barras */
+@media (max-width: 520px){
+  .gpBackBtn{ top: 66px; }
+}
+
+/* Leaflet: mantener tu fix de tiles (no lo tocamos, lo reforzamos) */
+.leaflet-container img,
+.leaflet-container canvas,
+.leaflet-container svg{
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Evitar desbordes horizontales sin romper layouts */
+html, body{ overflow-x: hidden; }
+#root, .appShell, .appMain, .page, .pageWrap, .container{ overflow-x: hidden; }
+/* =========================================================
+   GP FINAL OVERRIDE (ESTABLE · NO ROMPER)
+   - Corrige contraste global
+   - Unifica botones
+   - Evita “todo verde”
+   - Back button integrado (no tapa navbar)
+   ========================================================= */
+
+   :root{
+    --gp-bg:#050505;
+    --gp-text:rgba(255,255,255,0.92);
+    --gp-muted:rgba(255,255,255,0.65);
+    --gp-green:#74B800;
+    --gp-green2:#5da100;
+    --gp-border:rgba(255,255,255,0.12);
+    --gp-card:rgba(255,255,255,0.06);
+  }
+  
+  /* Fondo negro estable */
+  html, body{
+    background: var(--gp-bg) !important;
+    color: var(--gp-text) !important;
+  }
+  
+  /* Navbar consistente */
+  .navbar{
+    background:#0b0f14 !important;
+    color: var(--gp-green) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  }
+  .navLink{
+    color: var(--gp-text) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+  }
+  .navLink.active{
+    background: rgba(255,255,255,0.10) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+  }
+  
+  /* Cards oscuras (adiós “bloques verdes sin sentido”) */
+  .card, .authCard, .gpModalCard, .gpMapListPanel, .gpMapTop, .gpMapTopSticky{
+    background: var(--gp-card) !important;
+    color: var(--gp-text) !important;
+    border: 1px solid var(--gp-border) !important;
+    box-shadow: 0 18px 50px rgba(0,0,0,0.55) !important;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Textos */
+  .pageTitle, .authTitle{ color:#fff !important; }
+  .pageMeta, .authSub, .gpLabel, .authLabel{ color: var(--gp-muted) !important; }
+  
+  /* Inputs legibles */
+  input, select, textarea, .authInput, .gpInput, .gpTextarea{
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid var(--gp-border) !important;
+    color: var(--gp-text) !important;
+  }
+  
+  /* ✅ BOTONES: una sola verdad (evita tus duplicados) */
+  .btn, .gpBtn, .authBtn{
+    background: var(--gp-green) !important;
+    color: #fff !important;
+    border: 1px solid rgba(0,0,0,0.25) !important;
+    border-radius: 14px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.18) !important;
+  }
+  .btn:hover, .gpBtn:hover, .authBtn:hover{
+    background: var(--gp-green2) !important;
+  }
+  
+  /* ✅ Ghost: transparente (quita “recuadro verde raro”) */
+  .btn.ghost{
+    background: transparent !important;
+    color: var(--gp-text) !important;
+    border: 1px solid var(--gp-border) !important;
+    box-shadow: none !important;
+  }
+  .btn.ghost:hover{
+    background: rgba(255,255,255,0.06) !important;
+  }
+  
+  /* Back button: NO pisa el logo */
+  .gpBackBtn{
+    top: 70px !important;
+  }
+  
+  /* Leaflet tiles fix (sin tocar lo demás) */
+  .leaflet-container img,
+  .leaflet-container canvas,
+  .leaflet-container svg{
+    max-width:none !important;
+    max-height:none !important;
+  }
+  /* Back integrado en Navbar (NO flotante) */
+.navBackBtn{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-weight: 950;
+  line-height: 1;
+}
+.navBackBtn:hover{
+  background: rgba(255,255,255,0.10);
+}
+/* === Chips del mapa con look de botón === */
+.gpChipBtn{
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+}
+
+.gpChipBtn:hover{
+  background: rgba(255,255,255,0.10);
+}
+
+/* Activo (cuando lleva isOn) bien visible */
+.gpChipBtn.isOn{
+  background: rgba(116,184,0,0.92);
+  border-color: rgba(116,184,0,0.95);
+  color: #111;
+  box-shadow: 0 12px 26px rgba(116,184,0,0.25);
+}
+
+/* Oculta “decoraciones” del chip si no quieres que cante */
+.gpChipBtn .gpChipDot{ display:none; }
+/* === Modal sólido (no transparente) === */
+.gpModalOverlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.62);
+  backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+
+.gpModalCard{
+  background: rgba(16,18,22,0.98);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+
+/* Las tarjetas dentro del modal (para que no sean transparentes) */
+.gpModalOverlay .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #fff !important;
+}
+/* === Contraste en tarjetas de partido === */
+.matchCard{
+  color: #111 !important;
+}
+.matchCard .meta,
+.matchCard .sub,
+.matchCard .info{
+  color: rgba(17,17,17,0.78) !important;
+}
+/* ===== MAPA: chips activos en verde ===== */
+.gpChipBtn {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border-radius: 999px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.gpChipBtn .gpChipDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.35);
+}
+
+/* ✅ ACTIVO = VERDE */
+.gpChipBtn.isOn {
+  background: #74B800 !important;
+  border-color: rgba(0,0,0,0.10) !important;
+  color: #111 !important;
+  box-shadow: 0 16px 40px rgba(116,184,0,0.25);
+}
+
+.gpChipBtn.isOn .gpChipDot {
+  background: rgba(0,0,0,0.28);
+}
+/* ===== ICONOS: que hereden color del texto ===== */
+svg {
+  color: inherit;
+}
+
+svg * {
+  stroke: currentColor;
+}
+/* ===== PARTIDOS: cards claras con texto oscuro ===== */
+.gpMatchesPage .card,
+.gpMatchesPage .gpCard,
+.gpMatchesPage .matchCard,
+.gpMatchesPage .partyCard {
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.10);
+}
+
+/* Si hay textos secundarios */
+.gpMatchesPage .card * {
+  color: inherit;
+}
+
+/* ===== TABS / SEGMENTED: Míos / Todos ===== */
+.gpTabs,
+.gpSegmented {
+  display: inline-flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.gpTabs button,
+.gpSegmented button {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.86);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+/* ✅ activo = verde */
+.gpTabs button.isActive,
+.gpSegmented button.isActive {
+  background: #74B800;
+  color: #111;
+}
+.gpMatchesPage img.gpIcon,
+.gpMatchesPage .iconImg {
+  filter: invert(1);
+}
+/* ===== CLASES: cards claras con texto oscuro ===== */
+.gpClassesPage .card,
+.gpClassesPage .gpCard,
+.gpClassesPage .classCard {
+  background: #fff;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.10);
+}
+
+.gpClassesPage .card * {
+  color: inherit;
+}
+/* =========================
+   GORILA UI FIX PACK
+   (sin tocar lógica / push)
+   ========================= */
+
+/* ---------- 1) MAPA: Cerca/Favoritos tipo chip (activo verde) ---------- */
+button.gpChipBtn {
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.92) !important;
+  border-radius: 999px !important;
+  padding: 10px 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  font-weight: 900 !important;
+}
+
+button.gpChipBtn .gpChipDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.35);
+}
+
+/* ✅ ACTIVO */
+button.gpChipBtn.isOn {
+  background: #74B800 !important;
+  border-color: rgba(0,0,0,0.12) !important;
+  color: #111 !important;
+  box-shadow: 0 16px 40px rgba(116,184,0,0.22) !important;
+}
+
+button.gpChipBtn.isOn .gpChipDot {
+  background: rgba(0,0,0,0.28) !important;
+}
+
+button.gpChipBtn.isOn .gpChipIcon,
+button.gpChipBtn.isOn .gpChipText {
+  color: #111 !important;
+}
+
+
+/* ---------- 2) TABS / SEGMENTED: "Los míos" / "Todos" ---------- */
+/* contenedor */
+.gpSegmented {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* botones */
+.gpSegmented button {
+  border: 0 !important;
+  background: transparent !important;
+  color: rgba(255,255,255,0.88) !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+  line-height: 1 !important;
+}
+
+/* ✅ activo verde */
+.gpSegmented button.isActive {
+  background: #74B800 !important;
+  color: #111 !important;
+}
+
+
+/* ---------- 3) ICONOS calendario / reloj: SIEMPRE visibles ---------- */
+/* Si usas SVG (ideal): */
+.gpIcon,
+.gpIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.gpIcon svg,
+.gpIcon svg * {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* En fondos oscuros => icono claro */
+.page,
+.gpMapPage,
+.matchesPage,
+.classesPage {
+  --gpIconColor: rgba(255,255,255,0.88);
+}
+.gpIcon {
+  color: var(--gpIconColor) !important;
+}
+
+/* En tarjetas / modales blancos => icono oscuro */
+.card,
+.gpModalCard,
+.gpWhiteCard {
+  --gpIconColor: #111;
+}
+
+/* Si tus iconos son IMG (png/svg como img) y se “pierden”,
+   NO los inviertas globalmente. Solo en zonas oscuras: */
+.page img.gpIconImg,
+.page button img.gpIconImg {
+  filter: none !important;
+}
+.gpMapPage img.gpIconImg,
+.matchesPage img.gpIconImg,
+.classesPage img.gpIconImg {
+  filter: invert(1) !important;
+  opacity: 0.92 !important;
+}
+
+
+/* ---------- 4) PARTIDOS: texto blanco sobre recuadro blanco (fix) ---------- */
+/* Opción segura: crea clase gpMatchCard en el wrapper (te digo abajo) */
+.gpMatchCard {
+  background: #fff !important;
+  color: #111 !important;
+}
+
+.gpMatchCard * {
+  color: #111 !important;
+}
+
+/* pero respeta botones verdes/acciones */
+.gpMatchCard .btn,
+.gpMatchCard button,
+.gpMatchCard .gpBtn,
+.gpMatchCard a {
+  color: inherit;
+}
+
+/* Si tienes chips/badges dentro que deben ser claros */
+.gpMatchCard .badge,
+.gpMatchCard .pill {
+  color: #111 !important;
+}
+/* =====================================================
+   GORILA PÁDEL – FIX VISUAL DEFINITIVO
+   SOLO CSS · NO TOCA PUSH · NO TOCA LÓGICA
+   ===================================================== */
+
+
+/* ===============================
+   1. BOTONES "CERCA DE MÍ" / "FAVORITOS"
+   =============================== */
+   button.gpChipBtn {
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.92);
+    border-radius: 999px;
+    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 900;
+  }
+  
+  /* puntito decorativo */
+  button.gpChipBtn .gpChipDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.35);
+  }
+  
+  /* ✅ ACTIVO = VERDE GORILA */
+  button.gpChipBtn.isOn {
+    background: #74B800 !important;
+    border-color: rgba(0,0,0,0.15) !important;
+    color: #111 !important;
+    box-shadow: 0 12px 30px rgba(116,184,0,0.30);
+  }
+  
+  button.gpChipBtn.isOn * {
+    color: #111 !important;
+  }
+  
+  button.gpChipBtn.isOn .gpChipDot {
+    background: rgba(0,0,0,0.35);
+  }
+  
+  
+  /* ===============================
+     2. TABS "LOS MÍOS / TODOS"
+     =============================== */
+  .gpSegmented {
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+  
+  .gpSegmented button {
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,0.85);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  
+  /* ✅ ACTIVO = VERDE */
+  .gpSegmented button.isActive {
+    background: #74B800;
+    color: #111;
+  }
+  
+  
+  /* ===============================
+     3. TARJETAS BLANCAS (PARTIDOS / CLASES)
+     EVITA TEXTO BLANCO SOBRE BLANCO
+     =============================== */
+  .gpMatchCard,
+  .gpWhiteCard,
+  .card {
+    background: #ffffff;
+    color: #111111;
+  }
+  
+  .gpMatchCard *,
+  .gpWhiteCard *,
+  .card * {
+    color: #111111;
+  }
+  
+  /* respetar botones */
+  .gpMatchCard button,
+  .gpWhiteCard button,
+  .card button {
+    color: inherit;
+  }
+  
+  
+  /* ===============================
+     4. ICONOS (CALENDARIO / RELOJ)
+     =============================== */
+  
+  /* iconos SVG */
+  .gpIcon,
+  .gpIcon svg {
+    width: 18px;
+    height: 18px;
+    color: currentColor;
+  }
+  
+  /* en pantallas oscuras */
+  .page,
+  .gpMapPage,
+  .matchesPage,
+  .classesPage {
+    --gpIconColor: rgba(255,255,255,0.9);
+  }
+  
+  .gpIcon {
+    color: var(--gpIconColor);
+  }
+  
+  /* en tarjetas blancas */
+  .card,
+  .gpModalCard,
+  .gpWhiteCard {
+    --gpIconColor: #111;
+  }
+  
+  /* iconos como IMG (png / svg) SOLO en fondo oscuro */
+  .gpMapPage img,
+  .matchesPage img,
+  .classesPage img {
+    filter: invert(1);
+    opacity: 0.9;
+  }
+  
+  /* pero NO dentro de tarjetas blancas */
+  .card img,
+  .gpModalCard img {
+    filter: none !important;
+  }
+  body { outline: 6px solid magenta !important; }
+  /* =========================
+   FIX UI (sin tocar push)
+   ========================= */
+
+/* 1) Botones del mapa: ghost oscuro vs activo verde */
+.btn.gpMapBtn {
+  background: #74B800;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.14);
+}
+
+.btn.gpMapBtn.ghost {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.btn.gpMapBtn.ghost:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.btn.gpMapBtn.isOn {
+  background: #74B800 !important;
+  color: #111 !important;
+  border-color: rgba(0,0,0,0.14) !important;
+}
+
+/* 2) Tarjetas blancas: evitar texto blanco dentro (Partidos/Clases) */
+.card,
+.gpModalCard,
+.whiteCard,
+.matchCard {
+  background: #fff;
+  color: #111;
+}
+
+.card * {
+  color: inherit;
+}
+
+/* Si usas "muted" o similares */
+.muted,
+.subtle,
+.meta,
+.cardMeta {
+  color: rgba(17,17,17,0.70);
+}
+
+/* 3) Iconos (calendario/reloj): que sigan el color del texto */
+svg {
+  color: currentColor;
+}
+
+/* Si algún icono es IMG negro (png/svg como img) en fondo oscuro */
+img.gpIcon,
+.iconImg,
+button img.gpIcon {
+  filter: invert(1);
+  opacity: 0.92;
+}
+/* =========================
+   FIX UI (sin tocar push)
+   ========================= */
+
+/* A) Botones Mapa: ghost oscuro vs activo verde */
+.btn.gpMapBtn {
+  background: #74B800;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.14);
+}
+
+.btn.gpMapBtn.ghost {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.btn.gpMapBtn.ghost:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.btn.gpMapBtn.isOn {
+  background: #74B800 !important;
+  color: #111 !important;
+  border-color: rgba(0,0,0,0.14) !important;
+}
+
+/* B) Segmented/Tabs: "Los míos / Todos" (activo verde) */
+.gpTabs,
+.gpSegmented {
+  display: inline-flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.gpTabs button,
+.gpSegmented button {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.86);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.gpTabs button.isActive,
+.gpSegmented button.isActive {
+  background: #74B800;
+  color: #111;
+}
+
+/* C) Tarjetas blancas (Partidos / Clases / Modales): texto oscuro */
+.card,
+.gpModalCard,
+.matchCard,
+.whiteCard {
+  background: #fff;
+  color: #111;
+}
+
+.card * ,
+.gpModalCard * ,
+.matchCard * ,
+.whiteCard * {
+  color: inherit;
+}
+
+/* Textos secundarios dentro de cards */
+.muted,
+.subtle,
+.meta,
+.cardMeta {
+  color: rgba(17,17,17,0.70);
+}
+
+/* D) Iconos SVG: que sigan el color del texto (evita "invisibles") */
+svg {
+  color: currentColor;
+}
+
+/* E) Si algún icono es un <img> negro (png/svg) en fondo oscuro */
+img.gpIcon,
+.iconImg,
+button img.gpIcon {
+  filter: invert(1);
+  opacity: 0.92;
+}
+/* =========================
+   FIX DEFINITIVO: texto blanco en tarjetas
+   (Clases / Partidos / Modales)
+   ========================= */
+
+/* 0) Asegura que la app no fuerce blanco dentro de contenido */
+.page,
+.pageWrap,
+.container,
+.pageHeader,
+.pageMeta {
+  color: rgba(255,255,255,0.92); /* tu tema oscuro */
+}
+
+
+/* 2) Textos secundarios dentro de tarjetas */
+.card .muted,
+.card .subtle,
+.card .meta,
+.card .cardMeta,
+.matchCard .muted,
+.matchCard .subtle,
+.whiteCard .muted,
+.gpModalCard .muted {
+  color: rgba(17,17,17,0.70) !important;
+}
+
+/* 3) Inputs/select/labels dentro de tarjetas (porque a veces heredan blanco) */
+.card input,
+.card select,
+.card textarea,
+.gpModalCard input,
+.gpModalCard select,
+.gpModalCard textarea {
+  color: #111 !important;
+  background: #fff !important;
+}
+
+/* 4) Placeholders dentro de tarjetas */
+.card input::placeholder,
+.card textarea::placeholder,
+.gpModalCard input::placeholder,
+.gpModalCard textarea::placeholder {
+  color: rgba(17,17,17,0.55) !important;
+}
+
+/* 5) Iconos SVG dentro de tarjetas */
+.card svg,
+.matchCard svg,
+.whiteCard svg,
+.gpModalCard svg {
+  color: currentColor !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+/* =========================================
+   GP MATCHES UI — BONITO + LEGIBLE
+   PÉGALO AL FINAL (última palabra)
+   ========================================= */
+
+/* Fondo general oscuro (sin convertir todo en verde) */
+html, body{
+  background:#050505 !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+/* Header de página */
+.gpMatchesPage .pageTitle{ color:#fff !important; }
+.gpMatchesPage .pageMeta{ color: rgba(255,255,255,0.68) !important; }
+
+/* Cards de partidos: “glass” oscuro */
+.gpMatchesPage .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.92) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 55px rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Dentro de la card, texto hereda y se ve bien */
+.gpMatchesPage .card *,
+.gpMatchesPage .card .meta{
+  color: inherit !important;
+}
+
+/* Bloquecitos de info (Fecha/Plazas/Duración/Nivel) */
+.gpMatchesPage .card .meta{
+  opacity: .75 !important;
+  font-weight: 900 !important;
+}
+.gpMatchesPage .card [style*="background: rgba(0,0,0,.04)"]{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+/* Badges (texto que no se pierda) */
+.gpMatchesPage .gpBadge{
+  color: rgba(255,255,255,0.92) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}
+.gpMatchesPage .gpBadge.ok{ background: rgba(34,197,94,0.18) !important; }
+.gpMatchesPage .gpBadge.warn{ background: rgba(245,158,11,0.20) !important; }
+.gpMatchesPage .gpBadge.bad{ background: rgba(239,68,68,0.18) !important; }
+
+/* Botones: base verde (coherente) */
+.gpMatchesPage .btn{
+  background:#74B800 !important;
+  color:#fff !important;
+  border: 1px solid rgba(0,0,0,0.25) !important;
+  border-radius: 14px !important;
+  font-weight: 900 !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18) !important;
+}
+.gpMatchesPage .btn:hover{ filter: brightness(1.05); }
+
+/* Botón ghost: transparente, borde suave */
+.gpMatchesPage .btn.ghost{
+  background: transparent !important;
+  color: rgba(255,255,255,0.92) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: none !important;
+}
+.gpMatchesPage .btn.ghost:hover{
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* Danger */
+.gpMatchesPage .btn.danger{
+  background:#ef4444 !important;
+  color:#fff !important;
+  border-color: rgba(0,0,0,0.25) !important;
+}
+
+/* Segmented: Los míos / Todos */
+.gpMatchesPage .gpSegmented{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+.gpMatchesPage .gpSegmented button{
+  color: rgba(255,255,255,0.88) !important;
+}
+.gpMatchesPage .gpSegmented button.isActive{
+  background: #74B800 !important;
+  color: #111 !important;
+}
+
+/* Modal overlay (bonito) */
+.gpModalOverlay{
+  background: rgba(0,0,0,0.62) !important;
+  backdrop-filter: blur(10px);
+  z-index: 99999 !important;
+}
+
+/* Modal card oscuro premium */
+/* Modal card oscuro premium corregido */
+.gpModalCard{
+  background: rgba(16,18,22,0.98) !important;
+  color: #ffffff !important; /* Cambiado a blanco para que sea legible */
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.60) !important;
+}
+
+/* Inputs en modal */
+.gpModalCard .gpInput,
+.gpModalCard .gpTextarea{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+.gpModalCard .gpInput::placeholder,
+.gpModalCard .gpTextarea::placeholder{
+  color: rgba(255,255,255,0.45) !important;
+}
+
+/* Cards dentro del modal (chat mensajes / solicitudes) */
+.gpModalOverlay .card{
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #ffffff !important;
+}
+.gpModalOverlay .card .meta{
+  color: rgba(255,255,255,0.62) !important;
+}
+
+/* Quita la “inversión de iconos” solo si te estaba rompiendo imágenes */
+.gpMatchesPage img.gpIcon,
+.gpMatchesPage .iconImg{
+  filter: none !important;
+  opacity: 1 !important;
+}
+/* =========================================
+   GP MATCHES UI — INSTAGRAM PRO (solo Partidos)
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+   .gpMatchesPage .pageTitle{ color:#fff !important; }
+   .gpMatchesPage .pageMeta{ color: rgba(255,255,255,0.68) !important; }
+   
+   /* Grid más “feed”: 1 columna en móvil, 2 en desktop */
+   .gpMatchesPage .gpMatchesGrid{
+     display:grid;
+     grid-template-columns: repeat(2, minmax(0,1fr));
+     gap: 14px;
+   }
+   @media (max-width: 860px){
+     .gpMatchesPage .gpMatchesGrid{ grid-template-columns: 1fr; }
+   }
+   
+   /* Card pro */
+   .gpMatchesPage .gpMatchCard{
+     background: rgba(255,255,255,0.06);
+     border: 1px solid rgba(255,255,255,0.12);
+     color: rgba(255,255,255,0.92);
+     border-radius: 18px;
+     box-shadow: 0 18px 55px rgba(0,0,0,0.55);
+     backdrop-filter: blur(10px);
+     padding: 16px;
+     overflow: hidden;
+   }
+   
+   /* Texto hereda (evita “blanco sobre blanco” raro) */
+   .gpMatchesPage .gpMatchCard *{ color: inherit; }
+   
+   /* Título del club más pro */
+   .gpMatchesPage .gpMatchCard > div > div:first-child{
+     font-size: 17px !important;
+     font-weight: 950 !important;
+     letter-spacing: -0.2px;
+   }
+   
+   /* Rejilla de info (Fecha/Plazas/Duración/Nivel): más fina */
+   .gpMatchesPage .gpMatchCard .gpInfoGrid,
+   .gpMatchesPage .gpMatchCard [style*="gridTemplateColumns"]{
+     margin-top: 12px !important;
+     gap: 10px !important;
+   }
+   
+   .gpMatchesPage .gpMatchCard .meta{
+     font-size: 12px !important;
+     opacity: .70 !important;
+   }
+   
+   /* Cajitas internas: glass suave */
+   .gpMatchesPage .gpMatchCard [style*="background: rgba(0,0,0,.04)"]{
+     background: rgba(255,255,255,0.06) !important;
+     border: 1px solid rgba(255,255,255,0.10) !important;
+     border-radius: 16px !important;
+   }
+   
+   /* Badges (Estás dentro / Pendiente / etc.) más “pill” */
+   .gpMatchesPage .gpMatchCard .meta[style*="fontWeight: 950"]{
+     padding: 6px 10px;
+     border-radius: 999px;
+     background: rgba(255,255,255,0.06);
+     border: 1px solid rgba(255,255,255,0.10);
+     opacity: .92 !important;
+   }
+   
+   /* Botonera: compacta, tipo IG */
+   .gpMatchesPage .gpMatchCard .gpActions{
+     gap: 8px !important;
+     justify-content: flex-end;
+   }
+   
+   /* Botones en Partidos: verdes + ghost pro */
+   .gpMatchesPage .btn{
+     background:#74B800 !important;
+     color:#fff !important;
+     border: 1px solid rgba(0,0,0,0.25) !important;
+     border-radius: 14px !important;
+     font-weight: 950 !important;
+     box-shadow: 0 10px 22px rgba(0,0,0,0.18) !important;
+   }
+   .gpMatchesPage .btn:hover{ filter: brightness(1.05); }
+   
+   .gpMatchesPage .btn.ghost{
+     background: transparent !important;
+     color: rgba(255,255,255,0.92) !important;
+     border: 1px solid rgba(255,255,255,0.14) !important;
+     box-shadow: none !important;
+   }
+   .gpMatchesPage .btn.ghost:hover{
+     background: rgba(255,255,255,0.06) !important;
+   }
+   
+   /* Danger consistente */
+   .gpMatchesPage .btn.danger{
+     background: #ef4444 !important;
+     border-color: rgba(0,0,0,0.25) !important;
+     color: #fff !important;
+   }
+   
+   /* Scroll suave general (tú ya lo tienes en pageWrap, esto solo refuerza) */
+   .gpMatchesPage .pageWrap{
+     -webkit-overflow-scrolling: touch;
+   }
+   /* =========================================
+   GP MATCHES — CALENDARIO STRIP PRO (IG)
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+.gpMatchesPage .gpCalendarStrip{
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 2px 10px;
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.gpMatchesPage .gpCalendarStrip::-webkit-scrollbar{ display: none; }
+
+.gpMatchesPage .gpDayPill{
+  min-width: 68px;
+  padding: 10px 10px 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.gpMatchesPage .gpDayPill.isActive{
+  border-color: rgba(116,184,0,0.55);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  transform: translateY(-1px);
+}
+
+.gpMatchesPage .gpDow{
+  font-size: 12px;
+  font-weight: 900;
+  opacity: .72;
+  text-transform: capitalize;
+}
+.gpMatchesPage .gpDom{
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -0.3px;
+}
+
+.gpMatchesPage .gpDot{
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #74B800;
+  margin-top: 4px;
+  box-shadow: 0 0 0 6px rgba(116,184,0,0.10);
+}
+.gpMatchesPage .gpDot.isOff{
+  background: rgba(255,255,255,0.18);
+  box-shadow: none;
+}
+/* =========================================
+   GP MATCHES — CARD IG (avatares + fila info)
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+   .gpMatchesPage .gpMatchCard{
+    position: relative;
+  }
+  
+  /* Top: zona avatares */
+  .gpMatchesPage .gpTopRow{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  .gpMatchesPage .gpAvatars{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .gpMatchesPage .gpTeam{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  
+  .gpMatchesPage .gpAvatar{
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+    font-weight: 950;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+  }
+  
+  .gpMatchesPage .gpAvatar img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+  }
+  
+  .gpMatchesPage .gpVs{
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 950;
+    letter-spacing: .5px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.06);
+    opacity: .95;
+  }
+  
+  .gpMatchesPage .gpEmptySlot{
+    position: relative;
+  }
+  
+  .gpMatchesPage .gpEmptySlot::after{
+    content: "🦍";
+    font-size: 18px;
+    opacity: .9;
+  }
+  
+  /* Frase mini debajo (placeholder) */
+  .gpMatchesPage .gpSlotHint{
+    margin-top: 8px;
+    font-size: 12px;
+    opacity: .75;
+  }
+  
+  /* Fila de info (chips) justo encima de “Chat activo” */
+  .gpMatchesPage .gpInfoRow{
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  
+  .gpMatchesPage .gpChip{
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  
+  /* Acciones abajo: que respiren un poco */
+  .gpMatchesPage .gpBottomRow{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  /* =========================================
+   GP MATCHES — AVATARES RECTANGULARES PRO
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+.gpMatchesPage .gpTopRow{
+  align-items: flex-start;
+}
+
+/* Bloque de avatares ocupa el ancho y manda */
+.gpMatchesPage .gpAvatars{
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* “Tarjetas” verticales (rectangulares) */
+.gpMatchesPage .gpAvatar{
+  width: 74px;
+  height: 104px;
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-weight: 950;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+}
+
+/* Ajuste imagen dentro */
+.gpMatchesPage .gpAvatar img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Equipos con separación clara */
+.gpMatchesPage .gpTeam{
+  gap: 10px;
+}
+
+/* VS más elegante, centrado entre equipos */
+.gpMatchesPage .gpVs{
+  align-self: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 950;
+  letter-spacing: .6px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+}
+
+/* “contador 2/4” abajo (pequeñito, pro) */
+.gpMatchesPage .gpCountUnder{
+  margin-top: 10px;
+  display:flex;
+  justify-content: flex-end;
+}
+
+/* chip más pequeño para el 2/4 */
+.gpMatchesPage .gpChip.isMini{
+  font-size: 12px;
+  font-weight: 950;
+  padding: 6px 10px;
+  opacity: .95;
+}
+
+/* La fila de info (chips) más compacta */
+.gpMatchesPage .gpInfoRow{
+  margin-top: 12px;
+  gap: 8px;
+}
+/* =========================================
+   GP MATCHES — CARD IG: headline + caption + action bar
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+   .gpMatchesPage .gpMatchCard{
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Headline */
+  .gpMatchesPage .gpHeadline{
+    font-size: 18px;
+    font-weight: 980;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+  
+  /* Caption (chips) */
+  .gpMatchesPage .gpCaption{
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    opacity: .95;
+  }
+  
+  .gpMatchesPage .gpChip{
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 900;
+    font-size: 12px;
+  }
+  
+  /* Separador sutil antes de acciones */
+  .gpMatchesPage .gpDivider{
+    margin-top: 12px;
+    height: 1px;
+    background: rgba(255,255,255,0.10);
+  }
+  
+  /* Barra de acciones estilo IG */
+  .gpMatchesPage .gpActionBar{
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  /* Grupo izquierda/derecha */
+  .gpMatchesPage .gpActionLeft,
+  .gpMatchesPage .gpActionRight{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  /* Botones más “icon-like” en ghost */
+  .gpMatchesPage .btn.ghost.gpIconBtn{
+    padding: 10px 12px !important;
+    border-radius: 14px !important;
+    font-weight: 950 !important;
+  }
+  
+  /* Mantener danger pro */
+  .gpMatchesPage .btn.danger{
+    border-radius: 14px !important;
+    padding: 10px 14px !important;
+    font-weight: 950 !important;
+  }
+  
+  /* Asegura que los botones no “bailen” */
+  .gpMatchesPage .gpActionBar .btn{
+    white-space: nowrap;
+  }
+  /* =========================================
+   GP MATCHES — ROSTER 4 AVATARES + VS (IG PRO)
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+.gpMatchesPage .gpRoster{
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.gpMatchesPage .gpTeam{
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* Slot rectangular vertical (más grande sin agrandar la card) */
+.gpMatchesPage .gpSlot{
+  height: 92px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.gpMatchesPage .gpSlotImg{
+  width: 52px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.25);
+}
+
+.gpMatchesPage .gpSlotText{
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.gpMatchesPage .gpSlotName{
+  font-weight: 950;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gpMatchesPage .gpSlotMeta{
+  font-size: 12px;
+  opacity: .70;
+  font-weight: 850;
+}
+
+/* Placeholder gorila */
+.gpMatchesPage .gpSlotEmpty{
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.gpMatchesPage .gpGorila{
+  font-size: 20px;
+  line-height: 1;
+}
+
+.gpMatchesPage .gpVs{
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.30);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+}
+/* =========================================
+   GP MATCHES — ROSTER VS (IG PRO)
+   PÉGALO AL FINAL del index.css
+   ========================================= */
+
+/* Card: más “feed”, sin inflarla */
+.gpMatchesPage .gpMatchCard{
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== ROSTER ===== */
+.gpMatchesPage .gpRoster{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* Equipos: 2 slots en columna */
+.gpMatchesPage .gpTeam{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+/* VS: pill premium */
+.gpMatchesPage .gpVs{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  letter-spacing: -0.2px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+/* Slot: tarjeta interna, vertical */
+.gpMatchesPage .gpSlot{
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: center;
+
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+/* Imagen: RECTANGULAR VERTICAL */
+.gpMatchesPage .gpSlotImg{
+  width: 72px;
+  height: 96px;              /* 👈 vertical */
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+/* Texto */
+.gpMatchesPage .gpSlotText{ min-width: 0; }
+.gpMatchesPage .gpSlotName{
+  font-weight: 1000;
+  font-size: 13px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gpMatchesPage .gpSlotMeta{
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: .75;
+  font-weight: 900;
+}
+
+/* Slots vacíos: “gorila” con estilo */
+.gpMatchesPage .gpSlotEmpty{
+  background: rgba(255,255,255,0.04);
+  border-style: dashed;
+}
+
+.gpMatchesPage .gpSlotEmpty .gpGorila{
+  width: 72px;
+  height: 96px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  background: rgba(0,0,0,0.18);
+  border: 1px dashed rgba(255,255,255,0.14);
+}
+
+/* En móviles: roster en 1 columna, VS centrado */
+@media (max-width: 520px){
+  .gpMatchesPage .gpRoster{
+    grid-template-columns: 1fr;
+  }
+  .gpMatchesPage .gpVs{
+    margin: 4px auto 6px;
+  }
+}
+
+/* ===== CABECERA + CHIPS ===== */
+.gpMatchesPage .gpHeadline{
+  margin-top: 2px;
+}
+
+.gpMatchesPage .gpCaption{
+  margin-top: 10px;
+}
+
+/* Chips un pelín más compactos */
+.gpMatchesPage .gpChip{
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* Badges debajo, más “pill” */
+.gpMatchesPage .meta[style*="fontWeight: 950"]{
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* ActionBar: respiración y alineación */
+.gpMatchesPage .gpActionBar{
+  gap: 10px;
+}
+
+/* Botones ghost más “icon button” */
+.gpMatchesPage .btn.ghost.gpIconBtn{
+  padding: 10px 12px !important;
+}
+/* ===== Matches cards PRO ===== */
+.gpMatchesGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.gpMatchCard {
+  border-radius: 22px;
+  padding: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+}
+
+.gpHeadline {
+  font-size: 22px;
+  font-weight: 1000;
+  margin-top: 10px;
+}
+
+.gpCaption {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.gpChip {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.10);
+  font-weight: 900;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gpDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.10);
+  margin: 14px 0;
+}
+
+.gpActionBar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gpActionLeft,
+.gpActionRight {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn.gpIconBtn {
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-weight: 950;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+}
+
+.btn.gpIconBtn:hover {
+  background: rgba(255,255,255,0.10);
+}
+
+.btn {
+  border-radius: 999px;
+  padding: 12px 14px;
+  font-weight: 950;
+}
+
+.btn.ghost {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.btn.danger {
+  background: rgba(220,38,38,0.14);
+  border: 1px solid rgba(220,38,38,0.35);
+}
+
+/* ===== Roster más premium ===== */
+.gpRoster {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.gpTeam {
+  display: grid;
+  gap: 10px;
+}
+
+.gpVs {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 1000;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.gpSlot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.gpSlotImg {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.08);
+}
+
+.gpSlotText {
+  min-width: 0;
+}
+
+.gpSlotName {
+  font-weight: 1000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gpSlotMeta {
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 900;
+}
+
+.gpSlotEmpty .gpSlotName {
+  display: none;
+}
+
+/* móvil */
+@media (max-width: 720px) {
+  .gpRoster {
+    grid-template-columns: 1fr;
+  }
+  .gpVs {
+    margin: 0 auto;
+  }
+}
+/* ===== Scroll snap (tipo TikTok) para partidos ===== */
+.gpMatchesSnapWrap {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gpMatchesHeaderSticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 14px 14px 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.92), rgba(0,0,0,0.55), rgba(0,0,0,0));
+  backdrop-filter: blur(10px);
+}
+
+.gpMatchesSnapList {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px 18px;
+  display: grid;
+  gap: 14px;
+}
+
+/* cada card “ocupa pantalla” y engancha */
+.gpMatchSnapCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+
+  /* ✅ tarjeta normal (NO gigante) */
+  min-height: auto;
+  height: auto;
+
+  display: block;
+}
+
+/* opcional: esconder scrollbar */
+.gpMatchesSnapList::-webkit-scrollbar { width: 0; height: 0; }
+.gpMatchesSnapList { scrollbar-width: none; }
+/* ===== Scroll snap (tipo TikTok) para partidos ===== */
+.gpMatchesSnapWrap {
+  /* altura dinámica móvil */
+  height: 100dvh;
+}
+
+.gpMatchesSnapList {
+  max-height: calc(100dvh - 240px); /* deja sitio al header/calendario */
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* cada card engancha */
+.gpMatchSnapCard {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* opcional: scrollbar invisible */
+.gpMatchesSnapList::-webkit-scrollbar { width: 0; height: 0; }
+.gpMatchesSnapList { scrollbar-width: none; }
+/* deja un margen para que el snap no corte la card con el header */
+.gpMatchesSnapList {
+  scroll-padding-top: 10px;
+}
+/* Forzar calendario en inputs de fecha */
+input[type="date"].gpInput {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+  min-height: 44px;
+}
+
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  display: block;
+}
+/* Icono calendario visible y negro */
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 2V5M14 2V5M3 8H17M4 4H16C16.5523 4 17 4.44772 17 5V17C17 17.5523 16.5523 18 16 18H4C3.44772 18 3 17.5523 3 17V5C3 4.44772 3.44772 4 4 4Z' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 20px 20px;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 20px;
+  height: 20px;
+}
+
+/* Para modo oscuro (fondo negro), usar icono blanco */
+@media (prefers-color-scheme: dark) {
+  input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M6 2V5M14 2V5M3 8H17M4 4H16C16.5523 4 17 4.44772 17 5V17C17 17.5523 16.5523 18 16 18H4C3.44772 18 3 17.5523 3 17V5C3 4.44772 3.44772 4 4 4Z' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+/* Icono calendario negro y visible */
+input[type="date"].gpInput::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(1) brightness(0);
+  opacity: 1;
+  width: 24px;
+  height: 24px;
+}
+/* =========================
+   GORILA MAPA — MOCKUP EXACT STYLE
+   (añadir al FINAL del index.css)
+   ========================= */
+
+/* Contenedor principal del mapa */
+.gpMapPage .gpMapMapWrap {
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.10);
+  margin-top: 12px;
+}
+
+/* Barra de 3 botones (Ver Lista | Cerca de mí | Favoritos) */
+.gpMapBtnBar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.gpMapBtnBar .btn {
+  border-radius: 14px;
+  padding: 14px 12px;
+  font-weight: 950;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.gpMapBtnBar .btn.isActive {
+  background: #1a3d14 !important; /* verde oscuro mockup */
+  color: #fff !important;
+  border-color: rgba(0,0,0,0.10);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+/* Modal lista de clubs */
+.gpModalOverlay {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(8px);
+}
+
+.gpModalCard {
+  background: rgba(240,240,240,0.98) !important; /* fondo claro */
+  color: #111 !important;
+}
+
+/* Cards de clubs (layout horizontal) */
+.gpClubCard {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #1a3d14; /* verde oscuro mockup */
+  border: 1px solid rgba(0,0,0,0.08);
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Foto del club (cuadrada, izquierda) */
+.gpClubLogo {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.15);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.20);
+}
+
+.gpClubLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gpClubLogoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 52px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.30);
+}
+
+/* Info del club (nombre + distancia) */
+.gpClubInfo {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gpClubName {
+  font-size: 20px;
+  font-weight: 950;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+}
+
+.gpClubMeta {
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 800;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* Estrella favorito (arriba derecha del nombre) */
+.gpBananaBtn {
+  grid-column: 3;
+  grid-row: 1;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  align-self: start;
+  justify-self: end;
+}
+
+.gpBananaBtn:hover {
+  transform: scale(1.15);
+}
+
+.gpBananaBtn.isActive {
+  /* Estrella amarilla cuando es favorito */
+}
+
+/* Acciones del club (PARTIDOS | CREAR | VER) */
+.gpClubActions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: flex-end;
+}
+
+.gpClubActions .btn {
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-weight: 950;
+  font-size: 13px;
+  background: #2e7d32; /* verde más oscuro */
+  color: #fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  min-width: 90px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.gpClubActions .btn:hover {
+  background: #388e3c;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.20);
+}
+
+/* Móvil: ajustar layout */
+@media (max-width: 640px) {
+  .gpMapBtnBar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .gpClubCard {
+    grid-template-columns: 130px 1fr;
+    gap: 12px;
+  }
+  
+  .gpClubLogo {
+    width: 130px;
+    height: 130px;
+  }
+
+  .gpBananaBtn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    font-size: 26px;
+    background: rgba(255,255,255,0.90);
+    border-radius: 999px;
+  }
+
+  .gpClubInfo {
+    grid-column: 2;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gpClubActions {
+    grid-column: 1 / 3;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .gpClubActions .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gpClubCard {
+    grid-template-columns: 1fr;
+  }
+
+  .gpClubLogo {
+    grid-row: 1;
+    width: 100%;
+    height: 180px;
+  }
+
+  .gpClubInfo {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .gpBananaBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  .gpClubActions {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+/* =========================
+   MAPA MOCKUP EXACTO
+   ========================= */
+
+/* Mapa */
+.gpMapMapWrap {
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* Botones debajo del mapa */
+.gpMapBtnBar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.gpMapBtnBar .btn {
+  border-radius: 14px;
+  padding: 14px 12px;
+  font-weight: 950;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.gpMapBtnBar .btn.isActive {
+  background: #1a3d14;
+  color: #fff;
+  border-color: rgba(0,0,0,0.10);
+}
+
+/* Modal lista */
+.gpModalCard {
+  background: rgba(240,240,240,0.98);
+  color: #111;
+}
+
+/* Cards de clubs */
+.gpClubCard {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #1a3d14;
+  position: relative;
+}
+
+.gpClubLogo {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.15);
+}
+
+.gpClubLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gpClubLogoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 52px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.30);
+}
+
+.gpClubInfo {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.gpClubName {
+  font-size: 20px;
+  font-weight: 950;
+  color: #fff;
+  margin: 0;
+}
+
+.gpClubMeta {
+  font-size: 14px;
+  color: rgba(255,255,255,0.75);
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.gpBananaBtn {
+  grid-column: 3;
+  grid-row: 1;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+}
+
+.gpClubActions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.gpClubActions .btn {
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-weight: 950;
+  font-size: 13px;
+  background: #2e7d32;
+  color: #fff;
+  min-width: 90px;
+}
+
+@media (max-width: 640px) {
+  .gpMapBtnBar {
+    grid-template-columns: 1fr;
+  }
+  
+  .gpClubCard {
+    grid-template-columns: 130px 1fr;
+  }
+  
+  .gpClubLogo {
+    width: 130px;
+    height: 130px;
+  }
+}
+/* =========================
+   MAPA MOCKUP - ESTILOS FINALES
+   PEGAR AL FINAL del index.css
+   ========================= */
+
+/* Contenedor del mapa más limpio */
+.gpMapPage .gpMapMapWrap {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* Asegurar que los botones overlay se vean bien */
+.gpMapPage [style*="position: absolute"][style*="bottom: 12px"] {
+  z-index: 1000 !important;
+}
+
+/* Botones overlay más pro */
+.gpMapPage [style*="position: absolute"] button {
+  backdrop-filter: blur(10px);
+  font-weight: 950 !important;
+  letter-spacing: -0.2px;
+  transition: all 0.2s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.gpMapPage [style*="position: absolute"] button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+}
+
+/* Cards de clubs - estilo mockup exacto */
+.gpMapPage .gpClubCardWrapper {
+  background: #1a3d14 !important;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  position: relative;
+}
+
+/* Foto del club más prominente */
+.gpMapPage .gpClubCardWrapper > div:first-child {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.20) !important;
+}
+
+/* Nombre del club más limpio */
+.gpMapPage .gpClubCardWrapper h3 {
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  font-weight: 950 !important;
+  letter-spacing: -0.3px;
+}
+
+/* Distancia más visible */
+.gpMapPage .gpClubCardWrapper [style*="rgba(255,255,255,0.75)"] {
+  color: rgba(255,255,255,0.85) !important;
+  font-weight: 900 !important;
+}
+
+/* Estrella favorito más grande y dorada */
+.gpMapPage .gpClubCardWrapper button[style*="fontSize: 32px"] {
+  font-size: 36px !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  transition: transform 0.2s ease;
+}
+
+.gpMapPage .gpClubCardWrapper button[style*="fontSize: 32px"]:hover {
+  transform: scale(1.2) !important;
+}
+
+/* Botones de acción más verdes y pro */
+.gpMapPage .gpClubCardWrapper button[style*="#2e7d32"] {
+  background: #2e7d32 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.2px;
+  box-shadow: 0 4px 12px rgba(46,125,50,0.25) !important;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 12px !important;
+}
+
+.gpMapPage .gpClubCardWrapper button[style*="#2e7d32"]:hover {
+  background: #388e3c !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46,125,50,0.35) !important;
+}
+
+/* Móvil: ajustes responsive */
+@media (max-width: 640px) {
+  .gpMapPage .gpClubCardWrapper {
+    grid-template-columns: 130px 1fr !important;
+  }
+  
+  .gpMapPage .gpClubCardWrapper > div:first-child {
+    width: 130px !important;
+    height: 130px !important;
+  }
+
+  .gpMapPage .gpClubCardWrapper button[style*="fontSize: 32px"] {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 999px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    font-size: 28px !important;
+  }
+
+  .gpMapPage .gpClubCardWrapper > div:last-child {
+    grid-column: 1 / 3 !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .gpMapPage .gpClubCardWrapper button[style*="#2e7d32"] {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Input de búsqueda más bonito */
+.gpMapPage input[placeholder*="Buscar"] {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  transition: all 0.2s ease;
+}
+
+.gpMapPage input[placeholder*="Buscar"]:focus {
+  outline: 2px solid rgba(116,184,0,0.3);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
+}
+
+/* Contenedor general con max-width para mejor look en desktop */
+.gpMapPage .container[style*="maxWidth: 800"] {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* Espaciado entre cards más equilibrado */
+.gpMapPage > div > div > div[style*="marginTop: 14"][style*="display: grid"] {
+  gap: 16px !important;
+  margin-top: 18px !important;
+}
+
+/* Loading y empty states más bonitos */
+.gpMapPage [style*="opacity: 0.75"] {
+  color: rgba(255,255,255,0.75) !important;
+  font-weight: 800;
+  text-align: center;
+  padding: 20px !important;
+}
+/* =========================
+   MAPA MOCKUP EXACTO V2
+   ========================= */
+
+   .gpMapPage {
+    background: #000;
+    color: #fff;
+  }
+  
+  .gpMapPage .pageWrap {
+    padding: 0;
+  }
+  
+  .gpMapContainer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 12px 14px;
+  }
+  
+  /* BARRA DE BÚSQUEDA */
+  .gpSearchBar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  
+  .gpSearchInput {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: #fff;
+    font-size: 16px;
+    color: #111;
+  }
+  
+  .gpSearchInput::placeholder {
+    color: rgba(0,0,0,0.5);
+  }
+  
+  .gpTwitterBtn {
+    width: 50px;
+    height: 50px;
+    border-radius: 999px;
+    border: none;
+    background: #1DA1F2;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  
+  /* MAPA */
+  .gpMapWrapper {
+    position: relative;
+    height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  
+  /* BOTÓN UBICACIÓN (DERECHA) */
+  .gpMapLocBtn {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    font-size: 24px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+  }
+  
+  .gpMapLocBtn:hover {
+    transform: scale(1.05);
+  }
+  
+  .gpMapLocBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* BOTONES RADIO (ABAJO DEL MAPA) */
+  .gpMapRadioBtns {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 4px;  /* 👈 MÁS PEGADO AL BORDE */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    z-index: 1000;
+  }
+  
+  .gpMapRadioBtns button {
+    padding: 9px 10px;  /* 👈 UN POCO MÁS BAJO */
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: rgba(255,255,255,0.95);
+    color: #111;
+    font-weight: 900;
+    font-size: 12px;  /* 👈 UN POCO MÁS PEQUEÑO */
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+  
+  .gpMapRadioBtns button:hover {
+    background: rgba(255,255,255,1);
+    transform: translateY(-1px);
+  }
+  
+  .gpMapRadioBtns button.active {
+    background: #1a3d14;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.20);
+    border-color: rgba(0,0,0,0.20);
+  }
+  
+  /* LISTA DE CLUBS */
+  .gpClubList {
+    display: grid;
+    gap: 14px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 14px 4px 4px 4px;
+    margin-top: 14px;
+    border-top: 2px solid rgba(255,255,255,0.08);
+  }
+  
+  .gpClubList::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .gpClubList::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 999px;
+  }
+  
+  .gpClubCard {
+    display: grid;
+    grid-template-columns: 160px 1fr auto;
+    grid-template-rows: auto 1fr;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 18px;
+    background: #1a3d14;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    position: relative;
+  }
+  
+  .gpClubPhoto {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    width: 160px;
+    height: 160px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+  }
+  
+  .gpClubPhoto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .gpClubPhotoPlaceholder {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,0.08);
+    font-size: 52px;
+    font-weight: 950;
+    color: rgba(255,255,255,0.30);
+  }
+  
+  .gpClubInfo {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+  
+  .gpClubInfo h3 {
+    font-size: 20px;
+    font-weight: 950;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  
+  .gpClubMeta {
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 900;
+    margin-top: 6px;
+  }
+  
+  .gpClubFavBtn {
+    grid-column: 3;
+    grid-row: 1;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    font-size: 32px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+  
+  .gpClubFavBtn:hover {
+    transform: scale(1.2);
+  }
+  
+  .gpClubActions {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: end;
+  }
+  
+  .gpClubActions button {
+    padding: 11px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.10);
+    background: #2e7d32;
+    color: #fff;
+    font-weight: 950;
+    font-size: 12px;
+    cursor: pointer;
+    min-width: 85px;
+    text-transform: uppercase;
+    letter-spacing: -0.2px;
+    box-shadow: 0 4px 12px rgba(46,125,50,0.25);
+    transition: all 0.2s ease;
+  }
+  
+  .gpClubActions button:hover {
+    background: #388e3c;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(46,125,50,0.35);
+  }
+  
+  .gpLoading,
+  .gpEmpty {
+    padding: 40px 20px;
+    text-align: center;
+    color: rgba(255,255,255,0.75);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  
+  /* MÓVIL */
+  @media (max-width: 640px) {
+    .gpMapRadioBtns {
+      bottom: 2px;  /* 👈 SÚPER PEGADO EN MÓVIL */
+      gap: 6px;
+      left: 8px;
+      right: 8px;
+    }
+  
+    .gpMapRadioBtns button {
+      font-size: 11px;
+      padding: 8px 8px;
+    }
+  
+    .gpClubCard {
+      grid-template-columns: 130px 1fr;
+    }
+    
+    .gpClubPhoto {
+      width: 130px;
+      height: 130px;
+    }
+  
+    .gpClubFavBtn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 999px;
+      width: 40px;
+      height: 40px;
+      font-size: 28px;
+    }
+  
+    .gpClubActions {
+      grid-column: 1 / 3;
+      justify-content: flex-start;
+      gap: 8px;
+    }
+  
+    .gpClubActions button {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      font-size: 11px;
+    }
+  }
+  /* =========================
+   MAPA MOCKUP V3 - FIXES
+   ========================= */
+
+.gpMapPage {
+  background: #000;
+  color: #fff;
+}
+
+.gpMapPage .pageWrap {
+  padding: 0;
+  padding-top: 68px; /* 👈 ESPACIO PARA EL NAVBAR */
+}
+
+.gpMapContainer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px 14px;
+}
+
+/* BARRA DE BÚSQUEDA */
+.gpSearchBar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 100;
+}
+
+.gpSearchInput {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  font-size: 16px;
+  color: #111;
+}
+
+.gpSearchInput::placeholder {
+  color: rgba(0,0,0,0.5);
+}
+
+/* SUGERENCIAS */
+.gpSuggest {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: rgba(16,18,22,0.98);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+}
+
+.gpSuggestItem {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s ease;
+}
+
+.gpSuggestItem:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.gpSuggestItem:last-child {
+  border-bottom: none;
+}
+
+.gpTwitterBtn {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  border: none;
+  background: #1DA1F2;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* MAPA */
+.gpMapWrapper {
+  position: relative;
+  height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* BOTÓN UBICACIÓN */
+.gpMapLocBtn {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  font-size: 24px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+
+.gpMapLocBtn:hover {
+  transform: scale(1.05);
+}
+
+.gpMapLocBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* BOTONES RADIO */
+.gpMapRadioBtns {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  z-index: 1000;
+}
+
+.gpMapRadioBtns button {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.95);
+  color: #111;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.gpMapRadioBtns button:hover {
+  background: rgba(255,255,255,1);
+  transform: translateY(-1px);
+}
+
+.gpMapRadioBtns button.active {
+  background: #1a3d14;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.20);
+  border-color: rgba(0,0,0,0.20);
+}
+
+/* LISTA DE CLUBS */
+.gpClubList {
+  display: grid;
+  gap: 14px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 14px 4px 4px 4px;
+  margin-top: 14px;
+  border-top: 2px solid rgba(255,255,255,0.08);
+}
+
+.gpClubList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gpClubList::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 999px;
+}
+
+.gpClubCard {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #1a3d14;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  position: relative;
+}
+
+.gpClubPhoto {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 160px;
+  height: 160px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+}
+
+.gpClubPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gpClubPhotoPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  font-size: 52px;
+  font-weight: 950;
+  color: rgba(255,255,255,0.30);
+}
+
+.gpClubInfo {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.gpClubInfo h3 {
+  font-size: 20px;
+  font-weight: 950;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.gpClubMeta {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 900;
+  margin-top: 6px;
+}
+
+.gpClubFavBtn {
+  grid-column: 3;
+  grid-row: 1;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-size: 32px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.gpClubFavBtn:hover {
+  transform: scale(1.2);
+}
+
+.gpClubActions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: end;
+}
+
+.gpClubActions button {
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #2e7d32;
+  color: #fff;
+  font-weight: 950;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 85px;
+  text-transform: uppercase;
+  letter-spacing: -0.2px;
+  box-shadow: 0 4px 12px rgba(46,125,50,0.25);
+  transition: all 0.2s ease;
+}
+
+.gpClubActions button:hover {
+  background: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46,125,50,0.35);
+}
+
+.gpLoading,
+.gpEmpty {
+  padding: 40px 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.75);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* ===== MAPA: fix SOLO MÓVIL para bajar el buscador bajo el navbar ===== */
+@media (max-width: 670px){
+  .gpMapPage .pageWrap{
+    padding-top: calc(56px + 12px + env(safe-area-inset-top)) !important;
+  }
+
+
+  .gpMapRadioBtns button {
+    font-size: 11px;
+    padding: 9px 8px;
+  }
+
+  .gpClubCard {
+    grid-template-columns: 130px 1fr;
+  }
+  
+  .gpClubPhoto {
+    width: 130px;
+    height: 130px;
+  }
+
+  .gpClubFavBtn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 999px;
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+  }
+
+  .gpClubActions {
+    grid-column: 1 / 3;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .gpClubActions button {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+}
+/* FORZAR MAPA CLARO */
+.leaflet-container,
+.leaflet-tile-pane,
+.leaflet-tile {
+  filter: none !important;
+  background: #fff !important;
+}
+
+.leaflet-tile-container img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+/* Animación estrella favorito */
+@keyframes gpPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* Hover en iconos del mapa */
+.leaflet-marker-icon {
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.leaflet-marker-icon:hover {
+  transform: translateY(-4px) scale(1.08);
+  filter: drop-shadow(0 12px 28px rgba(0,0,0,0.5));
+}
+
+.gpSearchInput {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0.2);
+  background: rgba(155, 239, 0, 0.95) !important;
+  font-size: 16px;
+  color: #111 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  transition: all 0.2s ease;
+}
+
+.gpSearchInput::placeholder {
+  color: rgba(0,0,0,0.6) !important;
+  font-weight: 900;
+}
+
+.gpSearchInput:focus {
+  outline: none;
+  border-color: rgba(0,0,0,0.4);
+  box-shadow: 0 6px 20px rgba(155, 239, 0, 0.4);
+  transform: translateY(-1px);
+}
+/* Barra búsqueda verde FORZADO */
+.gpSearchBar input,
+input.gpSearchInput,
+.gpMapPage input[type="text"] {
+  background: #9BEF00 !important;
+  color: #111 !important;
+  font-weight: 900 !important;
+  border: 2px solid rgba(0,0,0,0.25) !important;
+}
+
+.gpSearchBar input::placeholder,
+input.gpSearchInput::placeholder,
+.gpMapPage input[type="text"]::placeholder {
+  color: rgba(0,0,0,0.6) !important;
+  font-weight: 900 !important;
+}
+/* Barra búsqueda verde gorila */
+.gpMapPage input[type="text"]::placeholder {
+  color: rgba(255,255,255,0.85) !important;
+  font-weight: 900 !important;
+}
+/* Fix zoom en móvil */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Fix contenedores demasiado anchos */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+/* Fix páginas de la tienda en móvil */
+@media (max-width: 768px) {
+  .gpSellerPage .container,
+  .pageWrap .container {
+    padding: 0 12px;
+  }
+
+  /* Grid de 2 columnas → 1 columna en móvil */
+  [style*="gridTemplateColumns: '1fr 1fr'"],
+  [style*="gridTemplateColumns: '250px 1fr'"],
+  [style*="gridTemplateColumns: '1fr 380px'"],
+  [style*="gridTemplateColumns: '1fr 420px'"],
+  [style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* Tienda responsive */
+@media (max-width: 900px) {
+  /* Catálogo: sidebar + productos */
+  .gpStoreSidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Checkout: formulario + resumen */
+  .gpCheckoutGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Carrito: producto + precio */
+  .gpCartGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Panel vendedor: sidebar + contenido */
+  .gpSellerGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar vendedor oculto en móvil */
+  .gpSellerSidebar {
+    display: none;
+  }
+}
+/* Botón flotante carrito */
+.cartFloatingBtn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: #74B800;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.cartFloatingBtn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+
+.cartFloatingBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+  display: grid;
+  place-items: center;
+  border: 2px solid #000;
+}
+.cartFloatingBtn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: #74B800;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  cursor: pointer;
+  z-index: 9999;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #fff;
+}
+
+.cartFloatingBtn:hover {
+  transform: scale(1.08) translateY(-2px);
+}
+
+.cartFloatingBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+  display: grid;
+  place-items: center;
+  border: 2px solid #000;
+}

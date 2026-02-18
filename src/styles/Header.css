@@ -1,0 +1,330 @@
+/* Header.css - Navegación profesional mobile-first */
+
+.siteHeader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+  }
+  
+  .headerInner {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  
+  .headerLogo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  
+  .headerLogoImg {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+  
+  .headerLogoText {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  
+  .headerLogoText span {
+    color: #74B800;
+  }
+  
+  /* Menú hamburguesa */
+  .menuToggle {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .menuToggle:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #74B800;
+  }
+  
+  .menuToggle span {
+    width: 20px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+  
+  .menuToggle.isOpen span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  
+  .menuToggle.isOpen span:nth-child(2) {
+    opacity: 0;
+  }
+  
+  .menuToggle.isOpen span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+  
+  /* Nav desktop (oculto en móvil) */
+  .headerNav {
+    display: none;
+    gap: 8px;
+  }
+  
+  /* Menú móvil (drawer lateral) */
+  .mobileMenu {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: rgba(0, 0, 0, 0.98);
+    backdrop-filter: blur(30px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 999;
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+  
+  .mobileMenu.isOpen {
+    transform: translateX(0);
+  }
+  
+  .mobileMenuOverlay {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 998;
+  }
+  
+  .mobileMenuOverlay.isOpen {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .mobileMenuList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobileMenuItem {
+    margin: 0;
+  }
+  
+  .mobileMenuLink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+  
+  .mobileMenuLink:hover,
+  .mobileMenuLink.isActive {
+    background: rgba(116, 184, 0, 0.1);
+    color: #74B800;
+    border-left-color: #74B800;
+  }
+  
+  .mobileMenuIcon {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+  }
+  
+  .mobileMenuDivider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 12px 20px;
+  }
+  
+  .mobileMenuFooter {
+    padding: 20px;
+    margin-top: 20px;
+  }
+  
+  .mobileMenuUser {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .mobileMenuAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: rgba(116, 184, 0, 0.2);
+  }
+  
+  .mobileMenuUserInfo {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .mobileMenuUserName {
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .mobileMenuUserEmail {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .headerButton {
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  
+  .headerButton:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #74B800;
+  }
+  
+  .headerButton.primary {
+    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    border-color: transparent;
+    color: #000;
+  }
+  
+  .headerButton.primary:hover {
+    box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  /* Espaciado para contenido */
+  .pageWithHeader {
+    padding-top: 64px;
+  }
+  
+  /* Desktop */
+  @media (min-width: 768px) {
+    .siteHeader {
+      height: 72px;
+      padding: 0 24px;
+    }
+  
+    .menuToggle {
+      display: none;
+    }
+  
+    .headerNav {
+      display: flex;
+      flex: 1;
+      justify-content: center;
+    }
+  
+    .headerNavLink {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+  
+    .headerNavLink:hover,
+    .headerNavLink.isActive {
+      background: rgba(255, 255, 255, 0.08);
+      color: #74B800;
+    }
+  
+    .mobileMenu,
+    .mobileMenuOverlay {
+      display: none;
+    }
+  
+    .pageWithHeader {
+      padding-top: 72px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .siteHeader {
+      padding: 0 32px;
+    }
+  
+    .headerNavLink {
+      padding: 12px 20px;
+      font-size: 15px;
+    }
+  }
