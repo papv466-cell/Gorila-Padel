@@ -309,17 +309,6 @@ export async function notifyMatchRequest({ matchId, matchName, requesterId, requ
   });
 }
 
-// Partido - Solicitud aceptada
-export async function notifyMatchApproved({ matchId, matchName, creatorName, userId }) {
-  return createNotification({
-    userId,
-    type: NOTIFICATION_TYPES.MATCH_APPROVED,
-    title: "¡Solicitud aceptada!",
-    body: `${creatorName} te aceptó en el partido`,
-    data: { matchId },
-  });
-}
-
 // Partido - Solicitud rechazada
 export async function notifyMatchRejected({ matchId, matchName, creatorName, userId }) {
   return createNotification({
