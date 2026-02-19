@@ -169,13 +169,13 @@ export default function InclusiveMatchesPage() {
   }
 
   return (
-    <div className="gpPage">
-      <div className="gpWrap">
+    <div className="page pageWithHeader gpMatchesPage">
+      <div className="pageWrap">
         <div className="container">
-          {/* HEADER (2x2): titulo | Ir a Partidos  /  texto | Crear */}
+          {/* HEADER */}
           <div className="pageHeader gpIncHeader">
             <div className="gpIncGrid">
-              <h1 className="pageTitle gpIncTitle">Partidos inclusivos</h1>
+              <h1 className="pageTitle">Partidos inclusivos</h1>
 
               <button className="btn ghost gpIncBtnRight" type="button" onClick={() => navigate("/partidos")}>
                 Ir a Partidos
@@ -186,7 +186,7 @@ export default function InclusiveMatchesPage() {
               </div>
 
               <button className="btn gpIncBtnCreate" type="button" onClick={() => setOpenCreate(true)}>
-                + Crear partido
+                Crear partidos
               </button>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default function InclusiveMatchesPage() {
           {err ? <div className="authError" style={{ marginTop: 12 }}>{err}</div> : null}
 
           {/* LISTA */}
-          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+          <ul className="gpMatchesGrid" style={{ marginTop: 12 }}>
             {loading ? (
               <div style={{ opacity: 0.7 }}>Cargando…</div>
             ) : filtered.length === 0 ? (
@@ -252,44 +252,94 @@ export default function InclusiveMatchesPage() {
             ) : (
               filtered.map((m) => {
                 const needs = (m.needs || []).map(String);
+                
                 return (
-                  <div key={m.id} className="card gpIncMatchCard">
-                    <div className="gpIncMatchTop">
-                      <div style={{ minWidth: 0 }}>
-                        <div className="gpIncMatchTitle">
-                          {m.club_name || "Club sin nombre"}
-                          {m.city ? <span className="gpIncMatchCity"> · {m.city}</span> : null}
+                  <li key={m.id} className="gpMatchCard">
+                    {/* HEADER */}
+                    <div className="gpMatchHeader">
+                      <div className="gpClubName">{m.club_name || "Club sin nombre"}</div>
+                      <div className="gpClubMeta">
+                        <span>📍 {m.city || "Ciudad"}</span>
+                      </div>
+                    </div>
+              
+                    {/* ROSTER CON VS */}
+                    <div className="gpMatchRoster">
+                      {/* EQUIPO IZQUIERDO */}
+                      <div className="gpTeamSide left">
+                        {needs.slice(0, 2).map((k, idx) => {
+                          const n = NEEDS.find((x) => x.key === k);
+                          return (
+                            <div key={idx} className="gpPlayerAvatar">
+                              {n?.img ? (
+                                <img src={n.img} alt={n.label} />
+                              ) : (
+                                <span style={{ fontSize: '48px' }}>♿</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {needs.length < 2 && (
+                          <div className="gpPlayerAvatar">
+                            <span style={{ fontSize: '48px' }}>🦍</span>
+                          </div>
+                        )}
+                      </div>
+              
+                      {/* VS ICON */}
+                      <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
+              
+                      {/* EQUIPO DERECHO */}
+                      <div className="gpTeamSide right">
+                        {needs.slice(2, 4).map((k, idx) => {
+                          const n = NEEDS.find((x) => x.key === k);
+                          return (
+                            <div key={idx} className="gpPlayerAvatar">
+                              {n?.img ? (
+                                <img src={n.img} alt={n.label} />
+                              ) : (
+                                <span style={{ fontSize: '48px' }}>♿</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {needs.length < 4 && (
+                          <div className="gpPlayerAvatar">
+                            <span style={{ fontSize: '48px' }}>🦍</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+              
+                    {/* BADGES */}
+                    <div className="gpBadges">
+                      <div className={`gpBadge ${m.mix_allowed ? "verified" : ""}`}>
+                        {m.mix_allowed ? "✅ Mixto permitido" : "Solo perfiles similares"}
+                      </div>
+                    </div>
+              
+                    {/* INFO CHIPS */}
+                    <div className="gpMatchInfo">
+                      <div className="gpInfoChip">🗓️ {fmtDate(m.start_at)}</div>
+                      <div className="gpInfoChip">⏱️ {m.duration_min} min</div>
+                      <div className="gpInfoChip">🎚️ {m.level}</div>
+                    </div>
+              
+                    {m.notes && (
+                      <>
+                        <div className="gpDivider" />
+                        <div className="gpMatchInfo">
+                          <div className="gpInfoChip" style={{ width: '100%' }}>
+                            📝 {m.notes}
+                          </div>
                         </div>
-                        <div className="meta">{fmtDate(m.start_at)} · {m.duration_min} min · Nivel {m.level}</div>
-                      </div>
-
-                      <div className={`gpBadge ${m.mix_allowed ? "ok" : "warn"}`}>
-                        {m.mix_allowed ? "Mixto permitido" : "Solo perfiles similares"}
-                      </div>
-                    </div>
-
-                    <div className="gpIncNeedRow">
-                      {needs.map((k) => {
-                        const n = NEEDS.find((x) => x.key === k);
-                        return (
-                          <span key={k} className="gpIncNeedPill">
-                            {n?.img ? <img src={n.img} alt={n.label} /> : null}
-                            <span>{n?.label || k}</span>
-                          </span>
-                        );
-                      })}
-                    </div>
-
-                    {m.notes ? (
-                      <div className="gpIncNotes">
-                        <strong>Notas:</strong> {m.notes}
-                      </div>
-                    ) : null}
-                  </div>
+                      </>
+                    )}
+                  </li>
                 );
               })
             )}
-          </div>
+          </ul>
         </div>
       </div>
 
@@ -351,7 +401,7 @@ export default function InclusiveMatchesPage() {
                 </button>
 
                 <span style={{ opacity: 0.75, fontSize: 13 }}>
-                  “Mixto” permite: silla de ruedas + mixtos, ciego + vidente, etc.
+                  "Mixto" permite: silla de ruedas + mixtos, ciego + vidente, etc.
                 </span>
               </div>
 
@@ -359,6 +409,9 @@ export default function InclusiveMatchesPage() {
               <textarea className="gpTextarea" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ej: ambiente tranquilo, ayudamos con guía, etc." />
 
               <div className="gpActions">
+                <button className="btn" type="button" onClick={onCreate} disabled={creating}>
+                  {creating ? "Creando..." : "Crear partido"}
+                </button>
 
                 <button className="btn ghost" type="button" onClick={() => setOpenCreate(false)}>
                   Cancelar

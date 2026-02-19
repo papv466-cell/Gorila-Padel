@@ -4,9 +4,11 @@ import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "../../services/supabaseClient";
 import { useCart } from "../../contexts/CartContext";
 import "../../styles/Header.css";
+import NotificationBell from "../NotificationBell";
 
 export default function Navbar({ showBack = false, onBack }) {
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { totalItems } = useCart();
@@ -23,6 +25,20 @@ export default function Navbar({ showBack = false, onBack }) {
     ],
     []
   );
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data?.session ?? null);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s ?? null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -81,6 +97,8 @@ export default function Navbar({ showBack = false, onBack }) {
 
           {/* Acciones */}
           <div className="headerActions">
+            {/* Campana de notificaciones */}
+            {session && <NotificationBell />}
 
             {/* 🛒 ICONO CARRITO */}
             <Link

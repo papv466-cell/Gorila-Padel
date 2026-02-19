@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toggleReaction, getPostReactions, getUserReaction, getComments, createComment } from '../services/gorilandia';
 import './GorilandiaPost.css';
+import { useNavigate } from 'react-router-dom';
 
 export default function GorilandiaPost({ post, onReload }) {
   const [reactions, setReactions] = useState({ gorila: 0, fuego: 0, fuerza: 0, risa: 0 });
@@ -9,6 +10,7 @@ export default function GorilandiaPost({ post, onReload }) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const navigate = useNavigate();
 
   const userName = post.user?.full_name || post.user?.email?.split('@')[0] || 'Usuario';
   const mediaUrls = post.media_url || [];
@@ -81,7 +83,13 @@ export default function GorilandiaPost({ post, onReload }) {
         <div className="post-user">
           <div className="user-avatar">{userName[0].toUpperCase()}</div>
           <div className="user-info">
-            <span className="user-name">{userName}</span>
+            <span 
+              className="user-name" 
+              onClick={() => navigate(`/usuario/${post.user_id}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              {userName}
+            </span>
             <span className="post-time">{new Date(post.created_at).toLocaleDateString('es-ES')}</span>
           </div>
         </div>

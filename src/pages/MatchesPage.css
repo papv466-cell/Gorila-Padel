@@ -123,31 +123,6 @@
   }
 }
 
-/* ==================== NOMBRES EQUIPOS ==================== */
-.gpTeamName {
-  position: absolute;
-  bottom: 20px;
-  font-size: 20px;
-  font-weight: 950;
-  color: #ffffff !important;
-  text-shadow: 0 4px 15px rgba(0,0,0,1);
-  background: rgba(0,0,0,0.85);
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: 2px solid rgba(116,184,0,0.3);
-  display: flex;
-  gap: 10px;
-  z-index: 10;
-}
-
-.gpTeamSide.left .gpTeamName {
-  left: 20px;
-}
-
-.gpTeamSide.right .gpTeamName {
-  right: 20px;
-}
-
 /* ==================== BADGES - FONDO NEGRO ==================== */
 .gpBadges {
   padding: 14px 16px;
@@ -275,14 +250,50 @@
 }
 
 /* ==================== MOBILE ==================== */
+/* ==================== RESPONSIVE MOBILE ==================== */
 @media (max-width: 768px) {
   .gpMatchRoster {
     grid-template-columns: 1fr;
-    min-height: 500px;
+    grid-template-rows: auto auto auto;
+    min-height: 400px;
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .gpVsIcon {
+    width: 100px;
+    height: 100px;
+    margin: 16px auto;
+    order: 2;
+    display: block;
+  }
+
+  .gpTeamSide {
+    justify-content: center !important;
+    order: 1;
+  }
+
+  .gpTeamSide.right {
+    order: 3;
   }
 
   .gpPlayerAvatar {
-    margin: 0 50px;
+    width: 120px;
+    min-height: 200px;
+    margin: 0 4px;
+  }
+
+  .gpTeamName {
+    position: static;
+    margin-top: 8px;
+    font-size: 16px;
+  }
+
+  .gpTeamSide.left .gpTeamName,
+  .gpTeamSide.right .gpTeamName {
+    left: auto;
+    right: auto;
+    transform: none;
   }
 }
 /* FORZAR ACTUALIZACIÓN */

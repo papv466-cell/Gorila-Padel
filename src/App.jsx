@@ -26,6 +26,7 @@ import CartPage from './pages/CartPage';
 import CartFloatingButton from './components/UI/CartFloatingButton';
 import SellerOrders from './pages/SellerOrders';
 import SellerSettings from './pages/SellerSettings';
+import PublicProfilePage from './pages/PublicProfilePage';
 
 import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
@@ -187,6 +188,7 @@ export default function App() {
           <Route path="/vendedor/perfil" element={<SellerSettings />} />
           {/* GORILANDIA */}
           <Route path="/gorilandia" element={<GorilandiaPage />} />
+         
 
           {/* AUTH */}
           <Route path="/auth/confirm" element={<AuthConfirmPage />} />
@@ -215,6 +217,7 @@ export default function App() {
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
         </Routes>
       </main>
 

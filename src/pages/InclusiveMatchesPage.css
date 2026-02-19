@@ -1,230 +1,312 @@
-/* src/pages/InclusiveMatchesPage.css */
-/* LIMPIO - sin duplicados */
+/* ==================== MATCHES PAGE - DISEÑO DEFINITIVO ==================== */
 
-/* --- Base --- */
-.gpIncHeader {
-  padding: 10px 0 8px;
+.gpMatchesPage {
+  background: #0a0a0a;
+  min-height: 100vh;
 }
 
-/* Layout desktop/tablet (se ve bien en ordenador) */
-.gpIncGrid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  grid-template-areas:
-    "title  meta"
-    "create right"
-    "minibar minibar";
-  gap: 10px 12px;
-  align-items: start;
+.gpMatchesPage .pageWrap {
+  background: transparent;
 }
 
-.gpIncTitle {
-  grid-area: title;
-  margin: 0 !important;
+.gpMatchesGrid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ==================== MATCH CARD ==================== */
+.gpMatchCard {
+  background: #0a0a0a;
+  border: 2px solid rgba(116,184,0,0.35);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  list-style: none;
+}
+
+/* ==================== HEADER ==================== */
+.gpMatchHeader {
+  padding: 16px;
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(15px);
+  border-bottom: 2px solid rgba(116,184,0,0.3);
+}
+
+.gpClubName {
+  font-size: 20px;
   font-weight: 950;
-  line-height: 1.05;
-  font-size: clamp(26px, 4vw, 44px);
+  color: #ffffff !important;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,1);
 }
 
-.gpIncMeta {
-  grid-area: meta;
-  margin: 0 !important;
-  opacity: 0.75;
-  line-height: 1.25;
+.gpClubMeta {
   font-size: 13px;
-  max-width: 60ch;
-}
-
-.gpIncBtnCreate { grid-area: create; }
-.gpIncBtnRight  { grid-area: right; justify-self: end; }
-
-.gpIncMiniBar {
-  grid-area: minibar;
-  margin-top: 6px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
-
-.gpIncCount {
-  opacity: 0.85;
-  font-weight: 900;
-  font-size: 13px;
-}
-
-/* Lista */
-.gpIncList {
-  margin-top: 12px;
-  display: grid;
-  gap: 12px;
-}
-
-/* Card */
-.gpIncMatchCard {
-  padding: 14px;
-  border-radius: 18px;
-}
-
-.gpIncMatchTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.gpIncMatchTitle {
-  font-weight: 950;
-  font-size: 16px;
-  line-height: 1.15;
-}
-
-.gpIncMatchSub {
-  margin-top: 6px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  font-size: 13px;
-  opacity: 0.78;
+  color: #ffffff !important;
   font-weight: 800;
 }
 
-.gpIncPill {
-  padding: 8px 10px;
-  border-radius: 999px;
-  font-weight: 950;
-  font-size: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  white-space: nowrap;
+/* ==================== ROSTER ==================== */
+.gpMatchRoster {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  min-height: 380px;
+  background: 
+    linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%),
+    url('/images/padel-court.jpg') center/cover;
+  background-size: cover;
 }
-.gpIncPill.ok { border-color: rgba(116,184,0,0.45); background: rgba(116,184,0,0.18); }
-.gpIncPill.warn { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); }
 
-.gpIncNeedsGrid {
-  margin-top: 12px;
+.gpTeamSide {
+  display: flex;
+  padding: 0;
+}
+
+.gpTeamSide.left {
+  justify-content: flex-start;
+}
+
+.gpTeamSide.right {
+  justify-content: flex-end;
+}
+
+/* ==================== AVATARES ==================== */
+.gpPlayerAvatar {
+  width: 200px;
+  height: 100%;
+  min-height: 380px;
+  background: transparent;
+  overflow: visible;
+  margin: 0 100px;
+}
+
+.gpPlayerAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gpPlayerAvatar:not(:has(img)) {
+  display: grid;
+  place-items: center;
+  font-size: 80px;
+}
+
+.gpPlayerAvatar:not(:has(img))::before {
+  content: '🦍';
+}
+
+/* ==================== VS ==================== */
+.gpVsIcon {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 30px rgba(255,215,0,0.9));
+  animation: vsGlow 2.5s ease-in-out infinite;
+  margin: 0 60px;
+  align-self: center;
+}
+
+@keyframes vsGlow {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.12);
+  }
+}
+
+/* ==================== BADGES - FONDO NEGRO ==================== */
+.gpBadges {
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  background: #1a1a1a !important;
+}
+
+.gpBadge {
+  background: rgba(116,184,0,0.2) !important;
+  border: 2px solid rgba(116,184,0,0.5) !important;
+  padding: 10px 18px !important;
+  border-radius: 999px;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* ==================== INFO - FONDO NEGRO LETRAS BLANCAS ==================== */
+.gpMatchInfo {
+  padding: 14px 16px;
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  background: #1a1a1a !important;
 }
 
-.gpIncNeedTile {
-  width: 96px;
-  padding: 10px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  text-align: center;
+.gpInfoChip {
+  background: rgba(116,184,0,0.2) !important;
+  border: 2px solid rgba(116,184,0,0.5) !important;
+  padding: 10px 16px !important;
+  border-radius: 999px;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+  white-space: nowrap;
 }
 
-.gpIncNeedImg {
-  width: 46px;
-  height: 46px;
+/* ==================== DIVIDER ==================== */
+.gpDivider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(116,184,0,0.5), transparent);
+}
+
+/* ==================== BOTONES ==================== */
+.gpMatchActions {
+  padding: 18px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #1a1a1a !important;
+  border-top: 2px solid rgba(116,184,0,0.3);
+}
+
+.gpActionBtn {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+  color: #ffffff !important;
+  border: 2px solid #74B800;
+  text-shadow: none !important;
+}
+
+.gpActionBtn.primary {
+  flex: 1;
+  min-width: 140px;
+  font-size: 16px;
+}
+
+.gpActionBtn.secondary {
+  background: rgba(116,184,0,0.85);
+}
+
+.gpActionBtn.danger {
+  background: rgba(239,68,68,0.9);
+  border-color: #ef4444;
+}
+
+/* ==================== CALENDARIO ==================== */
+.gpDayPill {
+  min-width: 64px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   border-radius: 14px;
-  object-fit: cover;
+  cursor: pointer;
+}
+
+.gpDayPill:not(.isActive):not(.hasMatches) {
+  background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.12);
 }
 
-.gpIncNeedLabel {
-  font-size: 12px;
+.gpDayPill.hasMatches:not(.isActive) .gpDayNumber {
+  color: #74B800;
   font-weight: 950;
-  line-height: 1.05;
-  opacity: 0.95;
+  animation: pulse 1.8s ease-in-out infinite;
 }
 
-.gpIncNotes {
-  margin-top: 12px;
-  font-size: 13px;
-  opacity: 0.85;
-  line-height: 1.25;
+.gpDayPill.isActive {
+  background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+  border: 3px solid #74B800;
 }
 
-/* ========================================================= */
-/* ====================== MÓVIL FIX ========================= */
-/* ========================================================= */
-@media (max-width: 520px) {
+.gpDayPill.isActive .gpDayLabel,
+.gpDayPill.isActive .gpDayNumber {
+  color: #000;
+}
 
-  /* 1) Quitar aire de arriba SOLO en esta página */
-  .gpPage, .gpWrap, .container {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+.gpDayNumber {
+  font-size: 20px;
+  font-weight: 950;
+  color: #fff;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* ==================== MOBILE ==================== */
+/* ==================== RESPONSIVE MOBILE ==================== */
+@media (max-width: 768px) {
+  .gpMatchRoster {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    min-height: 400px;
+    gap: 12px;
+    padding: 12px 0;
   }
 
-  /* Si el layout global mete padding arriba (pageWithHeader / page / pageWrap) */
-  .pageWithHeader,
-  .page,
-  .pageWrap {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+  .gpVsIcon {
+    width: 100px;
+    height: 100px;
+    margin: 16px auto;
+    order: 2;
+    display: block;
   }
 
-  /* Subimos el header aún más (esto es lo que elimina el hueco visual) */
-  .pageHeader.gpIncHeader {
-    margin-top: -34px !important;
-    padding-top: 0 !important;
-    padding-bottom: 8px !important;
+  .gpTeamSide {
+    justify-content: center !important;
+    order: 1;
   }
 
-  /* 2) Croquis en móvil: 2 columnas */
-  .gpIncGrid {
-    grid-template-columns: 1fr 1fr !important;
-    grid-template-areas:
-      "title  meta"
-      "create right"
-      "create minibar";
-    gap: 8px 10px !important;
+  .gpTeamSide.right {
+    order: 3;
   }
 
-  /* 3) Texto más pequeño */
-  .gpIncTitle {
-    font-size: 22px !important;
-    line-height: 1.02 !important;
+  .gpPlayerAvatar {
+    width: 120px;
+    min-height: 200px;
+    margin: 0 4px;
   }
 
-  .gpIncMeta {
-    font-size: 11px !important;
-    line-height: 1.22 !important;
-    max-width: none !important;
+  .gpTeamName {
+    position: static;
+    margin-top: 8px;
+    font-size: 16px;
   }
 
-  /* 4) Botones centrados (no a la derecha) */
-  .gpIncBtnCreate,
-  .gpIncBtnRight {
-    justify-self: center !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    padding: 10px 12px !important;
-    border-radius: 16px !important;
-    font-size: 14px !important;
+  .gpTeamSide.left .gpTeamName,
+  .gpTeamSide.right .gpTeamName {
+    left: auto;
+    right: auto;
+    transform: none;
   }
+}
+/* FORZAR ACTUALIZACIÓN */
+* {
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* 5) MiniBar apilada en columna derecha */
-  .gpIncMiniBar {
-    display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-    align-items: stretch !important;
-    justify-content: initial !important;
-    margin-top: 0 !important;
-  }
-
-  .gpIncMiniBar .btn {
-    width: 100% !important;
-    border-radius: 16px !important;
-    font-size: 14px !important;
-    padding: 10px 12px !important;
-  }
-
-  .gpIncCount {
-    width: 100% !important;
-    text-align: center !important;
-    font-size: 13px !important;
-    padding: 10px 12px !important;
-    border-radius: 16px !important;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
-  }
+.gpInfoChip,
+.gpBadge,
+.gpClubName,
+.gpClubMeta,
+.gpTeamName,
+.gpActionBtn {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
 }

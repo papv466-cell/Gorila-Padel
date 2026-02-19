@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { notifySocialLike, notifySocialComment } from './notifications';
 
 // ============================================
 // FEED
@@ -90,7 +91,7 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
     .select('id, reaction_type')
     .eq('post_id', postId)
     .eq('user_id', user.id)
-    .eq('reaction_type', reactionType) // ← CAMBIO: Solo buscar ESTA reacción
+    .eq('reaction_type', reactionType)
     .maybeSingle();
 
   console.log('🔎 Reacción existente:', existing);
@@ -112,7 +113,79 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
         user_id: user.id, 
         reaction_type: reactionType 
       });
-    console.log('➕ Reacción creada:', result);
+      console.log('➕ Reacción creada:', result);
+
+      console.log('🔔 [1] EMPEZANDO bloque de notificación');
+      
+      // NOTIFICACIÓN: Enviar al dueño del post
+      try {
+        console.log('🔔 [2] Dentro del TRY');
+        
+        // Obtener el post para saber quién es el dueño
+        const { data: post } = await supabase
+          .from('gorilandia_posts')
+          .select('user_id')
+          .eq('id', postId)
+          .single();
+      
+        console.log('🔔 [3] Post obtenido:', post);
+      
+        // Solo notificar si NO es tu propio post
+        if (post && post.user_id !== user.id) {
+          console.log('🔔 [4] NO es mi propio post, obteniendo perfil...');
+          
+          // Obtener nombre del que dio like
+          const { data: likerProfile } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', user.id)
+            .single();
+      
+          console.log('🔔 [5] Perfil obtenido:', likerProfile);
+          console.log('🔔 [6] Llamando a notifySocialLike...');
+      
+          await notifySocialLike({
+            postId,
+            likerName: likerProfile?.full_name || likerProfile?.email || 'Alguien',
+            userId: post.user_id
+          });
+          
+          console.log('🔔 [7] ✅ Notificación enviada!');
+        } else {
+          console.log('🔔 [4] Es mi propio post, NO notificar');
+        }
+      } catch (notifError) {
+        console.error('🔔 [ERROR] Error sending like notification:', notifError);
+      }
+
+    // NOTIFICACIÓN: Enviar al dueño del post
+    try {
+      // Obtener el post para saber quién es el dueño
+      const { data: post } = await supabase
+        .from('gorilandia_posts')
+        .select('user_id')
+        .eq('id', postId)
+        .single();
+
+      // Solo notificar si NO es tu propio post
+      if (post && post.user_id !== user.id) {
+        // Obtener nombre del que dio like
+        const { data: likerProfile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', user.id)
+          .single();
+
+        await notifySocialLike({
+          postId,
+          likerName: likerProfile?.full_name || likerProfile?.email || 'Alguien',
+          userId: post.user_id
+        });
+      }
+    } catch (notifError) {
+      console.error('Error sending like notification:', notifError);
+    }
+
     return { action: 'added', type: reactionType };
   }
 }
@@ -204,6 +277,36 @@ export async function createComment(postId, text) {
     .single();
 
   if (error) throw error;
+
+  // NOTIFICACIÓN: Enviar al dueño del post
+  try {
+    // Obtener el post para saber quién es el dueño
+    const { data: post } = await supabase
+      .from('gorilandia_posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    // Solo notificar si NO es tu propio post
+    if (post && post.user_id !== user.id) {
+      // Obtener nombre del comentarista
+      const { data: commenterProfile } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', user.id)
+        .single();
+
+      await notifySocialComment({
+        postId,
+        commenterName: commenterProfile?.full_name || commenterProfile?.email || 'Alguien',
+        comment: text.trim(),
+        userId: post.user_id
+      });
+    }
+  } catch (notifError) {
+    console.error('Error sending comment notification:', notifError);
+  }
+
   return data;
 }
 

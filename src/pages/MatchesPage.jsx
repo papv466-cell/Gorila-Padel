@@ -30,6 +30,11 @@ import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 import { scheduleEndWarningsForEvent, unscheduleEventWarnings } from "../services/gorilaSound";
 
+import {
+  notifyMatchInvite,
+  notifyMatchTransferReceived,
+} from "../services/notifications";
+
 /* Utils */
 function toDateInputValue(d = new Date()) {
   const yyyy = d.getFullYear();
@@ -55,17 +60,9 @@ function safeParseDate(value) {
 function combineDateTimeToISO(dateStr, timeStr) {
   const [y, m, d] = String(dateStr || "").split("-").map((n) => Number(n));
   const [hh, mm] = String(timeStr || "19:00").split(":").map((n) => Number(n));
-  const now = new Date();
-  const dt = new Date(
-    Number.isFinite(y) ? y : now.getFullYear(),
-    Number.isFinite(m) ? m - 1 : now.getMonth(),
-    Number.isFinite(d) ? d : now.getDate(),
-    Number.isFinite(hh) ? hh : 19,
-    Number.isFinite(mm) ? mm : 0,
-    0,
-    0
-  );
-  return dt.toISOString();
+  
+  // Formato: 2026-02-19T19:00:00
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00`;
 }
 
 function localYMDFromStartAt(startAt) {
@@ -111,16 +108,27 @@ function uniqById(list) {
 
 function formatWhen(startAt) {
   try {
-    const dt = safeParseDate(startAt);
-    if (!dt) return String(startAt || "");
-    return dt.toLocaleString("es-ES", {
-      weekday: "short",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    if (!startAt) return "";
+    const s = String(startAt);
+    
+    // Parsear formato ISO local: 2026-02-19T19:00:00
+    const match = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (match) {
+      const [_, year, month, day, hour, minute] = match;
+      const dt = new Date(+year, +month - 1, +day, +hour, +minute);
+      
+      return dt.toLocaleString("es-ES", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    
+    // Fallback
+    return String(startAt);
   } catch {
     return String(startAt || "");
   }
@@ -137,6 +145,20 @@ export default function MatchesPage() {
   const [rosterProfilesById, setRosterProfilesById] = useState({});
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
+
+  //OBTENER SESIÓN
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthReady(true);
+    });
+  
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  
+    return () => subscription.unsubscribe();
+  }, []);
 
   const todayISO = toDateInputValue(new Date());
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -231,22 +253,26 @@ export default function MatchesPage() {
   }
 
   useEffect(() => {
-    let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setSession(data?.session ?? null);
-      setAuthReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (!alive) return;
-      setSession(s ?? null);
-      setAuthReady(true);
-    });
+    if (!session) return;
+    
+    load();
+    
+    // Suscripción en tiempo real
+    const channel = supabase
+      .channel('matches-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'matches' }, 
+        (payload) => {
+          console.log('🔄 Cambio en matches:', payload);
+          load(); // Recargar cuando haya cambios
+        }
+      )
+      .subscribe();
+    
     return () => {
-      alive = false;
-      sub?.subscription?.unsubscribe?.();
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -372,9 +398,9 @@ export default function MatchesPage() {
         const creatorIds = Array.from(new Set((unique || []).map((m) => m?.created_by_user).filter(Boolean).map(String)));
         if (creatorIds.length) {
           const profs = await fetchProfilesByIds(creatorIds);
-          if (aliveRef.current) setRosterProfilesById(profs || {});
-        } else {
-          setRosterProfilesById({});
+          if (aliveRef.current) {
+            setRosterProfilesById((prev) => ({ ...prev, ...(profs || {}) }));
+          }
         }
       } catch {
         setRosterProfilesById({});
@@ -637,6 +663,31 @@ export default function MatchesPage() {
       setCedeQuery("");
       setCedeResults([]);
       await load();
+  
+      // NOTIFICACIÓN AQUÍ DENTRO
+      try {
+        const { data: match } = await supabase
+          .from("matches")
+          .select("club_name")
+          .eq("id", matchId)
+          .single();
+      
+        const { data: fromUser } = await supabase
+          .from("profiles_public")
+          .select("name, handle")
+          .eq("id", session.user.id)
+          .single();
+      
+        await notifyMatchTransferReceived({
+          matchId,
+          matchName: match?.club_name || 'Partido',
+          fromUserName: fromUser?.name || fromUser?.handle || 'Un jugador',
+          toUserId: toUserId
+        });
+      } catch (notifError) {
+        console.error('Error sending transfer notification:', notifError);
+      }
+  
     } catch (e) {
       toast.error(e?.message || "No se pudo ceder la plaza");
     } finally {
@@ -656,10 +707,10 @@ export default function MatchesPage() {
         .eq("match_id", matchId)
         .in("to_user_id", uniq);
       if (exErr) throw exErr;
-
+  
       const existingSet = new Set((existing || []).map((r) => String(r.to_user_id)));
       const toInsert = uniq.filter((id) => !existingSet.has(String(id)));
-
+  
       if (toInsert.length === 0) {
         toast.success("Ya estaban invitados ✅");
         setInviteOpenFor(null);
@@ -668,7 +719,7 @@ export default function MatchesPage() {
         setInviteSelected([]);
         return;
       }
-
+  
       const payload = toInsert.map((to) => ({
         match_id: matchId,
         from_user_id: session.user.id,
@@ -676,7 +727,35 @@ export default function MatchesPage() {
       }));
       const { error } = await supabase.from("match_invites").insert(payload);
       if (error) throw error;
-
+  
+      // NOTIFICACIONES AQUÍ
+      try {
+        const { data: match } = await supabase
+          .from("matches")
+          .select("club_name")
+          .eq("id", matchId)
+          .single();
+  
+        const { data: fromUser } = await supabase
+          .from("profiles_public")
+          .select("name, handle")
+          .eq("id", session.user.id)
+          .single();
+  
+        // Notificar a cada invitado
+        for (const toUserId of toInsert) {
+          await notifyMatchInvite({
+            matchId,
+            matchName: match?.club_name || 'Partido',
+            fromUserId: session.user.id,
+            fromUserName: fromUser?.name || fromUser?.handle || 'Un jugador',
+            toUserId
+          });
+        }
+      } catch (notifError) {
+        console.error('Error sending invite notifications:', notifError);
+      }
+  
       toast.success(`Invitaciones enviadas ✅ (${toInsert.length})`);
       setInviteOpenFor(null);
       setInviteQuery("");
@@ -770,15 +849,16 @@ export default function MatchesPage() {
   }
 
   async function handleCreate() {
+    console.log("🚀 INICIO handleCreate - session:", !!session);
     if (!session) return goLogin();
     try {
       setSaveError(null);
       setSaving(true);
       const startAtISO = combineDateTimeToISO(form.date, form.time);
-
+  
       if (!String(form.clubName || "").trim()) throw new Error("Pon el nombre del club.");
       if (!String(form.clubId || "").trim()) throw new Error("Selecciona el club de la lista.");
-
+  
       await createMatch({
         clubId: form.clubId,
         clubName: form.clubName,
@@ -790,8 +870,15 @@ export default function MatchesPage() {
         userId: session.user.id,
       });
 
+      
+  
+      // Actualizar fecha seleccionada
       setSelectedDay(form.date);
+      
+      // Cerrar modal
       setOpenCreate(false);
+      
+      // Resetear formulario
       setForm({
         clubName: "",
         clubId: "",
@@ -803,10 +890,20 @@ export default function MatchesPage() {
         pricePerPlayer: "",
       });
       setClubQuery("");
+      
       toast.success("Partido creado ✅");
 
-      await load();
+        console.log("🔥 DEBUG: Después de crear partido");
+        console.log("🔥 selectedDay:", form.date);
+        console.log("🔥 viewMode será:", 'mine');
 
+        // Recargar partidos
+        await load();
+      
+      // FORZAR VISTA "LOS MÍOS" para ver el partido recién creado
+      setViewMode('mine');
+  
+      // Obtener perfil del creador
       try {
         const { data: profile, error } = await supabase
           .from("profiles_public")
@@ -817,6 +914,7 @@ export default function MatchesPage() {
           setRosterProfilesById((prev) => ({ ...prev, [String(session.user.id)]: profile }));
         }
       } catch {}
+      
     } catch (e) {
       setSaveError(e?.message || "No se pudo crear el partido");
       toast.error(e?.message || "No se pudo crear el partido");
@@ -1024,8 +1122,8 @@ export default function MatchesPage() {
       </div>
     ))}
     <div className="gpTeamName">
-      <span className="gpTeamEmoji">😎</span>
-      Creativos
+      <span className="gpTeamEmoji"></span>
+    
     </div>
   </div>
 
@@ -1040,17 +1138,13 @@ export default function MatchesPage() {
       </div>
     ))}
     <div className="gpTeamName">
-      The Pads
-      <span className="gpTeamEmoji">💪</span>
+      <span className="gpTeamEmoji"></span>
     </div>
   </div>
 </div>
 
       {/* BADGES */}
       <div className="gpBadges">
-        <div className="gpBadge fire">
-          🔥 {left}
-        </div>
         {isCreator && <div className="gpBadge verified">👑 Creador</div>}
         {myStatus2 === "approved" && <div className="gpBadge verified">✅ Dentro</div>}
         {myStatus2 === "pending" && <div className="gpBadge">⏳ Pendiente</div>}
@@ -1276,7 +1370,12 @@ export default function MatchesPage() {
                     type="time"
                     step="900"
                     value={form.time}
-                    onChange={(e) => setForm({ ...form, time: e.target.value })}
+                    onChange={(e) => {
+                      const [h, m] = e.target.value.split(':');
+                      const roundedMinute = Math.round(+m / 15) * 15;
+                      const formattedTime = `${h}:${String(roundedMinute % 60).padStart(2, '0')}`;
+                      setForm({ ...form, time: formattedTime });
+                    }}
                     disabled={saving}
                     style={{
                       width: "100%",
@@ -1290,7 +1389,7 @@ export default function MatchesPage() {
                     }}
                   />
                 </div>
-              </div>
+               </div>
 
               <div>
                 <label style={{ color: "#fff", display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 700 }}>

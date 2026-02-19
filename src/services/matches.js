@@ -1,6 +1,14 @@
 // src/services/matches.js
 import { supabase } from "./supabaseClient";
 import { sanitizeString, validateLevel, validateDuration, validatePlayers } from "../utils/validation";
+import { 
+  notifyMatchApproved, 
+  notifyMatchRejected,
+  notifyMatchRequest,
+  notifyMatchInvite,
+  notifyMatchTransferReceived,
+  notifyMatchChat
+} from './notifications';
 
 /* =========================
    Utils
@@ -69,6 +77,19 @@ export async function fetchMatches({ limit = 400 } = {}) {
 
   if (error) throw error;
   return Array.isArray(data) ? data : [];
+}
+
+export async function cancelMyJoin({ matchId }) {
+  const session = await getSessionOrThrow();
+  const uid = session?.user?.id;
+
+  const { error } = await supabase
+    .from("match_players")
+    .delete()
+    .eq("match_id", matchId)
+    .eq("player_uuid", uid);
+
+  if (error) throw error;
 }
 
 /* =========================
@@ -152,6 +173,8 @@ export async function createMatch(data) {
     .select()
     .single();
 
+    
+
   if (error) {
     console.error("[CREATE_MATCH_ERROR]", error);
     throw new Error(error.message || "No se pudo crear el partido");
@@ -161,54 +184,53 @@ export async function createMatch(data) {
   return row;
 }
 
-/* =========================
-   SOLICITAR UNIRSE
-========================= */
 export async function requestJoin(matchId) {
-  if (!matchId) throw new Error("Falta matchId");
-
   const session = await getSessionOrThrow();
+  const uid = session?.user?.id;
 
-  const payload = { match_id: matchId, user_id: session.user.id, status: "pending" };
+  // Obtener info del partido y creador
+  const { data: match, error: matchError } = await supabase
+    .from("matches")
+    .select("id, club_name, created_by_user")
+    .eq("id", matchId)
+    .single();
+
+  if (matchError) throw matchError;
+
+  // Obtener perfil del solicitante
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", uid)
+    .single();
 
   const { data, error } = await supabase
     .from("match_join_requests")
-    .insert(payload)
-    .select("id, match_id")
+    .insert({
+      match_id: matchId,
+      user_id: uid,
+      status: "pending",
+    })
+    .select()
     .single();
 
   if (error) throw error;
 
-  // ✅ Push al creador (NO rompe si falla)
+  // NOTIFICAR AL CREADOR
   try {
-    const out = await callApi("/api/push-join", {
-      session,
-      body: { matchId: data.match_id, requestId: data.id },
+    const { notifyMatchRequest } = await import('./notifications');
+    await notifyMatchRequest({
+      matchId: match.id,
+      matchName: match.club_name,
+      requesterId: uid,
+      requesterName: profile?.full_name || profile?.email || 'Un jugador',
+      creatorId: match.created_by_user
     });
-
-    if (out?.ok && out?.json && (out.json.sent ?? 0) === 0) {
-      console.warn("⚠️ push-join respondió OK pero NO envió:", out.json);
-    }
-  } catch (e) {
-    console.warn("Push join falló pero la solicitud se guardó:", e?.message || e);
+  } catch (notifError) {
+    console.error('Error sending notification:', notifError);
   }
 
-  return true;
-}
-
-export async function cancelMyJoin(matchId) {
-  if (!matchId) throw new Error("Falta matchId");
-
-  const session = await getSessionOrThrow();
-
-  const { error } = await supabase
-    .from("match_join_requests")
-    .delete()
-    .eq("match_id", matchId)
-    .eq("user_id", session.user.id);
-
-  if (error) throw error;
-  return true;
+  return data;
 }
 
 /* =========================
@@ -279,6 +301,16 @@ export async function approveRequest({ requestId }) {
   const session = await getSessionOrThrow();
   const uid = session?.user?.id;
 
+  // Primero obtener la solicitud con info del partido
+  const { data: request, error: reqError } = await supabase
+    .from("match_join_requests")
+    .select("*, matches(id, club_name)")
+    .eq("id", requestId)
+    .single();
+
+  if (reqError) throw reqError;
+
+  // Aprobar
   const { data, error } = await supabase
     .from("match_join_requests")
     .update({
@@ -291,6 +323,19 @@ export async function approveRequest({ requestId }) {
     .single();
 
   if (error) throw error;
+
+  // Notificar
+  try {
+    await notifyMatchApproved({
+      matchId: request.match_id,
+      matchName: request.matches?.club_name || 'Partido',
+      creatorName: 'El organizador',
+      userId: request.user_id
+    });
+  } catch (notifError) {
+    console.error('Error sending notification:', notifError);
+  }
+
   return data;
 }
 
@@ -298,6 +343,16 @@ export async function rejectRequest({ requestId }) {
   const session = await getSessionOrThrow();
   const uid = session?.user?.id;
 
+  // Obtener solicitud con info del partido
+  const { data: request, error: reqError } = await supabase
+    .from("match_join_requests")
+    .select("*, matches(id, club_name)")
+    .eq("id", requestId)
+    .single();
+
+  if (reqError) throw reqError;
+
+  // Rechazar
   const { data, error } = await supabase
     .from("match_join_requests")
     .update({
@@ -310,6 +365,19 @@ export async function rejectRequest({ requestId }) {
     .single();
 
   if (error) throw error;
+
+  // Notificar
+  try {
+    await notifyMatchRejected({
+      matchId: request.match_id,
+      matchName: request.matches?.club_name || 'Partido',
+      creatorName: 'El organizador',
+      userId: request.user_id
+    });
+  } catch (notifError) {
+    console.error('Error sending notification:', notifError);
+  }
+
   return data;
 }
 
@@ -384,6 +452,8 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 
   if (insErr) throw insErr;
 
+  
+
   try {
     const out = await callApi("/api/push-chat", {
       session,
@@ -397,8 +467,48 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
     console.warn("Push chat falló pero el mensaje se guardó:", e?.message || e);
   }
 
-  return inserted;
-}
+          // Obtener todos los jugadores del partido excepto el que envió
+        const { data: players } = await supabase
+        .from("match_players")
+        .select("player_uuid")
+        .eq("match_id", matchId)
+        .neq("player_uuid", session.user.id);
+
+        const { data: match } = await supabase
+        .from("matches")
+        .select("club_name, created_by_user")
+        .eq("id", matchId)
+        .single();
+
+        // Obtener perfil del remitente
+        const { data: sender } = await supabase
+        .from("profiles_public")
+        .select("name, handle")
+        .eq("id", session.user.id)
+        .single();
+
+        // Notificar a todos menos al que envió
+        const userIds = [...new Set([
+        match?.created_by_user,
+        ...(players || []).map(p => p.player_uuid)
+        ].filter(id => id && id !== session.user.id))];
+
+        if (userIds.length > 0) {
+        try {
+          await notifyMatchChat({
+            matchId,
+            matchName: match?.club_name || 'Partido',
+            senderName: sender?.name || sender?.handle || 'Un jugador',
+            message,
+            userIds
+          });
+        } catch (notifError) {
+          console.error('Error sending chat notifications:', notifError);
+        }
+        }
+
+          return inserted;
+        }
 
 /* =========================
    REALTIME SUBSCRIPTIONS
@@ -406,7 +516,7 @@ export async function sendMatchMessage({ matchId, text, message } = {}) {
 export function subscribeMatchesRealtime(onChange) {
   const channel = supabase
     .channel("rt:matches")
-    .on("postgres_changes", { event: "*", schema: "public", table: "matches_v2" }, (payload) => {
+    .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, (payload) => {
       try {
         onChange?.(payload);
       } catch (e) {

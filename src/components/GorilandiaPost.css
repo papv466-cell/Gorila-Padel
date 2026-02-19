@@ -394,3 +394,11 @@
       padding: 12px;
     }
   }
+  .user-name {
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .user-name:hover {
+    color: #74B800;
+  }

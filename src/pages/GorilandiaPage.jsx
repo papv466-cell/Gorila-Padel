@@ -34,12 +34,11 @@ export default function GorilandiaPage() {
         uploadedUrls.push(url);
       }
 
-      // Create post
-      await createPost({
-        type: postData.type,
-        mediaUrls: uploadedUrls,
-        caption: postData.caption
-      });
+      await createPost(
+        postData.type || 'photo',  // ← Con fallback
+        uploadedUrls,
+        postData.caption
+      );
 
       // Reload feed
       loadFeed();
