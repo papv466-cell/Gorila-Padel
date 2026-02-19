@@ -480,6 +480,39 @@ export async function notifyStoreNewSale({ orderId, orderNumber, productName, se
   });
 }
 
+// Aprobar solicitud de partido
+export async function notifyMatchApproved({ matchId, matchName, toUserId }) {
+  return createNotification({
+    userId: toUserId,
+    type: 'match_request_approved',
+    title: '✅ Solicitud aprobada',
+    message: `Tu solicitud para "${matchName}" ha sido aprobada`,
+    data: { matchId }
+  });
+}
+
+// Rechazar solicitud de partido
+export async function notifyMatchRejected({ matchId, matchName, toUserId }) {
+  return createNotification({
+    userId: toUserId,
+    type: 'match_request_rejected',
+    title: '❌ Solicitud rechazada',
+    body: `Tu solicitud para "${matchName}" ha sido rechazada`,
+    data: { matchId }
+  });
+}
+
+// Mensaje en chat de partido
+export async function notifyMatchMessage({ matchId, matchName, fromUserId, fromUserName, toUserId, messagePreview }) {
+  return createNotification({
+    userId: toUserId,
+    type: 'match_message_new',
+    title: `💬 ${fromUserName}`,
+    body: `${messagePreview}... en "${matchName}"`,
+    data: { matchId, fromUserId }
+  });
+}
+
 // Engagement - Te echamos de menos
 export async function notifyEngagementMissYou({ userId, userName, daysSinceLastLogin }) {
   return createNotification({
@@ -487,6 +520,7 @@ export async function notifyEngagementMissYou({ userId, userName, daysSinceLastL
     type: NOTIFICATION_TYPES.ENGAGEMENT_MISS_YOU,
     title: "¡Te echamos de menos! 🦍",
     body: `Hace ${daysSinceLastLogin} días que no juegas. ¿Qué tal un partido?`,
-    data: { daysSinceLastLogin },
+    data: { daysSinceLastLogin },    
   });
+  
 }
