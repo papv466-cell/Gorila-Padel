@@ -309,17 +309,6 @@ export async function notifyMatchRequest({ matchId, matchName, requesterId, requ
   });
 }
 
-// Partido - Solicitud rechazada
-export async function notifyMatchRejected({ matchId, matchName, creatorName, userId }) {
-  return createNotification({
-    userId,
-    type: NOTIFICATION_TYPES.MATCH_REJECTED,
-    title: "Solicitud rechazada",
-    body: `Tu solicitud para el partido fue rechazada`,
-    data: { matchId },
-  });
-}
-
 // Partido - Invitación
 export async function notifyMatchInvite({ matchId, matchName, fromUserId, fromUserName, toUserId }) {
   return createNotification({
