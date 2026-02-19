@@ -791,6 +791,28 @@ export default function MatchesPage() {
   async function handleApprove(requestId) {
     try {
       await approveRequest({ requestId });
+      
+      // NOTIFICACIÓN AL SOLICITANTE
+      try {
+        const request = pending.find(r => r.id === requestId);
+        if (request) {
+          const { data: match } = await supabase
+            .from("matches")
+            .select("id, club_name")
+            .eq("id", requestsOpenFor)
+            .single();
+          
+            const { notifyMatchApproved } = await import('../services/notifications');
+            await notifyMatchApproved({
+            matchId: match.id,
+            matchName: match.club_name,
+            toUserId: request.user_id
+          });
+        }
+      } catch (notifError) {
+        console.error('Error sending approval notification:', notifError);
+      }
+      
       await openRequests(requestsOpenFor);
       toast.success("Aprobado");
       await load();
@@ -802,6 +824,28 @@ export default function MatchesPage() {
   async function handleReject(requestId) {
     try {
       await rejectRequest({ requestId });
+      
+      // NOTIFICACIÓN AL SOLICITANTE
+      try {
+        const request = pending.find(r => r.id === requestId);
+        if (request) {
+          const { data: match } = await supabase
+            .from("matches")
+            .select("id, club_name")
+            .eq("id", requestsOpenFor)
+            .single();
+          
+          const { notifyMatchRejected } = await import('../services/notifications');
+          await notifyMatchRejected({
+            matchId: match.id,
+            matchName: match.club_name,
+            toUserId: request.user_id
+          });
+        }
+      } catch (notifError) {
+        console.error('Error sending rejection notification:', notifError);
+      }
+      
       await openRequests(requestsOpenFor);
       toast.success("Rechazado");
       await load();
@@ -960,7 +1004,47 @@ export default function MatchesPage() {
       const message = chatText.trim();
       if (!message) return;
       setChatText("");
+      
       await sendMatchMessage({ matchId: chatOpenFor, message });
+      
+      // NOTIFICACIÓN A PARTICIPANTES
+      try {
+        const { data: match } = await supabase
+          .from("matches")
+          .select("id, club_name, created_by_user")
+          .eq("id", chatOpenFor)
+          .single();
+        
+        const { data: players } = await supabase
+          .from("match_players")
+          .select("player_uuid")
+          .eq("match_id", chatOpenFor);
+        
+        const { data: senderProfile } = await supabase
+          .from("profiles_public")
+          .select("name, handle")
+          .eq("id", session.user.id)
+          .single();
+        
+        // Notificar a todos excepto al que envió el mensaje
+        const participants = new Set([match.created_by_user, ...(players || []).map(p => p.player_uuid)]);
+        participants.delete(session.user.id);
+        
+        const { notifyMatchMessage } = await import('../services/notifications');
+        for (const userId of participants) {
+          await notifyMatchMessage({
+            matchId: match.id,
+            matchName: match.club_name,
+            fromUserId: session.user.id,
+            fromUserName: senderProfile?.name || senderProfile?.handle || 'Un jugador',
+            toUserId: userId,
+            messagePreview: message.substring(0, 50)
+          });
+        }
+      } catch (notifError) {
+        console.error('Error sending chat notification:', notifError);
+      }
+      
       const rows = await fetchMatchMessages(chatOpenFor);
       setChatItems(Array.isArray(rows) ? rows : []);
     } catch (e) {
