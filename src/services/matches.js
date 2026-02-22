@@ -288,13 +288,33 @@ export async function fetchPendingRequests(matchId) {
 
   const { data, error } = await supabase
     .from("match_join_requests")
-    .select("*, profiles_public(id, name, handle, avatar_url)")  // ← JOIN directo
+    .select("*")
     .eq("match_id", matchId)
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return data ?? [];
+
+  // Enriquecer con perfiles manualmente
+  const rows = data ?? [];
+  const ids = rows.map(r => r.user_id).filter(Boolean);
+  
+  if (ids.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles_public")
+      .select("id, name, handle, avatar_url")
+      .in("id", ids);
+    
+    const profileMap = {};
+    for (const p of profiles || []) profileMap[p.id] = p;
+    
+    return rows.map(r => ({
+      ...r,
+      profiles_public: profileMap[r.user_id] || null
+    }));
+  }
+
+  return rows;
 }
 
 export async function approveRequest({ requestId }) {
