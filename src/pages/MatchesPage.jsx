@@ -1202,7 +1202,7 @@ export default function MatchesPage() {
       </div>
 
       {/* ROSTER CON VS */}
-<div className="gpMatchRoster">
+<div className="gpMatchRoster" style={{display:'none'}}>
   {/* EQUIPO IZQUIERDO */}
   <div className="gpTeamSide left">
     {leftTeam.map((player, idx) => (
@@ -1249,66 +1249,51 @@ export default function MatchesPage() {
       <div className="gpDivider" />
 
       {/* ACTION BUTTONS */}
-      <div className="gpMatchActions">
-        {/* Botón principal */}
-        {!session && <button className="gpActionBtn primary" onClick={goLogin}>PARTICIPAR</button>}
-        
-        {session && !isCreator && !myStatus2 && left > 0 && (
-          <button className="gpActionBtn primary" onClick={async () => {
-            try {
-              await requestJoin(m.id);
-              toast.success("Solicitud enviada");
-              await load();
-            } catch (e) {
-              toast.error(e?.message || "No se pudo enviar la solicitud");
-            }
-          }}>
-            PARTICIPAR
-          </button>
-        )}
+<div className="gpMatchActions">
+  {!session && <button className="gpActionBtn primary" onClick={goLogin}>PARTICIPAR</button>}
+  
+  {session && !isCreator && !myStatus2 && left > 0 && (
+    <button className="gpActionBtn primary" onClick={async () => {
+      try {
+        await requestJoin(m.id);
+        toast.success("Solicitud enviada");
+        await load();
+      } catch (e) {
+        toast.error(e?.message || "No se pudo enviar la solicitud");
+      }
+    }}>PARTICIPAR</button>
+  )}
 
-        {/* Botones secundarios */}
-        {isCreator && (
-          <button className="gpActionBtn secondary" onClick={() => openRequests(m.id)}>
-            📥 SOLICITUDES
-          </button>
-        )}
+  {isCreator && (
+    <button className="gpActionBtn secondary" onClick={() => openRequests(m.id)} title="Solicitudes">
+      📥
+    </button>
+  )}
 
-        {session && (isCreator || myStatus2 === "approved" || iAmInPlayers) && (
-          <button className="gpActionBtn secondary" onClick={() => {
-            closeAllModals();
-            setCedeOpenFor(m.id);
-            setCedeQuery("");
-            setCedeResults([]);
-          }}>
-            CEDER
-          </button>
-        )}
+  {session && (isCreator || myStatus2 === "approved" || iAmInPlayers) && (
+    <button className="gpActionBtn secondary" onClick={() => {
+      closeAllModals(); setCedeOpenFor(m.id); setCedeQuery(""); setCedeResults([]);
+    }} title="Ceder plaza">🤝</button>
+  )}
 
-        {session && iAmInside && (
-          <button className="gpActionBtn secondary" onClick={() => openChat(m.id)}>
-            💬 CHAT
-          </button>
-        )}
+  {session && iAmInside && (
+    <button className="gpActionBtn secondary" onClick={() => openChat(m.id)} title="Chat">
+      💬
+    </button>
+  )}
 
-        {session && isCreator && (
-          <button className="gpActionBtn secondary" onClick={() => {
-            closeAllModals();
-            setInviteOpenFor(m.id);
-            setInviteQuery("");
-            setInviteResults([]);
-            setInviteSelected([]);
-          }}>
-            📣 INVITAR
-          </button>
-        )}
+  {session && isCreator && (
+    <button className="gpActionBtn secondary" onClick={() => {
+      closeAllModals(); setInviteOpenFor(m.id); setInviteQuery(""); setInviteResults([]); setInviteSelected([]);
+    }} title="Invitar">📣</button>
+  )}
 
-        {session && isCreator && (
-          <button className="gpActionBtn danger" onClick={() => handleDelete(m.id)}>
-            🗑️ ELIMINAR
-          </button>
-        )}
-      </div>
+  {session && isCreator && (
+    <button className="gpActionBtn danger" onClick={() => handleDelete(m.id)} title="Eliminar">
+      🗑️
+    </button>
+  )}
+</div>
     </li>
   );
 })}
