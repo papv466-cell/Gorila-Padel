@@ -1202,7 +1202,7 @@ export default function MatchesPage() {
       </div>
 
       {/* ROSTER CON VS */}
-<div className="gpMatchRoster" style={{display:'none'}}>
+<div className="gpMatchRoster">
   {/* EQUIPO IZQUIERDO */}
   <div className="gpTeamSide left">
     {leftTeam.map((player, idx) => (
