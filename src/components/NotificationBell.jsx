@@ -124,59 +124,63 @@ export default function NotificationBell() {
   }
 
   async function handleNotificationClick(notification) {
-    // BORRAR la notificación
-    try {
-      await supabase
-        .from("notifications")
-        .delete()
-        .eq("id", notification.id);
-      
-      // Actualizar UI: quitar del estado local
-      setNotifications((prev) => prev.filter(n => n.id !== notification.id));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-    }
+  console.log('🔔 Notificación clickeada:', notification);
+  console.log('🔔 Type:', notification.type);
+  console.log('🔔 Data:', notification.data);
   
-    // Cerrar panel
-    setIsOpen(false);
-  
-    // Navegar según el tipo
-    const { type, data } = notification;
-  
-    if (type.startsWith("match_")) {
-      // Si es solicitud, abrir panel de solicitudes
-      if (type === "match_request_new" && data?.matchId) {
-        navigate(`/partidos?openRequests=${data.matchId}`);
-      }
-      // Si es otro tipo de notificación de partido con matchId, abrir chat
-      else if (data?.matchId) {
-        navigate(`/partidos?openChat=${data.matchId}`);
-      } 
-      // Sin matchId, ir a partidos general
-      else {
-        navigate("/partidos");
-      }
-    } else if (type.startsWith("class_")) {
-      navigate("/clases");
-    } else if (type.startsWith("social_")) {
-      if (data?.postId) {
-        navigate(`/gorilandia?post=${data.postId}`);
-      } else {
-        navigate("/gorilandia");
-      }
-    } else if (type.startsWith("store_")) {
-      if (data?.orderId) {
-        navigate(`/tienda/pedidos/${data.orderId}`);
-      } else {
-        navigate("/tienda");
-      }
-    } else if (type.startsWith("inclusive_")) {
-      navigate("/partidos-inclusivos");
-    } else if (type.startsWith("profile_")) {
-      navigate("/perfil");
-    }
+  // BORRAR la notificación
+  try {
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("id", notification.id);
+    
+    // Actualizar UI: quitar del estado local
+    setNotifications((prev) => prev.filter(n => n.id !== notification.id));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  } catch (error) {
+    console.error("Error deleting notification:", error);
   }
+
+  // Cerrar panel
+  setIsOpen(false);
+
+  // Navegar según el tipo
+  const { type, data } = notification;
+
+  if (type.startsWith("match_")) {
+    // Si es solicitud, abrir panel de solicitudes
+    if (type === "match_request" && data?.matchId) {
+      navigate(`/partidos?openRequests=${data.matchId}`);
+    }
+    // Si es otro tipo de notificación de partido con matchId, abrir chat
+    else if (data?.matchId) {
+      navigate(`/partidos?openChat=${data.matchId}`);
+    } 
+    // Sin matchId, ir a partidos general
+    else {
+      navigate("/partidos");
+    }
+  } else if (type.startsWith("class_")) {
+    navigate("/clases");
+  } else if (type.startsWith("social_")) {
+    if (data?.postId) {
+      navigate(`/gorilandia?post=${data.postId}`);
+    } else {
+      navigate("/gorilandia");
+    }
+  } else if (type.startsWith("store_")) {
+    if (data?.orderId) {
+      navigate(`/tienda/pedidos/${data.orderId}`);
+    } else {
+      navigate("/tienda");
+    }
+  } else if (type.startsWith("inclusive_")) {
+    navigate("/partidos-inclusivos");
+  } else if (type.startsWith("profile_")) {
+    navigate("/perfil");
+  }
+}
 
   async function handleMarkAllAsRead() {
     if (!session?.user?.id) return;
