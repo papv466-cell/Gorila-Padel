@@ -288,7 +288,7 @@ export async function fetchPendingRequests(matchId) {
 
   const { data, error } = await supabase
     .from("match_join_requests")
-    .select("*")
+    .select("*, profiles_public(id, name, handle, avatar_url)")  // ← JOIN directo
     .eq("match_id", matchId)
     .eq("status", "pending")
     .order("created_at", { ascending: true });

@@ -777,9 +777,14 @@ export default function MatchesPage() {
       const rows = await fetchPendingRequests(matchId);
       setPending(Array.isArray(rows) ? rows : []);
 
-      const ids = (rows || []).map((r) => r.user_id).filter(Boolean);
-      const profs = await fetchProfilesByIds(ids);
-      setProfilesById(profs || {});
+      // Construir profilesById desde los datos del JOIN
+      const profs = {};
+      for (const r of rows || []) {
+        if (r.profiles_public) {
+          profs[String(r.user_id)] = r.profiles_public;
+        }
+      }
+      setProfilesById(profs);
     } catch (e) {
       toast.error(e?.message || "No pude cargar solicitudes");
       setPending([]);
