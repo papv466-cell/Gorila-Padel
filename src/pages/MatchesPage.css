@@ -50,14 +50,7 @@
 
 /* ==================== ROSTER - COMPACTO ==================== */
 .gpMatchRoster {
-  padding: 8px 12px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;        /* ← antes 120px */
-  background: rgba(116,184,0,0.05);
-  border-bottom: 1px solid rgba(116,184,0,0.15);
+  height: 48px;  /* era 64px */
 }
 
 .gpTeamSide {
@@ -71,8 +64,8 @@
 
 /* ==================== AVATARES ==================== */
 .gpPlayerAvatar {
-  width: 36px;
-  height: 48px;
+  width: 28px;
+  height: 36px;
   margin: 0;
   background: transparent;
   overflow: visible;
@@ -97,8 +90,8 @@
 
 /* ==================== VS ==================== */
 .gpVsIcon {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   filter: drop-shadow(0 2px 8px rgba(255,215,0,0.9));
   animation: vsGlow 2.5s ease-in-out infinite;
