@@ -1,5 +1,4 @@
-/* ==================== MATCHES PAGE - DISEÑO DEFINITIVO ==================== */
-
+/* ==================== MATCHES PAGE ==================== */
 .gpMatchesPage {
   background: #0a0a0a;
   min-height: 100vh;
@@ -15,39 +14,38 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 /* ==================== MATCH CARD ==================== */
 .gpMatchCard {
   background: #0a0a0a;
   border: 2px solid rgba(116,184,0,0.35);
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.8);
   list-style: none;
 }
 
 /* ==================== HEADER ==================== */
 .gpMatchHeader {
-  padding: 16px;
+  padding: 10px 14px;
   background: rgba(0,0,0,0.95);
-  backdrop-filter: blur(15px);
-  border-bottom: 2px solid rgba(116,184,0,0.3);
+  border-bottom: 1px solid rgba(116,184,0,0.3);
 }
 
 .gpClubName {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 950;
   color: #ffffff !important;
-  margin: 0 0 8px 0;
-  text-shadow: 0 2px 8px rgba(0,0,0,1);
+  margin: 0 0 2px 0;
 }
 
 .gpClubMeta {
-  font-size: 13px;
+  font-size: 11px;
   color: #ffffff !important;
-  font-weight: 800;
+  font-weight: 700;
+  opacity: 0.8;
 }
 
 /* ==================== ROSTER ==================== */
@@ -56,47 +54,41 @@
   margin: 0;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 0;
-  min-height: 380px;
-  background: 
-    linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%),
-    url('/images/padel-court.jpg') center/cover;
-  background-size: cover;
+  align-items: center;
+  height: 120px;          /* ← FIJO Y PEQUEÑO */
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%),
+    url('/images/padel-court.jpg') center/cover no-repeat;
 }
 
 .gpTeamSide {
   display: flex;
-  padding: 0;
-}
-
-.gpTeamSide.left {
-  justify-content: flex-start;
-}
-
-.gpTeamSide.right {
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 8px;
 }
 
 /* ==================== AVATARES ==================== */
 .gpPlayerAvatar {
-  width: 200px;
-  height: 100%;
-  min-height: 380px;
+  width: 48px;
+  height: 80px;
+  margin: 0 2px;
   background: transparent;
   overflow: visible;
-  margin: 0 100px;
+  flex-shrink: 0;
 }
 
 .gpPlayerAvatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .gpPlayerAvatar:not(:has(img)) {
   display: grid;
   place-items: center;
-  font-size: 80px;
+  font-size: 36px;
 }
 
 .gpPlayerAvatar:not(:has(img))::before {
@@ -105,119 +97,110 @@
 
 /* ==================== VS ==================== */
 .gpVsIcon {
-  width: 140px;
-  height: 140px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 30px rgba(255,215,0,0.9));
+  filter: drop-shadow(0 4px 12px rgba(255,215,0,0.9));
   animation: vsGlow 2.5s ease-in-out infinite;
-  margin: 0 60px;
-  align-self: center;
 }
 
 @keyframes vsGlow {
-  0%, 100% { 
-    transform: scale(1);
-  }
-  50% { 
-    transform: scale(1.12);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
-/* ==================== BADGES - FONDO NEGRO ==================== */
+/* ==================== BADGES ==================== */
 .gpBadges {
-  padding: 14px 16px;
+  padding: 6px 12px;
   display: flex;
-  gap: 10px;
-  background: #1a1a1a !important;
+  gap: 6px;
+  background: #1a1a1a;
+  flex-wrap: wrap;
 }
 
 .gpBadge {
   background: rgba(116,184,0,0.2) !important;
-  border: 2px solid rgba(116,184,0,0.5) !important;
-  padding: 10px 18px !important;
+  border: 1px solid rgba(116,184,0,0.5) !important;
+  padding: 4px 12px !important;
   border-radius: 999px;
-  font-size: 15px !important;
+  font-size: 12px !important;
   font-weight: 900 !important;
   color: #ffffff !important;
-  text-shadow: none !important;
 }
 
-/* ==================== INFO - FONDO NEGRO LETRAS BLANCAS ==================== */
+/* ==================== INFO ==================== */
 .gpMatchInfo {
-  padding: 14px 16px;
+  padding: 6px 12px;
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
-  background: #1a1a1a !important;
+  background: #1a1a1a;
 }
 
 .gpInfoChip {
-  background: rgba(116,184,0,0.2) !important;
-  border: 2px solid rgba(116,184,0,0.5) !important;
-  padding: 10px 16px !important;
+  background: rgba(116,184,0,0.15) !important;
+  border: 1px solid rgba(116,184,0,0.4) !important;
+  padding: 4px 10px !important;
   border-radius: 999px;
-  font-size: 13px !important;
-  font-weight: 900 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
   color: #ffffff !important;
-  text-shadow: none !important;
   white-space: nowrap;
 }
 
 /* ==================== DIVIDER ==================== */
 .gpDivider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(116,184,0,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(116,184,0,0.4), transparent);
 }
 
 /* ==================== BOTONES ==================== */
 .gpMatchActions {
-  padding: 18px;
+  padding: 10px 12px;
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
-  background: #1a1a1a !important;
-  border-top: 2px solid rgba(116,184,0,0.3);
+  background: #1a1a1a;
+  border-top: 1px solid rgba(116,184,0,0.3);
 }
 
 .gpActionBtn {
-  padding: 14px 20px;
-  border-radius: 12px;
-  font-size: 15px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
   font-weight: 900;
   cursor: pointer;
   background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
-  color: #ffffff !important;
-  border: 2px solid #74B800;
-  text-shadow: none !important;
+  color: #000 !important;
+  border: none;
 }
 
 .gpActionBtn.primary {
   flex: 1;
-  min-width: 140px;
-  font-size: 16px;
+  min-width: 100px;
+  font-size: 13px;
 }
 
 .gpActionBtn.secondary {
-  background: rgba(116,184,0,0.85);
+  background: rgba(116,184,0,0.25);
+  color: #fff !important;
+  border: 1px solid rgba(116,184,0,0.5);
 }
 
 .gpActionBtn.danger {
-  background: rgba(239,68,68,0.9);
-  border-color: #ef4444;
+  background: rgba(239,68,68,0.85);
+  color: #fff !important;
 }
 
 /* ==================== CALENDARIO ==================== */
 .gpDayPill {
-  min-width: 64px;
-  padding: 10px 8px;
+  min-width: 52px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-radius: 14px;
+  border-radius: 12px;
   cursor: pointer;
-}
-
-.gpDayPill:not(.isActive):not(.hasMatches) {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.12);
 }
@@ -225,12 +208,11 @@
 .gpDayPill.hasMatches:not(.isActive) .gpDayNumber {
   color: #74B800;
   font-weight: 950;
-  animation: pulse 1.8s ease-in-out infinite;
 }
 
 .gpDayPill.isActive {
   background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
-  border: 3px solid #74B800;
+  border: 2px solid #74B800;
 }
 
 .gpDayPill.isActive .gpDayLabel,
@@ -238,8 +220,15 @@
   color: #000;
 }
 
+.gpDayLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: capitalize;
+}
+
 .gpDayNumber {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 950;
   color: #fff;
 }
@@ -249,64 +238,12 @@
   50% { transform: scale(1.15); }
 }
 
-/* ==================== MOBILE ==================== */
-/* ==================== RESPONSIVE MOBILE ==================== */
-@media (max-width: 768px) {
-  .gpMatchRoster {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    min-height: 400px;
-    gap: 12px;
-    padding: 12px 0;
-  }
-
-  .gpVsIcon {
-    width: 100px;
-    height: 100px;
-    margin: 16px auto;
-    order: 2;
-    display: block;
-  }
-
-  .gpTeamSide {
-    justify-content: center !important;
-    order: 1;
-  }
-
-  .gpTeamSide.right {
-    order: 3;
-  }
-
-  .gpPlayerAvatar {
-    width: 120px;
-    min-height: 200px;
-    margin: 0 4px;
-  }
-
-  .gpTeamName {
-    position: static;
-    margin-top: 8px;
-    font-size: 16px;
-  }
-
-  .gpTeamSide.left .gpTeamName,
-  .gpTeamSide.right .gpTeamName {
-    left: auto;
-    right: auto;
-    transform: none;
-  }
-}
-/* FORZAR ACTUALIZACIÓN */
-* {
-  -webkit-font-smoothing: antialiased;
-}
-
+/* ==================== TEXTO BLANCO ==================== */
 .gpInfoChip,
 .gpBadge,
 .gpClubName,
 .gpClubMeta,
-.gpTeamName,
-.gpActionBtn {
+.gpTeamName {
   color: white !important;
   -webkit-text-fill-color: white !important;
 }
