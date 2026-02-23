@@ -1201,42 +1201,30 @@ export default function MatchesPage() {
         </div>
       </div>
 
-    {/* ROSTER CON VS */}
-<div className="gpMatchRoster">
-  {/* IMAGEN DE FONDO COMO TAG - controlada perfectamente */}
-  <img src="/images/padel-court.jpg" alt="" className="gpRosterBg" />
-
-  {/* EQUIPO IZQUIERDO */}
-  <div className="gpTeamSide left">
-    {leftTeam.map((player, idx) => (
-      <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar
-          ? <img src={player.avatar} alt="" />
-          : player?.avatar_url
-            ? <img src={player.avatar_url} alt="" />
-            : <span style={{fontSize:26}}>🦍</span>
-        }
-      </div>
-    ))}
-  </div>
-
-  {/* VS */}
-  <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
-
-  {/* EQUIPO DERECHO */}
-  <div className="gpTeamSide right">
-    {rightTeam.map((player, idx) => (
-      <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar_url
-          ? <img src={player.avatar_url} alt="" />
-          : player?.avatar
-            ? <img src={player.avatar} alt="" />
-            : <span style={{fontSize:26}}>🦍</span>
-        }
-      </div>
-    ))}
-  </div>
+ {/* ROSTER CON VS */}
+      <div className="gpMatchRoster">
+        <div className="gpTeamSide left">
+  {leftTeam.filter(Boolean).map((player, idx) => (
+    <div key={idx} className="gpPlayerAvatar">
+      {player?.avatar ? <img src={player.avatar} alt="" />
+        : player?.avatar_url ? <img src={player.avatar_url} alt="" />
+        : <span style={{fontSize:24}}>🦍</span>}
+    </div>
+  ))}
 </div>
+
+<img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
+
+<div className="gpTeamSide right">
+  {rightTeam.filter(Boolean).map((player, idx) => (
+    <div key={idx} className="gpPlayerAvatar">
+      {player?.avatar_url ? <img src={player.avatar_url} alt="" />
+        : player?.avatar ? <img src={player.avatar} alt="" />
+        : <span style={{fontSize:24}}>🦍</span>}
+    </div>
+  ))}
+</div>
+      </div>
 
       {/* BADGES */}
       <div className="gpBadges">
@@ -1255,51 +1243,45 @@ export default function MatchesPage() {
       <div className="gpDivider" />
 
       {/* ACTION BUTTONS */}
-<div className="gpMatchActions">
-  {!session && <button className="gpActionBtn primary" onClick={goLogin}>PARTICIPAR</button>}
-  
-  {session && !isCreator && !myStatus2 && left > 0 && (
-    <button className="gpActionBtn primary" onClick={async () => {
-      try {
-        await requestJoin(m.id);
-        toast.success("Solicitud enviada");
-        await load();
-      } catch (e) {
-        toast.error(e?.message || "No se pudo enviar la solicitud");
-      }
-    }}>PARTICIPAR</button>
-  )}
+      <div className="gpMatchActions">
+        {!session && <button className="gpActionBtn primary" onClick={goLogin}>PARTICIPAR</button>}
+        
+        {session && !isCreator && !myStatus2 && left > 0 && (
+          <button className="gpActionBtn primary" onClick={async () => {
+            try {
+              await requestJoin(m.id);
+              toast.success("Solicitud enviada");
+              await load();
+            } catch (e) {
+              toast.error(e?.message || "No se pudo enviar la solicitud");
+            }
+          }}>PARTICIPAR</button>
+        )}
 
-  {isCreator && (
-    <button className="gpActionBtn secondary" onClick={() => openRequests(m.id)} title="Solicitudes">
-      📥
-    </button>
-  )}
+        {isCreator && (
+          <button className="gpActionBtn secondary" onClick={() => openRequests(m.id)} title="Solicitudes">📥</button>
+        )}
 
-  {session && (isCreator || myStatus2 === "approved" || iAmInPlayers) && (
-    <button className="gpActionBtn secondary" onClick={() => {
-      closeAllModals(); setCedeOpenFor(m.id); setCedeQuery(""); setCedeResults([]);
-    }} title="Ceder plaza">🤝</button>
-  )}
+        {session && (isCreator || myStatus2 === "approved" || iAmInPlayers) && (
+          <button className="gpActionBtn secondary" onClick={() => {
+            closeAllModals(); setCedeOpenFor(m.id); setCedeQuery(""); setCedeResults([]);
+          }} title="Ceder plaza">🤝</button>
+        )}
 
-  {session && iAmInside && (
-    <button className="gpActionBtn secondary" onClick={() => openChat(m.id)} title="Chat">
-      💬
-    </button>
-  )}
+        {session && iAmInside && (
+          <button className="gpActionBtn secondary" onClick={() => openChat(m.id)} title="Chat">💬</button>
+        )}
 
-  {session && isCreator && (
-    <button className="gpActionBtn secondary" onClick={() => {
-      closeAllModals(); setInviteOpenFor(m.id); setInviteQuery(""); setInviteResults([]); setInviteSelected([]);
-    }} title="Invitar">📣</button>
-  )}
+        {session && isCreator && (
+          <button className="gpActionBtn secondary" onClick={() => {
+            closeAllModals(); setInviteOpenFor(m.id); setInviteQuery(""); setInviteResults([]); setInviteSelected([]);
+          }} title="Invitar">📣</button>
+        )}
 
-  {session && isCreator && (
-    <button className="gpActionBtn danger" onClick={() => handleDelete(m.id)} title="Eliminar">
-      🗑️
-    </button>
-  )}
-</div>
+       {session && isCreator && (
+          <button className="gpActionBtn danger" onClick={() => handleDelete(m.id)} title="Eliminar">🗑️</button>
+        )}
+      </div>
     </li>
   );
 })}
