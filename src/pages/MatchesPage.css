@@ -116,9 +116,9 @@
 .gpBadge {
   background: rgba(116,184,0,0.15) !important;
   border: 1px solid rgba(116,184,0,0.4) !important;
-  padding: 1px 7px !important;
+  padding: 1px 5px !important;
   border-radius: 999px;
-  font-size: 10px !important;
+  font-size: 7px !important;
   font-weight: 800 !important;
   color: #fff !important;
 }
@@ -133,8 +133,8 @@
 .gpInfoChip {
   background: transparent !important;
   border: none !important;
-  padding: 1px 0 !important;
-  font-size: 10px !important;
+  padding: 1px 6px !important;
+  font-size: 7px !important;
   font-weight: 700 !important;
   color: rgba(255,255,255,0.7) !important;
   white-space: nowrap;
@@ -158,9 +158,9 @@
   overflow-x: auto;
 }
 .gpActionBtn {
-  padding: 5px 10px;
+  padding: 4px 7px;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   cursor: pointer;
   border: none;
@@ -170,7 +170,10 @@
 .gpActionBtn.primary {
   background: linear-gradient(135deg, #74B800, #9BE800);
   color: #000 !important;
+  font-size: 10px;
+  padding: 5px 8px;
   flex: 1;
+  
 }
 .gpActionBtn.secondary {
   background: rgba(116,184,0,0.15);

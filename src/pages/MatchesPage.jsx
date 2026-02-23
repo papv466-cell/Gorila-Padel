@@ -1197,7 +1197,7 @@ export default function MatchesPage() {
       <div className="gpMatchHeader">
         <div className="gpClubName">{m.club_name}</div>
         <div className="gpClubMeta">
-          <span>📍 4.7 km · Conirtos</span>
+          <span>📍 4.7 km </span>
         </div>
       </div>
 
