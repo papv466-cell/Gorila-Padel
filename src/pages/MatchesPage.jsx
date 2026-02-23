@@ -1203,37 +1203,37 @@ const rightTeam = [
 </div>
 
  {/* ROSTER CON VS */}
-      <div className="gpMatchRoster">
-   <div className="gpTeamSide left">
-  {[0,1].map((idx) => {
-    const player = leftTeam[idx];
-    const avatar = player?.avatar || player?.avatar_url;
-    return (
-      <div key={idx} className="gpPlayerAvatar">
-        {avatar
-          ? <img src={avatar} alt="" style={{width:32,height:48,objectFit:'contain'}} />
-          : <span style={{fontSize:24,lineHeight:1}}>🦍</span>}
-      </div>
-    );
-  })}
-</div>
+<div className="gpMatchRoster">
+  <div className="gpTeamSide left">
+    {[0,1].map((idx) => {
+      const player = leftTeam[idx];
+      const avatar = player?.avatar || player?.avatar_url;
+      return (
+        <div key={idx} style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+          {avatar
+            ? <img src={avatar} alt="" style={{width:36, height:52, objectFit:'cover', borderRadius:6}} />
+            : <span style={{fontSize:28}}>🦍</span>}
+        </div>
+      );
+    })}
+  </div>
 
-<img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
+  <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
 
-<div className="gpTeamSide right">
-  {[0,1].map((idx) => {
-    const player = rightTeam[idx];
-    const avatar = player?.avatar_url || player?.avatar;
-    return (
-      <div key={idx} className="gpPlayerAvatar">
-        {avatar
-          ? <img src={avatar} alt="" style={{width:32,height:48,objectFit:'contain'}} />
-          : <span style={{fontSize:24,lineHeight:1}}>🦍</span>}
-      </div>
-    );
-  })}
+  <div className="gpTeamSide right">
+    {[0,1].map((idx) => {
+      const player = rightTeam[idx];
+      const avatar = player?.avatar_url || player?.avatar;
+      return (
+        <div key={idx} style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+          {avatar
+            ? <img src={avatar} alt="" style={{width:36, height:52, objectFit:'cover', borderRadius:6}} />
+            : <span style={{fontSize:28}}>🦍</span>}
+        </div>
+      );
+    })}
+  </div>
 </div>
-      </div>
 
       {/* INFO CHIPS */}
       <div className="gpMatchInfo">
