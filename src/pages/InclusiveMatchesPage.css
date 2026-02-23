@@ -161,6 +161,7 @@
   color: #ffffff !important;
   text-shadow: none !important;
   white-space: nowrap;
+
 }
 
 /* ==================== DIVIDER ==================== */
@@ -309,4 +310,10 @@
 .gpActionBtn {
   color: white !important;
   -webkit-text-fill-color: white !important;
+}
+
+.gpInfoChip {
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
 }

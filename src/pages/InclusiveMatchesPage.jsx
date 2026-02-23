@@ -226,32 +226,29 @@ export default function InclusiveMatchesPage() {
                 return (
                   <li key={m.id} className="gpMatchCard">
                     {/* HEADER */}
-                    <div className="gpMatchHeader">
-                      <div className="gpClubName">{m.club_name || "Club"}</div>
-                      <div className="gpClubMeta">
-                        <span>📍 {m.city || "Ciudad"}</span>
-                      </div>
+                   <div className="gpMatchHeader" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                      <div className="gpClubName">📍 {m.club_name || "Club"} · {m.city || ""}</div>
                     </div>
-              
-                    {/* ROSTER CON 4 GORILAS */}
+                                  
+                   {/* ROSTER CON 4 GORILAS */}
                     <div className="gpMatchRoster">
                       <div className="gpTeamSide left">
-                        <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '24px' }}>🦍</span>
+                        <div style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                          <span style={{fontSize:28}}>🦍</span>
                         </div>
-                        <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '24px' }}>🦍</span>
+                        <div style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                          <span style={{fontSize:28}}>🦍</span>
                         </div>
                       </div>
-              
+
                       <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
-              
+
                       <div className="gpTeamSide right">
-                        <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '24px' }}>🦍</span>
+                        <div style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                          <span style={{fontSize:28}}>🦍</span>
                         </div>
-                        <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '24px' }}>🦍</span>
+                        <div style={{width:36, height:52, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                          <span style={{fontSize:28}}>🦍</span>
                         </div>
                       </div>
                     </div>
