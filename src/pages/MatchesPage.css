@@ -24,7 +24,7 @@
 
 /* ==================== HEADER ==================== */
 .gpMatchHeader {
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: #000;
   border-bottom: 1px solid rgba(116,184,0,0.2);
 }
@@ -32,6 +32,7 @@
   font-size: 13px;
   font-weight: 900;
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -39,6 +40,7 @@
 }
 .gpClubMeta { display: none; }
 
+/* ==================== ROSTER ==================== */
 .gpMatchRoster {
   display: flex !important;
   align-items: center;
@@ -71,23 +73,12 @@
   justify-content: center;
   overflow: hidden;
 }
-
 .gpPlayerAvatar img {
   width: 32px;
   height: 48px;
   object-fit: contain;
 }
-
 .gpPlayerAvatar::before { content: none !important; }
-
-.gpVsIcon {
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(255,200,0,0.8));
-  flex-shrink: 0;
-  margin: 0 4px;
-}
 
 /* ==================== VS ==================== */
 .gpVsIcon {
@@ -104,11 +95,11 @@
   50% { transform: scale(1.1); }
 }
 
-/* ==================== INFO ROW ==================== */
+/* ==================== BADGES ==================== */
 .gpBadges {
   display: flex;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: 3px;
+  padding: 3px 8px;
   background: #1a1a1a;
   flex-wrap: wrap;
 }
@@ -116,27 +107,30 @@
 .gpBadge {
   background: rgba(116,184,0,0.15) !important;
   border: 1px solid rgba(116,184,0,0.4) !important;
-  padding: 1px 5px !important;
+  padding: 1px 6px !important;
   border-radius: 999px;
-  font-size: 7px !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
+/* ==================== INFO CHIPS ==================== */
 .gpMatchInfo {
-  padding: 4px 10px;
+  padding: 3px 8px;
   display: flex;
-  gap: 4px;
+  gap: 3px;
   flex-wrap: wrap;
   background: #1a1a1a;
 }
 .gpInfoChip {
   background: transparent !important;
   border: none !important;
-  padding: 1px 6px !important;
-  font-size: 7px !important;
+  padding: 0 4px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
-  color: rgba(255,255,255,0.7) !important;
+  color: rgba(255,255,255,0.75) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.75) !important;
   white-space: nowrap;
 }
 .gpInfoChip + .gpInfoChip::before {
@@ -149,7 +143,7 @@
 
 /* ==================== BOTONES ==================== */
 .gpMatchActions {
-  padding: 6px 8px;
+  padding: 5px 8px;
   display: flex;
   gap: 5px;
   flex-wrap: nowrap;
@@ -160,7 +154,7 @@
 .gpActionBtn {
   padding: 4px 7px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 900;
   cursor: pointer;
   border: none;
@@ -170,10 +164,10 @@
 .gpActionBtn.primary {
   background: linear-gradient(135deg, #74B800, #9BE800);
   color: #000 !important;
-  font-size: 10px;
-  padding: 5px 8px;
+  -webkit-text-fill-color: #000 !important;
+  font-size: 11px;
+  padding: 5px 10px;
   flex: 1;
-  
 }
 .gpActionBtn.secondary {
   background: rgba(116,184,0,0.15);
@@ -211,9 +205,3 @@
 .gpDayPill.hasMatches:not(.isActive) .gpDayNumber { color: #74B800; }
 .gpDayLabel { font-size: 9px; font-weight: 700; color: #fff; text-transform: capitalize; }
 .gpDayNumber { font-size: 14px; font-weight: 950; color: #fff; }
-
-/* ==================== FORZAR BLANCO ==================== */
-.gpInfoChip, .gpBadge, .gpClubName {
-  color: white !important;
-  -webkit-text-fill-color: white !important;
-}
