@@ -1193,13 +1193,10 @@ export default function MatchesPage() {
 
   return (
     <li key={m.id} className="gpMatchCard">
-      {/* HEADER */}
+
       <div className="gpMatchHeader">
-        <div className="gpClubName">{m.club_name}</div>
-        <div className="gpClubMeta">
-          <span>📍 4.7 km </span>
-        </div>
-      </div>
+  <div className="gpClubName">📍 {m.club_name}</div>
+</div>
 
  {/* ROSTER CON VS */}
       <div className="gpMatchRoster">
