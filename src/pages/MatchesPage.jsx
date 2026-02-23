@@ -1203,6 +1203,9 @@ export default function MatchesPage() {
 
     {/* ROSTER CON VS */}
 <div className="gpMatchRoster">
+  {/* IMAGEN DE FONDO COMO TAG - controlada perfectamente */}
+  <img src="/images/padel-court.jpg" alt="" className="gpRosterBg" />
+
   {/* EQUIPO IZQUIERDO */}
   <div className="gpTeamSide left">
     {leftTeam.map((player, idx) => (
@@ -1211,7 +1214,7 @@ export default function MatchesPage() {
           ? <img src={player.avatar} alt="" />
           : player?.avatar_url
             ? <img src={player.avatar_url} alt="" />
-            : <span style={{fontSize:28}}>🦍</span>
+            : <span style={{fontSize:26}}>🦍</span>
         }
       </div>
     ))}
@@ -1228,7 +1231,7 @@ export default function MatchesPage() {
           ? <img src={player.avatar_url} alt="" />
           : player?.avatar
             ? <img src={player.avatar} alt="" />
-            : <span style={{fontSize:28}}>🦍</span>
+            : <span style={{fontSize:26}}>🦍</span>
         }
       </div>
     ))}
