@@ -219,3 +219,12 @@
   padding: 0 4px !important;
   line-height: 1.4 !important;
 }
+html body .gpMatchesPage .gpMatchInfo .gpInfoChip {
+  font-size: 9px !important;
+  padding: 0 4px !important;
+}
+
+html body .gpMatchesPage .gpBadges .gpBadge {
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+}
