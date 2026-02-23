@@ -1181,14 +1181,13 @@ export default function MatchesPage() {
 
   // Equipo izquierdo: Creador + 1 jugador
   const leftTeam = [
-    { name: creatorName, avatar: creatorAvatar, isCreator: true },
-    roster[0] || null
-  ];
+  { name: creatorName, avatar: creatorAvatar, isCreator: true },
+  roster[0] || null
+];
 
-  // Equipo derecho: 2 jugadores restantes
-  const rightTeam = [
-    roster[1] || null,
-    roster[2] || null
+const rightTeam = [
+  roster[1] || null,
+  roster[2] || null
   ];
 
   return (
@@ -1208,11 +1207,12 @@ export default function MatchesPage() {
    <div className="gpTeamSide left">
   {[0,1].map((idx) => {
     const player = leftTeam[idx];
+    const avatar = player?.avatar || player?.avatar_url;
     return (
       <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar ? <img src={player.avatar} alt="" />
-          : player?.avatar_url ? <img src={player.avatar_url} alt="" />
-          : <span style={{fontSize:24}}>🦍</span>}
+        {avatar
+          ? <img src={avatar} alt="" style={{width:32,height:48,objectFit:'contain'}} />
+          : <span style={{fontSize:24,lineHeight:1}}>🦍</span>}
       </div>
     );
   })}
@@ -1223,11 +1223,12 @@ export default function MatchesPage() {
 <div className="gpTeamSide right">
   {[0,1].map((idx) => {
     const player = rightTeam[idx];
+    const avatar = player?.avatar_url || player?.avatar;
     return (
       <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar_url ? <img src={player.avatar_url} alt="" />
-          : player?.avatar ? <img src={player.avatar} alt="" />
-          : <span style={{fontSize:24}}>🦍</span>}
+        {avatar
+          ? <img src={avatar} alt="" style={{width:32,height:48,objectFit:'contain'}} />
+          : <span style={{fontSize:24,lineHeight:1}}>🦍</span>}
       </div>
     );
   })}
