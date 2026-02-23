@@ -1205,26 +1205,32 @@ export default function MatchesPage() {
 
  {/* ROSTER CON VS */}
       <div className="gpMatchRoster">
-        <div className="gpTeamSide left">
-  {leftTeam.filter(Boolean).map((player, idx) => (
-    <div key={idx} className="gpPlayerAvatar">
-      {player?.avatar ? <img src={player.avatar} alt="" />
-        : player?.avatar_url ? <img src={player.avatar_url} alt="" />
-        : <span style={{fontSize:24}}>🦍</span>}
-    </div>
-  ))}
+   <div className="gpTeamSide left">
+  {[0,1].map((idx) => {
+    const player = leftTeam[idx];
+    return (
+      <div key={idx} className="gpPlayerAvatar">
+        {player?.avatar ? <img src={player.avatar} alt="" />
+          : player?.avatar_url ? <img src={player.avatar_url} alt="" />
+          : <span style={{fontSize:24}}>🦍</span>}
+      </div>
+    );
+  })}
 </div>
 
 <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
 
 <div className="gpTeamSide right">
-  {rightTeam.filter(Boolean).map((player, idx) => (
-    <div key={idx} className="gpPlayerAvatar">
-      {player?.avatar_url ? <img src={player.avatar_url} alt="" />
-        : player?.avatar ? <img src={player.avatar} alt="" />
-        : <span style={{fontSize:24}}>🦍</span>}
-    </div>
-  ))}
+  {[0,1].map((idx) => {
+    const player = rightTeam[idx];
+    return (
+      <div key={idx} className="gpPlayerAvatar">
+        {player?.avatar_url ? <img src={player.avatar_url} alt="" />
+          : player?.avatar ? <img src={player.avatar} alt="" />
+          : <span style={{fontSize:24}}>🦍</span>}
+      </div>
+    );
+  })}
 </div>
       </div>
 

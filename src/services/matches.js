@@ -181,6 +181,19 @@ export async function createMatch(data) {
   }
 
   console.log('✅ Partido creado:', row);
+
+  // Insertar creador en match_players
+  try {
+    await supabase.from("match_players").insert({
+      match_id: row.id,
+      player_uuid: data.userId,
+    });
+  } catch (e) {
+    console.error("Error insertando creador en match_players:", e);
+  }
+
+  return row;
+  
   return row;
 }
 
