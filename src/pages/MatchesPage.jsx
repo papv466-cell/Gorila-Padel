@@ -1194,8 +1194,13 @@ export default function MatchesPage() {
   return (
     <li key={m.id} className="gpMatchCard">
 
-      <div className="gpMatchHeader">
+      <div className="gpMatchHeader" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
   <div className="gpClubName">📍 {m.club_name}</div>
+  <div style={{fontSize:'10px', fontWeight:800, color:'#fff', flexShrink:0, marginLeft:8}}>
+    {isCreator && '👑 Creador'}
+    {myStatus2 === 'approved' && '✅ Dentro'}
+    {myStatus2 === 'pending' && '⏳ Pendiente'}
+  </div>
 </div>
 
  {/* ROSTER CON VS */}
@@ -1221,13 +1226,6 @@ export default function MatchesPage() {
     </div>
   ))}
 </div>
-      </div>
-
-      {/* BADGES */}
-      <div className="gpBadges">
-        {isCreator && <div className="gpBadge verified" style={{fontSize:'9px'}}>👑 Creador</div>}
-        {myStatus2 === "approved" && <div className="gpBadge verified" style={{fontSize:'9px'}}>✅ Dentro</div>}
-        {myStatus2 === "pending" && <div className="gpBadge" style={{fontSize:'9px'}}>⏳ Pendiente</div>}
       </div>
 
       {/* INFO CHIPS */}
