@@ -1228,17 +1228,12 @@ export default function MatchesPage() {
 </div>
       </div>
 
-      <div className="gpMatchInfo" style={{fontSize:'9px'}}>
-  <div className="gpInfoChip">🗓️ {(() => {
-    const s = String(m.start_at || '');
-    const match = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-    if (match) return `${match[3]}/${match[2]}/${match[1].slice(2)} ${match[4]}:${match[5]}`;
-    return s;
-  })()}</div>
-  <div className="gpInfoChip">⏱️ {m.duration_min}min</div>
-  <div className="gpInfoChip">🎚️ {String(m.level || '').toUpperCase()}</div>
-  {m.price_per_player ? <div className="gpInfoChip">💶 {m.price_per_player}€</div> : null}
-</div>
+      {/* INFO CHIPS */}
+      <div className="gpMatchInfo">
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>🗓️ {formatWhen(m.start_at)}</div>
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>⏱️ {m.duration_min} min</div>
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>🎚️ {String(m.level || "").toUpperCase()}</div>
+      </div>
 
       <div className="gpDivider" />
 

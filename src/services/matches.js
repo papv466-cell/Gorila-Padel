@@ -330,6 +330,8 @@ export async function approveRequest({ requestId }) {
 
   if (reqError) throw reqError;
 
+
+
   // Aprobar
   const { data, error } = await supabase
     .from("match_join_requests")
@@ -343,6 +345,18 @@ export async function approveRequest({ requestId }) {
     .single();
 
   if (error) throw error;
+
+  // Insertar en match_players para que aparezca en el roster
+  try {
+    const { error: mpError } = await supabase
+      .from("match_players")
+      .insert({
+        match_id: data.match_id,
+        player_uuid: data.user_id,
+      });
+    if (mpError) console.error("Error insertando en match_players:", mpError);
+  } catch (e) {
+    console.error("Error match_players:", e);
 
   // Notificar
   try {
