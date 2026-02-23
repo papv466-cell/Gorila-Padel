@@ -346,6 +346,8 @@ export async function approveRequest({ requestId }) {
 
   if (error) throw error;
 
+  if (error) throw error;
+
   // Insertar en match_players para que aparezca en el roster
   try {
     const { error: mpError } = await supabase
@@ -357,6 +359,7 @@ export async function approveRequest({ requestId }) {
     if (mpError) console.error("Error insertando en match_players:", mpError);
   } catch (e) {
     console.error("Error match_players:", e);
+  }
 
   // Notificar
   try {
