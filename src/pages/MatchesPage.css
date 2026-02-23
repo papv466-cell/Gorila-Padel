@@ -238,3 +238,6 @@
   color: white !important;
   -webkit-text-fill-color: white !important;
 }
+.gpPlayerAvatar::before {
+  content: none !important;
+}

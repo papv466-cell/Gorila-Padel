@@ -1201,34 +1201,37 @@ export default function MatchesPage() {
         </div>
       </div>
 
-      {/* ROSTER CON VS */}
+    {/* ROSTER CON VS */}
 <div className="gpMatchRoster">
   {/* EQUIPO IZQUIERDO */}
   <div className="gpTeamSide left">
     {leftTeam.map((player, idx) => (
       <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar && <img src={player.avatar} alt={player.name} />}
+        {player?.avatar
+          ? <img src={player.avatar} alt="" />
+          : player?.avatar_url
+            ? <img src={player.avatar_url} alt="" />
+            : <span style={{fontSize:28}}>🦍</span>
+        }
       </div>
     ))}
-    <div className="gpTeamName">
-      <span className="gpTeamEmoji"></span>
-    
-    </div>
   </div>
 
-  {/* VS ICON */}
+  {/* VS */}
   <img src="/images/vs-icon.png" alt="VS" className="gpVsIcon" />
 
   {/* EQUIPO DERECHO */}
   <div className="gpTeamSide right">
     {rightTeam.map((player, idx) => (
       <div key={idx} className="gpPlayerAvatar">
-        {player?.avatar_url && <img src={player.avatar_url} alt={player.name || 'Jugador'} />}
+        {player?.avatar_url
+          ? <img src={player.avatar_url} alt="" />
+          : player?.avatar
+            ? <img src={player.avatar} alt="" />
+            : <span style={{fontSize:28}}>🦍</span>
+        }
       </div>
     ))}
-    <div className="gpTeamName">
-      <span className="gpTeamEmoji"></span>
-    </div>
   </div>
 </div>
 
