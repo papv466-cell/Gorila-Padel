@@ -1228,16 +1228,16 @@ export default function MatchesPage() {
 
       {/* BADGES */}
       <div className="gpBadges">
-        {isCreator && <div className="gpBadge verified">👑 Creador</div>}
-        {myStatus2 === "approved" && <div className="gpBadge verified">✅ Dentro</div>}
-        {myStatus2 === "pending" && <div className="gpBadge">⏳ Pendiente</div>}
+        {isCreator && <div className="gpBadge verified" style={{fontSize:'9px'}}>👑 Creador</div>}
+        {myStatus2 === "approved" && <div className="gpBadge verified" style={{fontSize:'9px'}}>✅ Dentro</div>}
+        {myStatus2 === "pending" && <div className="gpBadge" style={{fontSize:'9px'}}>⏳ Pendiente</div>}
       </div>
 
       {/* INFO CHIPS */}
       <div className="gpMatchInfo">
-        <div className="gpInfoChip">🗓️ {formatWhen(m.start_at)}</div>
-        <div className="gpInfoChip">⏱️ {m.duration_min} min</div>
-        <div className="gpInfoChip">🎚️ {String(m.level || "").toUpperCase()}</div>
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>🗓️ {formatWhen(m.start_at)}</div>
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>⏱️ {m.duration_min} min</div>
+        <div className="gpInfoChip" style={{fontSize:'9px'}}>🎚️ {String(m.level || "").toUpperCase()}</div>
       </div>
 
       <div className="gpDivider" />
