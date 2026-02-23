@@ -1079,10 +1079,7 @@ export default function MatchesPage() {
 
   return (
     <div className="page pageWithHeader gpMatchesPage">
-       <style>{`
-        .gpMatchesPage .gpInfoChip { font-size: 9px !important; padding: 0 4px !important; }
-        .gpMatchesPage .gpMatchInfo { padding: 2px 8px !important; }
-      `}</style>
+      
       <div className="pageWrap">
         <div className="container">
           {/* HEADER */}

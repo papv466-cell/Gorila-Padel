@@ -6,6 +6,7 @@ import {
   fetchInclusiveMatches,
   createInclusiveMatch,
   subscribeInclusiveRealtime,
+  fetchClubsFromGoogleSheet,
 } from "../services/inclusiveMatches";
 
 const NEEDS = [
@@ -45,6 +46,14 @@ export default function InclusiveMatchesPage() {
   const [createNeeds, setCreateNeeds] = useState(() => new Set(["wheelchair"]));
   const [mixAllowed, setMixAllowed] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [showClubSuggest, setShowClubSuggest] = useState(false);
+  const [clubsSheet, setClubsSheet] = useState([]);
+
+  const clubSuggestions = useMemo(() => {
+    const q = clubName.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return clubsSheet.filter(c => c.name.toLowerCase().includes(q)).slice(0, 10);
+  }, [clubName, clubsSheet]);
 
   async function load() {
     try {
@@ -66,6 +75,7 @@ export default function InclusiveMatchesPage() {
   }, [searchParams]);
 
   useEffect(() => {
+    fetchClubsFromGoogleSheet().then(rows => setClubsSheet(Array.isArray(rows) ? rows : [])).catch(() => setClubsSheet([]));
     load();
     const unsub = subscribeInclusiveRealtime(() => load());
     return () => unsub?.();
@@ -227,10 +237,10 @@ export default function InclusiveMatchesPage() {
                     <div className="gpMatchRoster">
                       <div className="gpTeamSide left">
                         <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '64px' }}>🦍</span>
+                          <span style={{ fontSize: '24px' }}>🦍</span>
                         </div>
                         <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '64px' }}>🦍</span>
+                          <span style={{ fontSize: '24px' }}>🦍</span>
                         </div>
                       </div>
               
@@ -238,10 +248,10 @@ export default function InclusiveMatchesPage() {
               
                       <div className="gpTeamSide right">
                         <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '64px' }}>🦍</span>
+                          <span style={{ fontSize: '24px' }}>🦍</span>
                         </div>
                         <div className="gpPlayerAvatar">
-                          <span style={{ fontSize: '64px' }}>🦍</span>
+                          <span style={{ fontSize: '24px' }}>🦍</span>
                         </div>
                       </div>
                     </div>
@@ -316,10 +326,14 @@ export default function InclusiveMatchesPage() {
                   Club
                 </label>
                 <input
-                  value={clubName}
-                  onChange={(e) => setClubName(e.target.value)}
-                  placeholder="Nombre del club"
-                  style={{
+                
+                    value={clubName}
+                    onChange={(e) => {
+                      setClubName(e.target.value);
+                      setShowClubSuggest(true);
+                    }}
+                    placeholder="Buscar club..."
+                   style={{
                     width: "100%",
                     padding: "12px",
                     borderRadius: "10px",
@@ -330,6 +344,16 @@ export default function InclusiveMatchesPage() {
                     boxSizing: "border-box",
                   }}
                 />
+                {showClubSuggest && clubSuggestions.length > 0 && (
+                  <div style={{background:'#2a2a2a', borderRadius:10, marginTop:8, maxHeight:200, overflowY:'auto', border:'1px solid rgba(255,255,255,0.1)'}}>
+                    {clubSuggestions.map((c, idx) => (
+                      <div key={c.id || idx} onClick={() => { setClubName(c.name); setShowClubSuggest(false); }}
+                        style={{padding:12, cursor:'pointer', color:'#fff', fontSize:14, borderBottom: idx < clubSuggestions.length-1 ? '1px solid rgba(255,255,255,0.05)' : 'none'}}>
+                        {c.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
