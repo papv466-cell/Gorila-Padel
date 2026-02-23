@@ -26,9 +26,9 @@ export async function fetchInclusiveMatches({ limit = 200 } = {}) {
   try {
     const { data, error } = await supabase
       .from("inclusive_matches")
-      .select(`${baseSelect}, city`)
-      .order("start_at", { ascending: true })
-      .limit(limit);
+      .insert([cleanPayload])
+      .select("id, created_at, club_name, start_at, duration_min, level, needs, mix_allowed, notes")
+      .single();
 
     if (error) throw error;
     return (data || []).map(m => ({
@@ -54,9 +54,9 @@ export async function fetchInclusiveMatches({ limit = 200 } = {}) {
 
 export async function createInclusiveMatch(payload) {
   try {
-    const cleanPayload = {
+   const cleanPayload = {
       ...payload,
-      needs: Array.isArray(payload.needs) ? payload.needs.join(',') : (payload.needs || ''),
+      needs: Array.isArray(payload.needs) ? payload.needs : [payload.needs].filter(Boolean),
     };
     const { data, error } = await supabase
       .from("inclusive_matches")
