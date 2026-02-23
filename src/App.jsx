@@ -188,7 +188,7 @@ export default function App() {
           <Route path="/vendedor/perfil" element={<SellerSettings />} />
           {/* GORILANDIA */}
           <Route path="/gorilandia" element={<GorilandiaPage />} />
-         
+          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
 
           {/* AUTH */}
           <Route path="/auth/confirm" element={<AuthConfirmPage />} />
@@ -217,7 +217,6 @@ export default function App() {
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
-          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
         </Routes>
       </main>
 

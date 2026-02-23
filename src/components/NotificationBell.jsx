@@ -125,60 +125,36 @@ export default function NotificationBell() {
 
   async function handleNotificationClick(notification) {
   console.log('🔔 Notificación clickeada:', notification);
-  console.log('🔔 Type:', notification.type);
+  console.log('🔔 Type EXACTO:', JSON.stringify(notification.type));
   console.log('🔔 Data:', notification.data);
   
-  // BORRAR la notificación
-  try {
-    await supabase
-      .from("notifications")
-      .delete()
-      .eq("id", notification.id);
-    
-    // Actualizar UI: quitar del estado local
-    setNotifications((prev) => prev.filter(n => n.id !== notification.id));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  } catch (error) {
-    console.error("Error deleting notification:", error);
-  }
-
-  // Cerrar panel
+  await markAsClicked(notification.id);  // ← USA markAsClicked, no markAsRead
+  
+  setNotifications((prev) =>
+    prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+  );
   setIsOpen(false);
 
-  // Navegar según el tipo
   const { type, data } = notification;
 
   if (type.startsWith("match_")) {
-    // Si es solicitud, abrir panel de solicitudes
-    if (type === "match_request" && data?.matchId) {
+    const isRequest = type?.includes("request");
+
+    if (isRequest && data?.matchId) {
+      console.log('✅ Abriendo SOLICITUDES:', data.matchId);
       navigate(`/partidos?openRequests=${data.matchId}`);
-    }
-    // Si es otro tipo de notificación de partido con matchId, abrir chat
-    else if (data?.matchId) {
+    } else if (data?.matchId) {
+      console.log('💬 Abriendo CHAT:', data.matchId);
       navigate(`/partidos?openChat=${data.matchId}`);
-    } 
-    // Sin matchId, ir a partidos general
-    else {
+    } else {
       navigate("/partidos");
     }
-  } else if (type.startsWith("class_")) {
-    navigate("/clases");
   } else if (type.startsWith("social_")) {
-    if (data?.postId) {
-      navigate(`/gorilandia?post=${data.postId}`);
-    } else {
-      navigate("/gorilandia");
-    }
+    navigate("/gorilandia");
   } else if (type.startsWith("store_")) {
-    if (data?.orderId) {
-      navigate(`/tienda/pedidos/${data.orderId}`);
-    } else {
-      navigate("/tienda");
-    }
-  } else if (type.startsWith("inclusive_")) {
-    navigate("/partidos-inclusivos");
-  } else if (type.startsWith("profile_")) {
-    navigate("/perfil");
+    navigate("/tienda");
+  } else {
+    navigate("/");
   }
 }
 
