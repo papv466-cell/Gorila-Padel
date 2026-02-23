@@ -205,3 +205,17 @@
 .gpDayPill.hasMatches:not(.isActive) .gpDayNumber { color: #74B800; }
 .gpDayLabel { font-size: 9px; font-weight: 700; color: #fff; text-transform: capitalize; }
 .gpDayNumber { font-size: 14px; font-weight: 950; color: #fff; }
+
+.gpMatchesPage .gpBadges .gpBadge,
+.gpMatchesPage .gpBadge {
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+  margin-top: 2px !important;
+  line-height: 1.4 !important;
+}
+
+.gpMatchesPage .gpMatchInfo .gpInfoChip {
+  font-size: 9px !important;
+  padding: 0 4px !important;
+  line-height: 1.4 !important;
+}
