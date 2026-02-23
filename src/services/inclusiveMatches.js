@@ -31,7 +31,10 @@ export async function fetchInclusiveMatches({ limit = 200 } = {}) {
       .limit(limit);
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(m => ({
+      ...m,
+      needs: typeof m.needs === 'string' ? m.needs.split(',').filter(Boolean) : (m.needs || [])
+    }));
   } catch (e) {
     const msg = String(e?.message || e || "").toLowerCase();
     if (msg.includes("could not find the 'city' column")) {
@@ -50,13 +53,14 @@ export async function fetchInclusiveMatches({ limit = 200 } = {}) {
 }
 
 export async function createInclusiveMatch(payload) {
-  // ✅ Intento 1: tal cual (con city si viene)
   try {
+    const cleanPayload = {
+      ...payload,
+      needs: Array.isArray(payload.needs) ? payload.needs.join(',') : (payload.needs || ''),
+    };
     const { data, error } = await supabase
       .from("inclusive_matches")
-      .insert([payload])
-      .select("id, created_at, club_name, city, start_at, duration_min, level, needs, mix_allowed, notes")
-      .single();
+      .insert([cleanPayload])
 
     if (error) throw error;
     return data;
