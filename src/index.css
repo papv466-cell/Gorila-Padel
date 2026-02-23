@@ -491,10 +491,10 @@ img { max-width: 100%; height: auto; }
 
 .gpBadge {
   display: inline-block;
-  margin-top: 8px;
-  padding: 6px 10px;
+  margin-top: 4px;
+  padding: 1px 6px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 9px;
   border: 1px solid rgba(0,0,0,0.12);
 }
 .gpBadge.ok { background: rgba(0, 200, 80, 0.12); }
@@ -712,14 +712,12 @@ img { max-width: 100%; height: auto; }
 
 /* Badges */
 .gpBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  margin-top: 8px;
+  font-size: 9px;
+  border: 1px solid rgba(0,0,0,0.12);
 }
 .gpBadge.ok { background: rgba(0,160,80,0.12); border: 1px solid rgba(0,160,80,0.25); }
 .gpBadge.warn { background: rgba(255,170,0,0.14); border: 1px solid rgba(255,170,0,0.30); }
