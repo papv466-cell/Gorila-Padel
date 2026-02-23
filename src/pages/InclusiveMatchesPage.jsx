@@ -6,8 +6,8 @@ import {
   fetchInclusiveMatches,
   createInclusiveMatch,
   subscribeInclusiveRealtime,
-  fetchClubsFromGoogleSheet,
 } from "../services/inclusiveMatches";
+import { fetchClubsFromGoogleSheet } from "../services/sheets";
 
 const NEEDS = [
   { key: "wheelchair", label: "Silla de ruedas", emoji: "♿" },
