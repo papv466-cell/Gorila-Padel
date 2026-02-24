@@ -46,8 +46,8 @@ function makeClubIcon({ isFav, isSelected }) {
   const shadow = isSelected ? "0 0 0 3px rgba(116,184,0,0.4), 0 12px 30px rgba(0,0,0,0.5)" : "0 8px 20px rgba(0,0,0,0.4)";
   return L.divIcon({
     className: "gpClubIcon",
-    html: `<div style="width:${size}px;height:${size}px;position:relative;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.4));transition:all .2s;">
-      <img src="${pelotaTenis}" style="width:${size}px;height:${size}px;object-fit:cover;display:block;border-radius:50%;border:${border};box-shadow:${shadow};background:#74B800;"/>
+    html: `<div style="width:${size}px;height:${size}px;position:relative;overflow:hidden;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.4));transition:all .2s;">
+      <img src="${pelotaTenis}" style="width:140%;height:140%;object-fit:cover;display:block;border-radius:50%;border:${border};box-shadow:${shadow};background:#74B800;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"/>
       ${isFav ? `<div style="position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#FFD700,#FFA500);border:2.5px solid #111;font-size:12px;display:grid;place-items:center;">⭐</div>` : ""}
       ${isSelected ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #74B800;"></div>` : ""}
     </div>`,
