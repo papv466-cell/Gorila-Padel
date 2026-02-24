@@ -28,6 +28,7 @@ import SellerOrders from './pages/SellerOrders';
 import SellerSettings from './pages/SellerSettings';
 import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
+import ClubPage from "./pages/ClubPage";
 
 import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
@@ -219,6 +220,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/club/:clubId" element={<ClubPage />} />
 
         </Routes>
       </main>
