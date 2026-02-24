@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
-import pelotaTenis from "../assets/map/1.png";
+import pelotaTenis from "../assets/map/4.png";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -359,8 +359,10 @@ export default function MapPage() {
                     return (
                       <Marker key={it.key} position={[it.lat, it.lng]} icon={makeCountIcon(it.count)}
                         eventHandlers={{ click: () => {
-                          try { mapRef.current?.setView([it.lat, it.lng], Math.min(15, zoom + 4)); } catch {}
-                        }}} />
+                      try {
+                        const nextZoom = zoom <= 9 ? 11 : zoom <= 11 ? 13 : 15;
+                        mapRef.current?.setView([it.lat, it.lng], nextZoom, { animate: true, duration: 0.6 });
+                      } catch {}                        }}} />
                     );
                   }
                   const c = it.club;
