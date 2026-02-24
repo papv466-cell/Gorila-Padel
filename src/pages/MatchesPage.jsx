@@ -138,7 +138,10 @@ export default function MatchesPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterLevel, setFilterLevel] = useState("");
   const [filterUltimaHora, setFilterUltimaHora] = useState(false);
-  const [filterClubSearch, setFilterClubSearch] = useState("");
+const [filterClubSearch, setFilterClubSearch] = useState("");
+const [filterClubObj, setFilterClubObj] = useState(null); // club seleccionado del sheet
+const [clubFilterQuery, setClubFilterQuery] = useState("");
+const [showClubFilterSuggest, setShowClubFilterSuggest] = useState(false);  
   const [userLat, setUserLat] = useState(null);
   const [userLng, setUserLng] = useState(null);
   const [filterDistKm, setFilterDistKm] = useState(10);
@@ -643,7 +646,7 @@ const visibleList = viewMode === "mine" ? myList : filteredList;
           )}
         </div>
               {hasFilters && (
-                <button onClick={()=>{setFilterLevel("");setFilterUltimaHora(false);setFilterClubSearch("");setFilterNearMe(false);}}
+                <button onClick={()=>{setFilterLevel("");setFilterUltimaHora(false);setFilterClubSearch("");setFilterClubObj(null);setClubFilterQuery("");setFilterNearMe(false);
                   style={{padding:"5px 10px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:800,background:"rgba(220,38,38,0.2)",color:"#ff6b6b"}}>
                   ✕ Limpiar filtros
                 </button>
@@ -1092,25 +1095,50 @@ const visibleList = viewMode === "mine" ? myList : filteredList;
                   </div>
                 </div>
               </div>
-              <input placeholder="Notas del partido (opcional)…" value={postNotes} onChange={e=>setPostNotes(e.target.value)}
-                style={{...IS,fontSize:12,padding:"8px 10px"}} />
-              <button onClick={async()=>{
-                try {
-                  setPostSaving(true);
-                  const r = await submitMatchResult({matchId:postOpenFor,scoreLeft:postScoreL,scoreRight:postScoreR,notes:postNotes});
-                  setPostResult(r);
-                  toast.success("Resultado guardado ✅");
-                } catch(e){ toast.error(e?.message||"Error"); } finally { setPostSaving(false); }
-              }} disabled={postSaving}
-                style={{padding:"10px",borderRadius:10,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:13}}>
-                {postSaving?"Guardando…":"✅ Guardar resultado"}
-              </button>
-            </div>
-          ) : (
-            <div style={{textAlign:"center",color:"rgba(255,255,255,0.5)",fontSize:12}}>El creador aún no ha publicado el resultado.</div>
-          )
-        )}
-      </div>
+
+                  <>
+                    <input
+                      placeholder="🔍 Buscar club por nombre o ciudad..."
+                      value={clubFilterQuery}
+                      onChange={e=>{setClubFilterQuery(e.target.value);setFilterClubSearch(e.target.value);setFilterClubObj(null);setShowClubFilterSuggest(true);}}
+                      onFocus={()=>setShowClubFilterSuggest(true)}
+                      onBlur={()=>setTimeout(()=>setShowClubFilterSuggest(false),150)}
+                      style={{...IS,padding:"7px 10px",fontSize:12}}
+                    />
+                    {showClubFilterSuggest && clubFilterQuery.length >= 2 && (()=>{
+                      const q = clubFilterQuery.trim().toLowerCase();
+                      const sugs = (clubsSheet||[]).filter(c=>{
+                        const name = String(c?.name||"").toLowerCase();
+                        const city = String(c?.city||"").toLowerCase();
+                        return name.startsWith(q)||name.includes(q)||city.includes(q)||name.split(/\s+/).some(w=>w.startsWith(q));
+                      }).sort((a,b)=>{
+                        const an=String(a?.name||"").toLowerCase(), bn=String(b?.name||"").toLowerCase();
+                        return (an.startsWith(q)?0:1)-(bn.startsWith(q)?0:1)||an.localeCompare(bn);
+                      }).slice(0,8);
+                      if (!sugs.length) return null;
+                      return (
+                        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99,background:"#1a1a1a",border:"1px solid rgba(116,184,0,0.25)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                          {sugs.map((c,i)=>(
+                            <div key={c.id||i}
+                              onMouseDown={()=>{setFilterClubObj(c);setFilterClubSearch(String(c.name||""));setClubFilterQuery(String(c.name||""));setShowClubFilterSuggest(false);}}
+                              style={{padding:"9px 12px",cursor:"pointer",borderBottom:i<sugs.length-1?"1px solid rgba(255,255,255,0.05)":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}
+                              onMouseEnter={e=>e.currentTarget.style.background="rgba(116,184,0,0.08)"}
+                              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                              <div>
+                                <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>
+                                  {(()=>{const name=String(c.name||""),idx=name.toLowerCase().indexOf(q);if(idx===-1)return name;return<>{name.slice(0,idx)}<mark style={{background:"rgba(116,184,0,0.3)",color:"#74B800",borderRadius:2,padding:"0 1px"}}>{name.slice(idx,idx+q.length)}</mark>{name.slice(idx+q.length)}</>;})()}
+                                </div>
+                                {c.city && <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:1}}>📍 {c.city}</div>}
+                              </div>
+                              <span style={{fontSize:10,color:"rgba(116,184,0,0.6)",fontWeight:800}}>🏟️</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
 
       {/* VALORAR JUGADORES */}
       {postRoster.length > 0 && (
