@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import { useCart } from '../contexts/CartContext';
 
 export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -20,7 +22,7 @@ export default function ProductDetail() {
       setLoading(true);
       const { data, error } = await supabase
         .from('store_products')
-        .select(`*, seller:store_sellers(id, business_name, logo_url, rating, description)`)
+        .select('*, seller:store_sellers(id, business_name, logo_url, rating, description)')
         .eq('slug', slug)
         .maybeSingle();
       if (error || !data) { setProduct(null); return; }
@@ -34,14 +36,11 @@ export default function ProductDetail() {
     try {
       setAddingToCart(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { if (confirm('Debes iniciar sesión. ¿Ir a login?')) navigate('/login?redirect=' + window.location.pathname); return; }
-      const { data: existing } = await supabase.from('store_cart').select('*').eq('user_id', user.id).eq('product_id', product.id).maybeSingle();
-      if (existing) {
-        await supabase.from('store_cart').update({ quantity: existing.quantity + quantity }).eq('id', existing.id);
-      } else {
-        await supabase.from('store_cart').insert([{ user_id: user.id, product_id: product.id, quantity }]);
+      if (!user) {
+        if (confirm('Debes iniciar sesión. ¿Ir a login?')) navigate('/login?redirect=' + window.location.pathname);
+        return;
       }
-      window.dispatchEvent(new Event('cart-updated'));
+      await addItem(product.id, quantity);
       setAddedFeedback(true);
       setTimeout(() => setAddedFeedback(false), 2000);
     } catch (err) { alert('Error: ' + err.message); }
@@ -90,7 +89,6 @@ export default function ProductDetail() {
       <div className="pageWrap">
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 60px' }}>
 
-          {/* Breadcrumb */}
           <div style={{ padding: '12px 0 20px', fontSize: 12, color: 'rgba(255,255,255,0.4)', display: 'flex', gap: 6, alignItems: 'center' }}>
             <Link to="/tienda" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Tienda</Link>
             <span>›</span>
@@ -101,13 +99,11 @@ export default function ProductDetail() {
 
           <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 768 ? '1fr' : '1fr 1fr', gap: 32, animation: 'gsPdFadeUp 0.4s ease' }}>
 
-            {/* ── IMÁGENES ── */}
+            {/* IMÁGENES */}
             <div>
-              {/* Imagen principal */}
               <div style={{ borderRadius: 20, overflow: 'hidden', background: '#111', border: '1px solid rgba(255,255,255,0.07)', aspectRatio: '1/1', position: 'relative', marginBottom: 12 }}>
                 {images[selectedImage] ? (
-                  <img src={images[selectedImage]} alt={product.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={images[selectedImage]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 80, opacity: 0.1 }}>🏓</div>
                 )}
@@ -117,12 +113,10 @@ export default function ProductDetail() {
                   </div>
                 )}
               </div>
-              {/* Miniaturas */}
               {images.length > 1 && (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {images.map((img, i) => (
-                    <div key={i} className="gsThumb"
-                      onClick={() => setSelectedImage(i)}
+                    <div key={i} className="gsThumb" onClick={() => setSelectedImage(i)}
                       style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: selectedImage === i ? '2px solid #74B800' : '2px solid rgba(255,255,255,0.08)', opacity: selectedImage === i ? 1 : 0.5 }}>
                       <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
@@ -131,16 +125,11 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* ── INFO + COMPRA ── */}
+            {/* INFO + COMPRA */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {/* Categoría + título */}
               <div>
-                <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1.5, color: '#74B800', marginBottom: 8 }}>
-                  {product.category}
-                </div>
-                <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, letterSpacing: -0.5 }}>
-                  {product.title}
-                </h1>
+                <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1.5, color: '#74B800', marginBottom: 8 }}>{product.category}</div>
+                <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, letterSpacing: -0.5 }}>{product.title}</h1>
                 {product.seller?.business_name && (
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>
                     por <strong style={{ color: 'rgba(255,255,255,0.7)' }}>{product.seller.business_name}</strong>
@@ -148,13 +137,10 @@ export default function ProductDetail() {
                 )}
               </div>
 
-              {/* Precio */}
               <div style={{ padding: '16px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ fontSize: 38, fontWeight: 900, color: '#74B800', lineHeight: 1 }}>€{product.price}</span>
-                  {hasDiscount && (
-                    <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>€{product.compare_at_price}</span>
-                  )}
+                  {hasDiscount && <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>€{product.compare_at_price}</span>}
                   {hasDiscount && (
                     <span style={{ padding: '3px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: 12, fontWeight: 900, border: '1px solid rgba(239,68,68,0.25)' }}>
                       Ahorras €{(product.compare_at_price - product.price).toFixed(2)}
@@ -164,7 +150,6 @@ export default function ProductDetail() {
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>IVA incluido · Envío calculado al finalizar</div>
               </div>
 
-              {/* Stock */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: inStock ? 'rgba(116,184,0,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${inStock ? 'rgba(116,184,0,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: inStock ? '#74B800' : '#ef4444', flexShrink: 0 }} />
                 <span style={{ fontSize: 13, fontWeight: 800, color: inStock ? '#74B800' : '#ef4444' }}>
@@ -175,7 +160,6 @@ export default function ProductDetail() {
                 )}
               </div>
 
-              {/* Cantidad + Añadir */}
               {inStock && (
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '4px' }}>
@@ -185,7 +169,6 @@ export default function ProductDetail() {
                     <button className="gsQtyBtn" onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
                       style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 18, fontWeight: 900, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>+</button>
                   </div>
-
                   <button onClick={handleAddToCart} disabled={addingToCart || addedFeedback}
                     style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: addedFeedback ? 'rgba(116,184,0,0.3)' : 'linear-gradient(135deg,#74B800,#9BE800)', color: addedFeedback ? '#74B800' : '#000', fontWeight: 900, fontSize: 15, cursor: addingToCart ? 'not-allowed' : 'pointer', transition: 'all .2s', animation: addedFeedback ? 'gsAddedPulse 0.3s ease' : 'none' }}>
                     {addedFeedback ? '✅ ¡Añadido!' : addingToCart ? '⏳...' : '🛒 Añadir al carrito'}
@@ -193,7 +176,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Descripción */}
               {product.description && (
                 <div style={{ padding: '16px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Descripción</div>
@@ -201,22 +183,18 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Specs */}
               {product.specs && Object.keys(product.specs).length > 0 && (
                 <div style={{ padding: '16px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Especificaciones</div>
-                  <div style={{ display: 'grid', gap: 0 }}>
-                    {Object.entries(product.specs).map(([key, value], i) => (
-                      <div key={key} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 12, padding: '9px 0', borderBottom: i < Object.keys(product.specs).length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'capitalize', fontWeight: 700 }}>{key}</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
+                  {Object.entries(product.specs).map(([key, value], i) => (
+                    <div key={key} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', gap: 12, padding: '9px 0', borderBottom: i < Object.keys(product.specs).length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', textTransform: 'capitalize', fontWeight: 700 }}>{key}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{value}</div>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {/* Vendedor */}
               {product.seller && (
                 <div style={{ padding: '14px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 42, height: 42, borderRadius: 10, overflow: 'hidden', background: 'rgba(116,184,0,0.1)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
