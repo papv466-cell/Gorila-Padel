@@ -93,6 +93,12 @@ function FlyTo({ target, zoomLevel }) {
   return null;
 }
 
+function SetMapRef({ mapRef }) {
+  const map = useMap();
+  useEffect(() => { mapRef.current = map; }, [map]);
+  return null;
+}
+
 /* ─── Componente principal ─── */
 export default function MapPage() {
   const navigate = useNavigate();
@@ -350,8 +356,7 @@ export default function MapPage() {
               <MapContainer
                 center={defaultCenter} zoom={9}
                 style={{ height:"100%", width:"100%" }}
-                whenCreated={map => { mapRef.current = map; setZoom(map.getZoom()); }}
-              >
+                ref={mapRef}              >
                 <MapEvents onZoom={z => setZoom(z)} onMove={() => {}} onMapClick={closeSheet} />
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
