@@ -3,24 +3,35 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
+import {
+  ALL_SPECIALTY_CATEGORIES,
+  INCLUSION,
+  getSpecialtyInfo,
+  specialtiesToSearchText,
+} from "../constants/teacherSpecialties";
 
-function safeLower(x) {
-  return String(x || "").toLowerCase();
-}
-
+function safeLower(x) { return String(x || "").toLowerCase(); }
 function initials(name = "") {
-  const parts = String(name || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
   if (!parts.length) return "🦍";
-  return parts.map((p) => p[0].toUpperCase()).join("");
+  return parts.map(p => p[0].toUpperCase()).join("");
 }
 
-function uniq(arr) {
-  return Array.from(new Set((arr || []).filter(Boolean).map((x) => String(x).trim()))).filter(Boolean);
-}
+const IS = {
+  width: "100%", padding: "10px 12px", borderRadius: 9,
+  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+  color: "#fff", fontSize: 13, boxSizing: "border-box",
+};
+
+// Pills de inclusión destacadas (acceso rápido sin abrir el panel completo)
+const QUICK_INCLUSION = [
+  { key: "silla_ruedas",   label: "Silla de ruedas", emoji: "♿",  color: "#3B82F6" },
+  { key: "baja_vision",    label: "Invidentes",       emoji: "🦯",  color: "#8B5CF6" },
+  { key: "down",           label: "Síndrome de Down", emoji: "💙",  color: "#EC4899" },
+  { key: "tea",            label: "TEA / Autismo",    emoji: "🧩",  color: "#F59E0B" },
+  { key: "tdah",           label: "TDAH",             emoji: "⚡",  color: "#F97316" },
+  { key: "lesion_retorno", label: "Vuelta tras lesión",emoji: "❤️‍🩹", color: "#EF4444" },
+];
 
 export default function TeachersPage() {
   const navigate = useNavigate();
@@ -28,422 +39,379 @@ export default function TeachersPage() {
 
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]); // profesores enriquecidos
-
-  const [q, setQ] = useState("");
-  const [onlyFav, setOnlyFav] = useState(false);
-
-  // Filtros pro
-  const [onlyInclusive, setOnlyInclusive] = useState(false);
-  const [onlyOneToOne, setOnlyOneToOne] = useState(false);
-  const [onlyTwoPeople, setOnlyTwoPeople] = useState(false);
-
-  // favoritos
-  const [favMap, setFavMap] = useState({}); // teacher_id -> {isFav, notify_morning, notify_afternoon}
+  const [rows, setRows] = useState([]);
+  const [favMap, setFavMap] = useState({});
   const [busyFavId, setBusyFavId] = useState("");
 
-  // -------- Session ----------
+  const [q, setQ] = useState("");
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [openFilterCat, setOpenFilterCat] = useState(null);
+  const [onlyFav, setOnlyFav] = useState(false);
+
   useEffect(() => {
     let alive = true;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setSession(data?.session ?? null);
-      setAuthReady(true);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (!alive) return;
-      setSession(s ?? null);
-      setAuthReady(true);
-    });
-
-    return () => {
-      alive = false;
-      sub?.subscription?.unsubscribe?.();
-    };
+    supabase.auth.getSession().then(({ data }) => { if (!alive) return; setSession(data?.session ?? null); setAuthReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; setSession(s ?? null); setAuthReady(true); });
+    return () => { alive = false; sub?.subscription?.unsubscribe?.(); };
   }, []);
 
   async function loadAll() {
     try {
       setLoading(true);
 
-      // 1) teachers activos
+      // 1) teachers activos con sus datos (bio, zone, price, specialties — todo en una tabla)
       const { data: teachers, error: eT } = await supabase
         .from("teachers")
-        .select("id, is_active")
+        .select("id,is_active,bio,zone,price_base,specialties")
         .neq("is_active", false);
-
       if (eT) throw eT;
 
-      const ids = (teachers || []).map((t) => String(t.id)).filter(Boolean);
+      const ids = (teachers || []).map(t => String(t.id)).filter(Boolean);
+      if (!ids.length) { setRows([]); setFavMap({}); return; }
 
-      if (!ids.length) {
-        setRows([]);
-        setFavMap({});
-        return;
-      }
-
-      // 2) profiles
+      // 2) profiles (nombre + avatar)
       const { data: profs, error: eP } = await supabase
-        .from("profiles")
-        .select("id, name, handle, avatar_url")
-        .in("id", ids);
-
+        .from("profiles").select("id,name,handle,avatar_url").in("id", ids);
       if (eP) throw eP;
-
-      // 3) teacher_public (incluye lo nuevo)
-      const { data: pubs, error: ePub } = await supabase
-        .from("teacher_public")
-        .select("teacher_id, zone, price_base, bio, class_types, modalities, adaptations, formats, updated_at")
-        .in("teacher_id", ids);
-
-      if (ePub) throw ePub;
 
       const mapProf = {};
       for (const p of profs || []) mapProf[String(p.id)] = p;
 
-      const mapPub = {};
-      for (const t of pubs || []) mapPub[String(t.teacher_id)] = t;
+      const mapTeacher = {};
+      for (const t of teachers || []) mapTeacher[String(t.id)] = t;
 
-      // 4) favoritos del usuario
+      // 3) favoritos del usuario
       const uid = session?.user?.id ? String(session.user.id) : "";
-      let favs = [];
+      let nextFavMap = {};
       if (uid) {
-        const { data: favRows, error: eF } = await supabase
+        const { data: favRows } = await supabase
           .from("teacher_favorites")
-          .select("teacher_id, notify_morning, notify_afternoon, created_at")
+          .select("teacher_id,notify_morning,notify_afternoon")
           .eq("user_id", uid);
-
-        if (eF) throw eF;
-        favs = Array.isArray(favRows) ? favRows : [];
-      }
-
-      const nextFavMap = {};
-      for (const f of favs || []) {
-        const tid = String(f.teacher_id);
-        nextFavMap[tid] = {
-          isFav: true,
-          notify_morning: f.notify_morning !== false,
-          notify_afternoon: f.notify_afternoon !== false,
-        };
+        for (const f of favRows || []) {
+          nextFavMap[String(f.teacher_id)] = {
+            isFav: true,
+            notify_morning: f.notify_morning !== false,
+            notify_afternoon: f.notify_afternoon !== false,
+          };
+        }
       }
       setFavMap(nextFavMap);
 
-      // 5) juntar todo
-      const enriched = ids
-        .map((id) => {
-          const p = mapProf[id] || null;
-          const pub = mapPub[id] || null;
-
-          const displayName =
-            (p?.name && String(p.name).trim()) ||
-            (p?.handle && String(p.handle).trim()) ||
-            `Profe ${id.slice(0, 6)}…`;
-
-          return {
-            teacher_id: id,
-            name: displayName,
-            avatar_url: p?.avatar_url || "",
-
-            zone: pub?.zone || "",
-            price_base: pub?.price_base ?? null,
-            bio: pub?.bio || "",
-            class_types: Array.isArray(pub?.class_types) ? pub.class_types : [],
-
-            modalities: Array.isArray(pub?.modalities) ? pub.modalities : [],
-            adaptations: Array.isArray(pub?.adaptations) ? pub.adaptations : [],
-            formats: Array.isArray(pub?.formats) ? pub.formats : [],
-
-            updated_at: pub?.updated_at || null,
-          };
-        })
-        .sort((a, b) => safeLower(a.name).localeCompare(safeLower(b.name)));
+      // 4) montar filas enriquecidas
+      const enriched = ids.map(id => {
+        const p = mapProf[id] || null;
+        const t = mapTeacher[id] || null;
+        const displayName = (p?.name && String(p.name).trim())
+          || (p?.handle && String(p.handle).trim())
+          || `Profe ${id.slice(0, 6)}…`;
+        const specialties = Array.isArray(t?.specialties) ? t.specialties : [];
+        return {
+          teacher_id: id,
+          name: displayName,
+          avatar_url: p?.avatar_url || "",
+          zone: t?.zone || "",
+          price_base: t?.price_base ?? null,
+          bio: t?.bio || "",
+          specialties,
+          // texto unificado para búsqueda libre
+          searchText: safeLower(`${displayName} ${t?.zone || ""} ${t?.bio || ""} ${specialtiesToSearchText(specialties)}`),
+        };
+      }).sort((a, b) => safeLower(a.name).localeCompare(safeLower(b.name)));
 
       setRows(enriched);
     } catch (e) {
-      console.error("TeachersPage loadAll error:", e);
       toast.error(e?.message || "No se pudieron cargar los profesores");
-      setRows([]);
-      setFavMap({});
-    } finally {
-      setLoading(false);
-    }
+      setRows([]); setFavMap({});
+    } finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    if (!authReady) return;
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady, session?.user?.id]);
-
-  // ✅ Sugerencias “inteligentes” (datalist)
-  const suggestions = useMemo(() => {
-    const zones = uniq(rows.map((r) => r.zone).filter(Boolean));
-    const types = uniq(rows.flatMap((r) => r.class_types || []));
-    const modalities = uniq(rows.flatMap((r) => r.modalities || []));
-    const adaptations = uniq(rows.flatMap((r) => r.adaptations || []));
-    const formats = uniq(rows.flatMap((r) => r.formats || []));
-
-    // cosas “tipo etiqueta” para que el usuario entienda qué buscar
-    const tagged = [
-      ...zones.map((z) => `Zona: ${z}`),
-      ...types.map((t) => `Tipo: ${t}`),
-      ...modalities.map((m) => `Modalidad: ${m}`),
-      ...adaptations.map((a) => `Inclusión: ${a}`),
-      ...formats.map((f) => `Formato: ${f}`),
-    ];
-
-    return uniq(tagged).sort((a, b) => safeLower(a).localeCompare(safeLower(b))).slice(0, 80);
-  }, [rows]);
+  useEffect(() => { if (!authReady) return; loadAll(); }, [authReady, session?.user?.id]);
 
   const filtered = useMemo(() => {
     const qq = safeLower(q).trim();
-
-    return (rows || []).filter((r) => {
+    return rows.filter(r => {
       if (onlyFav && !favMap?.[r.teacher_id]?.isFav) return false;
-
-      if (onlyInclusive) {
-        // inclusivo si tiene Adaptada/Incl. o adaptations con algo
-        const hasInc =
-          (r.modalities || []).some((x) => safeLower(x).includes("inclus")) ||
-          (r.modalities || []).some((x) => safeLower(x).includes("adapt")) ||
-          (r.adaptations || []).length > 0;
-        if (!hasInc) return false;
-      }
-
-      if (onlyOneToOne) {
-        if (!(r.formats || []).some((x) => safeLower(x).includes("1:1"))) return false;
-      }
-
-      if (onlyTwoPeople) {
-        if (!(r.formats || []).some((x) => safeLower(x).includes("2"))) return false;
-      }
-
+      if (activeFilters.length > 0 && !activeFilters.every(fk => r.specialties.includes(fk))) return false;
       if (!qq) return true;
-
-      // Si el usuario selecciona una sugerencia tipo “Zona: X”, lo tratamos bonito
-      const normalized = qq
-        .replace(/^zona:\s*/i, "")
-        .replace(/^tipo:\s*/i, "")
-        .replace(/^modalidad:\s*/i, "")
-        .replace(/^inclusión:\s*/i, "")
-        .replace(/^formato:\s*/i, "");
-
-      const hay = [
-        r.name,
-        r.zone,
-        r.bio,
-        (r.class_types || []).join(" "),
-        (r.modalities || []).join(" "),
-        (r.adaptations || []).join(" "),
-        (r.formats || []).join(" "),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-
-      return safeLower(hay).includes(normalized);
+      return r.searchText.includes(qq);
     });
-  }, [rows, q, onlyFav, favMap, onlyInclusive, onlyOneToOne, onlyTwoPeople]);
+  }, [rows, q, onlyFav, favMap, activeFilters]);
+
+  function toggleFilter(key) {
+    setActiveFilters(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  }
+
+  function clearAll() { setQ(""); setOnlyFav(false); setActiveFilters([]); }
 
   async function toggleFav(teacherId) {
     const uid = session?.user?.id ? String(session.user.id) : "";
     if (!uid) return navigate("/login");
-
     try {
       setBusyFavId(teacherId);
-
       const isFav = !!favMap?.[teacherId]?.isFav;
-
       if (!isFav) {
-        const { error } = await supabase.from("teacher_favorites").insert({
-          user_id: uid,
-          teacher_id: teacherId,
-          notify_morning: true,
-          notify_afternoon: true,
-        });
+        const { error } = await supabase.from("teacher_favorites")
+          .insert({ user_id: uid, teacher_id: teacherId, notify_morning: true, notify_afternoon: true });
         if (error) throw error;
-
-        setFavMap((p) => ({
-          ...p,
-          [teacherId]: { isFav: true, notify_morning: true, notify_afternoon: true },
-        }));
+        setFavMap(p => ({ ...p, [teacherId]: { isFav: true, notify_morning: true, notify_afternoon: true } }));
         toast.success("⭐ Añadido a favoritos");
       } else {
-        const { error } = await supabase
-          .from("teacher_favorites")
-          .delete()
-          .eq("user_id", uid)
-          .eq("teacher_id", teacherId);
+        const { error } = await supabase.from("teacher_favorites")
+          .delete().eq("user_id", uid).eq("teacher_id", teacherId);
         if (error) throw error;
-
-        setFavMap((p) => {
-          const next = { ...p };
-          delete next[teacherId];
-          return next;
-        });
+        setFavMap(p => { const next = { ...p }; delete next[teacherId]; return next; });
         toast.success("Favorito eliminado");
       }
-    } catch (e) {
-      toast.error(e?.message || "No se pudo actualizar favorito");
-    } finally {
-      setBusyFavId("");
-    }
+    } catch (e) { toast.error(e?.message || "Error"); }
+    finally { setBusyFavId(""); }
   }
 
-  function clearFilters() {
-    setQ("");
-    setOnlyFav(false);
-    setOnlyInclusive(false);
-    setOnlyOneToOne(false);
-    setOnlyTwoPeople(false);
-  }
+  const totalFilters = activeFilters.length + (onlyFav ? 1 : 0);
+  const hasFilters = totalFilters > 0 || !!q;
 
   return (
-    <div className="page">
+    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
+      <style>{`
+        .tCard { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:14px; margin-bottom:8px; transition:border-color .2s; }
+        .tCard:hover { border-color:rgba(116,184,0,0.3); }
+        .tChip { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); }
+        .tBtn { padding:8px 14px; border-radius:9px; font-weight:900; font-size:12px; cursor:pointer; border:none; }
+        .tPrimary { background:linear-gradient(135deg,#74B800,#9BE800); color:#000; }
+        .tGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
+        .tFav { background:rgba(255,215,0,0.15); color:#FFD700; border:1px solid rgba(255,215,0,0.3) !important; }
+        .tFiltPill { display:inline-flex; align-items:center; gap:4px; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12px; font-weight:800; border:none; transition:all .15s; }
+        .tFiltCatH { display:flex; justify-content:space-between; align-items:center; padding:10px 0; cursor:pointer; border-top:1px solid rgba(255,255,255,0.05); }
+      `}</style>
+
       <div className="pageWrap">
-        <div className="container">
-          <div className="pageHeader">
+        <div className="container" style={{ padding: "0 16px", maxWidth: 720, margin: "0 auto" }}>
+
+          {/* HEADER */}
+          <div style={{ padding: "12px 0 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h1 className="pageTitle">Profesores</h1>
-              <div className="pageMeta">Busca por zona, tipo, modalidad, inclusión… y marca favoritos</div>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#fff" }}>👨‍🏫 Profesores</h1>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                {loading ? "Cargando…" : `${filtered.length} profe${filtered.length !== 1 ? "s" : ""} disponibles`}
+              </div>
             </div>
+            <button className="tBtn tGhost" onClick={() => setFilterPanelOpen(f => !f)}
+              style={{ position: "relative" }}>
+              🔍 Filtros
+              {totalFilters > 0 && (
+                <span style={{ position: "absolute", top: -6, right: -6, background: "#74B800", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>
+                  {totalFilters}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Controles */}
-          <div className="card" style={{ marginTop: 14 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-              <div style={{ fontWeight: 950, fontSize: 15 }}>Buscador</div>
-              <button className="btn ghost" onClick={clearFilters} disabled={loading}>
-                Limpiar
-              </button>
-            </div>
+          {/* PANEL FILTROS */}
+          {filterPanelOpen && (
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 14, padding: 16, marginBottom: 10 }}>
 
-            <div style={{ marginTop: 10 }}>
-              <label className="gpLabel">Buscar (sugerencias al escribir)</label>
-              <input
-                className="gpInput"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                list="teacher-search-suggest"
-                placeholder='Ej: "Zona: Teatinos", "Técnica", "Inclusión: silla", "Formato: 2 personas"...'
-              />
-              <datalist id="teacher-search-suggest">
-                {suggestions.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
-            </div>
-
-            <div className="gpGrid2" style={{ gap: 12, marginTop: 12 }}>
-              <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, opacity: 0.9 }}>
-                  <input type="checkbox" checked={!!onlyFav} onChange={(e) => setOnlyFav(!!e.target.checked)} />
-                  Solo favoritos
-                </label>
-
-                <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, opacity: 0.9 }}>
-                  <input type="checkbox" checked={!!onlyInclusive} onChange={(e) => setOnlyInclusive(!!e.target.checked)} />
-                  Inclusión / Adaptada
-                </label>
-
-                <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, opacity: 0.9 }}>
-                  <input type="checkbox" checked={!!onlyOneToOne} onChange={(e) => setOnlyOneToOne(!!e.target.checked)} />
-                  1:1
-                </label>
-
-                <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, opacity: 0.9 }}>
-                  <input type="checkbox" checked={!!onlyTwoPeople} onChange={(e) => setOnlyTwoPeople(!!e.target.checked)} />
-                  Para 2 personas
-                </label>
+              {/* Búsqueda libre */}
+              <div style={{ marginBottom: 14 }}>
+                <input style={IS} value={q} onChange={e => setQ(e.target.value)}
+                  placeholder="🔍  Busca por nombre, zona, golpe, técnica, nivel…" />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button className="btn ghost" onClick={loadAll} disabled={loading}>
-                  {loading ? "Cargando…" : "Actualizar"}
+              {/* Inclusión — acceso rápido */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 8 }}>
+                  ♿ Inclusión / Diversidad funcional
+                </div>
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                  {QUICK_INCLUSION.map(f => {
+                    const active = activeFilters.includes(f.key);
+                    return (
+                      <button key={f.key} className="tFiltPill" onClick={() => toggleFilter(f.key)}
+                        style={{
+                          background: active ? `${f.color}22` : "rgba(255,255,255,0.05)",
+                          color: active ? f.color : "rgba(255,255,255,0.6)",
+                          outline: active ? `1.5px solid ${f.color}60` : "1px solid rgba(255,255,255,0.08)",
+                        }}>
+                        {f.emoji} {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Solo favoritos */}
+              <div style={{ marginBottom: 14 }}>
+                <button className="tFiltPill" onClick={() => setOnlyFav(v => !v)}
+                  style={{
+                    background: onlyFav ? "rgba(255,215,0,0.15)" : "rgba(255,255,255,0.05)",
+                    color: onlyFav ? "#FFD700" : "rgba(255,255,255,0.6)",
+                    outline: onlyFav ? "1.5px solid rgba(255,215,0,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  }}>
+                  ⭐ Solo favoritos
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Lista */}
-          <div style={{ marginTop: 14 }}>
-            {loading ? (
-              <div style={{ opacity: 0.75 }}>Cargando…</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ opacity: 0.75 }}>No hay profes para mostrar con estos filtros.</div>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 12 }}>
-                {filtered.map((r) => {
-                  const isFav = !!favMap?.[r.teacher_id]?.isFav;
-                  const avatar = r.avatar_url || "";
-
-                  const zone = r.zone ? `📍 ${r.zone}` : "📍 —";
-                  const price = r.price_base != null ? `💶 Base: ${r.price_base}€` : "💶 Base: —";
-
-                  const modalities = (r.modalities || []).length ? `🧭 ${(r.modalities || []).join(" · ")}` : "";
-                  const types = (r.class_types || []).length ? `🎯 ${(r.class_types || []).join(" · ")}` : "🎯 —";
-                  const formats = (r.formats || []).length ? `👥 ${(r.formats || []).join(" · ")}` : "";
-                  const inclus = (r.adaptations || []).length ? `♿ ${(r.adaptations || []).join(" · ")}` : "";
-
+              {/* Todas las categorías en acordeón */}
+              <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)", padding: "0 14px", marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", padding: "10px 0 4px", letterSpacing: ".05em" }}>
+                  Filtrar por especialidad
+                </div>
+                {ALL_SPECIALTY_CATEGORIES.map(cat => {
+                  const catActive = activeFilters.filter(k => cat.items.some(i => i.key === k));
+                  const isOpen = openFilterCat === cat.id;
                   return (
-                    <li key={r.teacher_id} className="card">
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                        <div
-                          onClick={() => navigate(`/profesores/${r.teacher_id}`)}
-                          style={{ display: "flex", gap: 12, alignItems: "center", cursor: "pointer", minWidth: 260, flex: 1 }}
-                          title="Ver perfil"
-                        >
-                          {avatar ? (
-                            <img src={avatar} alt={r.name} style={{ width: 54, height: 54, borderRadius: 999, objectFit: "cover" }} />
-                          ) : (
-                            <div style={{ width: 54, height: 54, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 900, background: "rgba(0,0,0,0.06)" }}>
-                              {initials(r.name)}
-                            </div>
+                    <div key={cat.id}>
+                      <div className="tFiltCatH" onClick={() => setOpenFilterCat(isOpen ? null : cat.id)}>
+                        <span style={{ fontSize: 12, fontWeight: 800, color: catActive.length ? "#fff" : "rgba(255,255,255,0.55)" }}>
+                          {cat.label}
+                        </span>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          {catActive.length > 0 && (
+                            <span style={{ fontSize: 10, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "1px 7px", borderRadius: 999, fontWeight: 900 }}>{catActive.length}</span>
                           )}
-
-                          <div>
-                            <div style={{ fontWeight: 950, fontSize: 16 }}>{r.name}</div>
-                            <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
-                              {zone} · {price}
-                            </div>
-
-                            <div style={{ marginTop: 6, display: "grid", gap: 4, fontSize: 13, opacity: 0.85 }}>
-                              {modalities ? <div>{modalities}</div> : null}
-                              <div>{types}</div>
-                              {formats ? <div>{formats}</div> : null}
-                              {inclus ? <div>{inclus}</div> : null}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                          <button
-                            type="button"
-                            className={isFav ? "btn" : "btn ghost"}
-                            onClick={() => toggleFav(r.teacher_id)}
-                            disabled={busyFavId === r.teacher_id}
-                            style={{ borderRadius: 14, minWidth: 170 }}
-                          >
-                            {busyFavId === r.teacher_id ? "Guardando…" : isFav ? "⭐ En favoritos" : "☆ Añadir favorito"}
-                          </button>
-
-                          <button type="button" className="btn ghost" onClick={() => navigate(`/clases?teacher=${r.teacher_id}`)}>
-                            Ver clases
-                          </button>
+                          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10 }}>{isOpen ? "▲" : "▼"}</span>
                         </div>
                       </div>
-                    </li>
+                      {isOpen && (
+                        <div style={{ paddingBottom: 12 }}>
+                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                            {cat.items.map(item => {
+                              const active = activeFilters.includes(item.key);
+                              const isInc = cat.id === "inclusion";
+                              const color = item.color || "#74B800";
+                              return (
+                                <button key={item.key} className="tFiltPill" onClick={() => toggleFilter(item.key)}
+                                  style={{
+                                    background: active ? (isInc ? `${color}22` : "rgba(116,184,0,0.18)") : "rgba(255,255,255,0.04)",
+                                    color: active ? (isInc ? color : "#74B800") : "rgba(255,255,255,0.55)",
+                                    outline: active ? `1.5px solid ${isInc ? color + "60" : "rgba(116,184,0,0.4)"}` : "1px solid rgba(255,255,255,0.07)",
+                                  }}>
+                                  <span style={{ fontSize: 13 }}>{item.emoji}</span>
+                                  {item.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
-              </ul>
-            )}
-          </div>
+              </div>
 
-          <div style={{ marginTop: 12, fontSize: 12, opacity: 0.7 }}>
-            Tip: si quieres avisos por franja (mañana/tarde), entra en el profe y ajusta los checks.
+              {/* Chips de filtros activos */}
+              {activeFilters.length > 0 && (
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", alignSelf: "center" }}>Activos:</span>
+                  {activeFilters.map(k => {
+                    const info = getSpecialtyInfo(k);
+                    return (
+                      <button key={k} onClick={() => toggleFilter(k)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 999, background: "rgba(116,184,0,0.15)", color: "#74B800", border: "1px solid rgba(116,184,0,0.3)", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>
+                        {info.emoji} {info.label} ✕
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {hasFilters && (
+                <button className="tBtn tGhost" style={{ fontSize: 11 }} onClick={clearAll}>✕ Limpiar todo</button>
+              )}
+            </div>
+          )}
+
+          {/* LISTA */}
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.4)" }}>Cargando…</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ background: "#111", borderRadius: 14, padding: 28, textAlign: "center", border: "1px solid rgba(255,255,255,0.07)" }}>
+              <div style={{ fontSize: 36 }}>🦍</div>
+              <div style={{ fontWeight: 900, color: "#fff", marginTop: 8 }}>Ningún profe con estos filtros</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>Prueba a quitar algún filtro</div>
+              <button className="tBtn tGhost" style={{ marginTop: 12 }} onClick={clearAll}>Limpiar filtros</button>
+            </div>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {filtered.map(r => {
+                const isFav = !!favMap?.[r.teacher_id]?.isFav;
+                const inclusionSpecs = r.specialties.map(k => getSpecialtyInfo(k)).filter(s => s.category === "inclusion");
+                const otherSpecs = r.specialties.map(k => getSpecialtyInfo(k)).filter(s => s.category !== "inclusion").slice(0, 5);
+                const remaining = r.specialties.length - inclusionSpecs.length - Math.min(otherSpecs.length, 5);
+
+                return (
+                  <li key={r.teacher_id} className="tCard">
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      {/* AVATAR */}
+                      <div onClick={() => navigate(`/profesores/${r.teacher_id}`)} style={{ cursor: "pointer", flexShrink: 0 }}>
+                        {r.avatar_url
+                          ? <img src={r.avatar_url} alt={r.name} style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(116,184,0,0.3)" }} />
+                          : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(116,184,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#74B800", fontSize: 16 }}>{initials(r.name)}</div>
+                        }
+                      </div>
+
+                      {/* INFO */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 6 }}>
+                          <div onClick={() => navigate(`/profesores/${r.teacher_id}`)} style={{ cursor: "pointer", flex: 1 }}>
+                            <div style={{ fontWeight: 900, fontSize: 15, color: "#fff" }}>{r.name}</div>
+                            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                              {r.zone ? `📍 ${r.zone}` : ""}
+                              {r.price_base != null ? `${r.zone ? "  ·  " : ""}💶 ${r.price_base}€` : ""}
+                            </div>
+                          </div>
+                          <button className={`tBtn ${isFav ? "tFav" : "tGhost"}`}
+                            onClick={() => toggleFav(r.teacher_id)} disabled={busyFavId === r.teacher_id}
+                            style={{ flexShrink: 0, fontSize: 16, padding: "5px 10px" }}>
+                            {busyFavId === r.teacher_id ? "…" : isFav ? "⭐" : "☆"}
+                          </button>
+                        </div>
+
+                        {r.bio && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 6, lineHeight: 1.45 }}>{r.bio}</div>}
+
+                        {/* Inclusión destacada */}
+                        {inclusionSpecs.length > 0 && (
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 8 }}>
+                            {inclusionSpecs.map(s => (
+                              <span key={s.key} style={{
+                                display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 800,
+                                padding: "2px 8px", borderRadius: 999,
+                                background: `${s.color || "#3B82F6"}20`, color: s.color || "#3B82F6",
+                                border: `1px solid ${s.color || "#3B82F6"}40`,
+                              }}>
+                                {s.emoji} {s.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Otras especialidades */}
+                        {otherSpecs.length > 0 && (
+                          <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 5 }}>
+                            {otherSpecs.map(s => (
+                              <span key={s.key} className="tChip">{s.emoji} {s.label}</span>
+                            ))}
+                            {remaining > 0 && (
+                              <span className="tChip" style={{ color: "rgba(116,184,0,0.8)" }}>+{remaining} más</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                          <button className="tBtn tPrimary" onClick={() => navigate(`/profesores/${r.teacher_id}`)}>Ver perfil</button>
+                          <button className="tBtn tGhost" onClick={() => navigate(`/clases?teacher=${r.teacher_id}`)}>Ver clases</button>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <div style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 8, paddingBottom: 20 }}>
+            Marca ⭐ para recibir avisos cuando tu profe publique clases.
           </div>
         </div>
       </div>

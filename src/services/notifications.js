@@ -502,3 +502,16 @@ export async function notifyEngagementMissYou({ userId, userName, daysSinceLastL
   });
   
 }
+// SOS Cuarto Jugador
+export async function notifySOSMatch({ matchId, matchName, clubName, level, startTime, userIds }) {
+  const promises = userIds.map(userId =>
+    createNotification({
+      userId,
+      type: "sos_match",
+      title: "🆘 SOS Cuarto Jugador",
+      body: `Falta 1 plaza en ${clubName} — ${level} — ${startTime}`,
+      data: { matchId, matchName },
+    })
+  );
+  return Promise.allSettled(promises);
+}

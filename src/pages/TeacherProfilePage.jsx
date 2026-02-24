@@ -3,529 +3,411 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
+import {
+  ALL_SPECIALTY_CATEGORIES,
+  getSpecialtyInfo,
+  groupSpecialtiesByCategory,
+} from "../constants/teacherSpecialties";
 
 function isUuid(x = "") {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
 }
-
 function initials(name = "") {
-  const parts = String(name || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2);
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
   if (!parts.length) return "🦍";
-  return parts.map((p) => p[0].toUpperCase()).join("");
+  return parts.map(p => p[0].toUpperCase()).join("");
 }
 
-function fmtList(arr) {
-  const list = Array.isArray(arr) ? arr.filter(Boolean).map(String) : [];
-  return list.length ? list.join(" · ") : "—";
+const IS = {
+  width: "100%", padding: "10px 12px", borderRadius: 9,
+  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+  color: "#fff", fontSize: 13, boxSizing: "border-box",
+};
+const LB = {
+  fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.45)",
+  textTransform: "uppercase", letterSpacing: ".05em", display: "block", marginBottom: 6,
+};
+
+function SpecPill({ item, active, categoryId, onToggle }) {
+  const isInc = categoryId === "inclusion";
+  const color = item.color || "#74B800";
+  return (
+    <button type="button" onClick={onToggle}
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 5,
+        padding: "5px 11px", borderRadius: 999, cursor: "pointer",
+        fontSize: 12, fontWeight: 800, border: "none", transition: "all .15s",
+        background: active ? (isInc ? `${color}22` : "rgba(116,184,0,0.18)") : "rgba(255,255,255,0.05)",
+        color: active ? (isInc ? color : "#74B800") : "rgba(255,255,255,0.5)",
+        outline: active
+          ? `1.5px solid ${isInc ? color + "80" : "rgba(116,184,0,0.5)"}`
+          : "1px solid rgba(255,255,255,0.08)",
+      }}>
+      <span style={{ fontSize: 14 }}>{item.emoji}</span>
+      {item.label}
+    </button>
+  );
 }
 
-const MODALITIES = [
-  "Iniciación",
-  "Técnica",
-  "Competición",
-  "Infantil",
-  "Senior",
-  "Rehabilitación",
-  "Adaptada / Inclusiva",
-];
+function SpecCategory({ cat, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const catSelected = selected.filter(k => cat.items.some(i => i.key === k));
 
-const ADAPTATIONS = [
-  "♿ Movilidad reducida (silla de ruedas)",
-  "👁️ Discapacidad visual",
-  "🧠 Neurodiversidad (TEA / TDAH)",
-  "🧩 Discapacidad intelectual",
-  "🤝 Síndrome de Down",
-  "❤️‍🩹 Rehabilitación / vuelta tras lesión",
-  "⏱️ Ritmo suave / baja intensidad",
-];
+  function toggle(key) {
+    onChange(selected.includes(key) ? selected.filter(k => k !== key) : [...selected, key]);
+  }
 
-const FORMATS = [
-  "👤 Clase 1:1 (individual)",
-  "👥 Clase para 2 personas",
-];
+  return (
+    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div onClick={() => setOpen(o => !o)}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", cursor: "pointer", userSelect: "none" }}>
+        <span style={{ fontSize: 13, fontWeight: 800, color: catSelected.length ? "#fff" : "rgba(255,255,255,0.6)" }}>
+          {cat.label}
+        </span>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          {catSelected.length > 0 && (
+            <span style={{ fontSize: 11, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "2px 8px", borderRadius: 999, fontWeight: 900 }}>
+              {catSelected.length} ✓
+            </span>
+          )}
+          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, fontWeight: 900 }}>{open ? "▲" : "▼"}</span>
+        </div>
+      </div>
+      {open && (
+        <div style={{ paddingBottom: 14 }}>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+            {cat.items.map(item => (
+              <SpecPill key={item.key} item={item} categoryId={cat.id}
+                active={selected.includes(item.key)} onToggle={() => toggle(item.key)} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TeacherProfilePage() {
-  const { id } = useParams(); // teacher_id
+  const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Guard UUID
   useEffect(() => {
-    if (!id) return;
-    if (!isUuid(id)) {
-      toast.error("Profesor no válido");
-      navigate("/clases", { replace: true });
-    }
-  }, [id, navigate, toast]);
+    if (id && !isUuid(id)) { toast.error("Profesor no válido"); navigate("/profesores", { replace: true }); }
+  }, [id]);
 
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
-  const [pub, setPub] = useState(null);
+  const [teacherRow, setTeacherRow] = useState(null); // fila de tabla teachers
 
-  // Favoritos
   const [favBusy, setFavBusy] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [notifyMorning, setNotifyMorning] = useState(true);
   const [notifyAfternoon, setNotifyAfternoon] = useState(true);
 
-  // Editor (solo si soy ese profe)
   const isMe = useMemo(() => {
     const uid = session?.user?.id ? String(session.user.id) : "";
-    return uid && id && uid === String(id);
+    return !!(uid && id && uid === String(id));
   }, [session?.user?.id, id]);
 
-  // Editor fields
+  // Editor
   const [editBio, setEditBio] = useState("");
   const [editZone, setEditZone] = useState("");
   const [editPriceBase, setEditPriceBase] = useState("");
-  const [editTypes, setEditTypes] = useState("");
-  const [editModalities, setEditModalities] = useState([]);
-  const [editAdaptations, setEditAdaptations] = useState([]);
-  const [editFormats, setEditFormats] = useState([]);
+  const [editSpecialties, setEditSpecialties] = useState([]);
+  const [savingProfile, setSavingProfile] = useState(false);
 
-  // -------- Session ----------
   useEffect(() => {
     let alive = true;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setSession(data?.session ?? null);
-      setAuthReady(true);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      if (!alive) return;
-      setSession(s ?? null);
-      setAuthReady(true);
-    });
-
-    return () => {
-      alive = false;
-      sub?.subscription?.unsubscribe?.();
-    };
+    supabase.auth.getSession().then(({ data }) => { if (!alive) return; setSession(data?.session ?? null); setAuthReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; setSession(s ?? null); setAuthReady(true); });
+    return () => { alive = false; sub?.subscription?.unsubscribe?.(); };
   }, []);
 
   async function loadAll() {
     if (!id) return;
-
     try {
       setLoading(true);
 
-      // 1) profile
+      // perfil público
       const { data: prof, error: e1 } = await supabase
         .from("profiles")
-        .select("id, name, handle, avatar_url")
-        .eq("id", id)
-        .maybeSingle();
+        .select("id,name,handle,avatar_url")
+        .eq("id", id).maybeSingle();
       if (e1) throw e1;
 
-      // 2) teacher_public
-      const { data: tp, error: e2 } = await supabase
-        .from("teacher_public")
-        .select("teacher_id, bio, zone, price_base, class_types, modalities, adaptations, formats, updated_at")
-        .eq("teacher_id", id)
-        .maybeSingle();
+      // datos del profe (tabla teachers, misma id)
+      const { data: tc, error: e2 } = await supabase
+        .from("teachers")
+        .select("id,is_active,bio,zone,price_base,specialties")
+        .eq("id", id).maybeSingle();
       if (e2) throw e2;
 
       setProfile(prof || null);
-      setPub(tp || null);
+      setTeacherRow(tc || null);
+      setEditBio(String(tc?.bio || ""));
+      setEditZone(String(tc?.zone || ""));
+      setEditPriceBase(tc?.price_base == null ? "" : String(tc.price_base));
+      setEditSpecialties(Array.isArray(tc?.specialties) ? tc.specialties : []);
 
-      // Prefill editor
-      setEditBio(String(tp?.bio || ""));
-      setEditZone(String(tp?.zone || ""));
-      setEditPriceBase(tp?.price_base == null ? "" : String(tp.price_base));
-      setEditTypes(Array.isArray(tp?.class_types) ? tp.class_types.join(", ") : "");
-
-      setEditModalities(Array.isArray(tp?.modalities) ? tp.modalities : []);
-      setEditAdaptations(Array.isArray(tp?.adaptations) ? tp.adaptations : []);
-      setEditFormats(Array.isArray(tp?.formats) ? tp.formats : []);
-
-      // 3) favorito del usuario
+      // favorito
       const uid = session?.user?.id ? String(session.user.id) : "";
       if (uid) {
-        const { data: favRow, error: e3 } = await supabase
+        const { data: favRow } = await supabase
           .from("teacher_favorites")
-          .select("user_id, teacher_id, notify_morning, notify_afternoon, created_at")
-          .eq("user_id", uid)
-          .eq("teacher_id", id)
-          .maybeSingle();
-        if (e3) throw e3;
-
+          .select("user_id,notify_morning,notify_afternoon")
+          .eq("user_id", uid).eq("teacher_id", id).maybeSingle();
         if (favRow?.user_id) {
           setIsFav(true);
           setNotifyMorning(favRow.notify_morning !== false);
           setNotifyAfternoon(favRow.notify_afternoon !== false);
         } else {
           setIsFav(false);
-          setNotifyMorning(true);
-          setNotifyAfternoon(true);
         }
       }
-    } catch (e) {
-      console.error("TeacherProfile loadAll error:", e);
-      toast.error(e?.message || "No se pudo cargar el perfil del profesor");
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { toast.error(e?.message || "No se pudo cargar el perfil"); }
+    finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    if (!authReady) return;
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authReady, id, session?.user?.id]);
+  useEffect(() => { if (!authReady) return; loadAll(); }, [authReady, id, session?.user?.id]);
 
   async function toggleFavorite() {
     const uid = session?.user?.id ? String(session.user.id) : "";
     if (!uid) return navigate("/login");
-
     try {
       setFavBusy(true);
-
       if (!isFav) {
-        const { error } = await supabase.from("teacher_favorites").insert({
-          user_id: uid,
-          teacher_id: id,
-          notify_morning: true,
-          notify_afternoon: true,
-        });
+        const { error } = await supabase.from("teacher_favorites")
+          .insert({ user_id: uid, teacher_id: id, notify_morning: true, notify_afternoon: true });
         if (error) throw error;
-
-        setIsFav(true);
-        setNotifyMorning(true);
-        setNotifyAfternoon(true);
+        setIsFav(true); setNotifyMorning(true); setNotifyAfternoon(true);
         toast.success("⭐ Añadido a favoritos");
       } else {
-        const { error } = await supabase
-          .from("teacher_favorites")
-          .delete()
-          .eq("user_id", uid)
-          .eq("teacher_id", id);
+        const { error } = await supabase.from("teacher_favorites")
+          .delete().eq("user_id", uid).eq("teacher_id", id);
         if (error) throw error;
-
-        setIsFav(false);
-        toast.success("Favorito eliminado");
+        setIsFav(false); toast.success("Favorito eliminado");
       }
-    } catch (e) {
-      toast.error(e?.message || "No se pudo actualizar favorito");
-    } finally {
-      setFavBusy(false);
-    }
+    } catch (e) { toast.error(e?.message || "Error"); }
+    finally { setFavBusy(false); }
   }
 
-  async function saveFavPrefs(nextMorning, nextAfternoon) {
+  async function saveFavPrefs(m, t) {
     const uid = session?.user?.id ? String(session.user.id) : "";
-    if (!uid) return navigate("/login");
-    if (!isFav) return;
-
+    if (!uid || !isFav) return;
     try {
       setFavBusy(true);
-
-      const { error } = await supabase
-        .from("teacher_favorites")
-        .update({
-          notify_morning: !!nextMorning,
-          notify_afternoon: !!nextAfternoon,
-        })
-        .eq("user_id", uid)
-        .eq("teacher_id", id);
-
+      const { error } = await supabase.from("teacher_favorites")
+        .update({ notify_morning: !!m, notify_afternoon: !!t })
+        .eq("user_id", uid).eq("teacher_id", id);
       if (error) throw error;
-    } catch (e) {
-      toast.error(e?.message || "No se pudieron guardar las preferencias");
-    } finally {
-      setFavBusy(false);
-    }
-  }
-
-  function toggleInArray(arr, value) {
-    const v = String(value);
-    const set = new Set((arr || []).map(String));
-    if (set.has(v)) set.delete(v);
-    else set.add(v);
-    return Array.from(set);
+    } catch (e) { toast.error(e?.message); }
+    finally { setFavBusy(false); }
   }
 
   async function saveTeacherPublic() {
     if (!isMe) return;
-
     try {
-      setFavBusy(true);
-
-      const typesArr = String(editTypes || "")
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean);
-
+      setSavingProfile(true);
       const n = editPriceBase === "" ? null : Number(editPriceBase);
-      const priceBase = Number.isFinite(n) ? n : null;
-
-      const payload = {
-        teacher_id: id,
+      // Actualizamos la tabla teachers directamente
+      const { error } = await supabase.from("teachers").update({
         bio: String(editBio || "").trim() || null,
         zone: String(editZone || "").trim() || null,
-        price_base: priceBase,
-        class_types: typesArr.length ? typesArr : null,
-
-        modalities: (editModalities || []).length ? editModalities : null,
-        adaptations: (editAdaptations || []).length ? editAdaptations : null,
-        formats: (editFormats || []).length ? editFormats : null,
-      };
-
-      const { error } = await supabase.from("teacher_public").upsert(payload, {
-        onConflict: "teacher_id",
-      });
+        price_base: Number.isFinite(n) ? n : null,
+        specialties: editSpecialties.length ? editSpecialties : null,
+      }).eq("id", id);
       if (error) throw error;
-
       toast.success("Perfil actualizado ✅");
       await loadAll();
-    } catch (e) {
-      toast.error(e?.message || "No se pudo guardar el perfil");
-    } finally {
-      setFavBusy(false);
-    }
+    } catch (e) { toast.error(e?.message || "No se pudo guardar"); }
+    finally { setSavingProfile(false); }
   }
 
-  // Nombre robusto: name -> handle -> fallback
-  const name =
-    (profile?.name && String(profile.name).trim()) ||
-    (profile?.handle && String(profile.handle).trim()) ||
-    `Profe ${String(id || "").slice(0, 6)}…`;
-
+  const name = (profile?.name && String(profile.name).trim())
+    || (profile?.handle && String(profile.handle).trim())
+    || `Profe ${String(id || "").slice(0, 6)}…`;
   const avatar = profile?.avatar_url || "";
-  const zone = pub?.zone || "—";
-  const priceBase = pub?.price_base != null ? `${pub.price_base}€` : "—";
-  const types = fmtList(pub?.class_types);
-  const modalities = fmtList(pub?.modalities);
-  const adaptations = fmtList(pub?.adaptations);
-  const formats = fmtList(pub?.formats);
+  const specialtiesByCategory = useMemo(
+    () => groupSpecialtiesByCategory(teacherRow?.specialties || []),
+    [teacherRow?.specialties]
+  );
 
-  function onToggleMorning() {
-    const next = !notifyMorning;
-    setNotifyMorning(next);
-    saveFavPrefs(next, notifyAfternoon);
-  }
-
-  function onToggleAfternoon() {
-    const next = !notifyAfternoon;
-    setNotifyAfternoon(next);
-    saveFavPrefs(notifyMorning, next);
-  }
-
-  if (loading) {
-    return (
-      <div className="page">
-        <div className="pageWrap">
-          <div className="container">
-            <div style={{ opacity: 0.8 }}>Cargando perfil…</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "rgba(255,255,255,0.4)" }}>Cargando…</div>
+    </div>
+  );
 
   return (
-    <div className="page">
-      <div className="pageWrap">
-        <div className="container">
-          <div className="pageHeader" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-            <button type="button" className="btn ghost" onClick={() => navigate(-1)}>
-              ← Volver
-            </button>
+    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
+      <style>{`
+        .tpS { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:18px; margin-bottom:10px; }
+        .tpBtn { padding:9px 16px; border-radius:9px; font-weight:900; font-size:13px; cursor:pointer; border:none; }
+        .tpPrimary { background:linear-gradient(135deg,#74B800,#9BE800); color:#000; }
+        .tpGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
+        .tpFav { background:rgba(255,215,0,0.15); color:#FFD700; border:1px solid rgba(255,215,0,0.35) !important; }
+        .tpG2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media(max-width:480px){.tpG2{grid-template-columns:1fr;}}
+        .tpChip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.7); }
+      `}</style>
 
-            <div style={{ textAlign: "right" }}>
-              <div className="pageTitle" style={{ margin: 0 }}>Perfil del profesor</div>
-              <div className="pageMeta" style={{ opacity: 0.75 }}>{zone !== "—" ? `📍 ${zone}` : ""}</div>
-            </div>
+      <div className="pageWrap">
+        <div className="container" style={{ padding: "0 16px", maxWidth: 680, margin: "0 auto" }}>
+
+          {/* HEADER */}
+          <div style={{ padding: "12px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate(-1)}>← Volver</button>
+            {isMe && <span style={{ fontSize: 11, color: "#74B800", fontWeight: 800 }}>🦍 Tu perfil</span>}
           </div>
 
-          <div className="card" style={{ marginTop: 14, borderRadius: 18 }}>
-            <div style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
-              <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                {avatar ? (
-                  <img src={avatar} alt={name} style={{ width: 72, height: 72, borderRadius: 999, objectFit: "cover" }} />
-                ) : (
-                  <div style={{ width: 72, height: 72, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 900, background: "rgba(0,0,0,0.06)", fontSize: 22 }}>
-                    {initials(name)}
+          {/* PERFIL PÚBLICO */}
+          <div className="tpS">
+            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+              {avatar
+                ? <img src={avatar} alt={name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)", flexShrink: 0 }} />
+                : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(116,184,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#74B800", fontSize: 22, flexShrink: 0 }}>{initials(name)}</div>
+              }
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 900, fontSize: 20, color: "#fff" }}>{name}</div>
+                {teacherRow?.zone && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>📍 {teacherRow.zone}</div>}
+                {teacherRow?.bio
+                  ? <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 8, lineHeight: 1.55 }}>{teacherRow.bio}</div>
+                  : <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6, fontStyle: "italic" }}>Sin bio todavía.</div>
+                }
+                {teacherRow?.price_base != null && (
+                  <div style={{ marginTop: 8 }}>
+                    <span className="tpChip">💶 {teacherRow.price_base}€/clase</span>
                   </div>
                 )}
-
-                <div>
-                  <div style={{ fontWeight: 1000, fontSize: 20 }}>{name}</div>
-                  <div style={{ marginTop: 6, opacity: 0.85, fontSize: 14 }}>
-                    {pub?.bio ? pub.bio : "Sin bio todavía. (El profe puede completar su perfil)"}
-                  </div>
-
-                  <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", fontSize: 13, opacity: 0.95 }}>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontWeight: 800 }}>
-                      💶 Base: {priceBase}
-                    </span>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontWeight: 800 }}>
-                      🎯 Tipos: {types}
-                    </span>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontWeight: 800 }}>
-                      🧭 Modalidad: {modalities}
-                    </span>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontWeight: 800 }}>
-                      👥 Formatos: {formats}
-                    </span>
-                    <span style={{ padding: "6px 10px", borderRadius: 999, background: "rgba(0,0,0,0.06)", fontWeight: 800 }}>
-                      ♿ Inclusión: {adaptations}
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              {!isMe ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
-                  <button
-                    type="button"
-                    className={isFav ? "btn" : "btn ghost"}
-                    onClick={toggleFavorite}
-                    disabled={favBusy}
-                    style={{ minWidth: 200, borderRadius: 14 }}
-                  >
-                    {favBusy ? "Guardando…" : isFav ? "⭐ En favoritos" : "☆ Añadir a favoritos"}
-                  </button>
-
-                  {isFav ? (
-                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, opacity: 0.95 }}>
-                        <input type="checkbox" checked={!!notifyMorning} onChange={onToggleMorning} disabled={favBusy} />
-                        Mañana (06–14)
-                      </label>
-
-                      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, opacity: 0.95 }}>
-                        <input type="checkbox" checked={!!notifyAfternoon} onChange={onToggleAfternoon} disabled={favBusy} />
-                        Tarde (14–22)
-                      </label>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: 12, opacity: 0.65, textAlign: "right" }}>
-                      Añádelo a favoritos para recibir avisos cuando publique clases.
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="gpBadge ok">🦍 Este perfil es tuyo</div>
-              )}
             </div>
+
+            {/* Especialidades agrupadas */}
+            {Object.keys(specialtiesByCategory).length > 0 && (
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                {Object.entries(specialtiesByCategory).map(([catId, cat]) => (
+                  <div key={catId} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 6 }}>
+                      {cat.label}
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {cat.items.map(item => (
+                        <span key={item.key} className="tpChip"
+                          style={catId === "inclusion" && item.color ? {
+                            background: `${item.color}20`, color: item.color, border: `1px solid ${item.color}40`
+                          } : {}}>
+                          {item.emoji} {item.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* CTA alumno */}
+            {!isMe && (
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className={`tpBtn ${isFav ? "tpFav" : "tpGhost"}`} onClick={toggleFavorite} disabled={favBusy}>
+                    {favBusy ? "…" : isFav ? "⭐ En favoritos" : "☆ Añadir favorito"}
+                  </button>
+                  <button className="tpBtn tpPrimary" onClick={() => navigate(`/clases?teacher=${id}`)}>
+                    Ver sus clases
+                  </button>
+                </div>
+                {isFav && (
+                  <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Avisos cuando publique:</span>
+                    {[
+                      { label: "☀️ Mañana", val: notifyMorning, set: v => { setNotifyMorning(v); saveFavPrefs(v, notifyAfternoon); } },
+                      { label: "🌙 Tarde", val: notifyAfternoon, set: v => { setNotifyAfternoon(v); saveFavPrefs(notifyMorning, v); } },
+                    ].map(x => (
+                      <button key={x.label} onClick={() => x.set(!x.val)} disabled={favBusy}
+                        style={{ padding: "5px 11px", borderRadius: 999, cursor: "pointer", fontSize: 11, fontWeight: 800, border: "none",
+                          background: x.val ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)",
+                          color: x.val ? "#74B800" : "rgba(255,255,255,0.4)",
+                          outline: x.val ? "1px solid rgba(116,184,0,0.3)" : "1px solid rgba(255,255,255,0.08)" }}>
+                        {x.val ? "✅" : "○"} {x.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!isFav && (
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
+                    Añádelo a favoritos para recibir avisos cuando publique clases.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Editor pro */}
-          {isMe ? (
-            <div className="card" style={{ marginTop: 14, borderRadius: 18 }}>
-              <div style={{ fontWeight: 950, fontSize: 16 }}>Editar perfil público</div>
+          {/* EDITOR — solo el profe */}
+          {isMe && (
+            <div className="tpS">
+              <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 16 }}>✏️ Editar perfil público</div>
 
-              <div style={{ marginTop: 12 }}>
-                <label className="gpLabel">Bio (corta)</label>
-                <textarea
-                  className="gpInput"
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value)}
-                  rows={3}
-                  style={{ resize: "vertical" }}
-                  placeholder="Ej: técnica, iniciación, alto nivel…"
-                />
+              <div style={{ marginBottom: 14 }}>
+                <label style={LB}>Bio corta (visible a todos)</label>
+                <textarea style={{ ...IS, minHeight: 72, resize: "vertical" }} value={editBio}
+                  onChange={e => setEditBio(e.target.value)}
+                  placeholder="Ej: Monitor FEP, 8 años de experiencia. Especialidad en técnica e iniciación infantil." />
               </div>
 
-              <div className="gpGrid2" style={{ marginTop: 12 }}>
+              <div className="tpG2" style={{ marginBottom: 20 }}>
                 <div>
-                  <label className="gpLabel">Zona (puedes poner varias: “Málaga · Teatinos / Inacua / Vals”)</label>
-                  <input className="gpInput" value={editZone} onChange={(e) => setEditZone(e.target.value)} placeholder="Ej: Málaga · Teatinos / Inacua / Vals" />
+                  <label style={LB}>Zona / Club(s)</label>
+                  <input style={IS} value={editZone} onChange={e => setEditZone(e.target.value)} placeholder="Ej: Málaga · Inacua · Vals" />
                 </div>
-
                 <div>
-                  <label className="gpLabel">Precio base</label>
-                  <input className="gpInput" type="number" value={editPriceBase} onChange={(e) => setEditPriceBase(e.target.value)} placeholder="Ej: 30" />
-                </div>
-
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label className="gpLabel">Tipos de clase (coma)</label>
-                  <input className="gpInput" value={editTypes} onChange={(e) => setEditTypes(e.target.value)} placeholder="Ej: iniciación, técnica, alto nivel" />
+                  <label style={LB}>Precio base (€/clase)</label>
+                  <input style={IS} type="number" value={editPriceBase} onChange={e => setEditPriceBase(e.target.value)} placeholder="Ej: 30" />
                 </div>
               </div>
 
-              <div style={{ marginTop: 14 }}>
-                <div className="gpLabel" style={{ marginBottom: 8 }}>Modalidad</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {MODALITIES.map((m) => {
-                    const active = (editModalities || []).includes(m);
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        className={active ? "btn" : "btn ghost"}
-                        style={{ borderRadius: 999 }}
-                        onClick={() => setEditModalities((p) => toggleInArray(p, m))}
-                      >
-                        {m}
+              {/* Especialidades en acordeón */}
+              <div style={{ marginBottom: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: "rgba(255,255,255,0.85)" }}>🎯 Especialidades</span>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    {editSpecialties.length > 0 && (
+                      <span style={{ fontSize: 11, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "2px 9px", borderRadius: 999, fontWeight: 900 }}>
+                        {editSpecialties.length} seleccionadas
+                      </span>
+                    )}
+                    {editSpecialties.length > 0 && (
+                      <button type="button" onClick={() => setEditSpecialties([])}
+                        style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer" }}>
+                        Limpiar
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", padding: "0 14px" }}>
+                  {ALL_SPECIALTY_CATEGORIES.map(cat => (
+                    <SpecCategory key={cat.id} cat={cat} selected={editSpecialties} onChange={setEditSpecialties} />
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
+                  Abre cada sección y marca lo que aplica. Los alumnos podrán filtrar por estas especialidades.
                 </div>
               </div>
 
-              <div style={{ marginTop: 14 }}>
-                <div className="gpLabel" style={{ marginBottom: 8 }}>Formatos</div>
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                  {FORMATS.map((f) => {
-                    const active = (editFormats || []).includes(f);
-                    return (
-                      <label key={f} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, opacity: 0.95 }}>
-                        <input
-                          type="checkbox"
-                          checked={active}
-                          onChange={() => setEditFormats((p) => toggleInArray(p, f))}
-                        />
-                        {f}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div style={{ marginTop: 14 }}>
-                <div className="gpLabel" style={{ marginBottom: 8 }}>Inclusión / Adaptaciones</div>
-                <div style={{ display: "grid", gap: 8 }}>
-                  {ADAPTATIONS.map((a) => {
-                    const active = (editAdaptations || []).includes(a);
-                    return (
-                      <label key={a} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, opacity: 0.95 }}>
-                        <input
-                          type="checkbox"
-                          checked={active}
-                          onChange={() => setEditAdaptations((p) => toggleInArray(p, a))}
-                        />
-                        {a}
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="gpRow" style={{ marginTop: 14 }}>
-                <button type="button" className="btn" onClick={saveTeacherPublic} disabled={favBusy}>
-                  {favBusy ? "Guardando…" : "Guardar cambios"}
-                </button>
-              </div>
+              <button className="tpBtn tpPrimary" style={{ width: "100%", marginTop: 18 }} onClick={saveTeacherPublic} disabled={savingProfile}>
+                {savingProfile ? "Guardando…" : "Guardar cambios"}
+              </button>
             </div>
-          ) : null}
+          )}
 
-          <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" className="btn ghost" onClick={() => navigate(`/clases?teacher=${id}`)}>
-              Ver sus clases
-            </button>
-            <button type="button" className="btn ghost" onClick={() => navigate("/profesores")}>
-              Ver lista de profes
-            </button>
+          {/* NAV */}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 24 }}>
+            {!isMe && <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate(`/clases?teacher=${id}`)}>🎾 Ver sus clases</button>}
+            <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate("/profesores")}>👨‍🏫 Lista de profes</button>
           </div>
         </div>
       </div>

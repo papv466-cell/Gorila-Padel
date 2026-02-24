@@ -193,11 +193,11 @@ export async function createMatch(data) {
   }
 
   return row;
-  
+
   return row;
 }
 
-export async function requestJoin(matchId) {
+export async function requestJoin(matchId, mood = null) {
   const session = await getSessionOrThrow();
   const uid = session?.user?.id;
 
@@ -223,6 +223,7 @@ export async function requestJoin(matchId) {
       match_id: matchId,
       user_id: uid,
       status: "pending",
+      mood: mood || null,
     })
     .select()
     .single();
@@ -303,7 +304,7 @@ export async function fetchPendingRequests(matchId) {
     .from("match_join_requests")
     .select("*")
     .eq("match_id", matchId)
-    .eq("status", "pending")
+   .in("status", ["pending", "approved", "red_carded"])
     .order("created_at", { ascending: true });
 
   if (error) throw error;
@@ -638,4 +639,178 @@ export function subscribeMatchMessagesRealtime(matchId, onChange) {
       supabase.removeChannel(channel);
     } catch {}
   };
+}
+/* =========================
+   TARJETA ROJA GORILA
+========================= */
+export async function giveRedCard({ matchId, toUserId }) {
+  const session = await getSessionOrThrow();
+  const creatorId = session?.user?.id;
+
+  // Verificar que quien da la tarjeta es el creador del partido
+  const { data: match, error: matchError } = await supabase
+    .from("matches")
+    .select("created_by_user")
+    .eq("id", matchId)
+    .single();
+  if (matchError) throw matchError;
+  if (String(match.created_by_user) !== String(creatorId)) throw new Error("Solo el creador puede dar tarjeta roja");
+
+  // Verificar que el jugador estaba aprobado
+  const { data: req, error: reqError } = await supabase
+    .from("match_join_requests")
+    .select("id, status")
+    .eq("match_id", matchId)
+    .eq("user_id", toUserId)
+    .eq("status", "approved")
+    .single();
+  if (reqError || !req) throw new Error("Este jugador no estaba en el partido");
+
+  // Incrementar red_cards en profiles_public
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles_public")
+    .select("red_cards")
+    .eq("id", toUserId)
+    .single();
+  if (profileError) throw profileError;
+
+  const newCount = (Number(profile?.red_cards) || 0) + 1;
+  const { error: updateError } = await supabase
+    .from("profiles_public")
+    .update({ red_cards: newCount })
+    .eq("id", toUserId);
+  if (updateError) throw updateError;
+
+  // Marcar la solicitud con tarjeta roja
+  await supabase
+    .from("match_join_requests")
+    .update({ status: "red_carded" })
+    .eq("id", req.id);
+
+  return { newCount };
+}
+
+export async function redeemRedCard({ userId }) {
+  const { data: profile, error } = await supabase
+    .from("profiles_public")
+    .select("red_cards, matches_played")
+    .eq("id", userId)
+    .single();
+  if (error) throw error;
+
+  const cards = Number(profile?.red_cards) || 0;
+  const played = Number(profile?.matches_played) || 0;
+  if (cards <= 0) throw new Error("No tienes tarjetas rojas");
+  if (played < 1) throw new Error("Necesitas jugar un partido para redimir una tarjeta");
+
+  const { error: updateError } = await supabase
+    .from("profiles_public")
+    .update({ red_cards: cards - 1, matches_played: played - 1 })
+    .eq("id", userId);
+  if (updateError) throw updateError;
+
+  return { red_cards: cards - 1 };
+}
+/* =========================
+   SOS CUARTO JUGADOR
+========================= */
+export async function triggerSOS({ matchId }) {
+  const session = await getSessionOrThrow();
+  const creatorId = session?.user?.id;
+
+  // Verificar que es el creador
+  const { data: match, error: matchError } = await supabase
+    .from("matches")
+    .select("id, club_name, level, start_at, created_by_user, reserved_spots")
+    .eq("id", matchId)
+    .single();
+  if (matchError) throw matchError;
+  if (String(match.created_by_user) !== String(creatorId)) throw new Error("Solo el creador puede activar SOS");
+
+  // Marcar el partido como SOS activo
+  const { error: updateError } = await supabase
+    .from("matches")
+    .update({ sos_active: true })
+    .eq("id", matchId);
+  if (updateError) throw updateError;
+
+  // Buscar usuarios que NO están ya en el partido
+  const { data: alreadyIn } = await supabase
+    .from("match_join_requests")
+    .select("user_id")
+    .eq("match_id", matchId)
+    .in("status", ["pending", "approved"]);
+
+  const excludeIds = [creatorId, ...(alreadyIn||[]).map(r => r.user_id)];
+
+  // Buscar todos los usuarios registrados excepto los ya dentro
+  const { data: candidates } = await supabase
+    .from("profiles_public")
+    .select("id")
+    .not("id", "in", `(${excludeIds.join(",")})`)
+    .limit(200);
+
+  const userIds = (candidates||[]).map(u => u.id);
+  if (userIds.length === 0) return { sent: 0 };
+
+  // Formatear hora
+  const s = String(match.start_at||"");
+  const tm = s.match(/T(\d{2}:\d{2})/);
+  const startTime = tm ? tm[1] : "";
+
+  const { notifySOSMatch } = await import("./notifications");
+  await notifySOSMatch({
+    matchId,
+    matchName: match.club_name,
+    clubName: match.club_name,
+    level: match.level || "",
+    startTime,
+    userIds,
+  });
+
+  return { sent: userIds.length };
+}
+/* =========================
+   POST PARTIDO
+========================= */
+export async function submitMatchResult({ matchId, scoreLeft, scoreRight, notes }) {
+  const session = await getSessionOrThrow();
+  const { data, error } = await supabase
+    .from("match_results")
+    .insert({ match_id: matchId, score_left: scoreLeft, score_right: scoreRight, notes: notes||null, created_by: session.user.id })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getMatchResult(matchId) {
+  const { data, error } = await supabase
+    .from("match_results")
+    .select("*")
+    .eq("match_id", matchId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function submitPlayerRating({ matchId, toUserId, rating, vibe }) {
+  const session = await getSessionOrThrow();
+  const { data, error } = await supabase
+    .from("player_ratings")
+    .upsert({ match_id: matchId, from_user_id: session.user.id, to_user_id: toUserId, rating, vibe: vibe||null },
+      { onConflict: "match_id,from_user_id,to_user_id" })
+    .select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getMyRatingsForMatch(matchId) {
+  const session = await getSessionOrThrow();
+  const { data, error } = await supabase
+    .from("player_ratings")
+    .select("to_user_id, rating, vibe")
+    .eq("match_id", matchId)
+    .eq("from_user_id", session.user.id);
+  if (error) throw error;
+  return data || [];
 }
