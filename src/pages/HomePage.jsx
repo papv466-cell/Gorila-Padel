@@ -76,7 +76,7 @@ export default function HomePage() {
     } finally { setLoading(false); }
   }
 
-  const name = profile?.handle || profile?.name || session?.user?.email?.split("@")[0] || "Gorila";
+  const name = profile?.name || profile?.handle || "Gorila";
   const firstName = name.split(" ")[0];
 
   /* ── NO LOGUEADO ── */
