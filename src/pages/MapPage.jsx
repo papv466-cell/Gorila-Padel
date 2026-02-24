@@ -46,11 +46,23 @@ function makeClubIcon({ isFav, isSelected }) {
   const shadow = isSelected ? "0 0 0 3px rgba(116,184,0,0.4), 0 12px 30px rgba(0,0,0,0.5)" : "0 8px 20px rgba(0,0,0,0.4)";
   return L.divIcon({
     className: "gpClubIcon",
-    html: `<div style="width:${size}px;height:${size}px;position:relative;overflow:hidden;filter:drop-shadow(0 8px 20px rgba(0,0,0,0.4));transition:all .2s;">
-      <img src="${pelotaTenis}" style="width:140%;height:140%;object-fit:cover;display:block;border-radius:50%;border:${border};box-shadow:${shadow};background:#74B800;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);"/>
-      ${isFav ? `<div style="position:absolute;top:-4px;right:-4px;width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg,#FFD700,#FFA500);border:2.5px solid #111;font-size:12px;display:grid;place-items:center;">⭐</div>` : ""}
-      ${isSelected ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #74B800;"></div>` : ""}
-    </div>`,
+    html: `<div style="width:${size}px;height:${size}px;position:relative;">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
+    <circle cx="32" cy="32" r="30" fill="${isSelected ? '#9BE800' : '#74B800'}" stroke="#111" stroke-width="3"/>
+    <rect x="29" y="42" width="6" height="14" rx="3" fill="#111"/>
+    <ellipse cx="32" cy="28" rx="13" ry="16" fill="#fff" stroke="#111" stroke-width="2"/>
+    <circle cx="28" cy="24" r="2" fill="#74B800"/>
+    <circle cx="36" cy="24" r="2" fill="#74B800"/>
+    <circle cx="32" cy="30" r="2" fill="#74B800"/>
+    <circle cx="28" cy="36" r="2" fill="#74B800"/>
+    <circle cx="36" cy="36" r="2" fill="#74B800"/>
+    <circle cx="46" cy="46" r="7" fill="#9BE800" stroke="#111" stroke-width="1.5"/>
+    <path d="M41 44 Q46 41 51 44" stroke="#fff" stroke-width="1" fill="none"/>
+    <path d="M41 48 Q46 51 51 48" stroke="#fff" stroke-width="1" fill="none"/>
+  </svg>
+  ${isFav ? `<div style="position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:999px;background:#FFD700;border:2px solid #111;font-size:11px;display:grid;place-items:center;">⭐</div>` : ""}
+  ${isSelected ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #9BE800;"></div>` : ""}
+</div>`,
     iconSize: [size, size],
     iconAnchor: [size/2, size+6],
     popupAnchor: [0, -(size+6)],
