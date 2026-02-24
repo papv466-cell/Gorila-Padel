@@ -63,7 +63,7 @@ export default function HomePage() {
     try {
       setLoading(true);
       const [profRes, matchRes, rankRes, feedRes, prodRes] = await Promise.allSettled([
-        supabase.from("profiles_public").select("display_name, avatar_url, level").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles_public").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
         supabase.from("player_ratings").select("*").eq("rated_user_id", user.id).limit(1),
         getFeed(),
@@ -76,7 +76,7 @@ export default function HomePage() {
     } finally { setLoading(false); }
   }
 
-  const name = profile?.display_name || session?.user?.email?.split("@")[0] || "Gorila";
+  const name = profile?.handle || profile?.name || session?.user?.email?.split("@")[0] || "Gorila";
   const firstName = name.split(" ")[0];
 
   /* ── NO LOGUEADO ── */
