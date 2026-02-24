@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
-import pelotaTenis from "../assets/map/4.png";
+import pelotaTenis from "../assets/map/gorila-marker.png";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
