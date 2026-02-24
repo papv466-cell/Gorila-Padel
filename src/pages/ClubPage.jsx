@@ -216,47 +216,44 @@ export default function ClubPage() {
               {/* ── HERO DEL CLUB ── */}
               <div className="gpClubCard" style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", border: "1px solid rgba(116,184,0,0.2)", background: "#111" }}>
                 {/* Cabecera con color */}
-                <div style={{ height: 80, background: `linear-gradient(135deg, #1a2a00, #0d1a00)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 30% 50%, rgba(116,184,0,0.15), transparent 70%)" }} />
-                  <div style={{ fontSize: 48, zIndex: 1 }}>🏟️</div>
+                {/* Banner / imagen */}
+                <div style={{ height: 120, background: "linear-gradient(135deg, #1a2a00, #0d1a00)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 30% 50%, rgba(116,184,0,0.18), transparent 70%)" }} />
+                {club?.urlimagen
+                    ? <img src={club.urlimagen} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                    : <div style={{ fontSize:56, zIndex:1 }}>🏟️</div>
+                }
+                <button
+                    onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); }}
+                    style={{ position:"absolute", top:10, right:10, zIndex:2, padding:"7px 12px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, boxShadow:"0 4px 12px rgba(0,0,0,0.4)" }}>
+                    ➕ Crear
+                </button>
                 </div>
 
                 <div style={{ padding: "14px 16px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
-                    <div>
-                      <h1 style={{ margin:0, fontSize:20, fontWeight:900, color:"#fff" }}>
-                        {club?.name || searchParams.get("name") || `Club #${clubId}`}
-                      </h1>
-                      {club?.city && (
-                        <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginTop:3 }}>
-                          📍 {club.city}
-                        </div>
-                      )}
+                <h1 style={{ margin:"0 0 4px", fontSize:18, fontWeight:900, color:"#fff", lineHeight:1.3, wordBreak:"break-word" }}>
+                    {club?.name || searchParams.get("name") || `Club #${clubId}`}
+                </h1>
+                {club?.city && (
+                    <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", marginBottom:12 }}>
+                    📍 {club.city}
                     </div>
-                    <button
-                      onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); }}
-                      style={{ padding:"9px 14px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, whiteSpace:"nowrap", flexShrink:0 }}>
-                      ➕ Crear partido
-                    </button>
-                  </div>
-
-                  {/* Stats rápidas */}
-                  <div style={{ display:"flex", gap:8, marginTop:12, flexWrap:"wrap" }}>
+                )}
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
                     <div style={{ padding:"5px 10px", borderRadius:8, background:"rgba(116,184,0,0.1)", border:"1px solid rgba(116,184,0,0.2)", fontSize:11, fontWeight:800, color:"#74B800" }}>
-                      🏓 {matches.length} partido{matches.length !== 1 ? "s" : ""} próximos
+                    🏓 {matches.length} partido{matches.length !== 1 ? "s" : ""} próximos
                     </div>
                     <div style={{ padding:"5px 10px", borderRadius:8, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)" }}>
-                      📚 {classes.length} clase{classes.length !== 1 ? "s" : ""} disponibles
+                    📚 {classes.length} clase{classes.length !== 1 ? "s" : ""} disponibles
                     </div>
                     {club?.lat && club?.lng && (
-                      <a
-                        href={`https://maps.google.com/?q=${club.lat},${club.lng}`}
+                    <a href={`https://maps.google.com/?q=${club.lat},${club.lng}`}
                         target="_blank" rel="noopener noreferrer"
                         style={{ padding:"5px 10px", borderRadius:8, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", textDecoration:"none" }}>
                         🗺️ Ver en mapa
-                      </a>
+                    </a>
                     )}
-                  </div>
+                </div>
                 </div>
               </div>
 
