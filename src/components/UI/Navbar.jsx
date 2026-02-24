@@ -15,16 +15,17 @@ export default function Navbar({ showBack = false, onBack }) {
 
   const links = useMemo(
     () => [
-      { to: "/mapa", label: "Mapa", icon: "🗺️" },
-      { to: "/partidos", label: "Partidos", icon: "🎾" },
-      { to: "/gorilandia", label: "Gorilandia", icon: "🦍" },
-      { to: "/clases", label: "Clases", icon: "📚" },
-      { to: "/inclusivos", label: "Inclusivos", icon: "♿" },
-      { to: "/perfil", label: "Perfil", icon: "👤" },
-      { to: "/tienda", label: "Tienda", icon: "🛍️" }
-    ],
-    []
-  );
+     { to: "/mapa", label: "Mapa", icon: "🗺️" },
+    { to: "/partidos", label: "Partidos", icon: "🎾" },
+    { to: "/ranking", label: "Ranking", icon: "🏆" },  // ← AÑADE ESTA LÍNEA
+    { to: "/gorilandia", label: "Gorilandia", icon: "🦍" },
+    { to: "/clases", label: "Clases", icon: "📚" },
+    { to: "/inclusivos", label: "Inclusivos", icon: "♿" },
+    { to: "/perfil", label: "Perfil", icon: "👤" },
+    { to: "/tienda", label: "Tienda", icon: "🛍️" }
+  ],
+  []
+);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
