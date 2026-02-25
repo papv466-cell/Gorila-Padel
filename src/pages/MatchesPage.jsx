@@ -758,9 +758,10 @@ export default function MatchesPage() {
                       {[0,1].map(idx => {
                         const player = leftTeam[idx];
                         const avatar = player?.avatar||player?.avatar_url;
+                        const pid = player?.isCreator ? creatorId : player?.id;
                         return (
                           <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {avatar ? <img src={avatar} alt="" style={{width:36,height:52,objectFit:"cover",borderRadius:6}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default"}} /> : <span style={{fontSize:28}}>🦍</span>}
                           </div>
                         );
                       })}
@@ -770,9 +771,10 @@ export default function MatchesPage() {
                       {[0,1].map(idx => {
                         const player = rightTeam[idx];
                         const avatar = player?.avatar_url||player?.avatar;
+                        const pid = player?.id;
                         return (
                           <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {avatar ? <img src={avatar} alt="" style={{width:36,height:52,objectFit:"cover",borderRadius:6}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default"}} /> : <span style={{fontSize:28}}>🦍</span>}
                           </div>
                         );
                       })}
