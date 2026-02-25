@@ -229,9 +229,18 @@ export default function PublicProfilePage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      {[...Array(4)].map((_, i) => (
-                        <div key={i} style={{ width: 10, height: 10, borderRadius: 3, background: i < (match.join_requests?.length || 0) ? '#74B800' : 'rgba(255,255,255,0.12)' }} />
-                      ))}
+                      {[...Array(4)].map((_, i) => {
+                        const filled = i < (match.join_requests?.length || 0);
+                        return (
+                          <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="18" height="18">
+                            <rect x="29" y="42" width="6" height="14" rx="3" fill={filled ? '#111' : 'rgba(255,255,255,0.15)'}/>
+                            <ellipse cx="32" cy="28" rx="13" ry="16" fill={filled ? '#74B800' : 'rgba(255,255,255,0.15)'} stroke={filled ? '#111' : 'rgba(255,255,255,0.1)'} strokeWidth="2"/>
+                            <circle cx="28" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
+                            <circle cx="36" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
+                            <circle cx="32" cy="30" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
+                          </svg>
+                        );
+                      })}
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 800, color: spots > 0 ? '#74B800' : '#ef4444' }}>
                       {spots > 0 ? `${spots} plaza${spots !== 1 ? 's' : ''} libre${spots !== 1 ? 's' : ''}` : 'Completo'}
