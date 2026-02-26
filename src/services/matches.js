@@ -90,6 +90,12 @@ export async function cancelMyJoin({ matchId }) {
     .eq("player_uuid", uid);
 
   if (error) throw error;
+
+  await supabase
+    .from("match_join_requests")
+    .delete()
+    .eq("match_id", matchId)
+    .eq("user_id", uid);
 }
 
 /* =========================
