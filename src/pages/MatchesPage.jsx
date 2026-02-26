@@ -115,6 +115,8 @@ export default function MatchesPage() {
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const clubIdParam = searchParams.get("clubId")||"";
   const clubNameParam = searchParams.get("clubName")||"";
+  const courtIdParam = searchParams.get("courtId")||"";
+  const courtNameParam = searchParams.get("courtName")||"";
   const createParam = searchParams.get("create")==="1";
   const isClubFilter = !!(clubIdParam||clubNameParam);
   const openChatParam = qs.get("openChat")||(typeof window!=="undefined"&&window.sessionStorage?.getItem?.("openChat"))||"";
@@ -398,7 +400,7 @@ export default function MatchesPage() {
   useEffect(() => { if(!openRequestsParam||!authReady) return; if(!session){goLogin();return;} openRequests(openRequestsParam); }, [openRequestsParam,authReady,session]);
   useEffect(() => {
     if(!createParam||!authReady) return; if(!session){goLogin();return;}
-    setOpenCreate(true); setForm(prev=>({...prev,clubId:clubIdParam||prev.clubId,clubName:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO})); setClubQuery(clubNameParam||""); setShowClubSuggest(false);
+    const isPrivateCourt = !!courtIdParam; setOpenCreate(true); setForm(prev=>({...prev,clubId:isPrivateCourt?"private:"+courtIdParam:clubIdParam||prev.clubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO,isPrivateCourt})); setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); setShowClubSuggest(false);
   }, [createParam,clubIdParam,clubNameParam,authReady,session,todayISO,selectedDay]);
 
   /* ─── Actions ─── */
@@ -407,7 +409,7 @@ export default function MatchesPage() {
     try {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
-      if (!String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
+      if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
       await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id});
       setSelectedDay(form.date); setOpenCreate(false);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
