@@ -413,14 +413,13 @@ export default function MapPage() {
                     />
                   );
                 })}
-              </MapContainer>
-
               {privateCourts.filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)).map(c=>(
                 <Marker key={`court:${c.id}`} position={[c.lat,c.lng]}
                   icon={makeCourtIcon(selectedCourt&&selectedCourt.id===c.id)}
                   eventHandlers={{click:()=>{setSelectedCourt(c);setSelectedClub(null);}}}
                 />
               ))}
+              </MapContainer>
 
               {/* Botón ubicación */}}
               <button onClick={() => requestMyLocation()} disabled={locBusy}
