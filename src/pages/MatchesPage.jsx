@@ -745,8 +745,13 @@ export default function MatchesPage() {
               const creatorId = m.created_by_user ? String(m.created_by_user) : "";
               const creatorProf = rosterProfilesById?.[creatorId]||null;
               const creatorAvatar = creatorProf?.avatar_url||"";
-              const roster = (playersByMatchId?.[String(m.id)]||[]).filter(p=>String(p?.id||"")!==creatorId).slice(0,3);
-              const leftTeam = [{name:creatorProf?.name||"Creador",avatar:creatorAvatar,isCreator:true},roster[0]||null];
+              const rosterFromPlayers = (playersByMatchId?.[String(m.id)]||[]).filter(p=>String(p?.id||"")!==creatorId);
+              const rosterFromJoins = Object.values(rosterProfilesById||{}).filter(p=>p&&String(p.id)!==creatorId&&rosterFromPlayers.every(r=>String(r?.id||"")!==String(p.id)));
+              const allRosterProfiles = [...rosterFromPlayers.map(p=>({...p,avatar_url:p.avatar_url||rosterProfilesById?.[String(p.id)]?.avatar_url})),...rosterFromJoins].filter(p=>p?.id);
+              const matchRosterIds = (playersByMatchId?.[String(m.id)]||[]).map(p=>String(p?.id||"")).filter(Boolean);
+              const approvedProfiles = Object.values(rosterProfilesById||{}).filter(p=>p&&String(p.id)!==creatorId&&matchRosterIds.includes(String(p.id)));
+              const roster = approvedProfiles.length ? approvedProfiles.slice(0,3) : allRosterProfiles.slice(0,3);
+              const leftTeam = [{name:creatorProf?.name||"Creador",avatar:creatorAvatar,isCreator:true,id:creatorId},roster[0]||null];
               const rightTeam = [roster[1]||null,roster[2]||null];
 
               return (
