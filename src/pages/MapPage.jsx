@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
+import { supabase } from "../services/supabaseClient";
 import pelotaTenis from "../assets/map/gorila-marker.png";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -99,6 +100,16 @@ function SetMapRef({ mapRef }) {
   return null;
 }
 
+function makeCourtIcon(isSelected) {
+  const bg = isSelected ? "#9BE800" : "#f59e0b";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
+    <ellipse cx="18" cy="40" rx="8" ry="3" fill="rgba(0,0,0,0.3)"/>
+    <path d="M18 2 C10 2 4 8 4 16 C4 28 18 42 18 42 C18 42 32 28 32 16 C32 8 26 2 18 2Z" fill="${bg}" stroke="#000" stroke-width="1.5"/>
+    <text x="18" y="21" text-anchor="middle" font-size="14" fill="#000">🏠</text>
+  </svg>`;
+  return L.divIcon({ html: svg, className:"", iconSize:[36,44], iconAnchor:[18,44], popupAnchor:[0,-44] });
+}
+
 /* ─── Componente principal ─── */
 export default function MapPage() {
   const navigate = useNavigate();
@@ -117,6 +128,13 @@ export default function MapPage() {
   const mapRef = useRef(null);
   const searchRef = useRef(null);
   const cardsRef = useRef(null);
+
+  const [privateCourts, setPrivateCourts] = useState([]);
+  const [showCreateCourt, setShowCreateCourt] = useState(false);
+  const [selectedCourt, setSelectedCourt] = useState(null);
+  const [courtForm, setCourtForm] = useState({name:"",description:"",lat:null,lng:null});
+  const [courtSaving, setCourtSaving] = useState(false);
+  const [session, setSession] = useState(null);
 
   const [favIds, setFavIds] = useState(() => {
     try {
@@ -140,7 +158,11 @@ export default function MapPage() {
     (async () => {
       try {
         setLoading(true);
+        const { data: sessionData } = await supabase.auth.getSession();
+        setSession(sessionData?.session||null);
         const rows = await fetchClubsFromGoogleSheet();
+        const { data: courts } = await supabase.from("private_courts").select("*");
+        setPrivateCourts(Array.isArray(courts) ? courts : []);
         if (!alive) return;
         setClubs(Array.isArray(rows) ? rows : []);
       } catch {
@@ -393,11 +415,26 @@ export default function MapPage() {
                 })}
               </MapContainer>
 
-              {/* Botón ubicación */}
+              {privateCourts.filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)).map(c=>(
+                <Marker key={`court:${c.id}`} position={[c.lat,c.lng]}
+                  icon={makeCourtIcon(selectedCourt&&selectedCourt.id===c.id)}
+                  eventHandlers={{click:()=>{setSelectedCourt(c);setSelectedClub(null);}}}
+                />
+              ))}
+
+              {/* Botón ubicación */}}
               <button onClick={() => requestMyLocation()} disabled={locBusy}
                 style={{ position:"absolute", bottom: selectedClub ? 200 : 16, right:12, zIndex:500, width:44, height:44, borderRadius:12, background:"rgba(20,20,20,0.95)", border:"1px solid rgba(116,184,0,0.3)", fontSize:20, cursor:"pointer", display:"grid", placeItems:"center", backdropFilter:"blur(8px)", transition:"bottom .3s" }}>
                 {locBusy ? "⏳" : "🍌"}
               </button>
+
+              {/* Botón crear pista */}
+              {session && (
+                <button onClick={()=>{setShowCreateCourt(true);setCourtForm({name:"",description:"",lat:userPos?.lat||36.7,lng:userPos?.lng||-4.4});}}
+                  style={{position:"absolute",bottom:selectedClub?200:70,right:12,zIndex:500,padding:"8px 14px",borderRadius:12,background:"linear-gradient(135deg,#f59e0b,#fbbf24)",border:"none",color:"#000",fontWeight:900,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:6,boxShadow:"0 4px 12px rgba(0,0,0,0.4)"}}>
+                  🏠 Mi pista
+                </button>
+              )}
 
               {/* Contador */}
               <div style={{ position:"absolute", top:12, right:12, zIndex:400, background:"rgba(20,20,20,0.9)", border:"1px solid rgba(116,184,0,0.2)", borderRadius:20, padding:"4px 10px", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", backdropFilter:"blur(8px)" }}>
@@ -602,6 +639,95 @@ export default function MapPage() {
           </div>
         </>
       )}
+      {/* ── MODAL CREAR PISTA PRIVADA ── */}
+      {showCreateCourt && (
+        <div onClick={()=>setShowCreateCourt(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:50000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"min(640px,100%)",background:"#0f0f0f",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,0.1)",padding:20,paddingBottom:"max(20px,env(safe-area-inset-bottom))"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{fontSize:16,fontWeight:900,color:"#f59e0b"}}>🏠 Nueva pista privada</div>
+              <button onClick={()=>setShowCreateCourt(false)} style={{width:30,height:30,borderRadius:999,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontSize:16}}>✕</button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <input placeholder="Nombre de la pista (ej: Pista de Ana, Urbanización Condesa…)" value={courtForm.name}
+                onChange={e=>setCourtForm(p=>({...p,name:e.target.value}))}
+                style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none"}} />
+              <textarea placeholder="Descripción opcional (dirección, instrucciones de acceso…)" value={courtForm.description}
+                onChange={e=>setCourtForm(p=>({...p,description:e.target.value}))}
+                rows={3}
+                style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",resize:"none"}} />
+              <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",fontSize:12,color:"rgba(255,255,255,0.6)"}}>
+                📍 La pista se creará en tu ubicación actual
+                {userPos && <span style={{color:"#f59e0b",fontWeight:700}}> ({userPos.lat.toFixed(4)}, {userPos.lng.toFixed(4)})</span>}
+                {!userPos && <span style={{color:"#ef4444"}}> — activa la ubicación primero</span>}
+              </div>
+              <button disabled={!courtForm.name.trim()||!userPos||courtSaving}
+                onClick={async()=>{
+                  if(!courtForm.name.trim()||!userPos) return;
+                  try{
+                    setCourtSaving(true);
+                    const {data,error} = await supabase.from("private_courts").insert({
+                      name: courtForm.name.trim(),
+                      description: courtForm.description.trim()||null,
+                      lat: userPos.lat,
+                      lng: userPos.lng,
+                      is_public: true,
+                    }).select().single();
+                    if(error) throw error;
+                    setPrivateCourts(prev=>[...prev,data]);
+                    setShowCreateCourt(false);
+                    setSelectedCourt(data);
+                    setCourtForm({name:"",description:"",lat:null,lng:null});
+                  }catch(e){ alert(e?.message||"Error al crear pista"); }
+                  finally{ setCourtSaving(false); }
+                }}
+                style={{padding:"12px",borderRadius:12,background:courtForm.name.trim()&&userPos?"linear-gradient(135deg,#f59e0b,#fbbf24)":"rgba(255,255,255,0.08)",border:"none",color:courtForm.name.trim()&&userPos?"#000":"rgba(255,255,255,0.3)",fontWeight:900,fontSize:14,cursor:courtForm.name.trim()&&userPos?"pointer":"default"}}>
+                {courtSaving?"Creando…":"✅ Crear pista"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BOTTOM SHEET PISTA PRIVADA ── */}
+      {selectedCourt && !selectedClub && (
+        <>
+          <div onClick={()=>setSelectedCourt(null)} style={{position:"fixed",inset:0,zIndex:999}} />
+          <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"min(640px,100%)",zIndex:1000,background:"#111",borderRadius:"18px 18px 0 0",border:"1px solid rgba(245,158,11,0.3)",padding:16,paddingBottom:"max(16px,env(safe-area-inset-bottom))"}}>
+            <div style={{width:36,height:4,borderRadius:999,background:"rgba(255,255,255,0.15)",margin:"0 auto 14px"}} />
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+              <div>
+                <div style={{fontSize:17,fontWeight:900,color:"#fff"}}>{selectedCourt.name}</div>
+                {selectedCourt.description && <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:3}}>{selectedCourt.description}</div>}
+                <div style={{fontSize:11,color:"#f59e0b",fontWeight:700,marginTop:4}}>🏠 Pista privada</div>
+              </div>
+              <button onClick={()=>setSelectedCourt(null)} style={{width:28,height:28,borderRadius:999,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontSize:14}}>✕</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+              <button onClick={()=>navigate(`/partidos?create=1&courtId=${selectedCourt.id}&courtName=${encodeURIComponent(selectedCourt.name)}&lat=${selectedCourt.lat}&lng=${selectedCourt.lng}`)}
+                style={{padding:"12px 6px",borderRadius:12,background:"linear-gradient(135deg,#74B800,#9BE800)",border:"none",color:"#000",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:20}}>➕</span>
+                <span>Crear partido</span>
+              </button>
+              <button onClick={()=>navigate(`/partidos?courtId=${selectedCourt.id}&courtName=${encodeURIComponent(selectedCourt.name)}`)}
+                style={{padding:"12px 6px",borderRadius:12,background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:20}}>🏓</span>
+                <span>Ver partidos</span>
+              </button>
+            </div>
+            {session && String(selectedCourt.owner_id)===String(session?.user?.id) && (
+              <button onClick={async()=>{
+                if(!confirm("¿Eliminar esta pista?")) return;
+                await supabase.from("private_courts").delete().eq("id",selectedCourt.id);
+                setPrivateCourts(prev=>prev.filter(c=>c.id!==selectedCourt.id));
+                setSelectedCourt(null);
+              }} style={{marginTop:10,width:"100%",padding:"10px",borderRadius:10,background:"rgba(220,38,38,0.12)",border:"1px solid rgba(220,38,38,0.2)",color:"#ff6b6b",fontWeight:900,fontSize:12,cursor:"pointer"}}>
+                🗑️ Eliminar pista
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
     </div>
   );
 }
