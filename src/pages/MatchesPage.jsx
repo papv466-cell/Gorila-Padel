@@ -905,27 +905,72 @@ export default function MatchesPage() {
       {/* ══════════════════════════════
           MODAL: CHAT
       ══════════════════════════════ */}
-      {chatOpenFor && (
-        <div onClick={()=>setChatOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:30000,display:"flex",alignItems:"center",justifyContent:"center",padding:12,paddingBottom:"calc(12px + env(safe-area-inset-bottom))",overscrollBehavior:"contain"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"min(640px,calc(100% - 24px))",background:"#111",borderRadius:18,border:"1px solid rgba(255,255,255,0.14)",padding:14,maxHeight:"70vh",overflow:"hidden",display:"flex",flexDirection:"column",boxSizing:"border-box"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexShrink:0}}>
-              <div style={{fontWeight:900,color:"#74B800",fontSize:15}}>💬 Chat del partido</div>
-              <button onClick={()=>setChatOpenFor(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontWeight:900}}>❌</button>
+            {chatOpenFor && (
+        <div onClick={()=>setChatOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:30000,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:"env(safe-area-inset-bottom)",overscrollBehavior:"contain"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"min(640px,100%)",background:"#0f0f0f",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,0.1)",display:"flex",flexDirection:"column",maxHeight:"80vh",overflow:"hidden"}}>
+            <div style={{padding:"14px 16px 10px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+              <div>
+                <div style={{fontWeight:900,color:"#fff",fontSize:15}}>💬 Chat del partido</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{Object.keys(rosterProfilesById||{}).length} jugadores</div>
+              </div>
+              <button onClick={()=>setChatOpenFor(null)} style={{width:30,height:30,borderRadius:999,background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:16,display:"grid",placeItems:"center"}}>✕</button>
             </div>
-            <div style={{flex:"1 1 auto",minHeight:140,overflowY:"auto",paddingRight:4,WebkitOverflowScrolling:"touch"}}>
-              {chatLoading ? <div style={{color:"rgba(255,255,255,0.6)"}}>Cargando…</div>
-              : chatItems.length===0 ? <div style={{color:"rgba(255,255,255,0.5)"}}>Aún no hay mensajes.</div>
-              : chatItems.map((it,idx)=>(
-                <div key={it.id||idx} style={{padding:"7px 0",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-                  <div style={{color:"#74B800",fontWeight:800,fontSize:11}}>{it.author_name||it.author||"Jugador"}</div>
-                  <div style={{color:"#fff",opacity:0.9,fontSize:13,overflowWrap:"anywhere"}}>{it.message||it.text||""}</div>
-                </div>
-              ))}
+            <div style={{padding:"8px 16px",borderBottom:"1px solid rgba(255,255,255,0.05)",display:"flex",gap:8,overflowX:"auto",flexShrink:0}}>
+              {Object.values(rosterProfilesById||{}).slice(0,8).map((p,i)=>{
+                const pname = p?.name||p?.handle||"?";
+                return (
+                  <div key={p?.id||i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,flexShrink:0}}>
+                    <div style={{width:32,height:32,borderRadius:999,overflow:"hidden",background:"rgba(116,184,0,0.2)",border:"1.5px solid rgba(116,184,0,0.3)",display:"grid",placeItems:"center"}}>
+                      {p?.avatar_url ? <img src={p.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:14,fontWeight:900,color:"#74B800"}}>{pname[0].toUpperCase()}</span>}
+                    </div>
+                    <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:700,maxWidth:36,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{pname.split(" ")[0]}</div>
+                  </div>
+                );
+              })}
             </div>
-            <form onSubmit={e=>{e.preventDefault();handleSendChat();}} style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr auto",gap:8,flexShrink:0}}>
-              <input value={chatText} onChange={e=>setChatText(e.target.value)} placeholder="Escribe…" style={{...IS,minWidth:0,padding:"9px 12px"}} />
-              <button type="submit" style={{padding:"9px 16px",borderRadius:10,background:"#74B800",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:13}}>Enviar</button>
-            </form>
+            <div style={{flex:"1 1 auto",overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:8,WebkitOverflowScrolling:"touch"}}
+              ref={el=>{if(el){el.scrollTop=el.scrollHeight;}}}>
+              {chatLoading
+                ? <div style={{textAlign:"center",color:"rgba(255,255,255,0.4)",padding:20}}>Cargando…</div>
+                : chatItems.length===0
+                  ? <div style={{textAlign:"center",padding:"30px 0"}}>
+                      <div style={{fontSize:32,marginBottom:8}}>💬</div>
+                      <div style={{color:"rgba(255,255,255,0.4)",fontSize:13}}>Sé el primero en escribir</div>
+                    </div>
+                  : chatItems.map((it,idx)=>{
+                      const isMe = String(it.user_id)===String(session?.user?.id);
+                      const prof = rosterProfilesById?.[String(it.user_id)];
+                      const pname = prof?.name||prof?.handle||"Jugador";
+                      const avatar = prof?.avatar_url;
+                      const showName = !isMe && (idx===0||chatItems[idx-1]?.user_id!==it.user_id);
+                      const time = it.created_at ? new Date(it.created_at).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"}) : "";
+                      return (
+                        <div key={it.id||idx} style={{display:"flex",flexDirection:isMe?"row-reverse":"row",alignItems:"flex-end",gap:6}}>
+                          {!isMe && (
+                            <div style={{width:26,height:26,borderRadius:999,overflow:"hidden",background:"rgba(116,184,0,0.2)",flexShrink:0,display:"grid",placeItems:"center",visibility:showName?"visible":"hidden"}}>
+                              {avatar ? <img src={avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:12,fontWeight:900,color:"#74B800"}}>{pname[0].toUpperCase()}</span>}
+                            </div>
+                          )}
+                          <div style={{maxWidth:"72%",display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",gap:2}}>
+                            {showName && <div style={{fontSize:10,color:"#74B800",fontWeight:800,paddingLeft:4}}>{pname}</div>}
+                            <div style={{padding:"8px 12px",borderRadius:isMe?"14px 14px 4px 14px":"14px 14px 14px 4px",background:isMe?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.09)",color:isMe?"#000":"#fff",fontSize:13,lineHeight:1.4,overflowWrap:"anywhere",fontWeight:isMe?700:400}}>
+                              {it.message||it.text||""}
+                            </div>
+                            <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",paddingLeft:4,paddingRight:4}}>{time}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+              }
+            </div>
+            <div style={{padding:"10px 12px",borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",gap:8,alignItems:"center",flexShrink:0,paddingBottom:"max(10px,env(safe-area-inset-bottom))"}}>
+              <input value={chatText} onChange={e=>setChatText(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSendChat();}}}
+                placeholder="Escribe un mensaje…"
+                style={{flex:1,padding:"10px 14px",borderRadius:999,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:14,outline:"none",minWidth:0}} />
+              <button onClick={handleSendChat} disabled={!chatText.trim()}
+                style={{width:38,height:38,borderRadius:999,background:chatText.trim()?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.08)",border:"none",color:chatText.trim()?"#000":"rgba(255,255,255,0.3)",cursor:chatText.trim()?"pointer":"default",fontSize:18,display:"grid",placeItems:"center",flexShrink:0,transition:"all .15s"}}>↑</button>
+            </div>
           </div>
         </div>
       )}

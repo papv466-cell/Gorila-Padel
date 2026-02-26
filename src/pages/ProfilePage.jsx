@@ -1,6 +1,7 @@
 // src/pages/ProfilePage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../services/supabaseClient";
+import PlayerStats from "../components/PlayerStats";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ToastProvider";
 
@@ -402,6 +403,12 @@ export default function ProfilePage() {
                 🟥 Tienes {stats.red_cards} tarjeta{stats.red_cards > 1 ? "s" : ""} roja{stats.red_cards > 1 ? "s" : ""} por no presentarte a partidos. Juega más partidos para reducirlas.
               </div>
             )}
+          </div>
+
+          {/* ── STATS AVANZADAS ── */}
+          <div className="pfSection">
+            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📈 Estadísticas avanzadas</div>
+            <PlayerStats userId={session?.user?.id} />
           </div>
 
           {/* ── VALORACIONES RECIBIDAS ── */}

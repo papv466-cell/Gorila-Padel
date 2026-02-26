@@ -184,6 +184,12 @@ export default function PublicProfilePage() {
 
         {/* ── TAB INFO ── */}
         {tab === 'info' && (
+          <div style={{ marginBottom: 14 }}>
+            <PlayerStats userId={userId} />
+          </div>
+        )}
+
+        {tab === 'info_old' && (
           <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20 }}>
             {user.bio ? (
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: 0 }}>{user.bio}</p>
