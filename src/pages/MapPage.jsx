@@ -651,36 +651,60 @@ export default function MapPage() {
               <input placeholder="Nombre de la pista (ej: Pista de Ana, Urbanización Condesa…)" value={courtForm.name}
                 onChange={e=>setCourtForm(p=>({...p,name:e.target.value}))}
                 style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none"}} />
-              <textarea placeholder="Descripción opcional (dirección, instrucciones de acceso…)" value={courtForm.description}
-                onChange={e=>setCourtForm(p=>({...p,description:e.target.value}))}
-                rows={3}
-                style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",resize:"none"}} />
-              <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",fontSize:12,color:"rgba(255,255,255,0.6)"}}>
-                📍 La pista se creará en tu ubicación actual
-                {userPos && <span style={{color:"#f59e0b",fontWeight:700}}> ({userPos.lat.toFixed(4)}, {userPos.lng.toFixed(4)})</span>}
-                {!userPos && <span style={{color:"#ef4444"}}> — activa la ubicación primero</span>}
+              <div style={{position:"relative"}}>
+                <input placeholder="🔍 Busca la dirección (calle, número, ciudad…)" value={courtForm.addressQuery||""}
+                  onChange={async e=>{
+                    const q=e.target.value;
+                    setCourtForm(p=>({...p,addressQuery:q,lat:null,lng:null,addressLabel:""}));
+                    if(q.length<3) return;
+                    try{
+                      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`,{headers:{"Accept-Language":"es"}});
+                      const data = await res.json();
+                      setCourtForm(p=>({...p,geoResults:data||[]}));
+                    }catch{}
+                  }}
+                  style={{width:"100%",padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
+                {courtForm.geoResults?.length>0 && !courtForm.lat && (
+                  <div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:9999,background:"#1a1a1a",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,overflow:"hidden",marginTop:4}}>
+                    {courtForm.geoResults.slice(0,5).map((r,i)=>(
+                      <div key={i} onClick={()=>setCourtForm(p=>({...p,lat:parseFloat(r.lat),lng:parseFloat(r.lon),addressLabel:r.display_name,addressQuery:r.display_name,geoResults:[]}))}
+                        style={{padding:"10px 12px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.06)",fontSize:12,color:"#fff",background:"rgba(255,255,255,0.02)"}}>
+                        📍 {r.display_name}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <button disabled={!courtForm.name.trim()||!userPos||courtSaving}
+              {courtForm.lat && (
+                <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.3)",fontSize:12,color:"#f59e0b",fontWeight:700}}>
+                  ✅ Ubicación seleccionada: {courtForm.addressLabel?.slice(0,60)}…
+                </div>
+              )}
+              <textarea placeholder="Descripción opcional (instrucciones de acceso, pista número…)" value={courtForm.description||""}
+                onChange={e=>setCourtForm(p=>({...p,description:e.target.value}))}
+                rows={2}
+                style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",resize:"none"}} />
+              <button disabled={!courtForm.name.trim()||!courtForm.lat||courtSaving}
                 onClick={async()=>{
-                  if(!courtForm.name.trim()||!userPos) return;
+                  if(!courtForm.name.trim()||!courtForm.lat) return;
                   try{
                     setCourtSaving(true);
                     const {data,error} = await supabase.from("private_courts").insert({
                       name: courtForm.name.trim(),
-                      description: courtForm.description.trim()||null,
-                      lat: userPos.lat,
-                      lng: userPos.lng,
+                      description: (courtForm.description||"").trim()||courtForm.addressLabel||null,
+                      lat: courtForm.lat,
+                      lng: courtForm.lng,
                       is_public: true,
                     }).select().single();
                     if(error) throw error;
                     setPrivateCourts(prev=>[...prev,data]);
                     setShowCreateCourt(false);
                     setSelectedCourt(data);
-                    setCourtForm({name:"",description:"",lat:null,lng:null});
+                    setCourtForm({name:"",description:"",addressQuery:"",lat:null,lng:null,geoResults:[],addressLabel:""});
                   }catch(e){ alert(e?.message||"Error al crear pista"); }
                   finally{ setCourtSaving(false); }
                 }}
-                style={{padding:"12px",borderRadius:12,background:courtForm.name.trim()&&userPos?"linear-gradient(135deg,#f59e0b,#fbbf24)":"rgba(255,255,255,0.08)",border:"none",color:courtForm.name.trim()&&userPos?"#000":"rgba(255,255,255,0.3)",fontWeight:900,fontSize:14,cursor:courtForm.name.trim()&&userPos?"pointer":"default"}}>
+                style={{padding:"12px",borderRadius:12,background:courtForm.name.trim()&&courtForm.lat?"linear-gradient(135deg,#f59e0b,#fbbf24)":"rgba(255,255,255,0.08)",border:"none",color:courtForm.name.trim()&&courtForm.lat?"#000":"rgba(255,255,255,0.3)",fontWeight:900,fontSize:14,cursor:courtForm.name.trim()&&courtForm.lat?"pointer":"default"}}>
                 {courtSaving?"Creando…":"✅ Crear pista"}
               </button>
             </div>
