@@ -7,7 +7,7 @@ export async function fetchProfilesByIds(userIds = []) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,name,age,sex,level,hand")
+    .select("id,name,handle,age,sex,level,hand,avatar_url")
     .in("id", ids);
 
   if (error) throw error;

@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
   const [form, setForm] = useState({
     name: "", handle: "", sex: "X", level: "medio",
-    handedness: "right", birthdate: "", avatar_url: "",
+    handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false,
   });
 
   /* ─── Stats ─── */
@@ -160,11 +160,11 @@ export default function ProfilePage() {
       (async () => {
         try {
           setLoading(true); setErr(null);
-          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url").eq("id", s.user.id).maybeSingle();
+          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled").eq("id", s.user.id).maybeSingle();
           if (error) throw error;
           const handle = prof?.handle ?? "";
           const name = (prof?.name ?? "").trim() || handle;
-          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "" });
+          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false });
           await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
         } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
         finally { setLoading(false); }
@@ -183,7 +183,7 @@ export default function ProfilePage() {
     const finalHandle = cleanHandle || cleanName.toLowerCase().replace(/\s+/g, "");
     const finalName = cleanName || cleanHandle;
     const cleanBirthdate = form.birthdate && String(form.birthdate).trim() ? String(form.birthdate).trim() : null;
-    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, ...(payloadOverride || {}) };
+    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, sos_enabled: form.sos_enabled ?? false, ...(payloadOverride || {}) };
     try {
       setSaving(true);
       const { error: err1 } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
@@ -336,6 +336,20 @@ export default function ProfilePage() {
               <div>
                 <label className="pfLabel">Cumpleaños (opcional)</label>
                 <input className="pfInput" type="date" value={form.birthdate || ""} onChange={e => setForm(p => ({ ...p, birthdate: e.target.value }))} />
+              </div>
+              <div className="pfField">
+                <label className="pfLabel">🆘 Avisos SOS de partidos</label>
+                <div onClick={() => setForm(p => ({ ...p, sos_enabled: !p.sos_enabled }))}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: form.sos_enabled ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+                  <div style={{ width: 44, height: 24, borderRadius: 999, background: form.sos_enabled ? "#74B800" : "rgba(255,255,255,0.15)", position: "relative", transition: "background .2s", flexShrink: 0 }}>
+                    <div style={{ position: "absolute", top: 2, left: form.sos_enabled ? 22 : 2, width: 20, height: 20, borderRadius: 999, background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>{form.sos_enabled ? "Activado" : "Desactivado"}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Recibe avisos cuando falta 1 jugador</div>
+                  </div>
+                </div>
+              <div style={{display:"none"}}>
               </div>
             </div>
 

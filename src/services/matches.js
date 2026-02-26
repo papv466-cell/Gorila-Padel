@@ -747,6 +747,7 @@ export async function triggerSOS({ matchId }) {
   const { data: candidates } = await supabase
     .from("profiles_public")
     .select("id")
+    .eq("sos_enabled", true)
     .not("id", "in", `(${excludeIds.join(",")})`)
     .limit(200);
 
@@ -773,11 +774,11 @@ export async function triggerSOS({ matchId }) {
 /* =========================
    POST PARTIDO
 ========================= */
-export async function submitMatchResult({ matchId, scoreLeft, scoreRight, notes }) {
+export async function submitMatchResult({ matchId, scoreLeft, scoreRight, notes, sets }) {
   const session = await getSessionOrThrow();
   const { data, error } = await supabase
     .from("match_results")
-    .insert({ match_id: matchId, score_left: scoreLeft, score_right: scoreRight, notes: notes||null, created_by: session.user.id })
+    .insert({ match_id: matchId, score_left: scoreLeft, score_right: scoreRight, notes: notes||null, sets: sets||[], created_by: session.user.id })
     .select().single();
   if (error) throw error;
   return data;

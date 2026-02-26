@@ -138,7 +138,7 @@ export default function App() {
       }
 
       if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-        playGorila(1);
+        unlockGorilaAudio().then(() => playGorila(1)).catch(() => playGorila(1));
         const detail = {
           title: data.title || "Gorila Pádel",
           body: data.body || "",

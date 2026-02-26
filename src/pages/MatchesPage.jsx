@@ -185,8 +185,7 @@ export default function MatchesPage() {
   const [postOpenFor, setPostOpenFor] = useState(null);
   const [postResult, setPostResult] = useState(null);
   const [postRoster, setPostRoster] = useState([]);
-  const [postScoreL, setPostScoreL] = useState(0);
-  const [postScoreR, setPostScoreR] = useState(0);
+  const [postSets, setPostSets] = useState([{l:0,r:0}]);
   const [postNotes, setPostNotes] = useState("");
   const [postRatings, setPostRatings] = useState({});
   const [postVibes, setPostVibes] = useState({});
@@ -445,7 +444,7 @@ export default function MatchesPage() {
     try {
       await approveRequest({requestId});
       try { const req=pending.find(r=>r.id===requestId); if(req){ const {data:match}=await supabase.from("matches").select("id,club_name").eq("id",requestsOpenFor).single(); const {notifyMatchApproved}=await import("../services/notifications"); await notifyMatchApproved({matchId:match.id,matchName:match.club_name,toUserId:req.user_id}); } } catch {}
-      await openRequests(requestsOpenFor); toast.success("Aprobado ✅"); await load();
+      await openRequests(requestsOpenFor); toast.success("Aprobado ✅"); await load(); try { const req=pending.find(r=>r.id===requestId); if(req){ const {data:prof}=await supabase.from("profiles").select("name,handle").eq("id",req.user_id).single(); const pname=prof?.name||prof?.handle||"Un jugador"; await sendMatchMessage({matchId:requestsOpenFor, message: pname+" se ha unido al partido 🦍"}); } } catch {}
     } catch(e) { toast.error(e?.message??"Error"); }
   }
 
@@ -476,7 +475,7 @@ export default function MatchesPage() {
       const [result, myRatings] = await Promise.all([getMatchResult(matchId), getMyRatingsForMatch(matchId)]);
       setPostResult(result || null);
       setPostMyRatings(myRatings || []);
-      if (result) { setPostScoreL(result.score_left||0); setPostScoreR(result.score_right||0); setPostNotes(result.notes||""); }
+      if (result) { setPostSets(result.sets||[{l:result.score_left||0,r:result.score_right||0}]); setPostNotes(result.notes||""); }
       const roster = playersByMatchId?.[String(matchId)] || [];
       const creatorId = match.created_by_user ? String(match.created_by_user) : "";
       const creatorProf = rosterProfilesById?.[creatorId] || null;
@@ -533,7 +532,7 @@ export default function MatchesPage() {
           <div style={{padding:"10px 0 6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
               <h1 style={{margin:0,fontSize:22,fontWeight:900,color:"#fff"}}>
-                🏓 <span style={{color:"#74B800"}}>Partidos</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" style={{marginRight:6,verticalAlign:"middle"}}><rect x="29" y="42" width="6" height="14" rx="3" fill="#fff"/><ellipse cx="32" cy="28" rx="13" ry="16" fill="#74B800" stroke="#111" strokeWidth="2"/><circle cx="28" cy="24" r="2" fill="#9BE800"/><circle cx="36" cy="24" r="2" fill="#9BE800"/><circle cx="32" cy="30" r="2" fill="#9BE800"/></svg><span style={{color:"#74B800"}}>Partidos</span>
               </h1>
               <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:2}}>
                 {status.loading ? "Cargando…" : `${visibleList.length} partido(s)`}
@@ -727,7 +726,7 @@ export default function MatchesPage() {
             ) : visibleList.map(m => {
               const myStatus2 = normStatus(myReqStatus?.[m.id]??null);
               const isCreator = !!(session?.user?.id&&String(m.created_by_user)===String(session.user.id));
-              const occupied = Math.min(4,(Number(m.reserved_spots)||1)+(approvedCounts[m.id]||0));
+              const occupied = Math.min(4, 1 + (approvedCounts[m.id]||0));
               const left = Math.max(0,4-occupied);
               const iAmInPlayers = !!inPlayersByMatchId?.[String(m.id)];
               const iAmInside = isCreator||iAmInPlayers||myStatus2==="approved"||myStatus2==="pending";
@@ -799,7 +798,7 @@ export default function MatchesPage() {
                     {!session && <button className="mBtn primary" onClick={goLogin}>PARTICIPAR</button>}
                     {session&&!isCreator&&!myStatus2&&left>0 && <button className="mBtn primary" onClick={()=>setMoodOpenFor(m.id)}>PARTICIPAR</button>}
                     {session&&!isCreator&&myStatus2==="approved" && (
-                      <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin(m.id); toast.success("Has salido"); await load(); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
+                      <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin({matchId: m.id}); toast.success("Has salido"); await load(); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
                     )}
                     {isCreator && <button className="mBtn icon" onClick={()=>openRequests(m.id)} title="Solicitudes">📥</button>}
                     {session&&(isCreator||myStatus2==="approved"||iAmInPlayers) && (
@@ -819,7 +818,7 @@ export default function MatchesPage() {
                           style={{background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800"}}>📊</button>
                       );
                     })()}
-                    {session && isCreator && left === 1 && (
+                    {session && isCreator && (
                       <button className="mBtn icon" title="SOS Cuarto Jugador"
                         onClick={async () => {
                           if (!confirm("¿Activar SOS? Se notificará a todos los usuarios disponibles.")) return;
@@ -1123,35 +1122,54 @@ export default function MatchesPage() {
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:14,marginBottom:14}}>
               <div style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.6)",marginBottom:10}}>RESULTADO</div>
               {postResult ? (
-                <div style={{textAlign:"center"}}>
-                  <div style={{fontSize:36,fontWeight:900,color:"#fff"}}>{postResult.score_left} — {postResult.score_right}</div>
-                  {postResult.notes && <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:6}}>{postResult.notes}</div>}
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {(postResult.sets||[{l:postResult.score_left,r:postResult.score_right}]).map((s,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,padding:"8px",borderRadius:10,background:"rgba(255,255,255,0.04)"}}>
+                      <span style={{fontSize:22,fontWeight:900,color:s.l>s.r?"#74B800":"rgba(255,255,255,0.5)"}}>{s.l}</span>
+                      <span style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>Set {i+1}</span>
+                      <span style={{fontSize:22,fontWeight:900,color:s.r>s.l?"#74B800":"rgba(255,255,255,0.5)"}}>{s.r}</span>
+                    </div>
+                  ))}
+                  <div style={{textAlign:"center",fontSize:14,fontWeight:900,color:"#74B800",marginTop:4}}>
+                    {(()=>{const wL=(postResult.sets||[]).filter(s=>s.l>s.r).length;const wR=(postResult.sets||[]).filter(s=>s.r>s.l).length;return wL||wR?`Resultado: Eq. A ${wL} — ${wR} Eq. B`:""})()}
+                  </div>
+                  {postResult.notes && <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,textAlign:"center"}}>{postResult.notes}</div>}
                 </div>
               ) : (
                 visibleList.find(m=>m.id===postOpenFor)?.created_by_user === session?.user?.id ? (
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,justifyContent:"center"}}>
-                      <div style={{textAlign:"center"}}>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Equipo A</div>
-                        <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <button onClick={()=>setPostScoreL(s=>Math.max(0,s-1))} style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",cursor:"pointer",fontSize:16,fontWeight:900}}>−</button>
-                          <span style={{fontSize:32,fontWeight:900,color:"#fff",minWidth:32,textAlign:"center"}}>{postScoreL}</span>
-                          <button onClick={()=>setPostScoreL(s=>s+1)} style={{width:28,height:28,borderRadius:8,background:"rgba(116,184,0,0.3)",border:"none",color:"#fff",cursor:"pointer",fontSize:16,fontWeight:900}}>+</button>
-                        </div>
-                      </div>
-                      <div style={{fontSize:20,fontWeight:900,color:"rgba(255,255,255,0.3)"}}>—</div>
-                      <div style={{textAlign:"center"}}>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginBottom:4}}>Equipo B</div>
-                        <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <button onClick={()=>setPostScoreR(s=>Math.max(0,s-1))} style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,0.1)",border:"none",color:"#fff",cursor:"pointer",fontSize:16,fontWeight:900}}>−</button>
-                          <span style={{fontSize:32,fontWeight:900,color:"#fff",minWidth:32,textAlign:"center"}}>{postScoreR}</span>
-                          <button onClick={()=>setPostScoreR(s=>s+1)} style={{width:28,height:28,borderRadius:8,background:"rgba(116,184,0,0.3)",border:"none",color:"#fff",cursor:"pointer",fontSize:16,fontWeight:900}}>+</button>
-                        </div>
-                      </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>Sets</div>
+                      <button onClick={()=>setPostSets(s=>[...s,{l:0,r:0}])} style={{padding:"4px 10px",borderRadius:8,background:"rgba(116,184,0,0.2)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:900,fontSize:11,cursor:"pointer"}}>+ Set</button>
                     </div>
+                    <div style={{display:"grid",gridTemplateColumns:"auto 1fr auto 1fr auto",alignItems:"center",gap:4,marginBottom:4}}>
+                      <div style={{fontSize:10,fontWeight:900,color:"rgba(255,255,255,0.3)",textAlign:"center"}}>Eq. A</div>
+                      <div/>
+                      <div style={{fontSize:10,fontWeight:900,color:"rgba(255,255,255,0.3)",textAlign:"center"}}></div>
+                      <div/>
+                      <div style={{fontSize:10,fontWeight:900,color:"rgba(255,255,255,0.3)",textAlign:"center"}}>Eq. B</div>
+                    </div>
+                    {postSets.map((set,si)=>(
+                      <div key={si} style={{display:"grid",gridTemplateColumns:"1fr auto 1fr auto",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,l:Math.max(0,x.l-1)}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>−</button>
+                          <span style={{fontSize:24,fontWeight:900,color:set.l>set.r?"#74B800":set.l<set.r?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.l}</span>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,l:x.l+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(116,184,0,0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
+                        </div>
+                        <div style={{fontSize:14,fontWeight:900,color:"rgba(255,255,255,0.2)",textAlign:"center"}}>—</div>
+                        <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,r:Math.max(0,x.r-1)}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>−</button>
+                          <span style={{fontSize:24,fontWeight:900,color:set.r>set.l?"#74B800":set.r<set.l?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.r}</span>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,r:x.r+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(116,184,0,0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
+                        </div>
+                        {postSets.length>1 && <button onClick={()=>setPostSets(s=>s.filter((_,i)=>i!==si))} style={{width:22,height:22,borderRadius:6,background:"rgba(220,38,38,0.15)",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:12,fontWeight:900}}>✕</button>}
+                        {postSets.length===1 && <div style={{width:22}}/>}
+                      </div>
+                    ))}
+                    {(()=>{const wL=postSets.filter(s=>s.l>s.r).length;const wR=postSets.filter(s=>s.r>s.l).length;if(!wL&&!wR)return null;return(<div style={{textAlign:"center",padding:"8px",borderRadius:10,background:wL>wR?"rgba(116,184,0,0.1)":wR>wL?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.04)",border:"1px solid rgba(116,184,0,0.2)",marginTop:4}}><span style={{fontSize:13,fontWeight:900,color:"#74B800"}}>{wL>wR?"🏆 Gana Equipo A":"🏆 Gana Equipo B"} · {wL}–{wR}</span></div>);})()}
                     <input placeholder="Notas del partido (opcional)…" value={postNotes} onChange={e=>setPostNotes(e.target.value)} style={{...IS,fontSize:12,padding:"8px 10px"}} />
                     <button onClick={async()=>{
-                      try { setPostSaving(true); const r = await submitMatchResult({matchId:postOpenFor,scoreLeft:postScoreL,scoreRight:postScoreR,notes:postNotes}); setPostResult(r); toast.success("Resultado guardado ✅"); }
+                      try { setPostSaving(true); const winsL=postSets.filter(s=>s.l>s.r).length; const winsR=postSets.filter(s=>s.r>s.l).length; const r = await submitMatchResult({matchId:postOpenFor,scoreLeft:winsL,scoreRight:winsR,notes:postNotes,sets:postSets}); setPostResult(r); toast.success("Resultado guardado ✅"); }
                       catch(e){ toast.error(e?.message||"Error"); } finally { setPostSaving(false); }
                     }} disabled={postSaving}
                       style={{padding:"10px",borderRadius:10,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:13}}>
