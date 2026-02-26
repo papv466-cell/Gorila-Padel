@@ -651,8 +651,25 @@ export default function MapPage() {
               <input placeholder="Nombre de la pista (ej: Pista de Ana, Urbanización Condesa…)" value={courtForm.name}
                 onChange={e=>setCourtForm(p=>({...p,name:e.target.value}))}
                 style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none"}} />
+
+              {/* Botón usar mi ubicación */}
+              <button onClick={()=>{
+                if(!navigator.geolocation){alert("Geolocalización no disponible");return;}
+                navigator.geolocation.getCurrentPosition(pos=>{
+                  setCourtForm(p=>({...p,lat:pos.coords.latitude,lng:pos.coords.longitude,addressLabel:"Mi ubicación actual",addressQuery:"Mi ubicación actual",geoResults:[]}));
+                },()=>alert("No se pudo obtener tu ubicación"));
+              }} style={{padding:"10px 12px",borderRadius:10,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:800,fontSize:13,cursor:"pointer",textAlign:"left"}}>
+                📍 Usar mi ubicación actual
+              </button>
+
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",fontWeight:700}}>O BUSCA LA DIRECCIÓN</span>
+                <div style={{flex:1,height:1,background:"rgba(255,255,255,0.1)"}}/>
+              </div>
+
               <div style={{position:"relative"}}>
-                <input placeholder="🔍 Busca la dirección (calle, número, ciudad…)" value={courtForm.addressQuery||""}
+                <input placeholder="Calle, número, ciudad… (ej: Calle Mayor 5, Málaga)" value={courtForm.addressQuery==="Mi ubicación actual"?"":courtForm.addressQuery||""}
                   onChange={e=>{
                     const q=e.target.value;
                     setCourtForm(p=>({...p,addressQuery:q,lat:null,lng:null,addressLabel:"",geoResults:[]}));
@@ -660,35 +677,43 @@ export default function MapPage() {
                     if(q.length<3) return;
                     geoTimerRef.current = setTimeout(async()=>{
                       try{
-                        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=es`);
-                        const json = await res.json();
-                        const results = (json.features||[]).map(f=>({
-                          lat: f.geometry.coordinates[1],
-                          lon: f.geometry.coordinates[0],
-                          display_name: [f.properties.name, f.properties.street, f.properties.housenumber, f.properties.city, f.properties.country].filter(Boolean).join(", ")
-                        }));
-                        setCourtForm(p=>({...p,geoResults:results}));
-                      }catch(e){ console.error("geocoder error",e); }
-                    }, 400);
+                        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&countrycodes=es,ar,mx,co,cl,pe,uy,py,bo,ec,ve,gt,cu,do,hn,sv,ni,cr,pa,pr`;
+                        const res = await fetch(url, {headers:{"User-Agent":"GorilaApp/1.0","Accept-Language":"es"}});
+                        const data = await res.json();
+                        if(Array.isArray(data)&&data.length>0){
+                          setCourtForm(p=>({...p,geoResults:data}));
+                        }
+                      }catch(err){ console.error("geocoder:",err); }
+                    }, 500);
                   }}
                   style={{width:"100%",padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
-                {courtForm.geoResults?.length>0 && !courtForm.lat && (
-                  <div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:9999,background:"#1a1a1a",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,overflow:"hidden",marginTop:4}}>
-                    {courtForm.geoResults.slice(0,5).map((r,i)=>(
-                      <div key={i} onClick={()=>setCourtForm(p=>({...p,lat:parseFloat(r.lat),lng:parseFloat(r.lon),addressLabel:r.display_name,addressQuery:r.display_name,geoResults:[]}))}
-                        style={{padding:"10px 12px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.06)",fontSize:12,color:"#fff",background:"rgba(255,255,255,0.02)"}}>
-                        📍 {r.display_name}
+                {(courtForm.geoResults||[]).length>0 && (
+                  <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99999,background:"#1a1a1a",border:"1px solid rgba(116,184,0,0.3)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.6)"}}>
+                    {(courtForm.geoResults||[]).slice(0,6).map((r,i)=>(
+                      <div key={i} onClick={()=>{
+                        const lat=parseFloat(r.lat), lng=parseFloat(r.lon);
+                        const label = r.display_name;
+                        setCourtForm(p=>({...p,lat,lng,addressLabel:label,addressQuery:label,geoResults:[]}));
+                      }}
+                        style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:12,color:"#fff",lineHeight:1.4}}>
+                        <div style={{color:"#74B800",fontWeight:800,fontSize:11}}>📍</div>
+                        <div>{r.display_name}</div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+
               {courtForm.lat && (
-                <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.3)",fontSize:12,color:"#f59e0b",fontWeight:700}}>
-                  ✅ Ubicación seleccionada: {courtForm.addressLabel?.slice(0,60)}…
+                <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.3)",fontSize:12,color:"#74B800",fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
+                  <span>✅</span>
+                  <span>{(courtForm.addressLabel||"").slice(0,70)}{(courtForm.addressLabel||"").length>70?"…":""}</span>
+                  <button onClick={()=>setCourtForm(p=>({...p,lat:null,lng:null,addressLabel:"",addressQuery:"",geoResults:[]}))}
+                    style={{marginLeft:"auto",background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:14}}>✕</button>
                 </div>
               )}
-              <textarea placeholder="Descripción opcional (instrucciones de acceso, pista número…)" value={courtForm.description||""}
+
+              <textarea placeholder="Descripción opcional (instrucciones de acceso, número de pista…)" value={courtForm.description||""}
                 onChange={e=>setCourtForm(p=>({...p,description:e.target.value}))}
                 rows={2}
                 style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",resize:"none"}} />
