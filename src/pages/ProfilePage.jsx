@@ -349,6 +349,7 @@ export default function ProfilePage() {
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Recibe avisos cuando falta 1 jugador</div>
                   </div>
                 </div>
+              </div>
             </div>
 
             {err && <div style={{ marginTop: 10, color: "#ff6b6b", fontWeight: 700, fontSize: 13 }}>{err}</div>}
