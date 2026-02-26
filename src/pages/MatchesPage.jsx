@@ -252,8 +252,10 @@ export default function MatchesPage() {
       const map = await fetchInPlayersMap(ids, uid);
       if (aliveRef.current) setInPlayersByMatchId(map||{});
       const creatorIds = Array.from(new Set(unique.map(m=>m?.created_by_user).filter(Boolean).map(String)));
-      if (creatorIds.length) {
-        const profs = await fetchProfilesByIds(creatorIds);
+      const rosterPlayerIds = Array.from(new Set(Object.values(roster||{}).flat().map(p=>String(p?.id||"")).filter(Boolean)));
+      const allProfileIds = Array.from(new Set([...creatorIds, ...rosterPlayerIds]));
+      if (allProfileIds.length) {
+        const profs = await fetchProfilesByIds(allProfileIds);
         if (aliveRef.current) setRosterProfilesById(prev=>({...prev,...(profs||{})}));
       }
     } catch(e) {
