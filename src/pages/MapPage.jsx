@@ -660,10 +660,15 @@ export default function MapPage() {
                     if(q.length<3) return;
                     geoTimerRef.current = setTimeout(async()=>{
                       try{
-                        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`,{headers:{"Accept-Language":"es"}});
-                        const data = await res.json();
-                        setCourtForm(p=>({...p,geoResults:data||[]}));
-                      }catch{}
+                        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5&lang=es`);
+                        const json = await res.json();
+                        const results = (json.features||[]).map(f=>({
+                          lat: f.geometry.coordinates[1],
+                          lon: f.geometry.coordinates[0],
+                          display_name: [f.properties.name, f.properties.street, f.properties.housenumber, f.properties.city, f.properties.country].filter(Boolean).join(", ")
+                        }));
+                        setCourtForm(p=>({...p,geoResults:results}));
+                      }catch(e){ console.error("geocoder error",e); }
                     }, 400);
                   }}
                   style={{width:"100%",padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
