@@ -216,6 +216,16 @@ export default function MatchesPage() {
       const {data,error} = await supabase.from("match_players").select("match_id, player_uuid").in("match_id",matchIds);
       if (!error&&Array.isArray(data)) rows = data.map(r=>({match_id:r.match_id,user_id:r.player_uuid})).filter(r=>r.user_id);
     } catch {}
+    try {
+      const {data,error} = await supabase.from("match_join_requests").select("match_id, user_id").in("match_id",matchIds).eq("status","approved");
+      if (!error&&Array.isArray(data)) {
+        for (const r of data) {
+          if (!rows.find(x=>String(x.match_id)===String(r.match_id)&&String(x.user_id)===String(r.user_id))) {
+            rows.push({match_id:r.match_id, user_id:r.user_id});
+          }
+        }
+      }
+    } catch {}
     if (!rows.length) return {};
     const mapIds = {}, allUserIds = new Set();
     for (const r of rows) {
