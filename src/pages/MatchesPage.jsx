@@ -810,7 +810,7 @@ export default function MatchesPage() {
                     {!session && <button className="mBtn primary" onClick={goLogin}>PARTICIPAR</button>}
                     {session&&!isCreator&&!myStatus2&&left>0 && <button className="mBtn primary" onClick={()=>setMoodOpenFor(m.id)}>PARTICIPAR</button>}
                     {session&&!isCreator&&myStatus2==="approved" && (
-                      <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin({matchId: m.id}); toast.success("Has salido"); setTimeout(()=>load(),300); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
+                      <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin({matchId: m.id}); setMyReqStatus(prev=>{const n={...prev};delete n[m.id];return n;}); setInPlayersByMatchId(prev=>{const n={...prev};delete n[String(m.id)];return n;}); toast.success("Has salido"); setTimeout(()=>load(),500); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
                     )}
                     {isCreator && <button className="mBtn icon" onClick={()=>openRequests(m.id)} title="Solicitudes">📥</button>}
                     {session&&(isCreator||myStatus2==="approved"||iAmInPlayers) && (
