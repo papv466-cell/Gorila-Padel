@@ -135,6 +135,7 @@ export default function MapPage() {
   const [courtForm, setCourtForm] = useState({name:"",description:"",lat:null,lng:null});
   const [courtSaving, setCourtSaving] = useState(false);
   const [session, setSession] = useState(null);
+  const geoTimerRef = useRef(null);
 
   const [favIds, setFavIds] = useState(() => {
     try {
@@ -652,15 +653,18 @@ export default function MapPage() {
                 style={{padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none"}} />
               <div style={{position:"relative"}}>
                 <input placeholder="🔍 Busca la dirección (calle, número, ciudad…)" value={courtForm.addressQuery||""}
-                  onChange={async e=>{
+                  onChange={e=>{
                     const q=e.target.value;
-                    setCourtForm(p=>({...p,addressQuery:q,lat:null,lng:null,addressLabel:""}));
+                    setCourtForm(p=>({...p,addressQuery:q,lat:null,lng:null,addressLabel:"",geoResults:[]}));
+                    if(geoTimerRef.current) clearTimeout(geoTimerRef.current);
                     if(q.length<3) return;
-                    try{
-                      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`,{headers:{"Accept-Language":"es"}});
-                      const data = await res.json();
-                      setCourtForm(p=>({...p,geoResults:data||[]}));
-                    }catch{}
+                    geoTimerRef.current = setTimeout(async()=>{
+                      try{
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`,{headers:{"Accept-Language":"es"}});
+                        const data = await res.json();
+                        setCourtForm(p=>({...p,geoResults:data||[]}));
+                      }catch{}
+                    }, 400);
                   }}
                   style={{width:"100%",padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
                 {courtForm.geoResults?.length>0 && !courtForm.lat && (
