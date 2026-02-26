@@ -695,6 +695,7 @@ export default function MapPage() {
                       lat: courtForm.lat,
                       lng: courtForm.lng,
                       is_public: true,
+                      owner_id: session?.user?.id,
                     }).select().single();
                     if(error) throw error;
                     setPrivateCourts(prev=>[...prev,data]);
