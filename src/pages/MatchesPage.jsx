@@ -117,6 +117,8 @@ export default function MatchesPage() {
   const clubNameParam = searchParams.get("clubName")||"";
   const courtIdParam = searchParams.get("courtId")||"";
   const courtNameParam = searchParams.get("courtName")||"";
+  const courtLatParam = parseFloat(searchParams.get("lat")||"0")||null;
+  const courtLngParam = parseFloat(searchParams.get("lng")||"0")||null;
   const createParam = searchParams.get("create")==="1";
   const isClubFilter = !!(clubIdParam||clubNameParam);
   const openChatParam = qs.get("openChat")||(typeof window!=="undefined"&&window.sessionStorage?.getItem?.("openChat"))||"";
@@ -400,7 +402,7 @@ export default function MatchesPage() {
   useEffect(() => { if(!openRequestsParam||!authReady) return; if(!session){goLogin();return;} openRequests(openRequestsParam); }, [openRequestsParam,authReady,session]);
   useEffect(() => {
     if(!createParam||!authReady) return; if(!session){goLogin();return;}
-    const isPrivateCourt = !!courtIdParam; setOpenCreate(true); setForm(prev=>({...prev,clubId:isPrivateCourt?"private:"+courtIdParam:clubIdParam||prev.clubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO,isPrivateCourt})); setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); setShowClubSuggest(false);
+    const isPrivateCourt = !!courtIdParam; setOpenCreate(true); setForm(prev=>({...prev,clubId:isPrivateCourt?"private:"+courtIdParam:clubIdParam||prev.clubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO,isPrivateCourt,lat:isPrivateCourt?courtLatParam:null,lng:isPrivateCourt?courtLngParam:null})); setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); setShowClubSuggest(false);
   }, [createParam,clubIdParam,clubNameParam,authReady,session,todayISO,selectedDay]);
 
   /* ─── Actions ─── */
@@ -410,7 +412,7 @@ export default function MatchesPage() {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
-      await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id});
+      await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
       setSelectedDay(form.date); setOpenCreate(false);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
       toast.success("Partido creado ✅"); await load(); setViewMode("mine");

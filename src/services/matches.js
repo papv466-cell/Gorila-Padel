@@ -170,11 +170,12 @@ export async function createMatch(data) {
       level,
       duration_min: durationMin,
       players_needed: playersNeeded,
-      reserved_spots: playersNeeded, // ✅ Añadido para compatibilidad
+      reserved_spots: playersNeeded,
       start_at: startAt,
-      // notes: sanitizeString(data.notes || '', 500),
       price_per_player: data.pricePerPlayer ? Number(data.pricePerPlayer) : null,
       created_by_user: data.userId,
+      lat: data.lat || null,
+      lng: data.lng || null,
     })
     .select()
     .single();
@@ -727,7 +728,7 @@ export async function triggerSOS({ matchId }) {
   // Verificar que es el creador
   const { data: match, error: matchError } = await supabase
     .from("matches")
-    .select("id, club_name, level, start_at, created_by_user, reserved_spots")
+    .select("id, club_name, level, start_at, created_by_user, reserved_spots, lat, lng")
     .eq("id", matchId)
     .single();
   if (matchError) throw matchError;
@@ -749,15 +750,28 @@ export async function triggerSOS({ matchId }) {
 
   const excludeIds = [creatorId, ...(alreadyIn||[]).map(r => r.user_id)];
 
-  // Buscar todos los usuarios registrados excepto los ya dentro
+  // Buscar todos los usuarios con SOS activado excepto los ya dentro
   const { data: candidates } = await supabase
-    .from("profiles_public")
-    .select("id")
+    .from("profiles")
+    .select("id, sos_enabled, sos_radius_km, last_lat, last_lng")
     .eq("sos_enabled", true)
-    .not("id", "in", `(${excludeIds.join(",")})`)
-    .limit(200);
+    .not("id", "in", `(${excludeIds.join(",")})`);
 
-  const userIds = (candidates||[]).map(u => u.id);
+  // Filtrar por radio si el partido tiene coordenadas
+  function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.asin(Math.sqrt(a));
+  }
+
+  const matchLat = match.lat, matchLng = match.lng;
+  const userIds = (candidates||[]).filter(u => {
+    if (!matchLat || !matchLng) return true; // sin coords → notificar a todos
+    if (!u.last_lat || !u.last_lng) return true; // usuario sin ubicación → incluir
+    const radius = u.sos_radius_km || 50;
+    return haversineKm(matchLat, matchLng, u.last_lat, u.last_lng) <= radius;
+  }).map(u => u.id);
+
   if (userIds.length === 0) return { sent: 0 };
 
   // Formatear hora

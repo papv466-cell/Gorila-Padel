@@ -108,6 +108,21 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
+  // ✅ Guardar última ubicación del usuario
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const { supabase } = await import("./services/supabaseClient");
+        await supabase.from("profiles").update({
+          last_lat: pos.coords.latitude,
+          last_lng: pos.coords.longitude,
+        }).eq("id", session.user.id);
+      } catch {}
+    }, ()=>{}, { timeout: 10000 });
+  }, [session?.user?.id]);
+
   // ✅ Unlock audio (móvil)
   useEffect(() => {
     const unlock = () => {

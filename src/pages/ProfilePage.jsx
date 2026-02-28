@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
   const [form, setForm] = useState({
     name: "", handle: "", sex: "X", level: "medio",
-    handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false,
+    handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false, sos_radius_km: 50,
   });
 
   /* ─── Stats ─── */
@@ -160,11 +160,11 @@ export default function ProfilePage() {
       (async () => {
         try {
           setLoading(true); setErr(null);
-          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled").eq("id", s.user.id).maybeSingle();
+          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled,sos_radius_km").eq("id", s.user.id).maybeSingle();
           if (error) throw error;
           const handle = prof?.handle ?? "";
           const name = (prof?.name ?? "").trim() || handle;
-          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false });
+          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50 });
           await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
         } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
         finally { setLoading(false); }
@@ -183,7 +183,7 @@ export default function ProfilePage() {
     const finalHandle = cleanHandle || cleanName.toLowerCase().replace(/\s+/g, "");
     const finalName = cleanName || cleanHandle;
     const cleanBirthdate = form.birthdate && String(form.birthdate).trim() ? String(form.birthdate).trim() : null;
-    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, sos_enabled: form.sos_enabled ?? false, ...(payloadOverride || {}) };
+    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, sos_enabled: form.sos_enabled ?? false, sos_radius_km: form.sos_radius_km ?? 50, ...(payloadOverride || {}) };
     try {
       setSaving(true);
       const { error: err1 } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
@@ -350,6 +350,17 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
+              {form.sos_enabled && (
+                <div className="pfField">
+                  <label className="pfLabel">📡 Radio de avisos SOS: <span style={{color:"#74B800",fontWeight:900}}>{form.sos_radius_km} km</span></label>
+                  <input type="range" min={5} max={200} step={5} value={form.sos_radius_km||50}
+                    onChange={e=>setForm(p=>({...p,sos_radius_km:Number(e.target.value)}))}
+                    style={{width:"100%",accentColor:"#74B800",cursor:"pointer"}} />
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>
+                    <span>5 km</span><span>50 km</span><span>100 km</span><span>200 km</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {err && <div style={{ marginTop: 10, color: "#ff6b6b", fontWeight: 700, fontSize: 13 }}>{err}</div>}
