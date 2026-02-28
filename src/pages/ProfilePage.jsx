@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
   const [form, setForm] = useState({
     name: "", handle: "", sex: "X", level: "medio",
-    handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false, sos_radius_km: 50,
+    handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false, sos_radius_km: 50, notify_morning: false, notify_afternoon: false, followed_clubs: [],
   });
 
   /* ─── Stats ─── */
@@ -160,11 +160,11 @@ export default function ProfilePage() {
       (async () => {
         try {
           setLoading(true); setErr(null);
-          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled,sos_radius_km").eq("id", s.user.id).maybeSingle();
+          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled,sos_radius_km,notify_morning,notify_afternoon,followed_clubs").eq("id", s.user.id).maybeSingle();
           if (error) throw error;
           const handle = prof?.handle ?? "";
           const name = (prof?.name ?? "").trim() || handle;
-          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50 });
+          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
           await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
         } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
         finally { setLoading(false); }
@@ -183,7 +183,7 @@ export default function ProfilePage() {
     const finalHandle = cleanHandle || cleanName.toLowerCase().replace(/\s+/g, "");
     const finalName = cleanName || cleanHandle;
     const cleanBirthdate = form.birthdate && String(form.birthdate).trim() ? String(form.birthdate).trim() : null;
-    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, sos_enabled: form.sos_enabled ?? false, sos_radius_km: form.sos_radius_km ?? 50, ...(payloadOverride || {}) };
+    const payload = { id: session.user.id, name: finalName, handle: finalHandle, sex: form.sex, level: form.level, handedness: form.handedness, birthdate: cleanBirthdate, avatar_url: (form.avatar_url || "").trim() || defaultAvatarUrl, sos_enabled: form.sos_enabled ?? false, sos_radius_km: form.sos_radius_km ?? 50, notify_morning: form.notify_morning ?? false, notify_afternoon: form.notify_afternoon ?? false, followed_clubs: form.followed_clubs ?? [], ...(payloadOverride || {}) };
     try {
       setSaving(true);
       const { error: err1 } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
@@ -361,6 +361,21 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
+
+              {/* Turno preferido */}
+              <div className="pfField">
+                <label className="pfLabel">🔔 Notificaciones de nuevos partidos</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[{key:"notify_morning",label:"🌅 Mañana",sub:"Antes de las 14h"},{key:"notify_afternoon",label:"🌆 Tarde",sub:"Después de las 14h"}].map(({key,label,sub})=>(
+                    <div key={key} onClick={()=>setForm(p=>({...p,[key]:!p[key]}))}
+                      style={{flex:1,padding:"10px 12px",borderRadius:10,background:form[key]?"rgba(116,184,0,0.12)":"rgba(255,255,255,0.04)",border:form[key]?"1px solid rgba(116,184,0,0.4)":"1px solid rgba(255,255,255,0.1)",cursor:"pointer",textAlign:"center"}}>
+                      <div style={{fontSize:18,marginBottom:2}}>{label.split(" ")[0]}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:form[key]?"#74B800":"#fff"}}>{label.split(" ")[1]}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {err && <div style={{ marginTop: 10, color: "#ff6b6b", fontWeight: 700, fontSize: 13 }}>{err}</div>}

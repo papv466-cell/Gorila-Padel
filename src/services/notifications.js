@@ -515,3 +515,43 @@ export async function notifySOSMatch({ matchId, matchName, clubName, level, star
   );
   return Promise.allSettled(promises);
 }
+/* =========================
+   NUEVO PARTIDO — notificar a usuarios por preferencias
+========================= */
+export async function notifyNewMatch({ matchId, matchName, clubName, level, startAt, creatorId }) {
+  try {
+    const hour = new Date(startAt).getHours();
+    const isMorning = hour < 14;
+
+    // Buscar usuarios con notificaciones activadas para este club o turno
+    const { data: candidates } = await supabase
+      .from("profiles")
+      .select("id, notify_morning, notify_afternoon, followed_clubs")
+      .neq("id", creatorId);
+
+    if (!candidates?.length) return;
+
+    const userIds = candidates.filter(u => {
+      const followsClub = Array.isArray(u.followed_clubs) && u.followed_clubs.some(c =>
+        String(c).toLowerCase() === String(clubName).toLowerCase()
+      );
+      const wantsTurn = isMorning ? u.notify_morning : u.notify_afternoon;
+      return followsClub || wantsTurn;
+    }).map(u => u.id);
+
+    if (!userIds.length) return;
+
+    const promises = userIds.map(userId =>
+      createNotification({
+        userId,
+        type: "new_match",
+        title: "🏓 Nuevo partido disponible",
+        body: `${clubName} · ${level} · ${new Date(startAt).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"})}`,
+        data: { matchId, matchName },
+      })
+    );
+    await Promise.allSettled(promises);
+  } catch(e) {
+    console.error("notifyNewMatch error:", e);
+  }
+}

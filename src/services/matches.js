@@ -189,6 +189,12 @@ export async function createMatch(data) {
 
   console.log('✅ Partido creado:', row);
 
+  // Notificar a usuarios con preferencias
+  try {
+    const { notifyNewMatch } = await import('./notifications');
+    await notifyNewMatch({ matchId: row.id, matchName: clubName, clubName, level, startAt, creatorId: data.userId });
+  } catch {}
+
   // Insertar creador en match_players
   try {
     await supabase.from("match_players").insert({
