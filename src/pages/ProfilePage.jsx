@@ -1,6 +1,7 @@
 // src/pages/ProfilePage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../services/supabaseClient";
+import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import PlayerStats from "../components/PlayerStats";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ToastProvider";
@@ -56,6 +57,8 @@ export default function ProfilePage() {
 
   /* ─── Favoritos ─── */
   const [favLoading, setFavLoading] = useState(false);
+  const [clubsSheet, setClubsSheet] = useState([]);
+  const [clubSearchQ, setClubSearchQ] = useState("");
   const [favorites, setFavorites] = useState([]);
 
   const defaultAvatarUrl = useMemo(() => {
@@ -166,6 +169,7 @@ export default function ProfilePage() {
           const name = (prof?.name ?? "").trim() || handle;
           setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
           await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
+          fetchClubsFromGoogleSheet().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>{});
         } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
         finally { setLoading(false); }
       })();
@@ -375,6 +379,36 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Clubs favoritos para notificaciones */}
+              <div className="pfField">
+                <label className="pfLabel">🏢 Clubs que sigues <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,fontSize:10}}>(te avisamos de nuevos partidos)</span></label>
+                <input placeholder="Buscar club…" value={clubSearchQ} onChange={e=>setClubSearchQ(e.target.value)}
+                  style={{padding:"9px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",marginBottom:8}} />
+                {(form.followed_clubs||[]).length>0 && (
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                    {(form.followed_clubs||[]).map(c=>(
+                      <div key={c} style={{padding:"4px 10px",borderRadius:999,background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+                        {c}
+                        <span onClick={()=>setForm(p=>({...p,followed_clubs:(p.followed_clubs||[]).filter(x=>x!==c)}))} style={{cursor:"pointer",opacity:0.6,fontSize:11}}>✕</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {clubSearchQ.length>=2 && (
+                  <div style={{background:"#1a1a1a",borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",overflow:"hidden",maxHeight:180,overflowY:"auto"}}>
+                    {clubsSheet.filter(c=>c.name&&c.name.toLowerCase().includes(clubSearchQ.toLowerCase())&&!(form.followed_clubs||[]).includes(c.name)).slice(0,8).map(c=>(
+                      <div key={c.id||c.name} onClick={()=>{setForm(p=>({...p,followed_clubs:[...(p.followed_clubs||[]),c.name]}));setClubSearchQ("");}}
+                        style={{padding:"9px 12px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:13,color:"#fff"}}>
+                        🏢 {c.name} {c.city?<span style={{color:"rgba(255,255,255,0.4)",fontSize:11}}>· {c.city}</span>:""}
+                      </div>
+                    ))}
+                    {clubsSheet.filter(c=>c.name&&c.name.toLowerCase().includes(clubSearchQ.toLowerCase())&&!(form.followed_clubs||[]).includes(c.name)).length===0 && (
+                      <div style={{padding:"9px 12px",fontSize:12,color:"rgba(255,255,255,0.3)"}}>No se encontraron clubs</div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
