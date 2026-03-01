@@ -29,6 +29,7 @@ import SellerSettings from './pages/SellerSettings';
 import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
 import ClubPage from "./pages/ClubPage";
+import toast from 'react-hot-toast';
 
 import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
@@ -162,20 +163,21 @@ useEffect(() => {
 
 
    if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-  console.log("🦍 Intentando reproducir gorila...");
-  try {
-    const audio = new Audio("/sounds/gorila.mp3");
-    audio.volume = 1.0;
-    audio.play()
-      .then(() => console.log("✅ Gorila sonando"))
-      .catch((err) => {
-        console.log("❌ Audio.play() falló:", err.name, err.message);
-        unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
-      });
-  } catch(err) {
-    console.log("❌ Error creando Audio:", err);
-    playGorila(1).catch(() => {});
-  }
+      try {
+        const audio = new Audio("/sounds/gorila.mp3");
+        audio.volume = 1.0;
+        audio.play()
+          .then(() => {
+            toast.success("🦍 Gorila sonando");
+          })
+          .catch((err) => {
+            toast.error(`❌ ${err.name}: ${err.message}`);
+            unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
+          });
+      } catch(err) {
+        toast.error(`❌ catch: ${err.message}`);
+        playGorila(1).catch(() => {});
+      }
 
       const detail = {
         title: data.title || "Gorila Pádel",
