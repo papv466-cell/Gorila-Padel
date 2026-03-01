@@ -7,78 +7,68 @@ self.addEventListener("activate", (event) => {
   console.log("✅ GP SW activo");
 });
 
-// ✅ helper: mandar mensaje a TODAS las pestañas abiertas (clientes)
+// ─── helper: mandar mensaje a TODAS las pestañas abiertas ───────────────────
 async function broadcastMessage(msg) {
   const allClients = await self.clients.matchAll({
     type: "window",
     includeUncontrolled: true,
   });
-
   for (const client of allClients) {
-    try {
-      client.postMessage(msg);
-    } catch {}
+    try { client.postMessage(msg); } catch {}
   }
 }
 
-// ✅ Recibir mensajes desde la app (para tests y para cosas futuras)
+// ─── Mensajes desde la app ──────────────────────────────────────────────────
 self.addEventListener("message", (event) => {
   const data = event?.data || {};
   const type = String(data.type || "");
 
-  // ✅ TEST: simular push recibido estando la app abierta
   if (type === "PUSH_RECEIVED") {
-    // reenviamos a la app para que suene el gorila
     event.waitUntil(
       broadcastMessage({
         type: "PUSH_RECEIVED",
         title: data.title || "TEST 🦍",
-        body: data.body || "Si ves esto dentro de la app, ya está.",
+        body: data.body || "",
         url: data.url || "/partidos",
       })
     );
   }
 });
 
+// ─── Push recibido ──────────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch {}
+  try { data = event.data ? event.data.json() : {}; } catch {}
 
-  const title = data.title || "Gorila Pádel";
+  const title = data.title || "Gorila Pádel 🦍";
   const body = data.body || "Tienes una notificación";
   const url = data.data?.url || data.url || "/partidos";
   const matchId = data.data?.matchId || data.matchId || null;
   const notifType = data.data?.type || data.type || null;
 
-  // ✅ si la app está abierta, además de mostrar notificación
-  // le mandamos un mensaje para que suene el gorila en App.jsx
   event.waitUntil(
     (async () => {
-      // 1) sonido en app abierta
-      await broadcastMessage({
-        type: "PUSH_RECEIVED",
-        title,
-        body,
-        url,
-      });
+      // Si la app está abierta → mandar mensaje para que suene en app
+      const allClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const appOpen = allClients.length > 0;
 
-      // 2) notificación del sistema (cuando esté en background)
+      if (appOpen) {
+        await broadcastMessage({ type: "PUSH_RECEIVED", title, body, url });
+      }
+
+      // Siempre mostrar notificación del sistema
       return self.registration.showNotification(title, {
         body,
-        icon: "/favicon.ico",
-        badge: "/favicon.ico",
-        data: {
-          url,
-          type: notifType,
-          matchId: matchId,
-        },
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
+        vibrate: [200, 100, 200],       // vibración gorila 🦍
+        data: { url, type: notifType, matchId },
       });
     })()
   );
 });
 
+// ─── Click en notificación ──────────────────────────────────────────────────
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
@@ -93,30 +83,20 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true,
       });
 
-      // ✅ Si ya hay una pestaña abierta: enfocamos y navegamos sin reload
-      for (const client of allClients) {
-        try {
-          if ("focus" in client) await client.focus();
+      if (allClients.length > 0) {
+        // App abierta → enfocar + navegar + sonar
+        const client = allClients[0];
+        try { await client.focus(); } catch {}
 
-          if ("postMessage" in client) {
-            client.postMessage({
-              type: "PUSH_CLICKED",
-              url: targetPath,
-            });
-
-            // y además usamos tu NAVIGATE (sin reload)
-            client.postMessage({
-              type: "NAVIGATE",
-              url: targetPath,
-            });
-            return;
-          }
-        } catch {}
-      }
-
-      // ✅ Si no hay pestaña abierta: abrimos nueva
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(targetUrl);
+        // PUSH_CLICKED → App.jsx reproduce el sonido y despacha el evento gp:push
+        client.postMessage({ type: "PUSH_CLICKED", title: event.notification.title, body: event.notification.body, url: targetPath });
+        // NAVIGATE → App.jsx navega a la URL
+        client.postMessage({ type: "NAVIGATE", url: targetPath });
+      } else {
+        // App cerrada → abrir nueva pestaña (el sonido se reproducirá cuando cargue)
+        if (self.clients.openWindow) {
+          await self.clients.openWindow(targetUrl);
+        }
       }
     })()
   );

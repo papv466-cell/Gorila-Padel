@@ -1,6 +1,10 @@
 // src/services/gorilaSound.js
 // Sonidos + timers (5 min antes y fin). Evita duplicados y no rompe nada.
 
+// ─── RUTA ÚNICA del sonido gorila ───────────────────────────────────────────
+const GORILA_SOUND_URL = "/sounds/gorila.mp3";
+// ────────────────────────────────────────────────────────────────────────────
+
 let audioEl = null;
 
 // key -> { sig, t1, t2 }
@@ -26,10 +30,11 @@ function writeSessionSigMap(obj) {
 }
 
 /* ---------------------------
-   Audio
+   Web Audio API
 --------------------------- */
 let audioCtx = null;
 let audioBuffer = null;
+let audioUnlocked = false;
 
 function getAudioContext() {
   if (!audioCtx) {
@@ -42,50 +47,60 @@ async function loadBuffer() {
   if (audioBuffer) return audioBuffer;
   const ctx = getAudioContext();
   try {
-    const res = await fetch("/sounds/gorila.mp3");
+    const res = await fetch(GORILA_SOUND_URL);
     const arr = await res.arrayBuffer();
     audioBuffer = await ctx.decodeAudioData(arr);
   } catch {
-    // fallback a Audio element
     audioBuffer = null;
   }
   return audioBuffer;
 }
 
-function getAudio() {
+function getAudioElement() {
   if (audioEl) return audioEl;
-  const a = new Audio("/sounds/gorila.mp3");
+  const a = new Audio(GORILA_SOUND_URL);
   a.preload = "auto";
   a.volume = 1;
   audioEl = a;
   return audioEl;
 }
 
-// Para iOS / móviles (necesitan gesto)
+/**
+ * Desbloquear audio en iOS/móvil — llamar desde un gesto del usuario.
+ * App.jsx ya lo llama en pointerdown/keydown.
+ */
 export async function unlockGorilaAudio() {
+  if (audioUnlocked) return true;
   try {
-    // Desbloquear Web Audio Context
     const ctx = getAudioContext();
-    if (ctx.state === "suspended") {
-      await ctx.resume();
-    }
-    // Precargar buffer
+    if (ctx.state === "suspended") await ctx.resume();
     await loadBuffer();
-    // También desbloquear Audio element como fallback
-    const a = getAudio();
+
+    // Desbloquear Audio element como fallback
+    const a = getAudioElement();
     a.currentTime = 0;
     const p = a.play();
-    if (p) { await p.catch(()=>{}); a.pause(); a.currentTime = 0; }
+    if (p) {
+      await p.catch(() => {});
+      a.pause();
+      a.currentTime = 0;
+    }
+    audioUnlocked = true;
     return true;
   } catch {
     return false;
   }
 }
 
+/**
+ * Reproducir sonido gorila N veces.
+ * Intenta Web Audio API primero (más permisivo en móvil),
+ * cae a Audio element si falla.
+ */
 export async function playGorila(times = 1, gapMs = 320) {
   const n = Math.max(1, Number(times) || 1);
 
-  // Intentar con Web Audio API primero (más permisivo)
+  // Intentar con Web Audio API
   try {
     const ctx = getAudioContext();
     if (ctx.state === "suspended") await ctx.resume();
@@ -105,18 +120,18 @@ export async function playGorila(times = 1, gapMs = 320) {
   // Fallback a Audio element
   for (let i = 0; i < n; i++) {
     try {
-      const a = getAudio();
+      const a = getAudioElement();
       a.currentTime = 0;
       await a.play();
     } catch {
       break;
     }
-    await new Promise((r) => setTimeout(r, gapMs));
+    await new Promise(r => setTimeout(r, gapMs));
   }
 }
 
 /* ---------------------------
-   Timers
+   Timers para fin de partido/clase
 --------------------------- */
 function scheduleAt(ms, fn) {
   const delay = ms - Date.now();
@@ -126,12 +141,9 @@ function scheduleAt(ms, fn) {
 }
 
 /**
- * Programa:
- * - 5 min antes: warn5MinTimes (default 2)
- * - fin: endTimes (default 4)
- *
- * key: string única del evento (ej: "match:<id>", "class:<id>")
- * endMs: timestamp final en ms
+ * Programa avisos de sonido:
+ * - warnBeforeMs antes del fin: warn5MinTimes veces
+ * - al acabar: endTimes veces
  */
 export function scheduleEndWarningsForEvent({
   key,
@@ -153,12 +165,10 @@ export function scheduleEndWarningsForEvent({
 
   const sigMap = readSessionSigMap();
   if (sigMap[key] === sig) {
-    // ya programado en esta sesión (evita duplicados al re-montar)
     scheduled.set(key, { sig, t1: null, t2: null });
     return;
   }
 
-  // limpia anterior si era distinto
   if (prev) {
     try {
       if (prev.t1) clearTimeout(prev.t1);
@@ -169,11 +179,11 @@ export function scheduleEndWarningsForEvent({
   const warnMs = endMs - warnBeforeMs;
 
   const t1 = scheduleAt(warnMs, async () => {
-    await playGorila(warn5MinTimes); // 2
+    await playGorila(warn5MinTimes);
   });
 
   const t2 = scheduleAt(endMs, async () => {
-    await playGorila(endTimes); // 4
+    await playGorila(endTimes);
   });
 
   scheduled.set(key, { sig, t1, t2 });
@@ -182,7 +192,7 @@ export function scheduleEndWarningsForEvent({
 }
 
 /**
- * Quita timers por predicado
+ * Cancela timers por predicado
  */
 export function unscheduleEventWarnings(predicateFn) {
   if (typeof predicateFn !== "function") return;
@@ -192,14 +202,9 @@ export function unscheduleEventWarnings(predicateFn) {
   for (const [key, entry] of scheduled.entries()) {
     try {
       if (!predicateFn(key)) continue;
-
       if (entry?.t1) clearTimeout(entry.t1);
       if (entry?.t2) clearTimeout(entry.t2);
-
       scheduled.delete(key);
-
-      // Pro: dejamos la firma para evitar duplicados si vuelves a montar
-      // (si quieres reprogramar en la misma sesión, habría que borrar sigMap[key])
     } catch {}
   }
 
@@ -207,10 +212,9 @@ export function unscheduleEventWarnings(predicateFn) {
 }
 
 /**
- * ✅ COMPAT: ClassesPage está usando esto.
- * - clearGorilaTimers() -> limpia todo
- * - clearGorilaTimers("class:") -> limpia clases
- * - clearGorilaTimers("match:") -> limpia partidos
+ * COMPAT: clearGorilaTimers() -> limpia todo
+ * clearGorilaTimers("class:") -> limpia clases
+ * clearGorilaTimers("match:") -> limpia partidos
  */
 export function clearGorilaTimers(prefix = "") {
   const p = String(prefix || "");
@@ -218,11 +222,8 @@ export function clearGorilaTimers(prefix = "") {
 }
 
 /**
- * ✅ COMPAT: ClassesPage está usando esto.
- * Tu ClassesPage llama: scheduleGorilaForEnd(end_at)
- *
- * - endAtIso: ISO de final (ej "2026-02-02T10:00:00.000Z")
- * - classId opcional para usar key única (mejor)
+ * COMPAT: ClassesPage usa esto.
+ * endAtIso: ISO de final, classId opcional
  */
 export function scheduleGorilaForEnd(endAtIso, classId = "") {
   const endMs = new Date(String(endAtIso || "")).getTime();

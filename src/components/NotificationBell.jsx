@@ -123,12 +123,12 @@ export default function NotificationBell() {
     setIsOpen(!isOpen);
   }
 
-  async function handleNotificationClick(notification) {
+ async function handleNotificationClick(notification) {
   console.log('🔔 Notificación clickeada:', notification);
   console.log('🔔 Type EXACTO:', JSON.stringify(notification.type));
   console.log('🔔 Data:', notification.data);
   
-  await markAsClicked(notification.id);  // ← USA markAsClicked, no markAsRead
+  await markAsClicked(notification.id);
   
   setNotifications((prev) =>
     prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
@@ -137,21 +137,20 @@ export default function NotificationBell() {
 
   const { type, data } = notification;
 
-  if (type.startsWith("match_")) {
-    const isRequest = type?.includes("request");
+  // 1️⃣ Si la notificación trae URL directa → úsala (SOS, new_match, etc.)
+  if (data?.url) {
+    navigate(data.url);
+    return;
+  }
 
-    if (isRequest && data?.matchId) {
-      console.log('✅ Abriendo SOLICITUDES:', data.matchId);
-      navigate(`/partidos?openRequests=${data.matchId}`);
-    } else if (data?.matchId) {
-      console.log('💬 Abriendo CHAT:', data.matchId);
-      navigate(`/partidos?openChat=${data.matchId}`);
-    } else {
-      navigate("/partidos");
-    }
-  } else if (type.startsWith("social_")) {
+  // 2️⃣ Fallback para notificaciones antiguas sin url en data
+  if (type?.includes("request")) {
+    navigate(data?.matchId ? `/partidos?openRequests=${data.matchId}` : "/partidos");
+  } else if (type?.startsWith("match_") || type === "sos_match" || type === "new_match") {
+    navigate(data?.matchId ? `/partidos?openChat=${data.matchId}` : "/partidos");
+  } else if (type?.startsWith("social_")) {
     navigate("/gorilandia");
-  } else if (type.startsWith("store_")) {
+  } else if (type?.startsWith("store_")) {
     navigate("/tienda");
   } else {
     navigate("/");
