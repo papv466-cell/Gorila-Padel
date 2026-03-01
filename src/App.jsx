@@ -108,6 +108,14 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
+  // ✅ Registrar push subscription
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    import("./services/push").then(({ensurePushSubscription}) => {
+      ensurePushSubscription().catch(()=>{});
+    });
+  }, [session?.user?.id]);
+
   // ✅ Guardar última ubicación del usuario
   useEffect(() => {
     if (!session?.user?.id) return;

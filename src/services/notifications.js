@@ -536,6 +536,8 @@ export async function notifyNewMatch({ matchId, matchName, clubName, level, star
         String(c).toLowerCase() === String(clubName).toLowerCase()
       );
       const wantsTurn = isMorning ? u.notify_morning : u.notify_afternoon;
+      // Si sigue el club → siempre notificar
+      // Si no sigue el club → solo si tiene el turno activado
       return followsClub || wantsTurn;
     }).map(u => u.id);
 
