@@ -1,6 +1,7 @@
 // src/App.jsx
 import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import ClubAdminPage from "./pages/ClubAdminPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -279,6 +280,7 @@ export default function App() {
           <Route path="/clases" element={<RequireAuth session={session}><ClassesPage /></RequireAuth>} />
           <Route path="/inclusivos" element={<RequireAuth session={session}><InclusiveMatchesPage /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth session={session}><ProfilePage /></RequireAuth>} />
+          <Route path="/club-admin" element={<RequireAuth session={session}><ClubAdminPage /></RequireAuth>} />
           <Route path="/profesores" element={<RequireAuth session={session}><TeachersPage /></RequireAuth>} />
           <Route path="/profesores/:id" element={<RequireAuth session={session}><TeacherProfilePage /></RequireAuth>} />
           <Route path="/juega" element={<RequireAuth session={session}><PlayHubPage /></RequireAuth>} />
