@@ -305,7 +305,7 @@ export async function notifyMatchRequest({ matchId, matchName, requesterId, requ
     type: NOTIFICATION_TYPES.MATCH_REQUEST,
     title: "Nueva solicitud",
     body: `${requesterName} quiere unirse a tu partido`,
-    data: { matchId, requesterId },
+    data: { matchId, requesterId , url: `/partidos` },
   });
 }
 
@@ -316,7 +316,7 @@ export async function notifyMatchInvite({ matchId, matchName, fromUserId, fromUs
     type: NOTIFICATION_TYPES.MATCH_INVITE,
     title: "Te invitaron a un partido",
     body: `${fromUserName} te invitó a jugar`,
-    data: { matchId, fromUserId },
+    data: { matchId, fromUserId , url: `/partidos` },
   });
 }
 
@@ -327,7 +327,7 @@ export async function notifyMatchTransferReceived({ matchId, matchName, fromUser
     type: NOTIFICATION_TYPES.MATCH_TRANSFER_RECEIVED,
     title: "¡Te cedieron una plaza!",
     body: `${fromUserName} te cedió su plaza`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -339,7 +339,7 @@ export async function notifyMatchChat({ matchId, matchName, senderName, message,
       type: NOTIFICATION_TYPES.MATCH_CHAT,
       title: `${senderName} en el chat`,
       body: message.substring(0, 100),
-      data: { matchId },
+      data: { matchId , url: `/partidos` },
     })
   );
   return Promise.all(promises);
@@ -353,7 +353,7 @@ export async function notifyMatchCancelled({ matchId, matchName, userIds }) {
       type: NOTIFICATION_TYPES.MATCH_CANCELLED,
       title: "Partido cancelado",
       body: `El partido fue cancelado por el organizador`,
-      data: { matchId },
+      data: { matchId , url: `/partidos` },
     })
   );
   return Promise.all(promises);
@@ -366,7 +366,7 @@ export async function notifyMatchReminder24h({ matchId, matchName, startTime, us
     type: NOTIFICATION_TYPES.MATCH_REMINDER_24H,
     title: "Partido mañana",
     body: `Tu partido es mañana a las ${startTime}`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -377,7 +377,7 @@ export async function notifyMatchReminder1h({ matchId, matchName, userId }) {
     type: NOTIFICATION_TYPES.MATCH_REMINDER_1H,
     title: "Partido en 1 hora",
     body: `Tu partido empieza en 1 hora. ¡Prepárate!`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -388,7 +388,7 @@ export async function notifyMatchStarting({ matchId, matchName, userId }) {
     type: NOTIFICATION_TYPES.MATCH_STARTING,
     title: "¡Partido YA! 🎾",
     body: `Tu partido empieza en 5 minutos`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -399,7 +399,7 @@ export async function notifyMatchEnding({ matchId, matchName, userId }) {
     type: NOTIFICATION_TYPES.MATCH_ENDING_5MIN,
     title: "Último set 🔥",
     body: `El partido termina en 5 minutos`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -410,7 +410,7 @@ export async function notifyMatchEnded({ matchId, matchName, userId }) {
     type: NOTIFICATION_TYPES.MATCH_ENDED,
     title: "Partido terminado",
     body: `¿Cómo estuvo el partido? ¡Cuéntanos!`,
-    data: { matchId },
+    data: { matchId , url: `/partidos` },
   });
 }
 
@@ -465,7 +465,7 @@ export async function notifyMatchApproved({ matchId, matchName, toUserId }) {
     type: 'match_request_approved',
     title: '✅ Solicitud aprobada',
     message: `Tu solicitud para "${matchName}" ha sido aprobada`,
-    data: { matchId }
+    data: { matchId , url: `/partidos` }
   });
 }
 
@@ -476,7 +476,7 @@ export async function notifyMatchRejected({ matchId, matchName, toUserId }) {
     type: 'match_request_rejected',
     title: '❌ Solicitud rechazada',
     body: `Tu solicitud para "${matchName}" ha sido rechazada`,
-    data: { matchId }
+    data: { matchId , url: `/partidos` }
   });
 }
 
@@ -487,7 +487,7 @@ export async function notifyMatchMessage({ matchId, matchName, fromUserId, fromU
     type: 'match_message_new',
     title: `💬 ${fromUserName}`,
     body: `${messagePreview}... en "${matchName}"`,
-    data: { matchId, fromUserId }
+    data: { matchId, fromUserId , url: `/partidos` }
   });
 }
 
@@ -510,7 +510,7 @@ export async function notifySOSMatch({ matchId, matchName, clubName, level, star
       type: "sos_match",
       title: "🆘 SOS Cuarto Jugador",
       body: `Falta 1 plaza en ${clubName} — ${level} — ${startTime}`,
-      data: { matchId, matchName },
+      data: { matchId, matchName, url: `/partidos` },
     })
   );
   return Promise.allSettled(promises);
@@ -549,7 +549,7 @@ export async function notifyNewMatch({ matchId, matchName, clubName, level, star
         type: "new_match",
         title: "🏓 Nuevo partido disponible",
         body: `${clubName} · ${level} · ${new Date(startAt).toLocaleTimeString("es",{hour:"2-digit",minute:"2-digit"})}`,
-        data: { matchId, matchName },
+        data: { matchId, matchName, url: `/partidos` },
       })
     );
     await Promise.allSettled(promises);

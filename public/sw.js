@@ -48,7 +48,9 @@ self.addEventListener("push", (event) => {
 
   const title = data.title || "Gorila Pádel";
   const body = data.body || "Tienes una notificación";
-  const url = data.url || "/partidos";
+  const url = data.data?.url || data.url || "/partidos";
+  const matchId = data.data?.matchId || data.matchId || null;
+  const notifType = data.data?.type || data.type || null;
 
   // ✅ si la app está abierta, además de mostrar notificación
   // le mandamos un mensaje para que suene el gorila en App.jsx
@@ -69,8 +71,8 @@ self.addEventListener("push", (event) => {
         badge: "/favicon.ico",
         data: {
           url,
-          type: data.type || null,
-          matchId: data.matchId || null,
+          type: notifType,
+          matchId: matchId,
         },
       });
     })()
