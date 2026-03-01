@@ -3,10 +3,13 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const TABS = ["calendario", "reservas", "stats", "donaciones", "config"];
+const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "stats", "donaciones", "config"];
 const TAB_LABELS = {
   calendario: "📅 Calendario",
   reservas: "📋 Reservas",
+  espera: "⏳ Espera",
+  precios: "💶 Precios",
+  comunicacion: "📣 Comunicar",
   stats: "📊 Stats",
   donaciones: "💚 Donaciones",
   config: "⚙️ Config"
@@ -59,6 +62,13 @@ export default function ClubAdminPage() {
   const [showNewCourt, setShowNewCourt] = useState(false);
   const [courtForm, setCourtForm] = useState({ name:'', court_type:'outdoor' });
   const [playtomicUrl, setPlaytomicUrl] = useState('');
+  const [waitlist, setWaitlist] = useState([]);
+  const [pricing, setPricing] = useState([]);
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [broadcastForm, setBroadcastForm] = useState({title:'', body:''});
+  const [sending, setSending] = useState(false);
+  const [pricingForm, setPricingForm] = useState({day_type:'weekday', start_hour:8, end_hour:14, price:10});
+  const [editingPrice, setEditingPrice] = useState(null);
   const [syncing, setSyncing] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
@@ -83,9 +93,86 @@ export default function ClubAdminPage() {
         loadDonations(data.club_id),
         loadFoundations(),
         loadStats(data.club_id),
+        loadWaitlist(data.club_id),
+        loadPricing(data.club_id),
+        loadBroadcasts(data.club_id),
       ]);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
+  }
+
+  async function loadWaitlist(clubId) {
+    const {data} = await supabase.from('slot_waitlist').select('*, profiles(name, handle, avatar_url), court_slots(date, start_time, end_time)').eq('club_id', clubId).eq('status','waiting').order('position');
+    setWaitlist(data||[]);
+  }
+
+  async function loadPricing(clubId) {
+    const {data} = await supabase.from('club_pricing').select('*').eq('club_id', clubId).order('day_type').order('start_hour');
+    setPricing(data||[]);
+  }
+
+  async function loadBroadcasts(clubId) {
+    const {data} = await supabase.from('club_broadcasts').select('*').eq('club_id', clubId).order('sent_at', {ascending:false}).limit(20);
+    setBroadcasts(data||[]);
+  }
+
+  async function sendBroadcast() {
+    if (!broadcastForm.title.trim() || !broadcastForm.body.trim()) return;
+    try {
+      setSending(true);
+      // Buscar jugadores que han jugado en este club
+      const {data: matchPlayers} = await supabase
+        .from('matches')
+        .select('match_players(player_uuid)')
+        .eq('club_id', clubAdmin.club_id)
+        .gte('start_at', new Date(Date.now() - 30*24*60*60*1000).toISOString());
+      const userIds = [...new Set((matchPlayers||[]).flatMap(m => (m.match_players||[]).map(p=>p.player_uuid)).filter(Boolean))];
+      if (!userIds.length) { alert('No hay jugadores recientes en tu club'); return; }
+      // Enviar push a cada uno
+      const {notifyClubBroadcast} = await import('../services/notifications');
+      await notifyClubBroadcast({clubName: clubAdmin.club_name, title: broadcastForm.title, body: broadcastForm.body, userIds});
+      // Guardar registro
+      const {data} = await supabase.from('club_broadcasts').insert({
+        club_id: clubAdmin.club_id, club_name: clubAdmin.club_name,
+        sent_by: session.user.id, title: broadcastForm.title, body: broadcastForm.body,
+        recipients_count: userIds.length
+      }).select().single();
+      setBroadcasts(prev => [data, ...prev]);
+      setBroadcastForm({title:'', body:''});
+      alert(`✅ Mensaje enviado a ${userIds.length} jugadores`);
+    } catch(e) { alert(e.message); }
+    finally { setSending(false); }
+  }
+
+  async function savePricing() {
+    if (!pricingForm.price || !selectedCourt) return;
+    try {
+      setSaving(true);
+      const payload = { club_id: clubAdmin.club_id, court_id: selectedCourt, ...pricingForm, price: Number(pricingForm.price) };
+      const {data, error} = await supabase.from('club_pricing').upsert(payload, {onConflict:'club_id,court_id,day_type,start_hour'}).select().single();
+      if (error) throw error;
+      setPricing(prev => {
+        const idx = prev.findIndex(p => p.id === data.id);
+        if (idx >= 0) { const n=[...prev]; n[idx]=data; return n; }
+        return [...prev, data];
+      });
+      setEditingPrice(null);
+    } catch(e) { alert(e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function removeFromWaitlist(id) {
+    await supabase.from('slot_waitlist').delete().eq('id', id);
+    setWaitlist(prev => prev.filter(w => w.id !== id));
+  }
+
+  async function notifyFirstInWaitlist(slotId) {
+    const first = waitlist.filter(w => w.slot_id === slotId && w.status === 'waiting').sort((a,b)=>a.position-b.position)[0];
+    if (!first) return;
+    const expires = new Date(Date.now() + 15*60*1000).toISOString();
+    await supabase.from('slot_waitlist').update({status:'notified', notified_at: new Date().toISOString(), expires_at: expires}).eq('id', first.id);
+    setWaitlist(prev => prev.map(w => w.id === first.id ? {...w, status:'notified', expires_at: expires} : w));
+    alert(`✅ Notificado a ${first.profiles?.name||'jugador'}. Tiene 15 minutos para confirmar.`);
   }
 
   async function loadCourts(clubId) {
@@ -532,6 +619,163 @@ export default function ClubAdminPage() {
               </div>
             ))}
             <button onClick={()=>setShowNewCourt(true)} style={{...S.btn('green'), width:'100%', marginTop:10}}>+ Nueva pista</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── LISTA DE ESPERA ── */}
+      {tab === 'espera' && (
+        <div style={{padding:'12px'}}>
+          <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>⏳ Lista de espera</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Cuando una reserva se cancela, notifica automáticamente al primero de la lista.</div>
+          {waitlist.length === 0 && <div style={{textAlign:'center', padding:40, color:'rgba(255,255,255,0.3)', fontSize:14}}>No hay nadie en lista de espera</div>}
+          {[...new Set(waitlist.map(w=>w.slot_id))].map(slotId => {
+            const slotWaiters = waitlist.filter(w=>w.slot_id===slotId).sort((a,b)=>a.position-b.position);
+            const slot = slotWaiters[0]?.court_slots;
+            return (
+              <div key={slotId} style={{...S.card, marginBottom:12}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+                  <div>
+                    <div style={{fontSize:13, fontWeight:900, color:'#fff'}}>{slot?.date} · {slot?.start_time?.slice(0,5)} – {slot?.end_time?.slice(0,5)}</div>
+                    <div style={{fontSize:11, color:'rgba(255,255,255,0.4)'}}>{slotWaiters.length} persona{slotWaiters.length!==1?'s':''} esperando</div>
+                  </div>
+                  <button onClick={()=>notifyFirstInWaitlist(slotId)} style={{...S.btn('green'), fontSize:11, padding:'6px 12px'}}>
+                    📣 Notificar al 1º
+                  </button>
+                </div>
+                {slotWaiters.map((w,i)=>(
+                  <div key={w.id} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop:'1px solid rgba(255,255,255,0.05)'}}>
+                    <div style={{width:24, height:24, borderRadius:999, background:'rgba(116,184,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:900, color:'#74B800', flexShrink:0}}>
+                      {i+1}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13, fontWeight:800}}>{w.profiles?.name||'Usuario'}</div>
+                      {w.status==='notified' && w.expires_at && (
+                        <div style={{fontSize:10, color:'#FFA500'}}>⏰ Notificado · expira {new Date(w.expires_at).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</div>
+                      )}
+                    </div>
+                    <span style={S.badge(w.status==='notified'?'pending':'available')}>{w.status==='notified'?'Notificado':'Esperando'}</span>
+                    <button onClick={()=>removeFromWaitlist(w.id)} style={{background:'none', border:'none', color:'rgba(255,255,255,0.3)', cursor:'pointer', fontSize:14}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── PRECIOS DINÁMICOS ── */}
+      {tab === 'precios' && (
+        <div style={{padding:'12px'}}>
+          <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>💶 Precios dinámicos</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Configura precios distintos por franja horaria y tipo de día. Se aplican automáticamente al publicar slots.</div>
+
+          {/* Selector pista */}
+          <div style={{display:'flex', gap:6, marginBottom:12, overflowX:'auto'}}>
+            {courts.map(c=>(
+              <button key={c.id} onClick={()=>setSelectedCourt(c.id)}
+                style={{padding:'6px 14px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:12, whiteSpace:'nowrap',
+                  background:selectedCourt===c.id?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                  color:selectedCourt===c.id?'#000':'#fff'}}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Tabla de precios */}
+          {[{type:'weekday',label:'📅 Lunes – Viernes'},{type:'weekend',label:'🎉 Sábado – Domingo'}].map(({type,label})=>(
+            <div key={type} style={{...S.card, marginBottom:12}}>
+              <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>{label}</div>
+              {pricing.filter(p=>String(p.court_id)===String(selectedCourt)&&p.day_type===type).map(p=>(
+                <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
+                  <div style={{fontSize:13}}>{String(p.start_hour).padStart(2,'0')}:00 – {String(p.end_hour).padStart(2,'0')}:00</div>
+                  <div style={{display:'flex', alignItems:'center', gap:8}}>
+                    <div style={{fontSize:16, fontWeight:900, color:'#74B800'}}>{p.price}€</div>
+                    <button onClick={()=>{setEditingPrice(p); setPricingForm({day_type:p.day_type, start_hour:p.start_hour, end_hour:p.end_hour, price:p.price});}}
+                      style={{...S.btn(''), padding:'4px 10px', fontSize:11}}>Editar</button>
+                  </div>
+                </div>
+              ))}
+              <button onClick={()=>{setEditingPrice('new'); setPricingForm({day_type:type, start_hour:8, end_hour:14, price:10});}}
+                style={{...S.btn('green'), width:'100%', marginTop:10, fontSize:12}}>+ Nueva franja</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── COMUNICACIÓN ── */}
+      {tab === 'comunicacion' && (
+        <div style={{padding:'12px'}}>
+          <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>📣 Comunicar con jugadores</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Envía un push a todos los jugadores que han jugado en tu club en los últimos 30 días. Máximo 2 mensajes por semana.</div>
+
+          <div style={S.card}>
+            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:12}}>✉️ Nuevo mensaje</div>
+            <div style={{display:'flex', flexDirection:'column', gap:10}}>
+              <input placeholder="Título (ej: Torneo flash esta tarde 🏆)" value={broadcastForm.title}
+                onChange={e=>setBroadcastForm(p=>({...p,title:e.target.value}))}
+                style={S.input} />
+              <textarea placeholder="Mensaje (ej: Quedan 2 plazas para el torneo de las 18h. ¡Apúntate ya!)" value={broadcastForm.body}
+                onChange={e=>setBroadcastForm(p=>({...p,body:e.target.value}))}
+                rows={3} style={{...S.input, resize:'none'}} />
+              <div style={{fontSize:11, color:'rgba(255,255,255,0.3)'}}>📱 Se enviará como push notification a los jugadores recientes de tu club</div>
+              <button onClick={sendBroadcast} disabled={sending||!broadcastForm.title.trim()||!broadcastForm.body.trim()}
+                style={{...S.btn('green'), opacity:sending||!broadcastForm.title.trim()||!broadcastForm.body.trim()?0.5:1}}>
+                {sending?'Enviando…':'📣 Enviar a jugadores'}
+              </button>
+            </div>
+          </div>
+
+          {broadcasts.length > 0 && (
+            <div style={{marginTop:16}}>
+              <div style={{fontSize:13, fontWeight:900, color:'rgba(255,255,255,0.5)', marginBottom:8}}>MENSAJES ANTERIORES</div>
+              {broadcasts.map(b=>(
+                <div key={b.id} style={{...S.card, marginBottom:8}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:4}}>
+                    <div style={{fontSize:13, fontWeight:800}}>{b.title}</div>
+                    <div style={{fontSize:10, color:'rgba(255,255,255,0.3)'}}>{new Date(b.sent_at).toLocaleDateString('es')}</div>
+                  </div>
+                  <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:4}}>{b.body}</div>
+                  <div style={{fontSize:11, color:'#74B800', fontWeight:700}}>👥 {b.recipients_count} destinatarios</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MODAL PRECIO ── */}
+      {editingPrice && (
+        <div onClick={()=>setEditingPrice(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>💶 {editingPrice==='new'?'Nueva franja de precio':'Editar precio'}</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>DESDE</div>
+                  <select value={pricingForm.start_hour} onChange={e=>setPricingForm(p=>({...p,start_hour:Number(e.target.value)}))}
+                    style={{...S.input,background:'#1a1a1a'}}>
+                    {Array.from({length:16},(_,i)=>i+8).map(h=><option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>HASTA</div>
+                  <select value={pricingForm.end_hour} onChange={e=>setPricingForm(p=>({...p,end_hour:Number(e.target.value)}))}
+                    style={{...S.input,background:'#1a1a1a'}}>
+                    {Array.from({length:16},(_,i)=>i+9).map(h=><option key={h} value={h}>{String(h).padStart(2,'0')}:00</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO (€/hora)</div>
+                <input type="number" min="0" step="0.5" value={pricingForm.price}
+                  onChange={e=>setPricingForm(p=>({...p,price:e.target.value}))} style={S.input} />
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={savePricing} disabled={saving} style={{...S.btn('green'),flex:1}}>{saving?'Guardando…':'✅ Guardar'}</button>
+                <button onClick={()=>setEditingPrice(null)} style={S.btn('')}>Cancelar</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

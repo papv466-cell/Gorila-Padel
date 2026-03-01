@@ -554,3 +554,22 @@ export async function notifyNewMatch({ matchId, matchName, clubName, level, star
     console.error("notifyNewMatch error:", e);
   }
 }
+/* =========================
+   CLUB BROADCAST
+========================= */
+export async function notifyClubBroadcast({ clubName, title, body, userIds }) {
+  try {
+    const promises = userIds.map(userId =>
+      createNotification({
+        userId,
+        type: "club_broadcast",
+        title,
+        body,
+        data: { url: "/partidos", clubName },
+      })
+    );
+    await Promise.allSettled(promises);
+  } catch(e) {
+    console.error("notifyClubBroadcast error:", e);
+  }
+}
