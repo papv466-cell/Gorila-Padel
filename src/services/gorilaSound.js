@@ -2,7 +2,9 @@
 // Sonidos + timers (5 min antes y fin). Evita duplicados y no rompe nada.
 
 // ─── RUTA ÚNICA del sonido gorila ───────────────────────────────────────────
-const GORILA_SOUND_URL = "/sounds/gorila.mp3";
+const GORILA_SOUND_URL = typeof window !== 'undefined'
+  ? `${window.location.origin}/sounds/gorila.mp3`
+  : '/sounds/gorila.mp3';
 // ────────────────────────────────────────────────────────────────────────────
 
 let audioEl = null;

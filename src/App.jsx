@@ -163,31 +163,31 @@ useEffect(() => {
 
 
    if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-      try {
-        const audio = new Audio("/sounds/gorila.mp3");
-        audio.volume = 1.0;
-        audio.play()
-          .then(() => {
-            toast.success("🦍 Gorila sonando");
-          })
-          .catch((err) => {
-            toast.error(`❌ ${err.name}: ${err.message}`);
-            unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
-          });
-      } catch(err) {
-        toast.error(`❌ catch: ${err.message}`);
-        playGorila(1).catch(() => {});
-      }
+  try {
+    const audio = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
+    audio.volume = 1.0;
+    audio.play()
+      .then(() => {
+        toast.success("🦍 Gorila sonando");
+      })
+      .catch((err) => {
+        toast.error(`❌ ${err.name}: ${err.message}`);
+        unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
+      });
+  } catch(err) {
+    toast.error(`❌ catch: ${err.message}`);
+    playGorila(1).catch(() => {});
+  }
 
-      const detail = {
-        title: data.title || "Gorila Pádel",
-        body: data.body || "",
-        url: data.url || "/partidos",
-      };
-      try {
-        window.dispatchEvent(new CustomEvent("gp:push", { detail }));
-      } catch {}
-    }
+  const detail = {
+    title: data.title || "Gorila Pádel",
+    body: data.body || "",
+    url: data.url || "/partidos",
+  };
+  try {
+    window.dispatchEvent(new CustomEvent("gp:push", { detail }));
+  } catch {}
+}
   };
 
   navigator.serviceWorker.addEventListener("message", onMsg);
