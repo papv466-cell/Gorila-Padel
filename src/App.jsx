@@ -160,18 +160,22 @@ useEffect(() => {
       return;
     }
 
-    if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-      // Crear Audio element nuevo cada vez — más permisivo en móvil
-      try {
-        const audio = new Audio("/sounds/gorila.mp3");
-        audio.volume = 1.0;
-        audio.play().catch(() => {
-          // Si falla, intentar con playGorila como fallback
-          unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
-        });
-      } catch {
-        playGorila(1).catch(() => {});
-      }
+
+   if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
+  console.log("🦍 Intentando reproducir gorila...");
+  try {
+    const audio = new Audio("/sounds/gorila.mp3");
+    audio.volume = 1.0;
+    audio.play()
+      .then(() => console.log("✅ Gorila sonando"))
+      .catch((err) => {
+        console.log("❌ Audio.play() falló:", err.name, err.message);
+        unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
+      });
+  } catch(err) {
+    console.log("❌ Error creando Audio:", err);
+    playGorila(1).catch(() => {});
+  }
 
       const detail = {
         title: data.title || "Gorila Pádel",
