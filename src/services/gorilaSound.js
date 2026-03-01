@@ -28,14 +28,35 @@ function writeSessionSigMap(obj) {
 /* ---------------------------
    Audio
 --------------------------- */
+let audioCtx = null;
+let audioBuffer = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+async function loadBuffer() {
+  if (audioBuffer) return audioBuffer;
+  const ctx = getAudioContext();
+  try {
+    const res = await fetch("/sounds/gorila.mp3");
+    const arr = await res.arrayBuffer();
+    audioBuffer = await ctx.decodeAudioData(arr);
+  } catch {
+    // fallback a Audio element
+    audioBuffer = null;
+  }
+  return audioBuffer;
+}
+
 function getAudio() {
   if (audioEl) return audioEl;
-
-  // ✅ Ruta final: public/sounds/gorila.mp3 -> /sounds/gorila.mp3
   const a = new Audio("/sounds/gorila.mp3");
   a.preload = "auto";
   a.volume = 1;
-
   audioEl = a;
   return audioEl;
 }
@@ -43,11 +64,18 @@ function getAudio() {
 // Para iOS / móviles (necesitan gesto)
 export async function unlockGorilaAudio() {
   try {
+    // Desbloquear Web Audio Context
+    const ctx = getAudioContext();
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
+    // Precargar buffer
+    await loadBuffer();
+    // También desbloquear Audio element como fallback
     const a = getAudio();
     a.currentTime = 0;
-    await a.play();
-    a.pause();
-    a.currentTime = 0;
+    const p = a.play();
+    if (p) { await p.catch(()=>{}); a.pause(); a.currentTime = 0; }
     return true;
   } catch {
     return false;
@@ -57,16 +85,32 @@ export async function unlockGorilaAudio() {
 export async function playGorila(times = 1, gapMs = 320) {
   const n = Math.max(1, Number(times) || 1);
 
+  // Intentar con Web Audio API primero (más permisivo)
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === "suspended") await ctx.resume();
+    const buf = await loadBuffer();
+    if (buf) {
+      for (let i = 0; i < n; i++) {
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        await new Promise(r => setTimeout(r, gapMs + (buf.duration * 1000 || 0)));
+      }
+      return;
+    }
+  } catch {}
+
+  // Fallback a Audio element
   for (let i = 0; i < n; i++) {
     try {
       const a = getAudio();
       a.currentTime = 0;
-      // eslint-disable-next-line no-await-in-loop
       await a.play();
     } catch {
       break;
     }
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((r) => setTimeout(r, gapMs));
   }
 }
