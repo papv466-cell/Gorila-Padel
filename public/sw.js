@@ -62,6 +62,7 @@ self.addEventListener("push", (event) => {
         icon: "/icon-192.png",
         badge: "/icon-192.png",
         vibrate: [200, 100, 200],       // vibración gorila 🦍
+        silent: true,                    // ← evita el sonido del sistema
         data: { url, type: notifType, matchId },
       });
     })()

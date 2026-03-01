@@ -147,35 +147,46 @@ export default function App() {
   }, []);
 
   // ✅ Mensajes SW
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+useEffect(() => {
+  if (!("serviceWorker" in navigator)) return;
 
-    const onMsg = (event) => {
-      const data = event?.data || {};
-      const type = String(data.type || "");
+  const onMsg = (event) => {
+    const data = event?.data || {};
+    const type = String(data.type || "");
 
-      if (type === "NAVIGATE") {
-        const url = String(data.url || "");
-        if (url) navigate(url, { replace: false });
-        return;
+    if (type === "NAVIGATE") {
+      const url = String(data.url || "");
+      if (url) navigate(url, { replace: false });
+      return;
+    }
+
+    if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
+      // Crear Audio element nuevo cada vez — más permisivo en móvil
+      try {
+        const audio = new Audio("/sounds/gorila.mp3");
+        audio.volume = 1.0;
+        audio.play().catch(() => {
+          // Si falla, intentar con playGorila como fallback
+          unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
+        });
+      } catch {
+        playGorila(1).catch(() => {});
       }
 
-      if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-        unlockGorilaAudio().then(() => playGorila(1)).catch(() => playGorila(1));
-        const detail = {
-          title: data.title || "Gorila Pádel",
-          body: data.body || "",
-          url: data.url || "/partidos",
-        };
-        try {
-          window.dispatchEvent(new CustomEvent("gp:push", { detail }));
-        } catch {}
-      }
-    };
+      const detail = {
+        title: data.title || "Gorila Pádel",
+        body: data.body || "",
+        url: data.url || "/partidos",
+      };
+      try {
+        window.dispatchEvent(new CustomEvent("gp:push", { detail }));
+      } catch {}
+    }
+  };
 
-    navigator.serviceWorker.addEventListener("message", onMsg);
-    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
-  }, [navigate]);
+  navigator.serviceWorker.addEventListener("message", onMsg);
+  return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+}, [navigate]);
 
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
