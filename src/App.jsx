@@ -29,7 +29,7 @@ import SellerSettings from './pages/SellerSettings';
 import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
 import ClubPage from "./pages/ClubPage";
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
 import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
@@ -42,8 +42,7 @@ import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
-import { Toaster } from 'react-hot-toast';
-import { playGorila, unlockGorilaAudio } from "./services/gorilaSound";
+import { unlockGorilaAudio } from "./services/gorilaSound";
 
 // ✅ Guard para rutas privadas
 function RequireAuth({ session, children }) {
@@ -52,6 +51,22 @@ function RequireAuth({ session, children }) {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   return children;
+}
+
+// ✅ Reproducir sonido gorila con gesto garantizado
+async function sonarGorila() {
+  try {
+    const audio = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
+    audio.volume = 1.0;
+    await audio.play();
+  } catch {
+    try {
+      await unlockGorilaAudio();
+      const audio2 = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
+      audio2.volume = 1.0;
+      await audio2.play();
+    } catch {}
+  }
 }
 
 export default function App() {
@@ -112,8 +127,8 @@ export default function App() {
   // ✅ Registrar push subscription
   useEffect(() => {
     if (!session?.user?.id) return;
-    import("./services/push").then(({ensurePushSubscription}) => {
-      ensurePushSubscription().catch(()=>{});
+    import("./services/push").then(({ ensurePushSubscription }) => {
+      ensurePushSubscription().catch(() => {});
     });
   }, [session?.user?.id]);
 
@@ -129,15 +144,13 @@ export default function App() {
           last_lng: pos.coords.longitude,
         }).eq("id", session.user.id);
       } catch {}
-    }, ()=>{}, { timeout: 10000 });
+    }, () => {}, { timeout: 10000 });
   }, [session?.user?.id]);
 
-  // ✅ Unlock audio (móvil)
+  // ✅ Unlock audio (móvil) — primer gesto
   useEffect(() => {
     const unlock = () => {
       unlockGorilaAudio().catch(() => {});
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
     };
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
@@ -147,52 +160,71 @@ export default function App() {
     };
   }, []);
 
-  // ✅ Mensajes SW
-useEffect(() => {
-  if (!("serviceWorker" in navigator)) return;
+  // ✅ Mensajes SW — toast clickable con sonido gorila
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
 
-  const onMsg = (event) => {
-    const data = event?.data || {};
-    const type = String(data.type || "");
+    const onMsg = (event) => {
+      const data = event?.data || {};
+      const type = String(data.type || "");
 
-    if (type === "NAVIGATE") {
-      const url = String(data.url || "");
-      if (url) navigate(url, { replace: false });
-      return;
-    }
+      // Navegación directa (desde click en notificación del sistema)
+      if (type === "NAVIGATE") {
+        const url = String(data.url || "");
+        if (url) navigate(url, { replace: false });
+        return;
+      }
 
+      // Push recibido con app abierta → toast clickable
+      if (type === "PUSH_RECEIVED") {
+        const title = data.title || "Gorila Pádel 🦍";
+        const body = data.body || "";
+        const url = data.url || "/partidos";
 
-   if (type === "PUSH_RECEIVED" || type === "PUSH_CLICKED") {
-  try {
-    const audio = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
-    audio.volume = 1.0;
-    audio.play()
-      .then(() => {
-        toast.success("🦍 Gorila sonando");
-      })
-      .catch((err) => {
-        toast.error(`❌ ${err.name}: ${err.message}`);
-        unlockGorilaAudio().then(() => playGorila(1)).catch(() => {});
-      });
-  } catch(err) {
-    toast.error(`❌ catch: ${err.message}`);
-    playGorila(1).catch(() => {});
-  }
+        toast(
+          (t) => (
+            <div
+              onClick={() => {
+                toast.dismiss(t.id);
+                sonarGorila();
+                navigate(url);
+              }}
+              style={{ cursor: "pointer", width: "100%" }}
+            >
+              <div style={{ fontWeight: 700, marginBottom: 2 }}>{title}</div>
+              {body && <div style={{ opacity: 0.8, fontSize: 13 }}>{body}</div>}
+            </div>
+          ),
+          {
+            duration: 6000,
+            icon: "🦍",
+            style: {
+              background: '#1a1a1a',
+              color: '#fff',
+              border: '1px solid #74B800',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              fontSize: '14px',
+              fontFamily: 'Outfit, sans-serif',
+              cursor: 'pointer',
+            },
+          }
+        );
+        return;
+      }
 
-  const detail = {
-    title: data.title || "Gorila Pádel",
-    body: data.body || "",
-    url: data.url || "/partidos",
-  };
-  try {
-    window.dispatchEvent(new CustomEvent("gp:push", { detail }));
-  } catch {}
-}
-  };
+      // PUSH_CLICKED → viene del click en notificación del sistema cuando app estaba abierta
+      if (type === "PUSH_CLICKED") {
+        sonarGorila();
+        const url = data.url || "/partidos";
+        if (url) navigate(url, { replace: false });
+        return;
+      }
+    };
 
-  navigator.serviceWorker.addEventListener("message", onMsg);
-  return () => navigator.serviceWorker.removeEventListener("message", onMsg);
-}, [navigate]);
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, [navigate]);
 
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
@@ -228,6 +260,7 @@ useEffect(() => {
           <Route path="/vendedor/productos/:id" element={<SellerProductForm />} />
           <Route path="/vendedor/pedidos" element={<SellerOrders />} />
           <Route path="/vendedor/perfil" element={<SellerSettings />} />
+
           {/* GORILANDIA */}
           <Route path="/gorilandia" element={<GorilandiaPage />} />
           <Route path="/usuario/:userId" element={<PublicProfilePage />} />
@@ -261,7 +294,6 @@ useEffect(() => {
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/club/:clubId" element={<ClubPage />} />
-
         </Routes>
       </main>
 
@@ -270,7 +302,7 @@ useEffect(() => {
 
       {/* Toast */}
       <Toaster
-        position="bottom-right"
+        position="top-center"
         toastOptions={{
           style: {
             background: '#1a1a1a',
