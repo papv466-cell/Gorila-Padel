@@ -9,7 +9,24 @@ import {
   markAllAsRead,
   subscribeToNotifications,
 } from "../services/notifications";
+import { playGorila, unlockGorilaAudio } from "../services/gorilaSound";
 import "./NotificationBell.css";
+
+const GORILA_SOUND = `${window.location.origin}/sounds/gorila.mp3`;
+
+async function sonarGorila() {
+  try {
+    const audio = new Audio(GORILA_SOUND);
+    audio.volume = 1.0;
+    await audio.play();
+  } catch {
+    // fallback a Web Audio API
+    try {
+      await unlockGorilaAudio();
+      await playGorila(1);
+    } catch {}
+  }
+}
 
 export default function NotificationBell() {
   const navigate = useNavigate();
@@ -34,28 +51,6 @@ export default function NotificationBell() {
     };
   }, []);
 
-  // Desbloquear audio con primera interacción
-  useEffect(() => {
-    const unlockAudio = () => {
-      const audio = new Audio('/dist/sounds/gorila3.mp3');
-      audio.volume = 0;
-      audio.play().then(() => {
-        console.log('✅ Audio desbloqueado');
-        audio.pause();
-      }).catch(() => {
-        console.log('⚠️ Audio bloqueado - necesita interacción');
-      });
-    };
-    
-    document.addEventListener('click', unlockAudio, { once: true });
-    document.addEventListener('touchstart', unlockAudio, { once: true });
-    
-    return () => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
-  }, []);
-
   // Cargar contador de no leídas y suscribirse a notificaciones
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -64,15 +59,6 @@ export default function NotificationBell() {
 
     const unsub = subscribeToNotifications(session.user.id, (newNotification) => {
       setUnreadCount((prev) => prev + 1);
-      
-      // REPRODUCIR SONIDO 🦍
-      try {
-        const audio = new Audio('/dist/sounds/gorila3.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(err => console.log('No se pudo reproducir audio:', err));
-      } catch (err) {
-        console.log('Error cargando audio:', err);
-      }
 
       // Mostrar notificación nativa del navegador
       if (Notification.permission === "granted") {
@@ -123,39 +109,38 @@ export default function NotificationBell() {
     setIsOpen(!isOpen);
   }
 
- async function handleNotificationClick(notification) {
-  console.log('🔔 Notificación clickeada:', notification);
-  console.log('🔔 Type EXACTO:', JSON.stringify(notification.type));
-  console.log('🔔 Data:', notification.data);
-  
-  await markAsClicked(notification.id);
-  
-  setNotifications((prev) =>
-    prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-  );
-  setIsOpen(false);
+  async function handleNotificationClick(notification) {
+    // 🦍 Sonar aquí — hay gesto del usuario garantizado
+    sonarGorila();
 
-  const { type, data } = notification;
+    await markAsClicked(notification.id);
 
-  // 1️⃣ Si la notificación trae URL directa → úsala (SOS, new_match, etc.)
-  if (data?.url) {
-    navigate(data.url);
-    return;
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+    );
+    setIsOpen(false);
+
+    const { type, data } = notification;
+
+    // 1️⃣ Si la notificación trae URL directa → úsala
+    if (data?.url) {
+      navigate(data.url);
+      return;
+    }
+
+    // 2️⃣ Fallback para notificaciones antiguas sin url en data
+    if (type?.includes("request")) {
+      navigate(data?.matchId ? `/partidos?openRequests=${data.matchId}` : "/partidos");
+    } else if (type?.startsWith("match_") || type === "sos_match" || type === "new_match") {
+      navigate(data?.matchId ? `/partidos?openChat=${data.matchId}` : "/partidos");
+    } else if (type?.startsWith("social_")) {
+      navigate("/gorilandia");
+    } else if (type?.startsWith("store_")) {
+      navigate("/tienda");
+    } else {
+      navigate("/");
+    }
   }
-
-  // 2️⃣ Fallback para notificaciones antiguas sin url en data
-  if (type?.includes("request")) {
-    navigate(data?.matchId ? `/partidos?openRequests=${data.matchId}` : "/partidos");
-  } else if (type?.startsWith("match_") || type === "sos_match" || type === "new_match") {
-    navigate(data?.matchId ? `/partidos?openChat=${data.matchId}` : "/partidos");
-  } else if (type?.startsWith("social_")) {
-    navigate("/gorilandia");
-  } else if (type?.startsWith("store_")) {
-    navigate("/tienda");
-  } else {
-    navigate("/");
-  }
-}
 
   async function handleMarkAllAsRead() {
     if (!session?.user?.id) return;
