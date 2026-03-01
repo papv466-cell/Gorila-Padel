@@ -58,6 +58,7 @@ export default function ProfilePage() {
   /* ─── Favoritos ─── */
   const [favLoading, setFavLoading] = useState(false);
   const [clubsSheet, setClubsSheet] = useState([]);
+  const [isClubAdmin, setIsClubAdmin] = useState(false);
   const [clubSearchQ, setClubSearchQ] = useState("");
   const [favorites, setFavorites] = useState([]);
 
@@ -170,6 +171,7 @@ export default function ProfilePage() {
           setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
           await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
           fetchClubsFromGoogleSheet().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>{});
+          supabase.from("club_admins").select("id").eq("user_id",s.user.id).eq("status","approved").maybeSingle().then(({data})=>setIsClubAdmin(!!data));
         } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
         finally { setLoading(false); }
       })();
@@ -414,6 +416,14 @@ export default function ProfilePage() {
 
             {err && <div style={{ marginTop: 10, color: "#ff6b6b", fontWeight: 700, fontSize: 13 }}>{err}</div>}
 
+            {isClubAdmin && (
+              <div style={{marginTop:14}}>
+                <button onClick={()=>navigate("/club-admin")}
+                  style={{width:"100%",padding:"12px",borderRadius:12,background:"linear-gradient(135deg,#1a2a00,#2a4000)",border:"1px solid rgba(116,184,0,0.4)",color:"#74B800",fontWeight:900,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  🏟️ Panel de administración del club
+                </button>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <button className="pfBtn pfBtnPrimary" onClick={() => save()} disabled={saving || uploading}>
                 {saving ? "Guardando…" : "Guardar"}
