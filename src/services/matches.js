@@ -392,6 +392,69 @@ export async function approveRequest({ requestId }) {
   try {
     const { data: match } = await supabase
       .from("matches")
+      .select("id, club_id, club_name")
+      .eq("id", data.match_id)
+      .single();
+
+    const { count } = await supabase
+      .from("match_join_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("match_id", data.match_id)
+      .eq("status", "approved");
+
+    const totalPlayers = 1 + (count || 0);
+    const clubId = match?.club_id;
+
+    if (totalPlayers >= 4 && clubId) {
+      const month = new Date().toISOString().slice(0, 7);
+      const { data: existing } = await supabase
+        .from("club_donations")
+        .select("id, total_cents, matches_count")
+        .eq("club_id", clubId)
+        .eq("month", month)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("club_donations")
+          .update({
+            total_cents: existing.total_cents + 40,
+            matches_count: existing.matches_count + 1,
+          })
+          .eq("id", existing.id);
+      } else {
+        const { data: foundation } = await supabase
+          .from("foundations")
+          .select("id")
+          .eq("active", true)
+          .limit(1)
+          .maybeSingle();
+
+        await supabase.from("club_donations").insert({
+          club_id: clubId,
+          club_name: match?.club_name || "",
+          foundation_id: foundation?.id || null,
+          month,
+          total_cents: 40,
+          matches_count: 1,
+        });
+      }
+
+      await supabase
+        .from("matches")
+        .update({ paid: true })
+        .eq("id", data.match_id);
+
+      console.log("Donacion registrada: 40cts para club", clubId);
+    }
+  } catch (e) {
+    console.error("Error registrando donacion:", e);
+  }
+
+  // Simular reparto 30cts si el partido llega a 4 jugadores
+  try {
+    const { data: match } = await supabase
+      .from("matches")
       .select("id, club_id, reserved_spots")
       .eq("id", data.match_id)
       .single();
