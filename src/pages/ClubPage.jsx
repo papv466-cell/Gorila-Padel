@@ -74,6 +74,9 @@ export default function ClubPage() {
   const [ratingSaving, setRatingSaving] = useState(false);
   const [clubRatings, setClubRatings] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [clubBonos, setClubBonos] = useState([]);
+  const [myBonos, setMyBonos] = useState([]);
+  const [buyingBono, setBuyingBono] = useState(null);
   const [saveError, setSaveError] = useState(null);
   const todayISO = toDateInputValue(new Date());
   const [form, setForm] = useState({
@@ -97,11 +100,13 @@ export default function ClubPage() {
       if (data?.length) setSelectedCourt(data[0].id);
     });
     supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', normalizedId).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
+    supabase.from('club_bonos').select('*').eq('club_id', normalizedId).eq('activo', true).order('precio_cents').then(({data})=>setClubBonos(data||[]));
   }, [clubId]);
 
   useEffect(() => {
     if (!clubId || !session?.user?.id) return;
     const normalizedId = clubId.toLowerCase();
+    supabase.from('user_bonos').select('*, club_bonos(nombre, tipo, horas_incluidas)').eq('club_id', normalizedId).eq('user_id', session.user.id).eq('activo', true).gte('fecha_expiracion', new Date().toISOString()).then(({data})=>setMyBonos(data||[]));
     supabase.from('club_ratings').select('*').eq('club_id', normalizedId).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
       if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
     });
@@ -208,10 +213,36 @@ export default function ClubPage() {
     setSlots(data||[]);
   }
 
+  async function buyBono(bono) {
+    if (!session) { navigate('/login'); return; }
+    try {
+      setBuyingBono(bono.id);
+      const expiration = new Date();
+      expiration.setDate(expiration.getDate() + bono.duracion_dias);
+      const {error} = await supabase.from('user_bonos').insert({
+        user_id: session.user.id,
+        club_id: bono.club_id,
+        bono_id: bono.id,
+        horas_restantes: bono.tipo === 'ilimitado' ? null : bono.horas_incluidas,
+        fecha_expiracion: expiration.toISOString(),
+        activo: true,
+      });
+      if (error) throw error;
+      const normalizedId = clubId.toLowerCase();
+      const {data} = await supabase.from('user_bonos').select('*, club_bonos(nombre, tipo, horas_incluidas)').eq('club_id', normalizedId).eq('user_id', session.user.id).eq('activo', true).gte('fecha_expiracion', new Date().toISOString());
+      setMyBonos(data||[]);
+      toast.success('🎟️ Bono activado correctamente');
+    } catch(e) { toast.error(e.message); }
+    finally { setBuyingBono(null); }
+  }
+
   async function bookSlot(slot) {
     if (!session) { navigate('/login'); return; }
     try {
       setBookingSaving(true);
+      // Ver si tiene bono activo con horas
+      const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
+      const precioFinal = bonoActivo ? 0 : slot.price;
       const {error} = await supabase.from('court_bookings').insert({
         club_id: slot.club_id,
         court_id: slot.court_id,
@@ -219,14 +250,27 @@ export default function ClubPage() {
         date: slot.date,
         start_time: slot.start_time,
         end_time: slot.end_time,
-        price: slot.price,
+        price: precioFinal,
         status: 'pending',
       });
       if (error) throw error;
+      // Descontar 1 hora del bono si no es ilimitado
+      if (bonoActivo && bonoActivo.club_bonos?.tipo !== 'ilimitado') {
+        const nuevasHoras = (bonoActivo.horas_restantes || 1) - 1;
+        await supabase.from('user_bonos').update({
+          horas_restantes: nuevasHoras,
+          activo: nuevasHoras > 0,
+        }).eq('id', bonoActivo.id);
+        setMyBonos(prev => prev.map(b => b.id === bonoActivo.id ? {...b, horas_restantes: nuevasHoras, activo: nuevasHoras > 0} : b).filter(b => b.activo));
+      }
       await supabase.from('court_slots').update({status:'pending'}).eq('id', slot.id);
       setSlots(prev=>prev.filter(s=>s.id!==slot.id));
       setBookingSlot(null);
-      alert('✅ Reserva enviada. El club la confirmará en breve.');
+      if (bonoActivo) {
+        toast.success('✅ Reserva enviada · 1 hora descontada de tu bono');
+      } else {
+        alert('✅ Reserva enviada. El club la confirmará en breve.');
+      }
     } catch(e) { alert(e.message); }
     finally { setBookingSaving(false); }
   }
@@ -343,6 +387,7 @@ export default function ClubPage() {
                   { key:"partidos", label:"Partidos", emoji:"🏓", count:matches.length },
                   { key:"clases",   label:"Clases",   emoji:"📚", count:classes.length },
                   { key:"reservar", label:"Reservar",  emoji:"📅", count:null },
+                  { key:"bonos",    label:"Bonos",     emoji:"🎟️", count:clubBonos.length||null },
                   { key:"valorar",  label:"Valorar",   emoji:"⭐", count:null },
                   { key:"info",     label:"Info",      emoji:"ℹ️",  count:null },
                 ].map(t => (
@@ -538,6 +583,72 @@ export default function ClubPage() {
                 </div>
               )}
 
+              {tab === "bonos" && (
+                <div style={{padding:'12px'}}>
+                  {/* Mis bonos activos */}
+                  {myBonos.length > 0 && (
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Mis bonos activos</div>
+                      {myBonos.map(b=>(
+                        <div key={b.id} style={{background:'rgba(116,184,0,0.08)',borderRadius:12,border:'1px solid rgba(116,184,0,0.25)',padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:900,color:'#74B800'}}>{b.club_bonos?.nombre}</div>
+                            <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2}}>
+                              {b.club_bonos?.tipo==='ilimitado' ? '♾️ Ilimitado' : `🕐 ${b.horas_restantes} hora${b.horas_restantes!==1?'s':''} restantes`}
+                            </div>
+                            <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:2}}>
+                              Expira: {new Date(b.fecha_expiracion).toLocaleDateString('es')}
+                            </div>
+                          </div>
+                          <div style={{fontSize:24}}>✅</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Bonos disponibles */}
+                  {clubBonos.length === 0 ? (
+                    <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)',fontSize:14}}>
+                      <div style={{fontSize:36,marginBottom:8}}>🎟️</div>
+                      Este club aún no tiene bonos disponibles
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Bonos disponibles</div>
+                      {clubBonos.map(b=>{
+                        const yaTiene = myBonos.some(mb => mb.bono_id === b.id);
+                        return (
+                          <div key={b.id} style={{background:'#111',borderRadius:14,border:'1px solid rgba(255,255,255,0.08)',padding:14,marginBottom:10}}>
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                              <div>
+                                <div style={{fontSize:15,fontWeight:900,color:'#fff'}}>{b.nombre}</div>
+                                <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:3}}>
+                                  {b.tipo==='ilimitado' ? '♾️ Acceso ilimitado' : `🕐 ${b.horas_incluidas} horas incluidas`}
+                                </div>
+                                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>
+                                  📅 Válido {b.duracion_dias} días desde la compra
+                                </div>
+                              </div>
+                              <div style={{fontSize:22,fontWeight:900,color:'#74B800'}}>{(b.precio_cents/100).toFixed(2)}€</div>
+                            </div>
+                            {yaTiene ? (
+                              <div style={{padding:'10px',borderRadius:10,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.2)',textAlign:'center',fontSize:12,color:'#74B800',fontWeight:800}}>
+                                ✅ Ya tienes este bono activo
+                              </div>
+                            ) : (
+                              <button onClick={()=>buyBono(b)} disabled={buyingBono===b.id}
+                                style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer',opacity:buyingBono===b.id?0.6:1}}>
+                                {buyingBono===b.id?'Activando…':'🎟️ Comprar bono'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {tab === "valorar" && (
                 <div style={{padding:'12px'}}>
                   {/* Nota media */}
@@ -593,10 +704,27 @@ export default function ClubPage() {
                     <div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginBottom:16}}>
                       {courts.find(c=>c.id===bookingSlot.court_id)?.name} · {bookingSlot.date} · {bookingSlot.start_time?.slice(0,5)} – {bookingSlot.end_time?.slice(0,5)}
                     </div>
-                    <div style={{background:'rgba(116,184,0,0.08)',borderRadius:10,padding:14,marginBottom:16,textAlign:'center'}}>
-                      <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>{bookingSlot.price}€</div>
-                      <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>Precio por hora</div>
-                    </div>
+                    {(()=>{
+                      const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
+                      return (
+                        <div style={{background:'rgba(116,184,0,0.08)',borderRadius:10,padding:14,marginBottom:16,textAlign:'center'}}>
+                          {bonoActivo ? (
+                            <>
+                              <div style={{fontSize:14,color:'rgba(255,255,255,0.4)',textDecoration:'line-through',marginBottom:2}}>{bookingSlot.price}€</div>
+                              <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>0€ 🎟️</div>
+                              <div style={{fontSize:11,color:'#74B800',marginTop:2,fontWeight:800}}>
+                                {bonoActivo.club_bonos?.tipo==='ilimitado' ? 'Bono ilimitado activo' : `Bono activo · ${bonoActivo.horas_restantes} hora${bonoActivo.horas_restantes!==1?'s':''} restantes`}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>{bookingSlot.price}€</div>
+                              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>Precio por hora</div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
                     <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginBottom:16,textAlign:'center'}}>
                       La reserva quedará pendiente hasta que el club la confirme
                     </div>
