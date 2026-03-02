@@ -62,6 +62,17 @@ export default function ClubPage() {
 
   /* ─── Crear partido ─── */
   const [openCreate, setOpenCreate] = useState(false);
+  const [slots, setSlots] = useState([]);
+  const [courts, setCourts] = useState([]);
+  const [selectedCourt, setSelectedCourt] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [bookingSlot, setBookingSlot] = useState(null);
+  const [bookingSaving, setBookingSaving] = useState(false);
+  const [myRating, setMyRating] = useState(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratingSaving, setRatingSaving] = useState(false);
+  const [clubRatings, setClubRatings] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const todayISO = toDateInputValue(new Date());
@@ -163,6 +174,19 @@ export default function ClubPage() {
       setOpenCreate(false);
       await load();
       setTab("partidos");
+      // precargar courts
+      if (clubIdParam) {
+        supabase.from('club_courts').select('*').eq('club_id', clubIdParam).then(({data})=>{
+          setCourts(data||[]);
+          if (data?.length) setSelectedCourt(data[0].id);
+        });
+        supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubIdParam).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
+        if (session?.user?.id) {
+          supabase.from('club_ratings').select('*').eq('club_id', clubIdParam).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
+            if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
+          });
+        }
+      }
     } catch (e) {
       setSaveError(e?.message || "Error al crear");
     } finally {
@@ -172,6 +196,54 @@ export default function ClubPage() {
 
   /* ─── Partidos filtrados por día seleccionado ─── */
   const [selectedDay, setSelectedDay] = useState("all");
+
+  async function loadSlots(courtId, date) {
+    if (!courtId || !date) return;
+    const {data} = await supabase.from('court_slots').select('*').eq('court_id', courtId).eq('date', date).eq('status','available').order('start_time');
+    setSlots(data||[]);
+  }
+
+  async function bookSlot(slot) {
+    if (!session) { navigate('/login'); return; }
+    try {
+      setBookingSaving(true);
+      const {error} = await supabase.from('court_bookings').insert({
+        club_id: slot.club_id,
+        court_id: slot.court_id,
+        user_id: session.user.id,
+        date: slot.date,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+        price: slot.price,
+        status: 'pending',
+      });
+      if (error) throw error;
+      await supabase.from('court_slots').update({status:'pending'}).eq('id', slot.id);
+      setSlots(prev=>prev.filter(s=>s.id!==slot.id));
+      setBookingSlot(null);
+      alert('✅ Reserva enviada. El club la confirmará en breve.');
+    } catch(e) { alert(e.message); }
+    finally { setBookingSaving(false); }
+  }
+
+  async function saveRating() {
+    if (!session) { navigate('/login'); return; }
+    try {
+      setRatingSaving(true);
+      const clubIdParam = club?.id || String(window.location.pathname.split('/').pop());
+      const payload = { club_id: clubIdParam, user_id: session.user.id, rating: ratingValue, comment: ratingComment.trim()||null };
+      const {data, error} = await supabase.from('club_ratings').upsert(payload, {onConflict:'club_id,user_id'}).select().single();
+      if (error) throw error;
+      setMyRating(data);
+      setClubRatings(prev=>{
+        const idx=prev.findIndex(r=>r.user_id===session.user.id);
+        if(idx>=0){const n=[...prev];n[idx]={...data,profiles:prev[idx]?.profiles};return n;}
+        return [data,...prev];
+      });
+      alert('✅ ¡Gracias por tu valoración!');
+    } catch(e) { alert(e.message); }
+    finally { setRatingSaving(false); }
+  }
   const uniqueDays = useMemo(() => {
     const days = new Set(matches.map(m => localYMD(m.start_at)).filter(Boolean));
     return Array.from(days).sort();
@@ -265,7 +337,9 @@ export default function ClubPage() {
                 {[
                   { key:"partidos", label:"Partidos", emoji:"🏓", count:matches.length },
                   { key:"clases",   label:"Clases",   emoji:"📚", count:classes.length },
-                  { key:"info",     label:"Info",     emoji:"ℹ️",  count:null },
+                  { key:"reservar", label:"Reservar",  emoji:"📅", count:null },
+                  { key:"valorar",  label:"Valorar",   emoji:"⭐", count:null },
+                  { key:"info",     label:"Info",      emoji:"ℹ️",  count:null },
                 ].map(t => (
                   <button key={t.key} className="gpClubTab"
                     onClick={() => setTab(t.key)}
@@ -409,6 +483,132 @@ export default function ClubPage() {
               )}
 
               {/* ══ TAB: INFO ══ */}
+              {tab === "reservar" && (
+                <div style={{padding:'12px'}}>
+                  {courts.length === 0 ? (
+                    <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)',fontSize:14}}>
+                      <div style={{fontSize:36,marginBottom:8}}>🏟️</div>
+                      Este club aún no tiene pistas configuradas en Gorila
+                    </div>
+                  ) : (
+                    <>
+                      {/* Selector pista */}
+                      <div style={{display:'flex',gap:6,marginBottom:12,overflowX:'auto'}}>
+                        {courts.map(c=>(
+                          <button key={c.id} onClick={()=>{setSelectedCourt(c.id);loadSlots(c.id,selectedDate);}}
+                            style={{padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,whiteSpace:'nowrap',
+                              background:selectedCourt===c.id?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                              color:selectedCourt===c.id?'#000':'#fff'}}>
+                            {c.name} {c.court_type==='indoor'?'🏠':'☀️'}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Selector fecha */}
+                      <input type="date" value={selectedDate} min={new Date().toISOString().split('T')[0]}
+                        onChange={e=>{setSelectedDate(e.target.value);loadSlots(selectedCourt,e.target.value);}}
+                        style={{padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',marginBottom:12,background:'#1a1a1a'}} />
+                      {/* Slots disponibles */}
+                      {slots.length === 0 ? (
+                        <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.3)',fontSize:13}}>
+                          No hay horas disponibles para este día
+                        </div>
+                      ) : (
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                          {slots.map(s=>(
+                            <div key={s.id} onClick={()=>setBookingSlot(s)}
+                              style={{padding:'12px 8px',borderRadius:12,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.25)',cursor:'pointer',textAlign:'center'}}>
+                              <div style={{fontSize:15,fontWeight:900,color:'#74B800'}}>{s.start_time?.slice(0,5)}</div>
+                              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>{s.end_time?.slice(0,5)}</div>
+                              <div style={{fontSize:13,fontWeight:800,color:'#fff',marginTop:4}}>{s.price}€</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button onClick={()=>loadSlots(selectedCourt,selectedDate)}
+                        style={{marginTop:12,width:'100%',padding:'10px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.6)',fontWeight:800,fontSize:12,cursor:'pointer'}}>
+                        🔄 Actualizar disponibilidad
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {tab === "valorar" && (
+                <div style={{padding:'12px'}}>
+                  {/* Nota media */}
+                  {clubRatings.length > 0 && (
+                    <div style={{background:'#111',borderRadius:14,border:'1px solid rgba(116,184,0,0.15)',padding:16,marginBottom:16,textAlign:'center'}}>
+                      <div style={{fontSize:36,fontWeight:900,color:'#74B800'}}>{(clubRatings.reduce((s,r)=>s+r.rating,0)/clubRatings.length).toFixed(1)}</div>
+                      <div style={{fontSize:20,marginBottom:4}}>{'⭐'.repeat(Math.round(clubRatings.reduce((s,r)=>s+r.rating,0)/clubRatings.length))}</div>
+                      <div style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>{clubRatings.length} valoracion{clubRatings.length!==1?'es':''}</div>
+                    </div>
+                  )}
+                  {/* Formulario valorar */}
+                  <div style={{background:'#111',borderRadius:14,border:'1px solid rgba(255,255,255,0.07)',padding:14,marginBottom:16}}>
+                    <div style={{fontSize:13,fontWeight:900,color:'#74B800',marginBottom:12}}>{myRating?'✏️ Editar tu valoración':'⭐ Valora este club'}</div>
+                    <div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:12}}>
+                      {[1,2,3,4,5].map(star=>(
+                        <div key={star} onClick={()=>setRatingValue(star)}
+                          style={{fontSize:32,cursor:'pointer',opacity:star<=ratingValue?1:0.3,transition:'opacity .15s'}}>⭐</div>
+                      ))}
+                    </div>
+                    <textarea placeholder="Comentario opcional (instalaciones, ambiente, servicio…)" value={ratingComment}
+                      onChange={e=>setRatingComment(e.target.value)} rows={3}
+                      style={{padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',resize:'none',marginBottom:10}} />
+                    <button onClick={saveRating} disabled={ratingSaving}
+                      style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
+                      {ratingSaving?'Guardando…':myRating?'✅ Actualizar valoración':'✅ Enviar valoración'}
+                    </button>
+                  </div>
+                  {/* Lista valoraciones */}
+                  {clubRatings.map(r=>(
+                    <div key={r.id} style={{background:'#111',borderRadius:12,border:'1px solid rgba(255,255,255,0.07)',padding:12,marginBottom:8}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          {r.profiles?.avatar_url?(
+                            <img src={r.profiles.avatar_url} style={{width:30,height:30,borderRadius:999,objectFit:'cover'}} alt=""/>
+                          ):(
+                            <div style={{width:30,height:30,borderRadius:999,background:'rgba(116,184,0,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🦍</div>
+                          )}
+                          <div style={{fontSize:13,fontWeight:800}}>{r.profiles?.name||'Jugador'}</div>
+                        </div>
+                        <div style={{fontSize:14}}>{'⭐'.repeat(r.rating)}</div>
+                      </div>
+                      {r.comment&&<div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:6,lineHeight:1.5}}>{r.comment}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Modal confirmar reserva */}
+              {bookingSlot && (
+                <div onClick={()=>setBookingSlot(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+                  <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+                    <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:4}}>📅 Confirmar reserva</div>
+                    <div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginBottom:16}}>
+                      {courts.find(c=>c.id===bookingSlot.court_id)?.name} · {bookingSlot.date} · {bookingSlot.start_time?.slice(0,5)} – {bookingSlot.end_time?.slice(0,5)}
+                    </div>
+                    <div style={{background:'rgba(116,184,0,0.08)',borderRadius:10,padding:14,marginBottom:16,textAlign:'center'}}>
+                      <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>{bookingSlot.price}€</div>
+                      <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>Precio por hora</div>
+                    </div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginBottom:16,textAlign:'center'}}>
+                      La reserva quedará pendiente hasta que el club la confirme
+                    </div>
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>bookSlot(bookingSlot)} disabled={bookingSaving}
+                        style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
+                        {bookingSaving?'Reservando…':'✅ Confirmar reserva'}
+                      </button>
+                      <button onClick={()=>setBookingSlot(null)}
+                        style={{padding:'12px 16px',borderRadius:12,background:'rgba(255,255,255,0.08)',border:'none',color:'#fff',fontWeight:900,cursor:'pointer'}}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {tab === "info" && (
                 <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
                   {club ? (
