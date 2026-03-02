@@ -519,6 +519,46 @@ export default function MatchesPage() {
   /* ══════════════════════════════════════
      RENDER
   ══════════════════════════════════════ */
+  async function buscarJugarAhora() {
+    setJugarAhoraData(p=>({...p, loading:true}));
+    try {
+      const now = new Date();
+      const in2h = new Date(now.getTime() + 2*60*60*1000);
+      const today = now.toISOString().slice(0,10);
+      const fromTime = now.toTimeString().slice(0,5);
+      const toTime = in2h.toTimeString().slice(0,5);
+
+      // Pistas libres en clubs Gorila en las próximas 2h
+      const {data: slots} = await supabase
+        .from('court_slots')
+        .select('*, club_courts(name, court_type)')
+        .eq('date', today)
+        .eq('status', 'available')
+        .gte('start_time', fromTime)
+        .lte('start_time', toTime)
+        .limit(10);
+
+      // Partidos con hueco hoy próximas 2h
+      const {data: matchRows} = await supabase
+        .from('matches')
+        .select('*, match_join_requests(status)')
+        .eq('start_at::date', today)
+        .gte('start_at', now.toISOString())
+        .lte('start_at', in2h.toISOString())
+        .limit(10);
+
+      // Filtrar partidos con hueco
+      const matchesConHueco = (matchRows||[]).filter(m => {
+        const aprobados = (m.match_join_requests||[]).filter(r=>r.status==='approved').length;
+        return (1 + aprobados) < 4;
+      });
+
+      setJugarAhoraData({ slots: slots||[], matches: matchesConHueco, loading:false });
+    } catch(e) {
+      setJugarAhoraData(p=>({...p, loading:false}));
+    }
+  }
+
   return (
     <div className="page pageWithHeader gpMatchesPage">
       <style>{`
@@ -560,6 +600,17 @@ export default function MatchesPage() {
               onTouchEnd={e=>{e.preventDefault();setOpenCreate(true);setForm(prev=>({...prev,date:selectedDay||todayISO}));}}
               style={{padding:"10px 16px",borderRadius:12,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",fontSize:13,cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation",zIndex:999}}
             >➕ Crear</button>
+          </div>
+
+          {/* ── JUGAR AHORA ── */}
+          <div onClick={()=>{setJugarAhora(true);buscarJugarAhora();}}
+            style={{margin:'6px 0 10px',padding:'12px 16px',borderRadius:14,background:'linear-gradient(135deg,rgba(116,184,0,0.15),rgba(155,232,0,0.08))',border:'1px solid rgba(116,184,0,0.3)',cursor:'pointer',display:'flex',alignItems:'center',gap:12,touchAction:'manipulation'}}>
+            <div style={{fontSize:28}}>⚡</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:15,fontWeight:900,color:'#9BE800'}}>Jugar ahora</div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2}}>Pistas libres y partidos con hueco en las próximas 2h</div>
+            </div>
+            <div style={{color:'#74B800',fontSize:20}}>›</div>
           </div>
 
           {/* ── CALENDARIO ── */}
@@ -1289,6 +1340,92 @@ export default function MatchesPage() {
             <button onClick={()=>setMoodOpenFor(null)} style={{width:"100%",marginTop:14,padding:"11px",borderRadius:12,background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.5)",fontWeight:700,cursor:"pointer",fontSize:13}}>
               Cancelar
             </button>
+          </div>
+        </div>
+      )}
+    </div>
+
+      {/* ── MODAL JUGAR AHORA ── */}
+      {jugarAhora && (
+        <div onClick={()=>setJugarAhora(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:60000,overflowY:'auto'}}>
+          <div onClick={e=>e.stopPropagation()} style={{maxWidth:640,margin:'0 auto',padding:'20px 16px',paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+              <button onClick={()=>setJugarAhora(false)} style={{background:'none',border:'none',color:'#74B800',fontSize:22,cursor:'pointer'}}>←</button>
+              <div>
+                <div style={{fontSize:18,fontWeight:900,color:'#9BE800'}}>⚡ Jugar ahora</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Próximas 2 horas</div>
+              </div>
+            </div>
+
+            {jugarAhoraData.loading && (
+              <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.4)'}}>Buscando opciones…</div>
+            )}
+
+            {!jugarAhoraData.loading && (
+              <>
+                {/* Pistas libres */}
+                {jugarAhoraData.slots.length > 0 && (
+                  <div style={{marginBottom:20}}>
+                    <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>🏟️ Pistas libres ahora</div>
+                    {jugarAhoraData.slots.map(s=>(
+                      <div key={s.id} onClick={()=>{setJugarAhora(false); navigate(`/club/${s.club_id}?tab=reservar`);}}
+                        style={{background:'#111',borderRadius:12,border:'1px solid rgba(116,184,0,0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <div>
+                          <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{s.club_courts?.name || 'Pista'} {s.club_courts?.court_type==='indoor'?'🏠':'☀️'}</div>
+                          <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:2}}>🕐 {s.start_time?.slice(0,5)} – {s.end_time?.slice(0,5)}</div>
+                          <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:2}}>{s.club_id}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:20,fontWeight:900,color:'#74B800'}}>{s.price}€</div>
+                          <div style={{fontSize:10,color:'rgba(255,255,255,0.3)'}}>por hora</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Partidos con hueco */}
+                {jugarAhoraData.matches.length > 0 && (
+                  <div style={{marginBottom:20}}>
+                    <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>🏓 Partidos con hueco</div>
+                    {jugarAhoraData.matches.map(m=>{
+                      const aprobados = (m.match_join_requests||[]).filter(r=>r.status==='approved').length;
+                      const ocupados = 1 + aprobados;
+                      const libres = 4 - ocupados;
+                      return (
+                        <div key={m.id} onClick={()=>{setJugarAhora(false); navigate(`/partidos?openChat=${m.id}`);}}
+                          style={{background:'#111',borderRadius:12,border:'1px solid rgba(116,184,0,0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <div>
+                            <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{m.club_name||'Partido'}</div>
+                            <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:2}}>🕐 {String(m.start_at||'').slice(11,16)} · {m.level}</div>
+                          </div>
+                          <div style={{textAlign:'right'}}>
+                            <div style={{fontSize:16,fontWeight:900,color:'#74B800'}}>{libres} libre{libres!==1?'s':''}</div>
+                            <div style={{display:'flex',gap:3,marginTop:4}}>
+                              {[0,1,2,3].map(i=>(
+                                <div key={i} style={{width:14,height:14,borderRadius:3,background:i<ocupados?'#74B800':'rgba(255,255,255,0.1)'}}/>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {jugarAhoraData.slots.length === 0 && jugarAhoraData.matches.length === 0 && (
+                  <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.4)'}}>
+                    <div style={{fontSize:40,marginBottom:8}}>😔</div>
+                    <div style={{fontSize:15,fontWeight:900,color:'#fff',marginBottom:6}}>Nada disponible ahora</div>
+                    <div style={{fontSize:12,marginBottom:20}}>No hay pistas libres ni partidos con hueco en las próximas 2h</div>
+                    <button onClick={()=>{setJugarAhora(false);setOpenCreate(true);}}
+                      style={{padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
+                      ➕ Crear un partido
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
