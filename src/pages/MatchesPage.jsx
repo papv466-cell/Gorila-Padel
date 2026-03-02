@@ -1343,7 +1343,6 @@ export default function MatchesPage() {
           </div>
         </div>
       )}
-    </div>
 
       {/* ── MODAL JUGAR AHORA ── */}
       {jugarAhora && (
