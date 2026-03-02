@@ -89,6 +89,22 @@ export default function ClubPage() {
 
   useEffect(() => { load(); }, [clubId]);
 
+  useEffect(() => {
+    if (!clubId) return;
+    supabase.from('club_courts').select('*').eq('club_id', clubId).then(({data})=>{
+      setCourts(data||[]);
+      if (data?.length) setSelectedCourt(data[0].id);
+    });
+    supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubId).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
+  }, [clubId]);
+
+  useEffect(() => {
+    if (!clubId || !session?.user?.id) return;
+    supabase.from('club_ratings').select('*').eq('club_id', clubId).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
+      if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
+    });
+  }, [clubId, session]);
+
   async function load() {
     setLoading(true);
     try {
@@ -174,19 +190,6 @@ export default function ClubPage() {
       setOpenCreate(false);
       await load();
       setTab("partidos");
-      // precargar courts
-      if (clubIdParam) {
-        supabase.from('club_courts').select('*').eq('club_id', clubIdParam).then(({data})=>{
-          setCourts(data||[]);
-          if (data?.length) setSelectedCourt(data[0].id);
-        });
-        supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubIdParam).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
-        if (session?.user?.id) {
-          supabase.from('club_ratings').select('*').eq('club_id', clubIdParam).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
-            if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
-          });
-        }
-      }
     } catch (e) {
       setSaveError(e?.message || "Error al crear");
     } finally {
