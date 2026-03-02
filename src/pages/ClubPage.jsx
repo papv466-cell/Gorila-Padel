@@ -91,16 +91,18 @@ export default function ClubPage() {
 
   useEffect(() => {
     if (!clubId) return;
-    supabase.from('club_courts').select('*').eq('club_id', clubId).then(({data})=>{
+    const normalizedId = clubId.toLowerCase();
+    supabase.from('club_courts').select('*').eq('club_id', normalizedId).then(({data})=>{
       setCourts(data||[]);
       if (data?.length) setSelectedCourt(data[0].id);
     });
-    supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubId).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
+    supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', normalizedId).order('created_at',{ascending:false}).then(({data})=>setClubRatings(data||[]));
   }, [clubId]);
 
   useEffect(() => {
     if (!clubId || !session?.user?.id) return;
-    supabase.from('club_ratings').select('*').eq('club_id', clubId).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
+    const normalizedId = clubId.toLowerCase();
+    supabase.from('club_ratings').select('*').eq('club_id', normalizedId).eq('user_id', session.user.id).maybeSingle().then(({data})=>{
       if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
     });
   }, [clubId, session]);
@@ -233,7 +235,7 @@ export default function ClubPage() {
     if (!session) { navigate('/login'); return; }
     try {
       setRatingSaving(true);
-      const clubIdParam = club?.id || String(window.location.pathname.split('/').pop());
+      const clubIdParam = (club?.id || String(window.location.pathname.split('/').pop())).toLowerCase();
       const payload = { club_id: clubIdParam, user_id: session.user.id, rating: ratingValue, comment: ratingComment.trim()||null };
       const {data, error} = await supabase.from('club_ratings').upsert(payload, {onConflict:'club_id,user_id'}).select().single();
       if (error) throw error;
