@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "torneos", "informe", "valoraciones", "stats", "donaciones", "config"];
+const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "torneos", "informe", "valoraciones", "stats", "donaciones", "bonos", "config"];
 const TAB_LABELS = {
   calendario: "📅 Calendario",
   reservas: "📋 Reservas",
@@ -15,7 +15,8 @@ const TAB_LABELS = {
   valoraciones: "⭐ Valoraciones",
   stats: "📊 Stats",
   donaciones: "💚 Donaciones",
-  config: "⚙️ Config"
+  config: "⚙️ Config",
+  bonos: "🎟️ Bonos"
 };
 
 const HOURS = Array.from({length:16}, (_,i) => `${(i+8).toString().padStart(2,'0')}:00`);
@@ -83,6 +84,10 @@ export default function ClubAdminPage() {
     const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   });
   const [syncing, setSyncing] = useState(false);
+  const [bonos, setBonos] = useState([]);
+  const [bonoForm, setBonoForm] = useState({nombre:'', tipo:'horas', horas_incluidas:10, precio_cents:1500, duracion_dias:30, activo:true});
+  const [showNewBono, setShowNewBono] = useState(false);
+  const [savingBono, setSavingBono] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
 
@@ -111,6 +116,7 @@ export default function ClubAdminPage() {
         loadBroadcasts(data.club_id),
         loadRatings(data.club_id),
         loadTournaments(data.club_id),
+        loadBonos(data.club_id),
       ]);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
@@ -171,6 +177,44 @@ export default function ClubAdminPage() {
     await supabase.from('flash_tournaments').update({status:'in_progress'}).eq('id', tournament.id);
     setTournaments(prev=>prev.map(t=>t.id===tournament.id?{...t,status:'in_progress'}:t));
     alert(`✅ Cuadro generado con ${matches.length} partido${matches.length!==1?'s':''}`);
+  }
+
+  async function loadBonos(clubId) {
+    const {data} = await supabase.from('club_bonos').select('*').eq('club_id', clubId).order('created_at', {ascending:false});
+    setBonos(data||[]);
+  }
+
+  async function createBono() {
+    if (!bonoForm.nombre.trim()) return;
+    try {
+      setSavingBono(true);
+      const {data, error} = await supabase.from('club_bonos').insert({
+        club_id: clubAdmin.club_id,
+        club_name: clubAdmin.club_name,
+        nombre: bonoForm.nombre.trim(),
+        tipo: bonoForm.tipo,
+        horas_incluidas: bonoForm.tipo === 'ilimitado' ? null : Number(bonoForm.horas_incluidas),
+        precio_cents: Number(bonoForm.precio_cents),
+        duracion_dias: Number(bonoForm.duracion_dias),
+        activo: true,
+      }).select().single();
+      if (error) throw error;
+      setBonos(prev => [data, ...prev]);
+      setShowNewBono(false);
+      setBonoForm({nombre:'', tipo:'horas', horas_incluidas:10, precio_cents:1500, duracion_dias:30, activo:true});
+    } catch(e) { alert(e.message); }
+    finally { setSavingBono(false); }
+  }
+
+  async function toggleBono(id, activo) {
+    await supabase.from('club_bonos').update({activo: !activo}).eq('id', id);
+    setBonos(prev => prev.map(b => b.id === id ? {...b, activo: !activo} : b));
+  }
+
+  async function deleteBono(id) {
+    if (!window.confirm('¿Eliminar este bono?')) return;
+    await supabase.from('club_bonos').delete().eq('id', id);
+    setBonos(prev => prev.filter(b => b.id !== id));
   }
 
   async function loadRatings(clubId) {
@@ -679,6 +723,111 @@ export default function ClubAdminPage() {
             </div>
           ))}
           {donations.length===0 && <div style={{textAlign:'center', padding:32, color:'rgba(255,255,255,0.3)', fontSize:14}}>Aún no hay donaciones</div>}
+        </div>
+      )}
+
+      {/* ── BONOS ── */}
+      {tab === 'bonos' && (
+        <div style={{padding:'12px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+            <div style={{fontSize:15, fontWeight:900}}>🎟️ Bonos y abonos</div>
+            <button onClick={()=>setShowNewBono(true)} style={{...S.btn('green'), fontSize:12, padding:'8px 14px'}}>+ Crear</button>
+          </div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>
+            Crea los bonos que quieras: horas sueltas, packs mensuales o acceso ilimitado. Cada club decide.
+          </div>
+
+          {bonos.length === 0 && !showNewBono && (
+            <div style={{textAlign:'center', padding:40, color:'rgba(255,255,255,0.3)', fontSize:14}}>
+              <div style={{fontSize:40, marginBottom:8}}>🎟️</div>
+              No hay bonos. ¡Crea el primero!
+            </div>
+          )}
+
+          {bonos.map(b => (
+            <div key={b.id} style={{...S.card, marginBottom:10, opacity: b.activo ? 1 : 0.5}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8}}>
+                <div>
+                  <div style={{fontSize:14, fontWeight:900}}>{b.nombre}</div>
+                  <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:2}}>
+                    {b.tipo === 'ilimitado' ? '♾️ Acceso ilimitado' : `🕐 ${b.horas_incluidas} horas`}
+                    {' · '}{b.duracion_dias} días de validez
+                  </div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:20, fontWeight:900, color:'#74B800'}}>{(b.precio_cents/100).toFixed(2)}€</div>
+                  <span style={S.badge(b.activo ? 'available' : 'rejected')}>{b.activo ? 'Activo' : 'Inactivo'}</span>
+                </div>
+              </div>
+              <div style={{display:'flex', gap:6}}>
+                <button onClick={()=>toggleBono(b.id, b.activo)}
+                  style={{...S.btn(b.activo ? '' : 'green'), flex:1, fontSize:12, padding:'7px'}}>
+                  {b.activo ? '⏸️ Desactivar' : '▶️ Activar'}
+                </button>
+                <button onClick={()=>deleteBono(b.id)}
+                  style={{...S.btn('red'), fontSize:12, padding:'7px 12px'}}>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── MODAL NUEVO BONO ── */}
+      {showNewBono && (
+        <div onClick={()=>setShowNewBono(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>🎟️ Nuevo bono</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <input placeholder="Nombre (ej: Bono 10 horas, Abono mensual ilimitado...)" value={bonoForm.nombre}
+                onChange={e=>setBonoForm(p=>({...p,nombre:e.target.value}))} style={S.input} />
+              <div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:6}}>TIPO DE BONO</div>
+                <div style={{display:'flex',gap:6}}>
+                  {[{v:'horas',l:'🕐 Por horas'},{v:'ilimitado',l:'♾️ Ilimitado'}].map(({v,l})=>(
+                    <button key={v} onClick={()=>setBonoForm(p=>({...p,tipo:v}))}
+                      style={{flex:1,padding:'10px',borderRadius:10,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
+                        background:bonoForm.tipo===v?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                        color:bonoForm.tipo===v?'#000':'#fff'}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {bonoForm.tipo === 'horas' && (
+                <div>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>HORAS INCLUIDAS</div>
+                  <input type="number" min="1" max="100" value={bonoForm.horas_incluidas}
+                    onChange={e=>setBonoForm(p=>({...p,horas_incluidas:e.target.value}))} style={S.input} />
+                </div>
+              )}
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO (€)</div>
+                  <input type="number" min="0" step="0.5" value={(bonoForm.precio_cents/100).toFixed(2)}
+                    onChange={e=>setBonoForm(p=>({...p,precio_cents:Math.round(Number(e.target.value)*100)}))} style={S.input} />
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>VALIDEZ (días)</div>
+                  <select value={bonoForm.duracion_dias} onChange={e=>setBonoForm(p=>({...p,duracion_dias:Number(e.target.value)}))}
+                    style={{...S.input,background:'#1a1a1a'}}>
+                    {[7,15,30,60,90,180,365].map(d=><option key={d} value={d}>{d} días</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{background:'rgba(116,184,0,0.05)',borderRadius:10,padding:12,border:'1px solid rgba(116,184,0,0.15)'}}>
+                <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
+                  📱 Los jugadores verán este bono en la página de tu club y podrán comprarlo directamente desde la app.
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={createBono} disabled={savingBono||!bonoForm.nombre.trim()}
+                  style={{...S.btn('green'),flex:1,opacity:savingBono||!bonoForm.nombre.trim()?0.5:1}}>
+                  {savingBono?'Creando…':'✅ Crear bono'}
+                </button>
+                <button onClick={()=>setShowNewBono(false)} style={S.btn('')}>Cancelar</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
