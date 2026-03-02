@@ -3,13 +3,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "informe", "valoraciones", "stats", "donaciones", "config"];
+const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "torneos", "informe", "valoraciones", "stats", "donaciones", "config"];
 const TAB_LABELS = {
   calendario: "📅 Calendario",
   reservas: "📋 Reservas",
   espera: "⏳ Espera",
   precios: "💶 Precios",
   comunicacion: "📣 Comunicar",
+  torneos: "🏆 Torneos",
   informe: "📈 Informe",
   valoraciones: "⭐ Valoraciones",
   stats: "📊 Stats",
@@ -72,6 +73,11 @@ export default function ClubAdminPage() {
   const [pricingForm, setPricingForm] = useState({day_type:'weekday', start_hour:8, end_hour:14, price:10});
   const [editingPrice, setEditingPrice] = useState(null);
   const [ratings, setRatings] = useState([]);
+  const [tournaments, setTournaments] = useState([]);
+  const [tournamentForm, setTournamentForm] = useState({name:'', date:'', start_time:'18:00', max_players:8, price_per_player:0, level:'todos'});
+  const [showNewTournament, setShowNewTournament] = useState(false);
+  const [selectedTournament, setSelectedTournament] = useState(null);
+  const [tournamentPlayers, setTournamentPlayers] = useState([]);
   const [monthReport, setMonthReport] = useState(null);
   const [reportMonth, setReportMonth] = useState(() => {
     const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -104,9 +110,67 @@ export default function ClubAdminPage() {
         loadPricing(data.club_id),
         loadBroadcasts(data.club_id),
         loadRatings(data.club_id),
+        loadTournaments(data.club_id),
       ]);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
+  }
+
+  async function loadTournaments(clubId) {
+    const {data} = await supabase.from('flash_tournaments').select('*, flash_tournament_players(user_id)').eq('club_id', clubId).order('date', {ascending:false});
+    setTournaments(data||[]);
+  }
+
+  async function createTournament() {
+    if (!tournamentForm.name.trim() || !tournamentForm.date) return;
+    try {
+      setSaving(true);
+      const {data, error} = await supabase.from('flash_tournaments').insert({
+        club_id: clubAdmin.club_id,
+        club_name: clubAdmin.club_name,
+        name: tournamentForm.name.trim(),
+        date: tournamentForm.date,
+        start_time: tournamentForm.start_time,
+        max_players: Number(tournamentForm.max_players)||8,
+        price_per_player: Number(tournamentForm.price_per_player)||0,
+        level: tournamentForm.level,
+        status: 'open',
+        created_by: session.user.id,
+      }).select().single();
+      if (error) throw error;
+      setTournaments(prev=>[data,...prev]);
+      setShowNewTournament(false);
+      setTournamentForm({name:'', date:'', start_time:'18:00', max_players:8, price_per_player:0, level:'todos'});
+      // Notificar a jugadores del club
+      try {
+        const {notifyClubBroadcast} = await import('../services/notifications');
+        const {data: matchPlayers} = await supabase.from('matches').select('match_players(player_uuid)').eq('club_id', clubAdmin.club_id).gte('start_at', new Date(Date.now()-30*24*60*60*1000).toISOString());
+        const userIds = [...new Set((matchPlayers||[]).flatMap(m=>(m.match_players||[]).map(p=>p.player_uuid)).filter(Boolean))];
+        if (userIds.length) await notifyClubBroadcast({clubName: clubAdmin.club_name, title: `🏆 Torneo flash: ${data.name}`, body: `${data.date} a las ${data.start_time} · Nivel ${data.level} · ${data.max_players} jugadores`, userIds});
+      } catch {}
+    } catch(e) { alert(e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function generateBracket(tournament) {
+    const players = (tournament.flash_tournament_players||[]).map(p=>p.user_id);
+    if (players.length < 4) { alert('Necesitas al menos 4 jugadores'); return; }
+    const shuffled = [...players].sort(()=>Math.random()-0.5);
+    const matches = [];
+    for (let i=0; i<shuffled.length-1; i+=4) {
+      matches.push({
+        tournament_id: tournament.id,
+        round: 1,
+        team_a: [shuffled[i], shuffled[i+1]||shuffled[i]],
+        team_b: [shuffled[i+2]||shuffled[i], shuffled[i+3]||shuffled[i+2]||shuffled[i]],
+        status: 'pending',
+      });
+    }
+    const {error} = await supabase.from('flash_tournament_matches').insert(matches);
+    if (error) { alert(error.message); return; }
+    await supabase.from('flash_tournaments').update({status:'in_progress'}).eq('id', tournament.id);
+    setTournaments(prev=>prev.map(t=>t.id===tournament.id?{...t,status:'in_progress'}:t));
+    alert(`✅ Cuadro generado con ${matches.length} partido${matches.length!==1?'s':''}`);
   }
 
   async function loadRatings(clubId) {
@@ -624,6 +688,20 @@ export default function ClubAdminPage() {
           <div style={{fontSize:15, fontWeight:900, marginBottom:12}}>⚙️ Configuración</div>
 
           <div style={S.card}>
+            <div style={{...S.card, marginBottom:12, background:'rgba(116,184,0,0.03)', border:'1px solid rgba(116,184,0,0.15)'}}>
+              <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🌐 Widget para tu web</div>
+              <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:10, lineHeight:1.6}}>
+                Pega este código en tu web y tus clientes podrán reservar sin salir de ella.
+              </div>
+              <div style={{background:'#0a0a0a', borderRadius:8, padding:12, fontFamily:'monospace', fontSize:11, color:'#74B800', lineHeight:1.8, overflowX:'auto', marginBottom:8}}>
+                {`<iframe src="https://gorila-padel.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`}
+              </div>
+              <button onClick={()=>{navigator.clipboard.writeText(`<iframe src="https://gorila-padel.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`); alert('✅ Copiado al portapapeles');}}
+                style={{...S.btn('green'), width:'100%', fontSize:12}}>
+                📋 Copiar código
+              </button>
+            </div>
+
             <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🔵 Sincronización Playtomic</div>
             <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:10, lineHeight:1.6}}>
               Pega la URL pública de tu club en Playtomic y sincronizaremos automáticamente los horarios ocupados. No necesitas gestionar dos calendarios.
@@ -773,6 +851,111 @@ export default function ClubAdminPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── TORNEOS FLASH ── */}
+      {tab === 'torneos' && (
+        <div style={{padding:'12px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+            <div style={{fontSize:15, fontWeight:900}}>🏆 Torneos flash</div>
+            <button onClick={()=>setShowNewTournament(true)} style={{...S.btn('green'), fontSize:12, padding:'8px 14px'}}>+ Crear</button>
+          </div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Torneos rápidos de 2h para jugadores de tu club. Se auto-organizan y generan el cuadro automáticamente.</div>
+
+          {tournaments.map(t=>{
+            const enrolled = (t.flash_tournament_players||[]).length;
+            const isFull = enrolled >= t.max_players;
+            return (
+              <div key={t.id} style={{...S.card, marginBottom:10}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8}}>
+                  <div>
+                    <div style={{fontSize:14, fontWeight:900}}>{t.name}</div>
+                    <div style={{fontSize:12, color:'rgba(255,255,255,0.5)'}}>{t.date} · {t.start_time?.slice(0,5)} · Nivel {t.level}</div>
+                    <div style={{fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:2}}>{t.price_per_player>0?`${t.price_per_player}€/jugador`:'Gratis'}</div>
+                  </div>
+                  <span style={S.badge(t.status==='open'?'available':t.status==='in_progress'?'pending':'confirmed')}>
+                    {t.status==='open'?'Abierto':t.status==='in_progress'?'En curso':'Terminado'}
+                  </span>
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+                  <div style={{flex:1, height:8, background:'rgba(255,255,255,0.06)', borderRadius:4, overflow:'hidden'}}>
+                    <div style={{height:'100%', width:`${enrolled/t.max_players*100}%`, background:isFull?'#ff6b6b':'linear-gradient(90deg,#74B800,#9BE800)', borderRadius:4}}/>
+                  </div>
+                  <div style={{fontSize:12, fontWeight:800, color:isFull?'#ff6b6b':'#74B800'}}>{enrolled}/{t.max_players}</div>
+                </div>
+                {t.status==='open' && enrolled >= 4 && (
+                  <button onClick={()=>generateBracket(t)} style={{...S.btn('green'), width:'100%', fontSize:12}}>
+                    ⚡ Generar cuadro y empezar
+                  </button>
+                )}
+                {t.status==='open' && enrolled < 4 && (
+                  <div style={{fontSize:11, color:'rgba(255,255,255,0.3)', textAlign:'center', padding:'6px 0'}}>
+                    Necesitas al menos 4 jugadores inscritos
+                  </div>
+                )}
+                {t.status==='in_progress' && (
+                  <div style={{fontSize:12, color:'#FFA500', fontWeight:800, textAlign:'center', padding:'6px 0'}}>🏓 Torneo en curso</div>
+                )}
+              </div>
+            );
+          })}
+          {tournaments.length===0 && (
+            <div style={{textAlign:'center', padding:40, color:'rgba(255,255,255,0.3)', fontSize:14}}>
+              <div style={{fontSize:40, marginBottom:8}}>🏆</div>
+              No hay torneos aún. ¡Crea el primero!
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MODAL NUEVO TORNEO ── */}
+      {showNewTournament && (
+        <div onClick={()=>setShowNewTournament(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>🏆 Nuevo torneo flash</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <input placeholder="Nombre (ej: Torneo Tarde Viernes)" value={tournamentForm.name}
+                onChange={e=>setTournamentForm(p=>({...p,name:e.target.value}))} style={S.input} />
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>FECHA</div>
+                  <input type="date" value={tournamentForm.date}
+                    onChange={e=>setTournamentForm(p=>({...p,date:e.target.value}))} style={{...S.input,background:'#1a1a1a'}} />
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>HORA</div>
+                  <input type="time" value={tournamentForm.start_time}
+                    onChange={e=>setTournamentForm(p=>({...p,start_time:e.target.value}))} style={{...S.input,background:'#1a1a1a'}} />
+                </div>
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>JUGADORES MÁX</div>
+                  <select value={tournamentForm.max_players} onChange={e=>setTournamentForm(p=>({...p,max_players:Number(e.target.value)}))}
+                    style={{...S.input,background:'#1a1a1a'}}>
+                    {[4,8,12,16].map(n=><option key={n} value={n}>{n} jugadores</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>NIVEL</div>
+                  <select value={tournamentForm.level} onChange={e=>setTournamentForm(p=>({...p,level:e.target.value}))}
+                    style={{...S.input,background:'#1a1a1a'}}>
+                    {['todos','iniciación','medio','avanzado'].map(l=><option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO POR JUGADOR (0 = gratis)</div>
+                <input type="number" min="0" step="0.5" value={tournamentForm.price_per_player}
+                  onChange={e=>setTournamentForm(p=>({...p,price_per_player:e.target.value}))} style={S.input} />
+              </div>
+              <button onClick={createTournament} disabled={saving||!tournamentForm.name.trim()||!tournamentForm.date}
+                style={{...S.btn('green'), opacity:saving||!tournamentForm.name.trim()||!tournamentForm.date?0.5:1}}>
+                {saving?'Creando…':'🏆 Crear torneo y notificar jugadores'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
