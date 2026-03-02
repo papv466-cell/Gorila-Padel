@@ -157,6 +157,8 @@ export default function MatchesPage() {
   const [filterDistKm, setFilterDistKm] = useState(10);
   const [filterNearMe, setFilterNearMe] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [jugarAhora, setJugarAhora] = useState(false);
+  const [jugarAhoraData, setJugarAhoraData] = useState({ slots:[], matches:[], loading:false });
   const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe);
 
   /* ─── Modals ─── */
@@ -519,7 +521,7 @@ export default function MatchesPage() {
   /* ══════════════════════════════════════
      RENDER
   ══════════════════════════════════════ */
-  async function buscarJugarAhora() {
+  // buscarJugarAhora movida arriba
     setJugarAhoraData(p=>({...p, loading:true}));
     try {
       const now = new Date();
@@ -553,6 +555,26 @@ export default function MatchesPage() {
         return (1 + aprobados) < 4;
       });
 
+      setJugarAhoraData({ slots: slots||[], matches: matchesConHueco, loading:false });
+    } catch(e) {
+      setJugarAhoraData(p=>({...p, loading:false}));
+    }
+  }
+
+  async function buscarJugarAhora() {
+    setJugarAhoraData(p=>({...p, loading:true}));
+    try {
+      const now = new Date();
+      const in2h = new Date(now.getTime() + 2*60*60*1000);
+      const today = now.toISOString().slice(0,10);
+      const fromTime = now.toTimeString().slice(0,5);
+      const toTime = in2h.toTimeString().slice(0,5);
+      const {data: slots} = await supabase.from('court_slots').select('*, club_courts(name, court_type)').eq('date', today).eq('status', 'available').gte('start_time', fromTime).lte('start_time', toTime).limit(10);
+      const {data: matchRows} = await supabase.from('matches').select('*, match_join_requests(status)').gte('start_at', now.toISOString()).lte('start_at', in2h.toISOString()).limit(20);
+      const matchesConHueco = (matchRows||[]).filter(m => {
+        const aprobados = (m.match_join_requests||[]).filter(r=>r.status==='approved').length;
+        return (1 + aprobados) < 4;
+      });
       setJugarAhoraData({ slots: slots||[], matches: matchesConHueco, loading:false });
     } catch(e) {
       setJugarAhoraData(p=>({...p, loading:false}));
