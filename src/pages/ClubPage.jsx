@@ -245,12 +245,12 @@ export default function ClubPage() {
       const precioFinal = bonoActivo ? 0 : slot.price;
       const {error} = await supabase.from('court_bookings').insert({
         club_id: slot.club_id,
-        court_id: slot.court_id,
+        court_number: slot.court_id,
         user_id: session.user.id,
         date: slot.date,
         start_time: slot.start_time,
         end_time: slot.end_time,
-        price: precioFinal,
+        price_cents: Math.round(precioFinal * 100),
         status: 'pending',
       });
       if (error) throw error;
