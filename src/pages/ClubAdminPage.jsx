@@ -3,13 +3,15 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "stats", "donaciones", "config"];
+const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "informe", "valoraciones", "stats", "donaciones", "config"];
 const TAB_LABELS = {
   calendario: "📅 Calendario",
   reservas: "📋 Reservas",
   espera: "⏳ Espera",
   precios: "💶 Precios",
   comunicacion: "📣 Comunicar",
+  informe: "📈 Informe",
+  valoraciones: "⭐ Valoraciones",
   stats: "📊 Stats",
   donaciones: "💚 Donaciones",
   config: "⚙️ Config"
@@ -69,6 +71,11 @@ export default function ClubAdminPage() {
   const [sending, setSending] = useState(false);
   const [pricingForm, setPricingForm] = useState({day_type:'weekday', start_hour:8, end_hour:14, price:10});
   const [editingPrice, setEditingPrice] = useState(null);
+  const [ratings, setRatings] = useState([]);
+  const [monthReport, setMonthReport] = useState(null);
+  const [reportMonth, setReportMonth] = useState(() => {
+    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  });
   const [syncing, setSyncing] = useState(false);
 
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
@@ -96,9 +103,34 @@ export default function ClubAdminPage() {
         loadWaitlist(data.club_id),
         loadPricing(data.club_id),
         loadBroadcasts(data.club_id),
+        loadRatings(data.club_id),
       ]);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
+  }
+
+  async function loadRatings(clubId) {
+    const {data} = await supabase.from('club_ratings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubId).order('created_at', {ascending:false});
+    setRatings(data||[]);
+  }
+
+  async function generateMonthReport(clubId, month) {
+    const [year, m] = month.split('-');
+    const start = `${month}-01`;
+    const end = new Date(Number(year), Number(m), 0).toISOString().split('T')[0];
+    const {data: matches} = await supabase.from('matches').select('id, join_fee_cents, start_at, players_needed').eq('club_id', clubId).gte('start_at', start).lte('start_at', end+'T23:59:59');
+    const {data: bookingsData} = await supabase.from('court_bookings').select('id, price, status, date').eq('club_id', clubId).gte('date', start).lte('date', end);
+    const totalMatches = (matches||[]).length;
+    const totalPlayers = (matches||[]).reduce((s,m)=>s+(m.players_needed||4),0);
+    const totalEarned = (matches||[]).reduce((s,m)=>s+(m.join_fee_cents||0)/3,0);
+    const totalDonated = totalEarned;
+    const confirmedBookings = (bookingsData||[]).filter(b=>b.status==='confirmed').length;
+    const bookingRevenue = (bookingsData||[]).filter(b=>b.status==='confirmed').reduce((s,b)=>s+Number(b.price||0),0);
+    const byHour = {};
+    HOURS.forEach(h=>byHour[h]=0);
+    (matches||[]).forEach(m=>{const h=String(m.start_at||'').match(/T(\d{2}):/); if(h){const k=`${h[1]}:00`; if(byHour[k]!==undefined)byHour[k]++;}});
+    const peakHour = Object.entries(byHour).sort((a,b)=>b[1]-a[1])[0]?.[0]||'--';
+    setMonthReport({ totalMatches, totalPlayers, totalEarned: Math.round(totalEarned), totalDonated: Math.round(totalDonated), confirmedBookings, bookingRevenue, peakHour, month });
   }
 
   async function loadWaitlist(clubId) {
@@ -739,6 +771,110 @@ export default function ClubAdminPage() {
                   <div style={{fontSize:11, color:'#74B800', fontWeight:700}}>👥 {b.recipients_count} destinatarios</div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── INFORME MENSUAL ── */}
+      {tab === 'informe' && (
+        <div style={{padding:'12px'}}>
+          <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>📈 Informe mensual</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:12}}>Resumen completo de actividad de tu club.</div>
+          <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:16}}>
+            <input type="month" value={reportMonth} onChange={e=>setReportMonth(e.target.value)}
+              style={{...S.input, flex:1, background:'#1a1a1a'}} />
+            <button onClick={()=>generateMonthReport(clubAdmin.club_id, reportMonth)}
+              style={{...S.btn('green'), whiteSpace:'nowrap'}}>Ver informe</button>
+          </div>
+          {monthReport && (
+            <>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12}}>
+                {[
+                  {icon:'🏓', label:'Partidos', value:monthReport.totalMatches},
+                  {icon:'👥', label:'Jugadores', value:monthReport.totalPlayers},
+                  {icon:'💶', label:'Ingresos €', value:(monthReport.totalEarned/100).toFixed(2)},
+                  {icon:'💚', label:'Donado €', value:(monthReport.totalDonated/100).toFixed(2)},
+                  {icon:'📅', label:'Reservas', value:monthReport.confirmedBookings},
+                  {icon:'💰', label:'Rev. reservas €', value:monthReport.bookingRevenue.toFixed(2)},
+                ].map(({icon,label,value})=>(
+                  <div key={label} style={{...S.card, textAlign:'center', padding:14}}>
+                    <div style={{fontSize:22}}>{icon}</div>
+                    <div style={{fontSize:22, fontWeight:900, color:'#74B800'}}>{value}</div>
+                    <div style={{fontSize:10, color:'rgba(255,255,255,0.4)', fontWeight:700, marginTop:2}}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{...S.card, background:'rgba(116,184,0,0.05)', border:'1px solid rgba(116,184,0,0.15)'}}>
+                <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:8}}>⏰ Hora pico del mes</div>
+                <div style={{fontSize:28, fontWeight:900, color:'#fff', textAlign:'center', padding:'8px 0'}}>{monthReport.peakHour}</div>
+                <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', textAlign:'center'}}>Hora con más partidos jugados</div>
+              </div>
+              <div style={{...S.card, marginTop:10, background:'rgba(116,184,0,0.03)', border:'1px solid rgba(116,184,0,0.1)'}}>
+                <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', lineHeight:1.8}}>
+                  📊 En <strong style={{color:'#fff'}}>{new Date(monthReport.month+'-01').toLocaleDateString('es',{month:'long',year:'numeric'})}</strong> tu club generó <strong style={{color:'#74B800'}}>{(monthReport.totalEarned/100).toFixed(2)}€</strong> en ingresos y donó <strong style={{color:'#4ade80'}}>{(monthReport.totalDonated/100).toFixed(2)}€</strong> a la fundación beneficiaria a través de <strong style={{color:'#fff'}}>{monthReport.totalMatches}</strong> partidos con <strong style={{color:'#fff'}}>{monthReport.totalPlayers}</strong> jugadores.
+                </div>
+              </div>
+            </>
+          )}
+          {!monthReport && (
+            <div style={{textAlign:'center', padding:40, color:'rgba(255,255,255,0.3)', fontSize:14}}>Selecciona un mes y pulsa "Ver informe"</div>
+          )}
+        </div>
+      )}
+
+      {/* ── VALORACIONES ── */}
+      {tab === 'valoraciones' && (
+        <div style={{padding:'12px'}}>
+          <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>⭐ Valoraciones del club</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Lo que dicen los jugadores sobre tu instalación.</div>
+          {ratings.length > 0 && (
+            <div style={{...S.card, background:'rgba(116,184,0,0.05)', border:'1px solid rgba(116,184,0,0.2)', marginBottom:16, textAlign:'center'}}>
+              <div style={{fontSize:36, fontWeight:900, color:'#74B800'}}>
+                {(ratings.reduce((s,r)=>s+r.rating,0)/ratings.length).toFixed(1)}
+              </div>
+              <div style={{fontSize:18, marginBottom:4}}>{'⭐'.repeat(Math.round(ratings.reduce((s,r)=>s+r.rating,0)/ratings.length))}</div>
+              <div style={{fontSize:12, color:'rgba(255,255,255,0.4)'}}>{ratings.length} valoracion{ratings.length!==1?'es':''}</div>
+              <div style={{display:'flex', justifyContent:'center', gap:8, marginTop:10}}>
+                {[5,4,3,2,1].map(star=>{
+                  const count = ratings.filter(r=>r.rating===star).length;
+                  const pct = ratings.length ? count/ratings.length*100 : 0;
+                  return (
+                    <div key={star} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:2}}>
+                      <div style={{fontSize:10, color:'rgba(255,255,255,0.4)'}}>{star}⭐</div>
+                      <div style={{width:8, height:40, background:'rgba(255,255,255,0.06)', borderRadius:4, overflow:'hidden', position:'relative'}}>
+                        <div style={{position:'absolute', bottom:0, width:'100%', height:`${pct}%`, background:'#74B800', borderRadius:4}}/>
+                      </div>
+                      <div style={{fontSize:9, color:'rgba(255,255,255,0.3)'}}>{count}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {ratings.map(r=>(
+            <div key={r.id} style={{...S.card, marginBottom:8}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:4}}>
+                <div style={{display:'flex', alignItems:'center', gap:8}}>
+                  {r.profiles?.avatar_url ? (
+                    <img src={r.profiles.avatar_url} style={{width:32,height:32,borderRadius:999,objectFit:'cover'}} alt=""/>
+                  ) : (
+                    <div style={{width:32,height:32,borderRadius:999,background:'rgba(116,184,0,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🦍</div>
+                  )}
+                  <div>
+                    <div style={{fontSize:13, fontWeight:800}}>{r.profiles?.name||'Jugador'}</div>
+                    <div style={{fontSize:10, color:'rgba(255,255,255,0.3)'}}>{new Date(r.created_at).toLocaleDateString('es')}</div>
+                  </div>
+                </div>
+                <div style={{fontSize:16}}>{'⭐'.repeat(r.rating)}</div>
+              </div>
+              {r.comment && <div style={{fontSize:12, color:'rgba(255,255,255,0.6)', marginTop:6, lineHeight:1.5, paddingTop:6, borderTop:'1px solid rgba(255,255,255,0.05)'}}>{r.comment}</div>}
+            </div>
+          ))}
+          {ratings.length===0 && (
+            <div style={{textAlign:'center', padding:40, color:'rgba(255,255,255,0.3)', fontSize:14}}>
+              <div style={{fontSize:40, marginBottom:8}}>⭐</div>
+              Aún no hay valoraciones
             </div>
           )}
         </div>
