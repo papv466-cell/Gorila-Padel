@@ -422,7 +422,7 @@ export default function MapPage() {
               ))}
               </MapContainer>
 
-              {/* Botón ubicación */}}
+              {/* Botón ubicación */}
               <button onClick={() => requestMyLocation()} disabled={locBusy}
                 style={{ position:"absolute", bottom: selectedClub ? 200 : 16, right:12, zIndex:500, width:44, height:44, borderRadius:12, background:"rgba(20,20,20,0.95)", border:"1px solid rgba(116,184,0,0.3)", fontSize:20, cursor:"pointer", display:"grid", placeItems:"center", backdropFilter:"blur(8px)", transition:"bottom .3s" }}>
                 {locBusy ? "⏳" : "🍌"}
