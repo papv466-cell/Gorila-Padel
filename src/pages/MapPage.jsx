@@ -178,7 +178,8 @@ export default function MapPage() {
   }, []);
 
   const clubsWithCoords = useMemo(() =>
-    (clubs||[]).filter(c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng))
+    (clubs||[]).map(c => ({...c, lng: c.lng ?? c.lon ?? c.longitude}))
+              .filter(c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng))
   , [clubs]);
 
   const suggestions = useMemo(() => {
