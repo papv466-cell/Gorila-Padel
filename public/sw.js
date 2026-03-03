@@ -1,11 +1,20 @@
 // public/sw.js
 
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", e => e.waitUntil(clients.claim()));
+const SW_VERSION = "2.0.0";
+const CACHE_NAME = "gp-cache-" + SW_VERSION;
+
+self.addEventListener("install", (e) => {
+  self.skipWaiting();
+  console.log("✅ SW instalado v" + SW_VERSION);
+});
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
-  console.log("✅ GP SW activo");
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+  console.log("✅ GP SW activo v" + SW_VERSION);
 });
 
 // ─── helper: mandar mensaje a TODAS las pestañas abiertas ───────────────────
