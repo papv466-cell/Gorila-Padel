@@ -392,7 +392,7 @@ export default function ClubPage() {
                   { key:"info",     label:"Info",      emoji:"ℹ️",  count:null },
                 ].map(t => (
                   <button key={t.key} className="gpClubTab"
-                    onClick={() => setTab(t.key)}
+                    onClick={() => { setTab(t.key); if(t.key==='reservar' && selectedCourt) loadSlots(selectedCourt, selectedDate); }}
                     style={{ flex:1, padding:"8px 4px", borderRadius:10, border: tab===t.key ? "1px solid #74B800" : "1px solid transparent", cursor:"pointer", fontSize:11, fontWeight:900, background: tab===t.key ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", color: tab===t.key ? "#74B800" : "rgba(255,255,255,0.6)", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
                     <span style={{ fontSize:16 }}>{t.emoji}</span>
                     <span>{t.label}{t.count !== null ? ` (${t.count})` : ""}</span>
@@ -532,9 +532,8 @@ export default function ClubPage() {
                 </div>
               )}
 
-              {/* ══ TAB: INFO ══ */}
               {tab === "reservar" && (
-                <div style={{padding:'12px'}}>
+                <div>
                   {courts.length === 0 ? (
                     <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)',fontSize:14}}>
                       <div style={{fontSize:36,marginBottom:8}}>🏟️</div>
@@ -542,42 +541,91 @@ export default function ClubPage() {
                     </div>
                   ) : (
                     <>
-                      {/* Selector pista */}
-                      <div style={{display:'flex',gap:6,marginBottom:12,overflowX:'auto'}}>
-                        {courts.map(c=>(
-                          <button key={c.id} onClick={()=>{setSelectedCourt(c.id);loadSlots(c.id,selectedDate);}}
-                            style={{padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,whiteSpace:'nowrap',
-                              background:selectedCourt===c.id?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
-                              color:selectedCourt===c.id?'#000':'#fff'}}>
-                            {c.name} {c.court_type==='indoor'?'🏠':'☀️'}
-                          </button>
-                        ))}
-                      </div>
-                      {/* Selector fecha */}
+                      {/* Selector fecha arriba */}
                       <input type="date" value={selectedDate} min={new Date().toISOString().split('T')[0]}
-                        onChange={e=>{setSelectedDate(e.target.value);loadSlots(selectedCourt,e.target.value);}}
-                        style={{padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',marginBottom:12,background:'#1a1a1a'}} />
-                      {/* Slots disponibles */}
-                      {slots.length === 0 ? (
-                        <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.3)',fontSize:13}}>
-                          No hay horas disponibles para este día
+                        onChange={e=>{
+                          setSelectedDate(e.target.value);
+                          loadSlots(selectedCourt, e.target.value);
+                        }}
+                        style={{padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',marginBottom:14}} />
+
+                      {/* Pistas — adaptativo según cantidad */}
+                      <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Elige pista</div>
+                      {courts.length <= 4 ? (
+                        <div style={{display:'grid',gridTemplateColumns:`repeat(${courts.length},1fr)`,gap:8,marginBottom:14}}>
+                          {courts.map(c=>{
+                            const isSelected = selectedCourt===c.id;
+                            const courtSlots = slots.filter(s=>s.court_id===c.id);
+                            const hasSlots = courtSlots.length > 0;
+                            return (
+                              <div key={c.id} onClick={()=>{setSelectedCourt(c.id); loadSlots(c.id,selectedDate);}}
+                                style={{padding:'12px 8px',borderRadius:12,cursor:'pointer',textAlign:'center',
+                                  background:isSelected?'linear-gradient(135deg,rgba(116,184,0,0.2),rgba(155,232,0,0.1))':hasSlots?'rgba(116,184,0,0.06)':'rgba(255,255,255,0.03)',
+                                  border:isSelected?'1px solid #74B800':hasSlots?'1px solid rgba(116,184,0,0.2)':'1px solid rgba(255,255,255,0.07)'}}>
+                                <div style={{fontSize:20,marginBottom:4}}>{c.court_type==='indoor'?'🏠':'☀️'}</div>
+                                <div style={{fontSize:11,fontWeight:900,color:isSelected?'#74B800':hasSlots?'#fff':'rgba(255,255,255,0.3)'}}>{c.name}</div>
+                                <div style={{fontSize:10,marginTop:3,fontWeight:800,
+                                  color:isSelected?'#74B800':hasSlots?'rgba(116,184,0,0.7)':'rgba(255,255,255,0.2)'}}>
+                                  {hasSlots ? `${courtSlots.length} hora${courtSlots.length!==1?'s':''}` : 'sin horas'}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ) : (
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
-                          {slots.map(s=>(
-                            <div key={s.id} onClick={()=>setBookingSlot(s)}
-                              style={{padding:'12px 8px',borderRadius:12,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.25)',cursor:'pointer',textAlign:'center'}}>
-                              <div style={{fontSize:15,fontWeight:900,color:'#74B800'}}>{s.start_time?.slice(0,5)}</div>
-                              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>{s.end_time?.slice(0,5)}</div>
-                              <div style={{fontSize:13,fontWeight:800,color:'#fff',marginTop:4}}>{s.price}€</div>
-                            </div>
-                          ))}
+                        <div style={{marginBottom:14}}>
+                          <select value={selectedCourt||''} onChange={e=>{setSelectedCourt(e.target.value); loadSlots(e.target.value,selectedDate);}}
+                            style={{width:'100%',padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',marginBottom:8}}>
+                            {courts.map(c=>{
+                              const n = slots.filter(s=>s.court_id===c.id).length;
+                              return <option key={c.id} value={c.id} style={{background:'#1a1a1a'}}>{c.court_type==='indoor'?'🏠':'☀️'} {c.name} {n>0?`· ${n} horas`:'· sin horas'}</option>;
+                            })}
+                          </select>
+                          {/* Mini indicadores disponibilidad */}
+                          <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                            {courts.map(c=>{
+                              const n = slots.filter(s=>s.court_id===c.id).length;
+                              return (
+                                <div key={c.id} onClick={()=>{setSelectedCourt(c.id); loadSlots(c.id,selectedDate);}}
+                                  style={{padding:'3px 8px',borderRadius:6,cursor:'pointer',fontSize:10,fontWeight:800,
+                                    background:selectedCourt===c.id?'rgba(116,184,0,0.2)':n>0?'rgba(116,184,0,0.08)':'rgba(255,255,255,0.04)',
+                                    border:selectedCourt===c.id?'1px solid #74B800':n>0?'1px solid rgba(116,184,0,0.2)':'1px solid rgba(255,255,255,0.06)',
+                                    color:selectedCourt===c.id?'#74B800':n>0?'rgba(116,184,0,0.7)':'rgba(255,255,255,0.2)'}}>
+                                  {n>0?`${n}h`:'–'}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
-                      <button onClick={()=>loadSlots(selectedCourt,selectedDate)}
-                        style={{marginTop:12,width:'100%',padding:'10px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.6)',fontWeight:800,fontSize:12,cursor:'pointer'}}>
-                        🔄 Actualizar disponibilidad
-                      </button>
+
+                      {/* Horas disponibles */}
+                      {selectedCourt && (()=>{
+                        const courtSlots = slots.filter(s=>s.court_id===selectedCourt);
+                        if (!courtSlots.length) return (
+                          <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.3)',fontSize:13,background:'rgba(255,255,255,0.02)',borderRadius:12,border:'1px solid rgba(255,255,255,0.05)'}}>
+                            <div style={{fontSize:28,marginBottom:8}}>🕐</div>
+                            No hay horas disponibles para este día
+                          </div>
+                        );
+                        return (
+                          <>
+                            <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>
+                              Horas disponibles · {courts.find(c=>c.id===selectedCourt)?.name}
+                            </div>
+                            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                              {courtSlots.map(s=>(
+                                <div key={s.id} onClick={()=>setBookingSlot(s)}
+                                  style={{padding:'14px 8px',borderRadius:12,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.25)',cursor:'pointer',textAlign:'center',transition:'all .15s'}}>
+                                  <div style={{fontSize:16,fontWeight:900,color:'#74B800'}}>{s.start_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>{s.end_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:14,fontWeight:800,color:'#fff',marginTop:6}}>{s.price}€</div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </div>
