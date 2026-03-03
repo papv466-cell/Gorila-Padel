@@ -12,7 +12,7 @@ import { CartProvider } from './contexts/CartContext';
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      const reg = await navigator.serviceWorker.register("/sw2.js", { scope: "/" });
       console.log("✅ SW registrado:", reg.scope);
       await navigator.serviceWorker.ready;
       console.log("✅ SW ready");
