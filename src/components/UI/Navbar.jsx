@@ -18,6 +18,7 @@ export default function Navbar({ showBack = false, onBack }) {
      { to: "/mapa", label: "Mapa", icon: "🗺️" },
     { to: "/partidos", label: "Partidos", icon: "🎾" },
     { to: "/ranking", label: "Ranking", icon: "🏆" },  // ← AÑADE ESTA LÍNEA
+    { to: "/ligas", label: "Ligas", icon: "🥇" },
     { to: "/gorilandia", label: "Gorilandia", icon: "🦍" },
     { to: "/clases", label: "Clases", icon: "📚" },
     { to: "/inclusivos", label: "Inclusivos", icon: "♿" },
