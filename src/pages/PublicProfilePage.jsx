@@ -26,8 +26,55 @@ export default function PublicProfilePage() {
   const [ratings, setRatings] = useState([]);
   const [tab, setTab] = useState('info'); // info | partidos | valoraciones
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followCount, setFollowCount] = useState(0);
+  const [followSaving, setFollowSaving] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({data})=>setSession(data?.session??null));
+  }, []);
 
   useEffect(() => { loadUserProfile(); }, [userId]);
+
+  useEffect(() => {
+    if (session?.user?.id && userId) loadFollowData();
+  }, [session?.user?.id, userId]);
+
+  async function loadFollowData() {
+    const [{data: isF}, {count}] = await Promise.all([
+      supabase.from('player_follows').select('follower_id').eq('follower_id', session.user.id).eq('following_id', userId).maybeSingle(),
+      supabase.from('player_follows').select('*', {count:'exact',head:true}).eq('following_id', userId),
+    ]);
+    setIsFollowing(!!isF);
+    setFollowCount(count||0);
+  }
+
+  async function toggleFollow() {
+    if (!session) { navigate('/login'); return; }
+    if (session.user.id === userId) return;
+    try {
+      setFollowSaving(true);
+      if (isFollowing) {
+        await supabase.from('player_follows').delete().eq('follower_id', session.user.id).eq('following_id', userId);
+        setIsFollowing(false);
+        setFollowCount(c=>Math.max(0,c-1));
+      } else {
+        await supabase.from('player_follows').insert({follower_id: session.user.id, following_id: userId});
+        setIsFollowing(true);
+        setFollowCount(c=>c+1);
+        // Notificar al jugador
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          type: 'new_follower',
+          title: '👤 Nuevo seguidor',
+          body: `${session.user.user_metadata?.name || 'Alguien'} ha empezado a seguirte`,
+          data: { follower_id: session.user.id }
+        });
+      }
+    } catch(e) { console.error(e); }
+    finally { setFollowSaving(false); }
+  }
 
   async function loadUserProfile() {
     try {
@@ -124,8 +171,22 @@ export default function PublicProfilePage() {
                   ? <img src={user.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 32, fontWeight: 900, background: `linear-gradient(135deg, ${levelColor}, ${levelColor}99)`, color: '#000' }}>{displayName[0].toUpperCase()}</div>}
               </div>
-              <div style={{ paddingBottom: 4 }}>
-                <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{displayName}</h1>
+              <div style={{ paddingBottom: 4, flex:1 }}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                  <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{displayName}</h1>
+                  {session?.user?.id && session.user.id !== userId && (
+                    <button onClick={toggleFollow} disabled={followSaving}
+                      style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:900,fontSize:12,flexShrink:0,
+                        background:isFollowing?'rgba(116,184,0,0.15)':'linear-gradient(135deg,#74B800,#9BE800)',
+                        color:isFollowing?'#74B800':'#000',
+                        border:isFollowing?'1px solid rgba(116,184,0,0.4)':'none'}}>
+                      {followSaving?'…':isFollowing?'✓ Siguiendo':'+ Seguir'}
+                    </button>
+                  )}
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginTop:4}}>
+                  {followCount>0 && <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}><span style={{color:'#fff',fontWeight:800}}>{followCount}</span> seguidores</div>}
+                </div>
                 {user.handle && user.name && (
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>@{user.handle}</div>
                 )}
