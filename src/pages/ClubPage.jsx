@@ -76,6 +76,8 @@ export default function ClubPage() {
   const [saving, setSaving] = useState(false);
   const [followedClubs, setFollowedClubs] = useState([]);
   const [followSaving, setFollowSaving] = useState(false);
+  const [waitlist, setWaitlist] = useState({}); // {slotId: true/false}
+  const [waitlistSaving, setWaitlistSaving] = useState(null);
   const [createSlots, setCreateSlots] = useState([]);
   const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
   const [createSelectedCourt, setCreateSelectedCourt] = useState(null);
@@ -123,6 +125,24 @@ export default function ClubPage() {
       if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
     });
   }, [clubId, session]);
+
+  async function toggleWaitlist(slot) {
+    if (!session) { navigate('/login'); return; }
+    try {
+      setWaitlistSaving(slot.id);
+      const isIn = waitlist[slot.id];
+      if (isIn) {
+        await supabase.from('slot_waitlist').delete().eq('slot_id', slot.id).eq('user_id', session.user.id);
+        setWaitlist(prev=>({...prev,[slot.id]:false}));
+        toast.success('Eliminado de la lista de espera');
+      } else {
+        await supabase.from('slot_waitlist').insert({slot_id:slot.id, user_id:session.user.id, club_id:clubId});
+        setWaitlist(prev=>({...prev,[slot.id]:true}));
+        toast.success('✅ En lista de espera — te avisaremos si se libera');
+      }
+    } catch(e) { toast.error(e.message); }
+    finally { setWaitlistSaving(null); }
+  }
 
   async function toggleFollow() {
     if (!session) { navigate('/login'); return; }
@@ -278,8 +298,21 @@ export default function ClubPage() {
 
   async function loadSlots(courtId, date) {
     if (!courtId || !date) return;
-    const {data} = await supabase.from('court_slots').select('*').eq('court_id', courtId).eq('date', date).eq('status','available').order('start_time');
-    setSlots(data||[]);
+    // Cargar todos los slots (disponibles Y ocupados) para mostrar lista de espera
+    const {data: allSlots} = await supabase.from('court_slots').select('*')
+      .eq('court_id', courtId).eq('date', date)
+      .in('status', ['available','booked','pending'])
+      .order('start_time');
+    setSlots(allSlots||[]);
+    // Cargar waitlist del usuario
+    if (session?.user?.id && allSlots?.length) {
+      const {data: wl} = await supabase.from('slot_waitlist')
+        .select('slot_id').eq('user_id', session.user.id)
+        .in('slot_id', allSlots.map(s=>s.id));
+      const wlMap = {};
+      (wl||[]).forEach(w=>{ wlMap[w.slot_id]=true; });
+      setWaitlist(wlMap);
+    }
   }
 
   async function buyBono(bono) {
@@ -688,14 +721,30 @@ export default function ClubPage() {
                               Horas disponibles · {courts.find(c=>c.id===selectedCourt)?.name}
                             </div>
                             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
-                              {courtSlots.map(s=>(
-                                <div key={s.id} onClick={()=>setBookingSlot(s)}
-                                  style={{padding:'14px 8px',borderRadius:12,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.25)',cursor:'pointer',textAlign:'center',transition:'all .15s'}}>
-                                  <div style={{fontSize:16,fontWeight:900,color:'#74B800'}}>{s.start_time?.slice(0,5)}</div>
-                                  <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:2}}>{s.end_time?.slice(0,5)}</div>
-                                  <div style={{fontSize:14,fontWeight:800,color:'#fff',marginTop:6}}>{s.price}€</div>
-                                </div>
-                              ))}
+                              {courtSlots.map(s=>{
+                                const isAvailable = s.status==='available';
+                                const inWaitlist = waitlist[s.id];
+                                return (
+                                  <div key={s.id}
+                                    onClick={()=>isAvailable?setBookingSlot(s):null}
+                                    style={{padding:'12px 6px',borderRadius:12,textAlign:'center',transition:'all .15s',
+                                      background:isAvailable?'rgba(116,184,0,0.08)':inWaitlist?'rgba(245,158,11,0.08)':'rgba(255,255,255,0.03)',
+                                      border:isAvailable?'1px solid rgba(116,184,0,0.25)':inWaitlist?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)',
+                                      cursor:isAvailable?'pointer':'default',opacity:isAvailable?1:0.8}}>
+                                    <div style={{fontSize:15,fontWeight:900,color:isAvailable?'#74B800':inWaitlist?'#f59e0b':'rgba(255,255,255,0.4)'}}>{s.start_time?.slice(0,5)}</div>
+                                    <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>{s.end_time?.slice(0,5)}</div>
+                                    <div style={{fontSize:12,fontWeight:800,color:isAvailable?'#fff':'rgba(255,255,255,0.3)',marginTop:4}}>{isAvailable?`${s.price}€`:'Ocupada'}</div>
+                                    {!isAvailable && (
+                                      <button onClick={e=>{e.stopPropagation();toggleWaitlist(s);}} disabled={waitlistSaving===s.id}
+                                        style={{marginTop:5,padding:'3px 6px',borderRadius:6,border:'none',cursor:'pointer',fontSize:9,fontWeight:900,
+                                          background:inWaitlist?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.08)',
+                                          color:inWaitlist?'#f59e0b':'rgba(255,255,255,0.5)'}}>
+                                        {waitlistSaving===s.id?'…':inWaitlist?'⏳ En espera':'+ Espera'}
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </>
                         );
