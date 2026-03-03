@@ -84,12 +84,27 @@ export default function ClubAdminPage() {
     const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   });
   const [syncing, setSyncing] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [bulkAction, setBulkAction] = useState(null); // 'delete' | 'price' | 'block'
+  const [bulkPrice, setBulkPrice] = useState('');
+  const [bulkBlockReason, setBulkBlockReason] = useState('');
+  const [calDays, setCalDays] = useState(7); // días visibles en calendario
   const [bonos, setBonos] = useState([]);
   const [bonoForm, setBonoForm] = useState({nombre:'', tipo:'horas', horas_incluidas:10, precio_cents:1500, duracion_dias:30, activo:true});
   const [showNewBono, setShowNewBono] = useState(false);
   const [savingBono, setSavingBono] = useState(false);
 
-  const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
+  const weekDates = useMemo(() => {
+    const all = [];
+    const base = getWeekDates(weekOffset);
+    for (let i = 0; i < calDays; i++) {
+      const d = new Date(base[0]);
+      d.setDate(base[0].getDate() + i);
+      all.push(d);
+    }
+    return all;
+  }, [weekOffset, calDays]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({data}) => {
@@ -372,6 +387,14 @@ export default function ClubAdminPage() {
 
   async function handleCellClick(court, date, hour) {
     const existing = getSlot(court.id, date, hour);
+    // Modo selección múltiple
+    if (selectMode) {
+      if (!existing) return;
+      if (existing.status === 'booked') return;
+      const id = existing.id;
+      setSelectedSlots(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+      return;
+    }
     if (existing) {
       if (existing.status === 'booked') return;
       if (window.confirm(`¿Eliminar slot ${hour} del ${dateToISO(date)}?`)) {
@@ -430,6 +453,28 @@ export default function ClubAdminPage() {
   async function updateBookingStatus(bookingId, status) {
     await supabase.from('court_bookings').update({status}).eq('id', bookingId);
     setBookings(prev => prev.map(b => b.id === bookingId ? {...b, status} : b));
+  }
+
+  async function applyBulkAction() {
+    if (!selectedSlots.length) return;
+    try {
+      setSaving(true);
+      if (bulkAction === 'delete') {
+        await supabase.from('court_slots').delete().in('id', selectedSlots);
+      } else if (bulkAction === 'price' && bulkPrice) {
+        await supabase.from('court_slots').update({price: Number(bulkPrice)}).in('id', selectedSlots);
+      } else if (bulkAction === 'block' && bulkBlockReason) {
+        await supabase.from('court_slots').update({status:'blocked', block_reason: bulkBlockReason, price:0}).in('id', selectedSlots);
+      } else if (bulkAction === 'available') {
+        await supabase.from('court_slots').update({status:'available', block_reason:null}).in('id', selectedSlots);
+      }
+      await loadSlots(clubAdmin.club_id);
+      setSelectedSlots([]);
+      setBulkAction(null);
+      setBulkPrice('');
+      setBulkBlockReason('');
+    } catch(e) { alert(e.message); }
+    finally { setSaving(false); }
   }
 
   async function bulkCreateSlots() {
@@ -560,14 +605,88 @@ export default function ClubAdminPage() {
 
           {/* Botón llenar semana */}
           {activeCourt && (
-            <div style={{padding:'0 12px 8px', display:'flex', gap:8}}>
-              <button onClick={bulkCreateSlots} disabled={saving}
-                style={{...S.btn('green'), fontSize:11, padding:'6px 12px'}}>
-                ⚡ Publicar toda la semana
-              </button>
-              <div style={{fontSize:10, color:'rgba(255,255,255,0.3)', display:'flex', alignItems:'center'}}>
-                Crea slots disponibles en todos los horarios vacíos
+            <div style={{padding:'0 12px 8px', display:'flex', flexDirection:'column', gap:8}}>
+              {/* Fila 1: publicar + selector días */}
+              <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+                <button onClick={bulkCreateSlots} disabled={saving}
+                  style={{...S.btn('green'), fontSize:11, padding:'6px 12px'}}>
+                  ⚡ Publicar toda la semana
+                </button>
+                <div style={{display:'flex', alignItems:'center', gap:6, marginLeft:'auto'}}>
+                  <span style={{fontSize:10, color:'rgba(255,255,255,0.4)', fontWeight:700}}>VER</span>
+                  {[2,5,7,14,30].map(d=>(
+                    <button key={d} onClick={()=>setCalDays(d)}
+                      style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:10, fontWeight:800,
+                        background:calDays===d?'#74B800':'rgba(255,255,255,0.08)',
+                        color:calDays===d?'#000':'rgba(255,255,255,0.5)'}}>
+                      {d}d
+                    </button>
+                  ))}
+                </div>
               </div>
+              {/* Fila 2: modo selección */}
+              <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                <button onClick={()=>{setSelectMode(m=>!m); setSelectedSlots([]); setBulkAction(null);}}
+                  style={{...S.btn(selectMode?'blue':''), fontSize:11, padding:'6px 12px',
+                    background:selectMode?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.08)',
+                    border:selectMode?'1px solid rgba(59,130,246,0.4)':'1px solid transparent',
+                    color:selectMode?'#60a5fa':'rgba(255,255,255,0.6)'}}>
+                  {selectMode ? `✅ Selección activa (${selectedSlots.length})` : '☑️ Selección múltiple'}
+                </button>
+                {selectMode && selectedSlots.length > 0 && (
+                  <>
+                    <button onClick={()=>setBulkAction('delete')}
+                      style={{...S.btn('red'), fontSize:11, padding:'6px 10px'}}>🗑️ Borrar</button>
+                    <button onClick={()=>setBulkAction('price')}
+                      style={{...S.btn(''), fontSize:11, padding:'6px 10px'}}>💶 Precio</button>
+                    <button onClick={()=>setBulkAction('block')}
+                      style={{...S.btn(''), fontSize:11, padding:'6px 10px',color:'#FFA500'}}>🚫 Bloquear</button>
+                    <button onClick={()=>setBulkAction('available')}
+                      style={{...S.btn('green'), fontSize:11, padding:'6px 10px'}}>✅ Liberar</button>
+                  </>
+                )}
+              </div>
+              {/* Panel acción en masa */}
+              {bulkAction && selectedSlots.length > 0 && (
+                <div style={{background:'rgba(255,255,255,0.04)', borderRadius:10, padding:12, border:'1px solid rgba(255,255,255,0.1)'}}>
+                  <div style={{fontSize:12, fontWeight:800, color:'#fff', marginBottom:8}}>
+                    {bulkAction==='delete'?'🗑️ Eliminar':bulkAction==='price'?'💶 Cambiar precio':bulkAction==='block'?'🚫 Bloquear':'✅ Liberar'} — {selectedSlots.length} slot{selectedSlots.length!==1?'s':''}
+                  </div>
+                  {bulkAction==='price' && (
+                    <div style={{display:'flex', gap:8, marginBottom:8}}>
+                      <input type="number" min="0" step="0.5" placeholder="Nuevo precio €" value={bulkPrice}
+                        onChange={e=>setBulkPrice(e.target.value)}
+                        style={{...S.input, flex:1}} />
+                    </div>
+                  )}
+                  {bulkAction==='block' && (
+                    <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:8}}>
+                      {['🔧 Mantenimiento','🏆 Torneo propio','📚 Clase','🔒 Uso interno','❌ Cerrado'].map(m=>(
+                        <button key={m} onClick={()=>setBulkBlockReason(m)}
+                          style={{padding:'5px 10px', borderRadius:20, border:'none', cursor:'pointer', fontSize:11, fontWeight:700,
+                            background:bulkBlockReason===m?'rgba(220,38,38,0.25)':'rgba(255,255,255,0.06)',
+                            color:bulkBlockReason===m?'#ff6b6b':'rgba(255,255,255,0.5)'}}>
+                          {m}
+                        </button>
+                      ))}
+                      <input placeholder="Motivo personalizado…" value={bulkBlockReason}
+                        onChange={e=>setBulkBlockReason(e.target.value)}
+                        style={{...S.input, marginTop:4}} />
+                    </div>
+                  )}
+                  {bulkAction==='delete' && (
+                    <div style={{fontSize:11, color:'#ff6b6b', marginBottom:8}}>⚠️ Se eliminarán {selectedSlots.length} slots permanentemente</div>
+                  )}
+                  <div style={{display:'flex', gap:8}}>
+                    <button onClick={applyBulkAction} disabled={saving||(bulkAction==='price'&&!bulkPrice)||(bulkAction==='block'&&!bulkBlockReason)}
+                      style={{...S.btn(bulkAction==='delete'?'red':'green'), flex:1, fontSize:12,
+                        opacity:saving||(bulkAction==='price'&&!bulkPrice)||(bulkAction==='block'&&!bulkBlockReason)?0.5:1}}>
+                      {saving?'Aplicando…':'✅ Aplicar'}
+                    </button>
+                    <button onClick={()=>setBulkAction(null)} style={{...S.btn(''), fontSize:12, padding:'10px 14px'}}>Cancelar</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -599,11 +718,12 @@ export default function ClubAdminPage() {
                       return (
                         <div key={di} onClick={()=>!isPast && handleCellClick(activeCourt, date, hour)}
                           style={{
-                            margin:'1px', borderRadius:4, minHeight:36, cursor:isPast?'default':'pointer',
-                            background:slot?colors.bg:isPast?'rgba(255,255,255,0.01)':'rgba(255,255,255,0.02)',
-                            border:slot?`1px solid ${colors.border}`:'1px solid transparent',
+                            margin:'1px', borderRadius:4, minHeight:36, cursor:isPast?'default':selectMode&&slot&&slot.status!=='booked'?'cell':'pointer',
+                            background: slot && selectedSlots.includes(slot.id) ? 'rgba(59,130,246,0.3)' : slot?colors.bg:isPast?'rgba(255,255,255,0.01)':'rgba(255,255,255,0.02)',
+                            border: slot && selectedSlots.includes(slot.id) ? '2px solid #60a5fa' : slot?`1px solid ${colors.border}`:'1px solid transparent',
                             display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
                             transition:'all .15s',
+                            outline: selectMode && slot && slot.status!=='booked' ? '1px dashed rgba(96,165,250,0.3)' : 'none',
                           }}>
                           {slot && (
                             <>
