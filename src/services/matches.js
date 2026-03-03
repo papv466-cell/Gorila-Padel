@@ -226,7 +226,7 @@ export async function requestJoin(matchId, mood = null) {
   // Obtener perfil del solicitante
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email")
+    .select("name, email")
     .eq("id", uid)
     .single();
 
@@ -250,7 +250,7 @@ export async function requestJoin(matchId, mood = null) {
       matchId: match.id,
       matchName: match.club_name,
       requesterId: uid,
-      requesterName: profile?.full_name || profile?.email || 'Un jugador',
+      requesterName: profile?.name || profile?.email || 'Un jugador',
       creatorId: match.created_by_user
     });
   } catch (notifError) {

@@ -65,7 +65,7 @@ export default function HomePage() {
       const [profRes, matchRes, rankRes, feedRes, prodRes] = await Promise.allSettled([
         supabase.from("profiles").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
-        supabase.from("player_ratings").select("*").eq("rated_user_id", user.id).limit(1),
+        supabase.from("player_ratings").select("*").eq("to_user_id", user.id).limit(1),
         getFeed(),
         supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("active", true).order("created_at", { ascending: false }).limit(4),
       ]);

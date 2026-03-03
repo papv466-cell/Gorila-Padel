@@ -68,7 +68,6 @@ export async function ensurePushSubscription() {
     auth: json?.keys?.auth || "",
     user_agent: navigator.userAgent || "",
     platform: navigator.platform || "",
-    updated_at: new Date().toISOString(),
   };
 
   // 7) Upsert (requiere UNIQUE endpoint + policy update/insert)

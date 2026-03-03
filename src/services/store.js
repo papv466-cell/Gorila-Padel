@@ -202,7 +202,7 @@ export async function getMyOrders({ page = 1, limit = 20, status = '' } = {}) {
         created_at,
         buyer:profiles!buyer_id(
           id,
-          full_name,
+          name,
           email
         )
       ),
@@ -498,7 +498,7 @@ export async function getProductReviews(productId) {
       *,
       user:profiles(
         id,
-        full_name,
+        name,
         avatar_url
       )
     `)
