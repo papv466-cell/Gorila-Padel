@@ -74,6 +74,8 @@ export default function ClubPage() {
   const [ratingSaving, setRatingSaving] = useState(false);
   const [clubRatings, setClubRatings] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [followedClubs, setFollowedClubs] = useState([]);
+  const [followSaving, setFollowSaving] = useState(false);
   const [createSlots, setCreateSlots] = useState([]);
   const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
   const [createSelectedCourt, setCreateSelectedCourt] = useState(null);
@@ -97,6 +99,12 @@ export default function ClubPage() {
   useEffect(() => { load(); }, [clubId]);
 
   useEffect(() => {
+    if (!clubId || !session?.user?.id) return;
+    supabase.from('profiles').select('followed_clubs').eq('id', session.user.id).maybeSingle()
+      .then(({data}) => setFollowedClubs(data?.followed_clubs || []));
+  }, [clubId, session?.user?.id]);
+
+  useEffect(() => {
     if (!clubId) return;
     const normalizedId = clubId.toLowerCase();
     supabase.from('club_courts').select('*').eq('club_id', normalizedId).then(({data})=>{
@@ -115,6 +123,22 @@ export default function ClubPage() {
       if (data) { setMyRating(data); setRatingValue(data.rating); setRatingComment(data.comment||''); }
     });
   }, [clubId, session]);
+
+  async function toggleFollow() {
+    if (!session) { navigate('/login'); return; }
+    try {
+      setFollowSaving(true);
+      const clubName = club?.name || '';
+      const isFollowing = followedClubs.includes(clubName);
+      const newList = isFollowing
+        ? followedClubs.filter(c => c !== clubName)
+        : [...followedClubs, clubName];
+      await supabase.from('profiles').update({followed_clubs: newList}).eq('id', session.user.id);
+      setFollowedClubs(newList);
+      toast.success(isFollowing ? 'Club eliminado de favoritos' : '❤️ Club añadido a favoritos');
+    } catch(e) { toast.error(e.message); }
+    finally { setFollowSaving(false); }
+  }
 
   async function load() {
     setLoading(true);
@@ -393,6 +417,11 @@ export default function ClubPage() {
                     onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); if(courts.length) cargarSlotsParaCrear(form.date); }}
                     style={{ position:"absolute", top:10, right:10, zIndex:2, padding:"7px 12px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, boxShadow:"0 4px 12px rgba(0,0,0,0.4)" }}>
                     ➕ Crear
+                  </button>
+                  {/* Botón seguir */}
+                  <button onClick={toggleFollow} disabled={followSaving}
+                    style={{ position:"absolute", top:10, left:10, zIndex:2, padding:"7px 12px", borderRadius:10, border: followedClubs.includes(club?.name||'') ? "1px solid rgba(220,38,38,0.5)" : "1px solid rgba(255,255,255,0.2)", background: followedClubs.includes(club?.name||'') ? "rgba(220,38,38,0.3)" : "rgba(0,0,0,0.4)", color:"#fff", fontWeight:900, cursor:"pointer", fontSize:12, backdropFilter:"blur(8px)" }}>
+                    {followedClubs.includes(club?.name||'') ? '❤️ Siguiendo' : '🤍 Seguir'}
                   </button>
                 </div>
 
