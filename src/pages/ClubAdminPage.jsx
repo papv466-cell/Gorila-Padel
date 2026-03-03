@@ -1281,9 +1281,17 @@ export default function ClubAdminPage() {
               {slotForm.status === 'available' && (
                 <>
                   <div>
-                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO (€)</div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span>PRECIO (€)</span>
+                      {slotForm.autoPriced && <span style={{fontSize:10,color:'#74B800',fontWeight:800}}>⚡ Precio automático</span>}
+                    </div>
                     <input type="number" min="0" step="0.5" placeholder="10" value={slotForm.price}
-                      onChange={e=>setSlotForm(p=>({...p,price:e.target.value}))} style={S.input} />
+                      onChange={e=>setSlotForm(p=>({...p,price:e.target.value,autoPriced:false}))} style={S.input} />
+                    {slotForm.autoPriced && (
+                      <div style={{fontSize:10,color:'rgba(116,184,0,0.6)',marginTop:4}}>
+                        Calculado según tus franjas de precio — puedes cambiarlo manualmente
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>DURACIÓN</div>
