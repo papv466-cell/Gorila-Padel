@@ -1327,7 +1327,7 @@ export default function ClubAdminPage() {
               <div style={{display:'flex',gap:8,marginTop:4}}>
                 <button onClick={createSlot} disabled={saving||(slotForm.status==='blocked'&&!(slotForm.block_reason||'').trim())}
                   style={{...S.btn(slotForm.status==='blocked'?'red':'green'),flex:1,
-                    opacity:saving||(slotForm.status==='blocked'&&!slotForm.block_reason.trim())?0.5:1}}>
+                    opacity:saving||(slotForm.status==='blocked'&&!(slotForm.block_reason||'').trim())?0.5:1}}>
                   {saving?'Guardando…':slotForm.status==='blocked'?'🚫 Bloquear slot':'✅ Publicar slot'}
                 </button>
                 <button onClick={()=>setSlotModal(null)} style={{...S.btn(''),padding:'10px 16px'}}>Cancelar</button>
