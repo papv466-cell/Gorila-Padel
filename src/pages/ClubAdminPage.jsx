@@ -1462,8 +1462,9 @@ export default function ClubAdminPage() {
                         <button key={d} onClick={()=>setSlotForm(p=>({...p,duration:d}))}
                           style={{flex:1,padding:'8px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
                             background:slotForm.duration===d?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
-                            color:slotForm.duration===d?'#000':'#fff'}}>
-                          {d}min
+                            color:slotForm.duration===d?'#000':'#fff',
+                            position:'relative'}}>
+                          {d}min{d===90&&<span style={{position:'absolute',top:-6,right:2,fontSize:8,background:'#74B800',color:'#000',borderRadius:4,padding:'1px 3px',fontWeight:900}}>partido</span>}
                         </button>
                       ))}
                     </div>

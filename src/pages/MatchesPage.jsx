@@ -204,6 +204,7 @@ export default function MatchesPage() {
   const [createSlots, setCreateSlots] = useState([]);
   const [createCourts, setCreateCourts] = useState([]);
   const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
+  const [createSelectedCourt, setCreateSelectedCourt] = useState(null);
   const [createSlotsLoading, setCreateSlotsLoading] = useState(false);
 
   function closeAllModals() { setChatOpenFor(null); setRequestsOpenFor(null); setInviteOpenFor(null); setCedeOpenFor(null); }
@@ -421,17 +422,19 @@ export default function MatchesPage() {
   /* ─── Actions ─── */
   async function cargarSlotsParaCrear(clubId, date) {
     if (!clubId || !date || clubId.startsWith('private:')) {
-      setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null); return;
+      setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null); return;
     }
     try {
       setCreateSlotsLoading(true);
       const {data: courts} = await supabase.from('club_courts').select('*').eq('club_id', clubId.toLowerCase());
       setCreateCourts(courts||[]);
-      if (!courts?.length) { setCreateSlots([]); setCreateSelectedSlot(null); return; }
+      if (!courts?.length) { setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null); return; }
       const courtIds = courts.map(c=>c.id);
       const {data: slots} = await supabase.from('court_slots').select('*, club_courts(name,court_type)').in('court_id', courtIds).eq('date', date).eq('status','available').order('start_time');
       setCreateSlots(slots||[]);
       setCreateSelectedSlot(null);
+      // Seleccionar primera pista por defecto
+      if (courts.length) setCreateSelectedCourt(courts[0].id);
     } catch(e) { setCreateSlots([]); } finally { setCreateSlotsLoading(false); }
   }
 
@@ -460,7 +463,7 @@ export default function MatchesPage() {
         } catch(e) { console.error('Error bloqueando slot:', e); }
       }
       setSelectedDay(form.date); setOpenCreate(false);
-      setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery(""); setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null);
+      setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery(""); setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null);
       toast.success(createSelectedSlot ? "Partido creado y pista reservada ✅" : "Partido creado ✅"); await load(); setViewMode("mine");
       try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
     } catch(e) { setSaveError(e?.message||"No se pudo crear"); toast.error(e?.message||"Error"); } finally { setSaving(false); }
@@ -968,35 +971,66 @@ export default function MatchesPage() {
               {form.clubId && !form.isPrivateCourt && (
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>
-                    🏟️ Pista disponible {createSlotsLoading ? "· Buscando…" : createSlots.length > 0 ? `· ${createSlots.length} disponible${createSlots.length>1?"s":""}` : "· Sin slots en Gorila"}
+                    🏟️ Elige pista y hora {createSlotsLoading ? "· Buscando…" : ""}
                   </label>
                   {createSlotsLoading && <div style={{textAlign:"center",padding:12,color:"rgba(255,255,255,0.4)",fontSize:12}}>Buscando pistas libres…</div>}
-                  {!createSlotsLoading && createSlots.length > 0 && (
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,maxHeight:180,overflowY:"auto"}}>
-                      {createSlots.map(s=>{
-                        const sel = createSelectedSlot?.id === s.id;
-                        return (
-                          <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
-                            style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
-                              background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
-                              border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
-                            <div style={{fontSize:13,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
-                            <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{s.end_time?.slice(0,5)}</div>
-                            <div style={{fontSize:11,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:2}}>{s.price}€</div>
-                            <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:1}}>{s.club_courts?.name} {s.club_courts?.court_type==="indoor"?"🏠":"☀️"}</div>
+                  {!createSlotsLoading && createCourts.length > 0 && (
+                    <>
+                      {/* Selector de pista */}
+                      <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
+                        {createCourts.map(c => {
+                          const courtSlots = createSlots.filter(s=>s.court_id===c.id);
+                          const hasSlots = courtSlots.length > 0;
+                          const isSelected = createSelectedCourt === c.id;
+                          return (
+                            <button key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
+                              style={{padding:"8px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:800,fontSize:12,whiteSpace:"nowrap",flexShrink:0,
+                                background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":hasSlots?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.05)",
+                                color:isSelected?"#000":hasSlots?"#74B800":"rgba(255,255,255,0.3)",
+                                border:isSelected?"none":hasSlots?"1px solid rgba(116,184,0,0.3)":"1px solid rgba(255,255,255,0.08)"}}>
+                              {c.name} {c.court_type==="indoor"?"🏠":"☀️"}
+                              {hasSlots && <span style={{marginLeft:4,fontSize:10}}>({courtSlots.length})</span>}
+                              {!hasSlots && <span style={{marginLeft:4,fontSize:9,opacity:0.5}}>sin horas</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {/* Horas de la pista seleccionada */}
+                      {createSelectedCourt && (()=>{
+                        const courtSlots = createSlots.filter(s=>s.court_id===createSelectedCourt);
+                        if (!courtSlots.length) return (
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"8px 0"}}>
+                            No hay horas disponibles en esta pista para este día
                           </div>
                         );
-                      })}
-                    </div>
+                        return (
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                            {courtSlots.map(s=>{
+                              const sel = createSelectedSlot?.id === s.id;
+                              return (
+                                <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
+                                  style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
+                                    background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
+                                    border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
+                                  <div style={{fontSize:14,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:1}}>{s.end_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:12,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:3}}>{s.price}€</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </>
                   )}
-                  {!createSlotsLoading && createSlots.length === 0 && form.clubId && (
+                  {!createSlotsLoading && createCourts.length === 0 && form.clubId && (
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"8px 0"}}>
-                      Sin pistas Gorila para este día — el partido se creará sin reserva de pista
+                      Este club no tiene pistas en Gorila — el partido se creará sin reserva de pista
                     </div>
                   )}
                   {createSelectedSlot && (
-                    <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
-                      ✅ Pista reservada: {createSelectedSlot.club_courts?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.end_time?.slice(0,5)} · {createSelectedSlot.price}€
+                    <div style={{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
+                      ✅ {createSelectedSlot.club_courts?.name||createCourts.find(c=>c.id===createSelectedCourt)?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.end_time?.slice(0,5)} · {createSelectedSlot.price}€
                     </div>
                   )}
                 </div>
