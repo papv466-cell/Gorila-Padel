@@ -900,10 +900,20 @@ export default function ClubPage() {
                       La reserva quedará pendiente hasta que el club la confirme
                     </div>
                     <div style={{display:'flex',gap:8}}>
-                      <button onClick={()=>bookSlot(bookingSlot)} disabled={bookingSaving}
-                        style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
-                        {bookingSaving?'Reservando…':'✅ Confirmar reserva'}
-                      </button>
+                      {(()=>{
+                        const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
+                        return bonoActivo ? (
+                          <button onClick={()=>bookSlot(bookingSlot)} disabled={bookingSaving}
+                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
+                            {bookingSaving?'Reservando…':'✅ Confirmar con bono'}
+                          </button>
+                        ) : (
+                          <button onClick={()=>navigate(`/reserva/pago?slotId=${bookingSlot.id}`)}
+                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
+                            💳 Pagar {bookingSlot.price}€
+                          </button>
+                        );
+                      })()}
                       <button onClick={()=>setBookingSlot(null)}
                         style={{padding:'12px 16px',borderRadius:12,background:'rgba(255,255,255,0.08)',border:'none',color:'#fff',fontWeight:900,cursor:'pointer'}}>
                         Cancelar

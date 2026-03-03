@@ -30,6 +30,7 @@ import SellerSettings from './pages/SellerSettings';
 import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
 import LeaguePage from "./pages/LeaguePage";
+import CourtCheckoutPage from "./pages/CourtCheckoutPage";
 import ClubPage from "./pages/ClubPage";
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -297,6 +298,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
             <Route path="/ligas" element={<LeaguePage />} />
+            <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage />} />
         </Routes>
       </main>
