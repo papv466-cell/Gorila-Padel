@@ -408,7 +408,14 @@ export default function MatchesPage() {
   useEffect(() => { if(!openRequestsParam||!authReady) return; if(!session){goLogin();return;} openRequests(openRequestsParam); }, [openRequestsParam,authReady,session]);
   useEffect(() => {
     if(!createParam||!authReady) return; if(!session){goLogin();return;}
-    const isPrivateCourt = !!courtIdParam; setOpenCreate(true); setForm(prev=>({...prev,clubId:isPrivateCourt?"private:"+courtIdParam:clubIdParam||prev.clubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO,isPrivateCourt,lat:isPrivateCourt?courtLatParam:null,lng:isPrivateCourt?courtLngParam:null})); setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); setShowClubSuggest(false);
+    const isPrivateCourt = !!courtIdParam; 
+    const resolvedDate = selectedDay||todayISO;
+    const resolvedClubId = isPrivateCourt?"private:"+courtIdParam:clubIdParam||"";
+    setOpenCreate(true); 
+    setForm(prev=>({...prev,clubId:resolvedClubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:resolvedDate,isPrivateCourt,lat:isPrivateCourt?courtLatParam:null,lng:isPrivateCourt?courtLngParam:null})); 
+    setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); 
+    setShowClubSuggest(false);
+    if(resolvedClubId && !isPrivateCourt) cargarSlotsParaCrear(resolvedClubId, resolvedDate);
   }, [createParam,clubIdParam,clubNameParam,authReady,session,todayISO,selectedDay]);
 
   /* ─── Actions ─── */
