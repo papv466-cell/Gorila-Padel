@@ -995,25 +995,59 @@ export default function MatchesPage() {
                   {createSlotsLoading && <div style={{textAlign:"center",padding:12,color:"rgba(255,255,255,0.4)",fontSize:12}}>Buscando pistas libres…</div>}
                   {!createSlotsLoading && createCourts.length > 0 && (
                     <>
-                      {/* Selector de pista */}
-                      <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:2}}>
-                        {createCourts.map(c => {
-                          const courtSlots = createSlots.filter(s=>s.court_id===c.id);
-                          const hasSlots = courtSlots.length > 0;
-                          const isSelected = createSelectedCourt === c.id;
-                          return (
-                            <button key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
-                              style={{padding:"8px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:800,fontSize:12,whiteSpace:"nowrap",flexShrink:0,
-                                background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":hasSlots?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.05)",
-                                color:isSelected?"#000":hasSlots?"#74B800":"rgba(255,255,255,0.3)",
-                                border:isSelected?"none":hasSlots?"1px solid rgba(116,184,0,0.3)":"1px solid rgba(255,255,255,0.08)"}}>
-                              {c.name} {c.court_type==="indoor"?"🏠":"☀️"}
-                              {hasSlots && <span style={{marginLeft:4,fontSize:10}}>({courtSlots.length})</span>}
-                              {!hasSlots && <span style={{marginLeft:4,fontSize:9,opacity:0.5}}>sin horas</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {/* Selector de pista — compacto para clubs con muchas pistas */}
+                      {createCourts.length <= 4 ? (
+                        <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                          {createCourts.map(c => {
+                            const courtSlots = createSlots.filter(s=>s.court_id===c.id);
+                            const hasSlots = courtSlots.length > 0;
+                            const isSelected = createSelectedCourt === c.id;
+                            return (
+                              <button key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
+                                style={{padding:"8px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:800,fontSize:12,whiteSpace:"nowrap",
+                                  background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":hasSlots?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.05)",
+                                  color:isSelected?"#000":hasSlots?"#74B800":"rgba(255,255,255,0.3)",
+                                  border:isSelected?"none":hasSlots?"1px solid rgba(116,184,0,0.3)":"1px solid rgba(255,255,255,0.08)"}}>
+                                {c.name} {c.court_type==="indoor"?"🏠":"☀️"}
+                                {hasSlots && <span style={{marginLeft:4,fontSize:10,opacity:0.7}}>({courtSlots.length})</span>}
+                                {!hasSlots && <span style={{marginLeft:4,fontSize:9,opacity:0.4}}>sin horas</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div style={{marginBottom:10}}>
+                          <select
+                            value={createSelectedCourt||''}
+                            onChange={e=>{setCreateSelectedCourt(e.target.value);setCreateSelectedSlot(null);}}
+                            style={{width:"100%",padding:"10px 12px",borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",color:"#fff",fontSize:13,outline:"none"}}>
+                            {createCourts.map(c=>{
+                              const courtSlots = createSlots.filter(s=>s.court_id===c.id);
+                              const hasSlots = courtSlots.length > 0;
+                              return (
+                                <option key={c.id} value={c.id} style={{background:"#1a1a1a"}}>
+                                  {c.court_type==="indoor"?"🏠":"☀️"} {c.name} {hasSlots?`· ${courtSlots.length} hora${courtSlots.length!==1?'s':''}`:' · sin horas'}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          {/* Preview disponibilidad */}
+                          <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                            {createCourts.map(c=>{
+                              const n = createSlots.filter(s=>s.court_id===c.id).length;
+                              return (
+                                <div key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
+                                  style={{padding:"4px 8px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:800,
+                                    background:createSelectedCourt===c.id?"rgba(116,184,0,0.2)":n>0?"rgba(116,184,0,0.08)":"rgba(255,255,255,0.04)",
+                                    border:createSelectedCourt===c.id?"1px solid #74B800":n>0?"1px solid rgba(116,184,0,0.2)":"1px solid rgba(255,255,255,0.06)",
+                                    color:createSelectedCourt===c.id?"#74B800":n>0?"rgba(116,184,0,0.7)":"rgba(255,255,255,0.2)"}}>
+                                  {n>0?`${n}h`:'–'}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {/* Horas de la pista seleccionada */}
                       {createSelectedCourt && (()=>{
                         const courtSlots = createSlots.filter(s=>s.court_id===createSelectedCourt);
