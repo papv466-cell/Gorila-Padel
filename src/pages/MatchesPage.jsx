@@ -1113,7 +1113,7 @@ export default function MatchesPage() {
                             {courtSlots.map(s=>{
                               const sel = createSelectedSlot?.id === s.id;
                               return (
-                                <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
+                                <div key={s.id} onClick={()=>{ setCreateSelectedSlot(sel?null:s); if(!sel) setForm(f=>({...f,pricePerPlayer:((s.price||0)/4).toFixed(2)})); }}
                                   style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
                                     background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
                                     border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
@@ -1135,7 +1135,7 @@ export default function MatchesPage() {
                   )}
                   {createSelectedSlot && (
                     <div style={{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
-                      ✅ {createSelectedSlot.club_courts?.name||createCourts.find(c=>c.id===createSelectedCourt)?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.end_time?.slice(0,5)} · {createSelectedSlot.price}€
+                      ✅ {createSelectedSlot.club_courts?.name||createCourts.find(c=>c.id===createSelectedCourt)?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.end_time?.slice(0,5)} · {createSelectedSlot.price}€ total · <span style={{color:'#9BE800'}}>{((createSelectedSlot.price||0)/4).toFixed(2)}€/jugador</span>
                     </div>
                   )}
                 </div>
@@ -1157,6 +1157,11 @@ export default function MatchesPage() {
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Precio/jugador €</label>
                   <input type="number" value={form.pricePerPlayer} onChange={e=>setForm({...form,pricePerPlayer:e.target.value})} disabled={saving} placeholder="0" min="0" step="0.5" style={IS} />
+                  {createSelectedSlot && form.pricePerPlayer && (
+                    <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.15)",fontSize:11,color:"rgba(255,255,255,0.6)"}}>
+                      💶 <span style={{color:"#74B800",fontWeight:900}}>{form.pricePerPlayer}€</span> × 4 jugadores = <span style={{color:"#74B800",fontWeight:900}}>{(parseFloat(form.pricePerPlayer||0)*4).toFixed(2)}€</span> total pista
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{display:"flex",gap:10,marginTop:6}}>
