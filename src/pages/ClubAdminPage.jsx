@@ -442,13 +442,24 @@ export default function ClubAdminPage() {
         const existing = getSlot(court.id, date, hour);
         if (!existing) {
           const [h] = hour.split(':');
+          const hourNum = parseInt(h);
+          const dayOfWeek = date.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          const dayType = isWeekend ? 'weekend' : 'weekday';
+          const matchingPrice = pricing.find(p =>
+            String(p.court_id) === String(court.id) &&
+            p.day_type === dayType &&
+            hourNum >= p.start_hour &&
+            hourNum < p.end_hour
+          );
+          const price = matchingPrice ? matchingPrice.price : 10;
           slotsToCreate.push({
             club_id: clubAdmin.club_id,
             court_id: court.id,
             date: dateToISO(date),
             start_time: hour,
             end_time: `${String(Number(h)+1).padStart(2,'0')}:00`,
-            price: 10,
+            price,
             status: 'available',
             source: 'gorila',
           });
