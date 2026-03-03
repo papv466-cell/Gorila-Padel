@@ -5,10 +5,44 @@ import { supabase } from "../services/supabaseClient";
 
 /* ─── Categorías de ranking ─── */
 const TABS = [
+  { key: "elo",        label: "ELO",        emoji: "🎯", col: "elo",             desc: "Puntuación ELO basada en resultados" },
   { key: "partidos",   label: "Partidos",   emoji: "🏓", col: "matches_played",  desc: "Total partidos jugados" },
   { key: "valoracion", label: "Valoración", emoji: "⭐", col: "avg_rating",       desc: "Media de valoraciones recibidas" },
   { key: "limpio",     label: "Tarjeta Limpia", emoji: "✅", col: "clean",        desc: "Más partidos sin tarjeta roja" },
 ];
+
+// Calcula ELO simple a partir de resultados de partidos
+function calcElo(players, results) {
+  const K = 32;
+  const elo = {};
+  players.forEach(p => { elo[p.id] = 1000; }); // ELO inicial
+
+  // Ordenar resultados por fecha
+  const sorted = [...(results||[])].sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+  for (const r of sorted) {
+    if (!r.players || r.players.length < 2) continue;
+    const sideA = r.players.filter(p=>p.side==='a').map(p=>p.player_uuid);
+    const sideB = r.players.filter(p=>p.side==='b').map(p=>p.player_uuid);
+    if (!sideA.length || !sideB.length) continue;
+
+    const avgA = sideA.reduce((s,id)=>(s + (elo[id]||1000)),0) / sideA.length;
+    const avgB = sideB.reduce((s,id)=>(s + (elo[id]||1000)),0) / sideB.length;
+
+    const expA = 1 / (1 + Math.pow(10, (avgB - avgA) / 400));
+    const expB = 1 - expA;
+
+    const scoreA = r.winner_side === 'a' ? 1 : r.winner_side === 'b' ? 0 : 0.5;
+    const scoreB = 1 - scoreA;
+
+    const deltaA = Math.round(K * (scoreA - expA));
+    const deltaB = Math.round(K * (scoreB - expB));
+
+    sideA.forEach(id => { if (elo[id] !== undefined) elo[id] = Math.max(0, elo[id] + deltaA); });
+    sideB.forEach(id => { if (elo[id] !== undefined) elo[id] = Math.max(0, elo[id] + deltaB); });
+  }
+  return elo;
+}
 
 const MEDALS = ["🥇","🥈","🥉"];
 
@@ -49,6 +83,25 @@ export default function RankingPage() {
         .limit(100);
       if (error) throw error;
 
+      /* Traer resultados para ELO */
+      const { data: matchResults } = await supabase
+        .from("match_results")
+        .select("match_id, winner_side, created_at");
+
+      const { data: matchPlayerRows } = await supabase
+        .from("match_players")
+        .select("match_id, player_uuid, side");
+
+      // Agrupar jugadores por partido
+      const playersByMatch = {};
+      for (const mp of matchPlayerRows||[]) {
+        if (!playersByMatch[mp.match_id]) playersByMatch[mp.match_id] = [];
+        playersByMatch[mp.match_id].push(mp);
+      }
+      const resultsWithPlayers = (matchResults||[]).map(r=>({
+        ...r, players: playersByMatch[r.match_id]||[]
+      }));
+
       /* Traer ratings agregados */
       const { data: ratingRows } = await supabase
         .from("player_ratings")
@@ -61,6 +114,8 @@ export default function RankingPage() {
         ratingMap[r.to_user_id].push(Number(r.rating));
       }
 
+      const eloMap = calcElo(profiles||[], resultsWithPlayers);
+
       const enriched = (profiles || []).map(p => {
         const ratings = ratingMap[p.id] || [];
         const avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
@@ -70,6 +125,7 @@ export default function RankingPage() {
           avg_rating: Math.round(avg * 10) / 10,
           rating_count: ratings.length,
           clean: Math.max(0, clean),
+          elo: eloMap[p.id] || 1000,
         };
       });
 
@@ -268,6 +324,12 @@ export default function RankingPage() {
 
                       {/* Valor */}
                       <div style={{ fontSize: 12, fontWeight: 900, color: isMe ? "#74B800" : "rgba(255,255,255,0.6)", flexShrink: 0, textAlign: "right" }}>
+                        {tab === "elo" && (
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:15,fontWeight:900,color:isMe?"#74B800":"#fff"}}>{p.elo}</div>
+                            <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontWeight:700}}>pts ELO</div>
+                          </div>
+                        )}
                         {tab === "partidos" && <><span style={{ color: "#fff" }}>{p.matches_played}</span> 🏓</>}
                         {tab === "valoracion" && (
                           p.rating_count > 0
@@ -308,6 +370,7 @@ export default function RankingPage() {
               <div>🏓 <strong style={{ color: "#fff" }}>Partidos</strong> — total de partidos jugados</div>
               <div>⭐ <strong style={{ color: "#fff" }}>Valoración</strong> — media de estrellas recibidas de compañeros</div>
               <div>✅ <strong style={{ color: "#fff" }}>Tarjeta Limpia</strong> — partidos jugados con menos tarjetas rojas</div>
+              <div>🎯 <strong style={{ color: "#fff" }}>ELO</strong> — puntos según resultados reales · ganar sube, perder baja · más difícil = más puntos</div>
             </div>
           </div>
 
