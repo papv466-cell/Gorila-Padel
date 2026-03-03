@@ -201,6 +201,10 @@ export default function MatchesPage() {
     clubName:"", clubId:"", date:todayISO, time:"19:00",
     durationMin:90, level:"medio", alreadyPlayers:1, pricePerPlayer:"",
   });
+  const [createSlots, setCreateSlots] = useState([]);
+  const [createCourts, setCreateCourts] = useState([]);
+  const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
+  const [createSlotsLoading, setCreateSlotsLoading] = useState(false);
 
   function closeAllModals() { setChatOpenFor(null); setRequestsOpenFor(null); setInviteOpenFor(null); setCedeOpenFor(null); }
   function goLogin() { navigate("/login",{replace:true,state:{from:location.pathname+location.search}}); }
@@ -377,7 +381,7 @@ export default function MatchesPage() {
     if (!q||q.length<2) return [];
     return (clubsSheet||[]).filter(c=>String(c?.name||"").toLowerCase().includes(q)).slice(0,10);
   }, [clubQuery, clubsSheet]);
-  function pickClub(c) { setForm(prev=>({...prev,clubId:String(c?.id??""),clubName:String(c?.name??"")})); setClubQuery(String(c?.name??"")); setShowClubSuggest(false); }
+  function pickClub(c) { setForm(prev=>({...prev,clubId:String(c?.id??""),clubName:String(c?.name??"")})); setClubQuery(String(c?.name??"")); setShowClubSuggest(false); cargarSlotsParaCrear(String(c?.id??""), form.date||todayISO); }
 
   /* ─── Search profiles ─── */
   async function searchPublicProfiles(q) {
@@ -408,16 +412,49 @@ export default function MatchesPage() {
   }, [createParam,clubIdParam,clubNameParam,authReady,session,todayISO,selectedDay]);
 
   /* ─── Actions ─── */
+  async function cargarSlotsParaCrear(clubId, date) {
+    if (!clubId || !date || clubId.startsWith('private:')) {
+      setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null); return;
+    }
+    try {
+      setCreateSlotsLoading(true);
+      const {data: courts} = await supabase.from('club_courts').select('*').eq('club_id', clubId.toLowerCase());
+      setCreateCourts(courts||[]);
+      if (!courts?.length) { setCreateSlots([]); setCreateSelectedSlot(null); return; }
+      const courtIds = courts.map(c=>c.id);
+      const {data: slots} = await supabase.from('court_slots').select('*, club_courts(name,court_type)').in('court_id', courtIds).eq('date', date).eq('status','available').order('start_time');
+      setCreateSlots(slots||[]);
+      setCreateSelectedSlot(null);
+    } catch(e) { setCreateSlots([]); } finally { setCreateSlotsLoading(false); }
+  }
+
   async function handleCreate() {
     if (!session) return goLogin();
     try {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
-      await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      const match = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      // Si hay slot seleccionado, bloquearlo y crear reserva
+      if (createSelectedSlot && match?.id) {
+        try {
+          await supabase.from('court_slots').update({status:'booked'}).eq('id', createSelectedSlot.id);
+          await supabase.from('court_bookings').insert({
+            club_id: createSelectedSlot.club_id,
+            court_number: createSelectedSlot.court_id,
+            user_id: session.user.id,
+            date: createSelectedSlot.date,
+            start_time: createSelectedSlot.start_time,
+            end_time: createSelectedSlot.end_time,
+            price_cents: Math.round((createSelectedSlot.price||0)*100),
+            status: 'confirmed',
+            match_id: match.id,
+          });
+        } catch(e) { console.error('Error bloqueando slot:', e); }
+      }
       setSelectedDay(form.date); setOpenCreate(false);
-      setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
-      toast.success("Partido creado ✅"); await load(); setViewMode("mine");
+      setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery(""); setCreateSlots([]); setCreateCourts([]); setCreateSelectedSlot(null);
+      toast.success(createSelectedSlot ? "Partido creado y pista reservada ✅" : "Partido creado ✅"); await load(); setViewMode("mine");
       try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
     } catch(e) { setSaveError(e?.message||"No se pudo crear"); toast.error(e?.message||"Error"); } finally { setSaving(false); }
   }
@@ -913,13 +950,51 @@ export default function MatchesPage() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Fecha</label>
-                  <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} disabled={saving} style={IS} />
+                  <input type="date" value={form.date} onChange={e=>{setForm({...form,date:e.target.value});if(form.clubId)cargarSlotsParaCrear(form.clubId,e.target.value);}} disabled={saving} style={IS} />
                 </div>
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Hora</label>
                   <input type="time" step="900" value={form.time} onChange={e=>{ const [h,min]=e.target.value.split(":"); const rm=Math.round(+min/15)*15; setForm({...form,time:`${h}:${String(rm%60).padStart(2,"0")}`}); }} disabled={saving} style={IS} />
                 </div>
               </div>
+              {/* ── SLOTS DISPONIBLES ── */}
+              {form.clubId && !form.isPrivateCourt && (
+                <div>
+                  <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>
+                    🏟️ Pista disponible {createSlotsLoading ? "· Buscando…" : createSlots.length > 0 ? `· ${createSlots.length} disponible${createSlots.length>1?"s":""}` : "· Sin slots en Gorila"}
+                  </label>
+                  {createSlotsLoading && <div style={{textAlign:"center",padding:12,color:"rgba(255,255,255,0.4)",fontSize:12}}>Buscando pistas libres…</div>}
+                  {!createSlotsLoading && createSlots.length > 0 && (
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,maxHeight:180,overflowY:"auto"}}>
+                      {createSlots.map(s=>{
+                        const sel = createSelectedSlot?.id === s.id;
+                        return (
+                          <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
+                            style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
+                              background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
+                              border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
+                            <div style={{fontSize:13,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{s.end_time?.slice(0,5)}</div>
+                            <div style={{fontSize:11,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:2}}>{s.price}€</div>
+                            <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",marginTop:1}}>{s.club_courts?.name} {s.club_courts?.court_type==="indoor"?"🏠":"☀️"}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!createSlotsLoading && createSlots.length === 0 && form.clubId && (
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"8px 0"}}>
+                      Sin pistas Gorila para este día — el partido se creará sin reserva de pista
+                    </div>
+                  )}
+                  {createSelectedSlot && (
+                    <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
+                      ✅ Pista reservada: {createSelectedSlot.club_courts?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.end_time?.slice(0,5)} · {createSelectedSlot.price}€
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Nivel</label>
                 <select value={form.level} onChange={e=>setForm({...form,level:e.target.value})} disabled={saving} style={IS}>
