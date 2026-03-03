@@ -61,7 +61,7 @@ export default function ClubAdminPage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedCourt, setSelectedCourt] = useState(null);
   const [slotModal, setSlotModal] = useState(null); // { date, hour, court }
-  const [slotForm, setSlotForm] = useState({ price:'', duration:60, status:'available' });
+  const [slotForm, setSlotForm] = useState({ price:'', duration:60, status:'available', block_reason:'' });
   const [saving, setSaving] = useState(false);
   const [showNewCourt, setShowNewCourt] = useState(false);
   const [courtForm, setCourtForm] = useState({ name:'', court_type:'outdoor' });
@@ -398,9 +398,10 @@ export default function ClubAdminPage() {
         date: dateToISO(date),
         start_time: hour,
         end_time: endTime,
-        price: Number(slotForm.price)||0,
+        price: slotForm.status === 'blocked' ? 0 : Number(slotForm.price)||0,
         status: slotForm.status,
         source: 'gorila',
+        block_reason: slotForm.status === 'blocked' ? (slotForm.block_reason||'Bloqueado') : null,
       }).select().single();
       if (error) throw error;
       setSlots(prev => [...prev, data]);
@@ -1257,27 +1258,77 @@ export default function ClubAdminPage() {
               {slotModal.court.name} · {slotModal.date.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'})} · {slotModal.hour}
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              {/* Tipo de slot */}
               <div>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO (€)</div>
-                <input type="number" min="0" step="0.5" placeholder="10" value={slotForm.price}
-                  onChange={e=>setSlotForm(p=>({...p,price:e.target.value}))} style={S.input} />
-              </div>
-              <div>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>DURACIÓN</div>
+                <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:6}}>TIPO</div>
                 <div style={{display:'flex',gap:6}}>
-                  {[60,90,120].map(d=>(
-                    <button key={d} onClick={()=>setSlotForm(p=>({...p,duration:d}))}
-                      style={{flex:1,padding:'8px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
-                        background:slotForm.duration===d?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
-                        color:slotForm.duration===d?'#000':'#fff'}}>
-                      {d}min
+                  {[
+                    {v:'available', l:'✅ Disponible', c:'green'},
+                    {v:'blocked',   l:'🚫 Bloquear',   c:'red'},
+                  ].map(({v,l,c})=>(
+                    <button key={v} onClick={()=>setSlotForm(p=>({...p,status:v}))}
+                      style={{flex:1,padding:'10px',borderRadius:10,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
+                        background:slotForm.status===v?(c==='green'?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(220,38,38,0.3)'):'rgba(255,255,255,0.08)',
+                        color:slotForm.status===v?(c==='green'?'#000':'#ff6b6b'):'rgba(255,255,255,0.6)',
+                        border:slotForm.status===v?(c==='red'?'1px solid rgba(220,38,38,0.5)':'none'):'1px solid transparent'}}>
+                      {l}
                     </button>
                   ))}
                 </div>
               </div>
+
+              {/* Si disponible: precio y duración */}
+              {slotForm.status === 'available' && (
+                <>
+                  <div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>PRECIO (€)</div>
+                    <input type="number" min="0" step="0.5" placeholder="10" value={slotForm.price}
+                      onChange={e=>setSlotForm(p=>({...p,price:e.target.value}))} style={S.input} />
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4}}>DURACIÓN</div>
+                    <div style={{display:'flex',gap:6}}>
+                      {[60,90,120].map(d=>(
+                        <button key={d} onClick={()=>setSlotForm(p=>({...p,duration:d}))}
+                          style={{flex:1,padding:'8px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
+                            background:slotForm.duration===d?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                            color:slotForm.duration===d?'#000':'#fff'}}>
+                          {d}min
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Si bloqueado: motivo */}
+              {slotForm.status === 'blocked' && (
+                <div>
+                  <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:6}}>MOTIVO</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+                    {['🔧 Mantenimiento','🏆 Torneo propio','📚 Clase','🔒 Uso interno','❌ Cerrado'].map(m=>(
+                      <button key={m} onClick={()=>setSlotForm(p=>({...p,block_reason:m}))}
+                        style={{padding:'6px 12px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:700,fontSize:11,
+                          background:slotForm.block_reason===m?'rgba(220,38,38,0.25)':'rgba(255,255,255,0.06)',
+                          color:slotForm.block_reason===m?'#ff6b6b':'rgba(255,255,255,0.5)',
+                          border:slotForm.block_reason===m?'1px solid rgba(220,38,38,0.4)':'1px solid transparent'}}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <input placeholder="O escribe un motivo personalizado…" value={slotForm.block_reason}
+                    onChange={e=>setSlotForm(p=>({...p,block_reason:e.target.value}))} style={S.input} />
+                  <div style={{marginTop:8,padding:'10px 12px',borderRadius:10,background:'rgba(220,38,38,0.08)',border:'1px solid rgba(220,38,38,0.2)',fontSize:11,color:'rgba(255,100,100,0.8)'}}>
+                    🚫 Este horario quedará bloqueado y no podrá reservarse
+                  </div>
+                </div>
+              )}
+
               <div style={{display:'flex',gap:8,marginTop:4}}>
-                <button onClick={createSlot} disabled={saving} style={{...S.btn('green'),flex:1}}>
-                  {saving?'Guardando…':'✅ Publicar slot'}
+                <button onClick={createSlot} disabled={saving||(slotForm.status==='blocked'&&!slotForm.block_reason.trim())}
+                  style={{...S.btn(slotForm.status==='blocked'?'red':'green'),flex:1,
+                    opacity:saving||(slotForm.status==='blocked'&&!slotForm.block_reason.trim())?0.5:1}}>
+                  {saving?'Guardando…':slotForm.status==='blocked'?'🚫 Bloquear slot':'✅ Publicar slot'}
                 </button>
                 <button onClick={()=>setSlotModal(null)} style={{...S.btn(''),padding:'10px 16px'}}>Cancelar</button>
               </div>
