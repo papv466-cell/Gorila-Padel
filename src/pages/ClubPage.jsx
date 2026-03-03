@@ -74,6 +74,10 @@ export default function ClubPage() {
   const [ratingSaving, setRatingSaving] = useState(false);
   const [clubRatings, setClubRatings] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [createSlots, setCreateSlots] = useState([]);
+  const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
+  const [createSelectedCourt, setCreateSelectedCourt] = useState(null);
+  const [createSlotsLoading, setCreateSlotsLoading] = useState(false);
   const [clubBonos, setClubBonos] = useState([]);
   const [myBonos, setMyBonos] = useState([]);
   const [buyingBono, setBuyingBono] = useState(null);
@@ -181,20 +185,41 @@ export default function ClubPage() {
     if (!session) { navigate("/login"); return; }
     try {
       setSaveError(null); setSaving(true);
-      const startAt = `${form.date}T${form.time}:00`;
-      const { error } = await supabase.from("matches").insert({
+      const startAt = createSelectedSlot
+        ? `${form.date}T${createSelectedSlot.start_time.slice(0,5)}:00`
+        : `${form.date}T${form.time}:00`;
+      const { data: match, error } = await supabase.from("matches").insert({
         club_id: clubId,
         club_name: club?.name || "",
         start_at: startAt,
-        duration_min: Number(form.durationMin) || 90,
+        duration_min: 90,
         level: form.level,
         reserved_spots: 1,
         price_per_player: form.pricePerPlayer || null,
         created_by_user: session.user.id,
-      });
+      }).select().single();
       if (error) throw error;
-      toast.success("Partido creado ✅");
+      // Bloquear slot si se seleccionó uno
+      if (createSelectedSlot && match?.id) {
+        try {
+          const slotsUsed = createSelectedSlot.slots_used || [createSelectedSlot.id];
+          await supabase.from('court_slots').update({status:'booked'}).in('id', slotsUsed);
+          await supabase.from('court_bookings').insert({
+            club_id: clubId,
+            court_number: createSelectedSlot.court_id,
+            user_id: session.user.id,
+            date: form.date,
+            start_time: createSelectedSlot.start_time,
+            end_time: createSelectedSlot.display_end,
+            price_cents: Math.round((createSelectedSlot.price||0)*100),
+            status: 'confirmed',
+            match_id: match.id,
+          });
+        } catch(e) { console.error('Error bloqueando slot:', e); }
+      }
+      toast.success(createSelectedSlot ? "Partido creado y pista reservada ✅" : "Partido creado ✅");
       setOpenCreate(false);
+      setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null);
       await load();
       setTab("partidos");
     } catch (e) {
@@ -206,6 +231,26 @@ export default function ClubPage() {
 
   /* ─── Partidos filtrados por día seleccionado ─── */
   const [selectedDay, setSelectedDay] = useState("all");
+
+  async function cargarSlotsParaCrear(date) {
+    if (!clubId || !date) return;
+    try {
+      setCreateSlotsLoading(true);
+      const {data: rawSlots} = await supabase.from('court_slots')
+        .select('*, club_courts(name,court_type)')
+        .in('court_id', courts.map(c=>c.id))
+        .eq('date', date).eq('status','available').order('start_time');
+      const slots90 = (rawSlots||[]).map(s => {
+        const startMins = parseInt(s.start_time.slice(0,2))*60 + parseInt(s.start_time.slice(3,5));
+        const endMins = startMins + 90;
+        return {...s, display_end:`${String(Math.floor(endMins/60)).padStart(2,'0')}:${String(endMins%60).padStart(2,'0')}`, slots_used:[s.id]};
+      }).sort((a,b)=>a.start_time.localeCompare(b.start_time));
+      setCreateSlots(slots90);
+      setCreateSelectedSlot(null);
+      if (courts.length) setCreateSelectedCourt(courts[0].id);
+    } catch(e) { setCreateSlots([]); }
+    finally { setCreateSlotsLoading(false); }
+  }
 
   async function loadSlots(courtId, date) {
     if (!courtId || !date) return;
@@ -345,7 +390,7 @@ export default function ClubPage() {
                   }
                   {/* Botón crear flotante */}
                   <button
-                    onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); }}
+                    onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); if(courts.length) cargarSlotsParaCrear(form.date); }}
                     style={{ position:"absolute", top:10, right:10, zIndex:2, padding:"7px 12px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, boxShadow:"0 4px 12px rgba(0,0,0,0.4)" }}>
                     ➕ Crear
                   </button>
@@ -868,13 +913,83 @@ export default function ClubPage() {
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                 <div>
                   <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Fecha</label>
-                  <input type="date" value={form.date} onChange={e => setForm({...form, date:e.target.value})} style={IS} />
+                  <input type="date" value={form.date} min={todayISO}
+                    onChange={e => { setForm({...form, date:e.target.value}); if(courts.length) cargarSlotsParaCrear(e.target.value); }}
+                    style={IS} />
                 </div>
                 <div>
-                  <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Hora</label>
-                  <input type="time" step="900" value={form.time} onChange={e => setForm({...form, time:e.target.value})} style={IS} />
+                  <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Hora (sin pista)</label>
+                  <input type="time" step="900" value={form.time} onChange={e => setForm({...form, time:e.target.value})} style={{...IS, opacity: createSelectedSlot?0.4:1}} disabled={!!createSelectedSlot} />
                 </div>
               </div>
+
+              {/* Selector pista + hora */}
+              {courts.length > 0 && (
+                <div>
+                  <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:11,fontWeight:700}}>
+                    🏟️ Elige pista y hora {createSlotsLoading?"· Buscando…":""}
+                  </label>
+                  {createSlotsLoading && <div style={{textAlign:"center",padding:10,color:"rgba(255,255,255,0.4)",fontSize:12}}>Buscando pistas libres…</div>}
+                  {!createSlotsLoading && courts.length > 0 && (
+                    <>
+                      {/* Selector pista */}
+                      {courts.length <= 4 ? (
+                        <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                          {courts.map(c=>{
+                            const courtSlots = createSlots.filter(s=>s.court_id===c.id);
+                            const isSelected = createSelectedCourt===c.id;
+                            return (
+                              <button key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
+                                style={{padding:"6px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:800,fontSize:11,
+                                  background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":courtSlots.length?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.05)",
+                                  color:isSelected?"#000":courtSlots.length?"#74B800":"rgba(255,255,255,0.3)"}}>
+                                {c.name} {c.court_type==="indoor"?"🏠":"☀️"}
+                                {courtSlots.length>0&&<span style={{marginLeft:4,fontSize:9}}>({courtSlots.length})</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <select value={createSelectedCourt||''} onChange={e=>{setCreateSelectedCourt(e.target.value);setCreateSelectedSlot(null);}}
+                          style={{...IS,marginBottom:8,background:'#1a1a1a'}}>
+                          {courts.map(c=>{
+                            const n=createSlots.filter(s=>s.court_id===c.id).length;
+                            return <option key={c.id} value={c.id} style={{background:'#1a1a1a'}}>{c.name} {n>0?`· ${n} horas`:'· sin horas'}</option>;
+                          })}
+                        </select>
+                      )}
+                      {/* Horas de la pista seleccionada */}
+                      {createSelectedCourt && (()=>{
+                        const courtSlots = createSlots.filter(s=>s.court_id===createSelectedCourt);
+                        if (!courtSlots.length) return <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"6px 0"}}>Sin horas disponibles en esta pista</div>;
+                        return (
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                            {courtSlots.map(s=>{
+                              const sel=createSelectedSlot?.id===s.id;
+                              return (
+                                <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
+                                  style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
+                                    background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
+                                    border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
+                                  <div style={{fontSize:14,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{s.display_end}</div>
+                                  <div style={{fontSize:12,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:2}}>{s.price}€</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                      {createSelectedSlot && (
+                        <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
+                          ✅ {courts.find(c=>c.id===createSelectedCourt)?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.display_end} · {createSelectedSlot.price}€
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Nivel</label>
                 <select value={form.level} onChange={e => setForm({...form, level:e.target.value})} style={IS}>
@@ -883,22 +998,16 @@ export default function ClubPage() {
                   <option value="alto" style={{ background:"#1a1a1a" }}>Alto</option>
                 </select>
               </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                <div>
-                  <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Duración (min)</label>
-                  <input type="number" value={form.durationMin} onChange={e => setForm({...form, durationMin:e.target.value})} min="30" max="180" step="15" style={IS} />
-                </div>
-                <div>
-                  <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Precio/jugador €</label>
-                  <input type="number" value={form.pricePerPlayer} onChange={e => setForm({...form, pricePerPlayer:e.target.value})} placeholder="0" min="0" step="0.5" style={IS} />
-                </div>
+              <div>
+                <label style={{ color:"#fff", display:"block", marginBottom:5, fontSize:11, fontWeight:700 }}>Precio/jugador €</label>
+                <input type="number" value={form.pricePerPlayer} onChange={e => setForm({...form, pricePerPlayer:e.target.value})} placeholder="0" min="0" step="0.5" style={IS} />
               </div>
               <div style={{ display:"flex", gap:10, marginTop:4 }}>
                 <button onClick={handleCreate} disabled={saving}
                   style={{ flex:1, padding:13, borderRadius:12, background:saving?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:saving?"not-allowed":"pointer", fontSize:13 }}>
-                  {saving ? "⏳ Creando..." : "✅ Crear Partido"}
+                  {saving ? "⏳ Creando..." : createSelectedSlot ? "✅ Crear partido y reservar pista" : "✅ Crear Partido"}
                 </button>
-                <button onClick={() => setOpenCreate(false)}
+                <button onClick={() => { setOpenCreate(false); setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null); }}
                   style={{ padding:"13px 16px", borderRadius:12, background:"rgba(255,255,255,0.08)", color:"#fff", fontWeight:700, border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer" }}>❌</button>
               </div>
             </div>
