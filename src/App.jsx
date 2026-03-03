@@ -344,12 +344,12 @@ export default function App() {
           },
         }}
       />
+      {showOnboarding && onboardingSession && (
+        <OnboardingModal
+          session={onboardingSession}
+          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); }}
+        />
+      )}
     </div>
-    {showOnboarding && onboardingSession && (
-      <OnboardingModal
-        session={onboardingSession}
-        onClose={() => { setShowOnboarding(false); setOnboardingSession(null); }}
-      />
-    )}
   );
 }
