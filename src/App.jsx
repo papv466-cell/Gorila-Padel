@@ -78,17 +78,19 @@ export default function App() {
   const [onboardingSession, setOnboardingSession] = useState(null);
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        // Verificar si es nuevo usuario
-        const { data: profile } = await supabase.from("profiles")
-          .select("onboarding_done").eq("id", session.user.id).maybeSingle();
-        if (profile && !profile.onboarding_done) {
-          setOnboardingSession(session);
-          setShowOnboarding(true);
-        }
+        try {
+          const { data: profile } = await supabase.from("profiles")
+            .select("onboarding_done").eq("id", session.user.id).maybeSingle();
+          if (profile && !profile.onboarding_done) {
+            setOnboardingSession(session);
+            setShowOnboarding(true);
+          }
+        } catch(e) { console.warn("onboarding check failed:", e); }
       }
     });
+    return () => subscription.unsubscribe();
   }, []);
   const location = useLocation();
   const navigate = useNavigate();
