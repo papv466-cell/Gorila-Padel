@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
+import PostMatchModal from "../components/PostMatchModal";
 import "./MatchesPage.css";
 
 import {
@@ -159,6 +160,7 @@ export default function MatchesPage() {
   const [geoLoading, setGeoLoading] = useState(false);
   const [jugarAhora, setJugarAhora] = useState(false);
   const [jugarAhoraData, setJugarAhoraData] = useState({ slots:[], matches:[], loading:false });
+  const [postMatch, setPostMatch] = useState(null); // {match, players}
   const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe);
 
   /* ─── Modals ─── */
@@ -403,6 +405,56 @@ export default function MatchesPage() {
     t = setTimeout(async()=>{ try{ const r=await searchPublicProfiles(q); if(aliveRef.current) setInviteResults(r); }catch{ if(aliveRef.current) setInviteResults([]); } },220);
     return ()=>clearTimeout(t);
   }, [inviteQuery]);
+
+  /* ─── Detectar partido terminado ─── */
+  useEffect(() => {
+    if (!session?.user?.id || !authReady) return;
+    checkFinishedMatches();
+  }, [session?.user?.id, authReady]);
+
+  async function checkFinishedMatches() {
+    try {
+      const now = new Date();
+      const userId = session.user.id;
+      // Buscar partidos donde el usuario jugó en las últimas 24h que ya terminaron
+      const since = new Date(now.getTime() - 24*60*60*1000).toISOString();
+      const {data: myMatches} = await supabase
+        .from('match_players')
+        .select('match_id, matches(id, club_name, start_at, duration_min)')
+        .eq('player_uuid', userId)
+        .gte('matches.start_at', since);
+
+      if (!myMatches?.length) return;
+
+      for (const row of myMatches) {
+        const m = row.matches;
+        if (!m) continue;
+        const startMs = new Date(m.start_at).getTime();
+        const endMs = startMs + (Number(m.duration_min)||90)*60000;
+        if (now.getTime() < endMs) continue; // no terminó aún
+
+        // Ver si ya hizo el post
+        const {data: done} = await supabase.from('match_post_done')
+          .select('match_id').eq('match_id', m.id).eq('user_id', userId).maybeSingle();
+        if (done) continue;
+
+        // Cargar jugadores del partido
+        const {data: players} = await supabase.from('match_players')
+          .select('player_uuid, profiles_public(name, handle, avatar_url)')
+          .eq('match_id', m.id);
+
+        const playersFormatted = (players||[]).map(p=>({
+          player_uuid: p.player_uuid,
+          name: p.profiles_public?.name,
+          handle: p.profiles_public?.handle,
+          avatar_url: p.profiles_public?.avatar_url,
+        }));
+
+        setPostMatch({ match: m, players: playersFormatted });
+        break; // mostrar uno a la vez
+      }
+    } catch(e) { console.error('checkFinishedMatches:', e); }
+  }
 
   /* ─── Open from URL params ─── */
   useEffect(() => { if(!openChatParam||!authReady) return; if(!session){goLogin();return;} try{window.sessionStorage?.removeItem?.("openChat");}catch{} openChat(openChatParam); }, [openChatParam,authReady,session]);
@@ -1579,6 +1631,15 @@ export default function MatchesPage() {
           </div>
         </div>
       )}
+    {/* ── POST MATCH MODAL ── */}
+    {postMatch && (
+      <PostMatchModal
+        match={postMatch.match}
+        players={postMatch.players}
+        session={session}
+        onClose={()=>setPostMatch(null)}
+      />
+    )}
     </div>
   );
 }
