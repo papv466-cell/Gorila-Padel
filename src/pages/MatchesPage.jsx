@@ -430,8 +430,52 @@ export default function MatchesPage() {
       setCreateCourts(courts||[]);
       if (!courts?.length) { setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null); return; }
       const courtIds = courts.map(c=>c.id);
-      const {data: slots} = await supabase.from('court_slots').select('*, club_courts(name,court_type)').in('court_id', courtIds).eq('date', date).eq('status','available').order('start_time');
-      setCreateSlots(slots||[]);
+      const {data: rawSlots} = await supabase.from('court_slots').select('*, club_courts(name,court_type)').in('court_id', courtIds).eq('date', date).eq('status','available').order('start_time');
+      
+      // Agrupar slots consecutivos para formar bloques de 90min
+      const slots90 = [];
+      const slotsByCourtArr = (rawSlots||[]);
+      
+      // Para cada slot, ver si hay suficientes slots consecutivos para cubrir 90min
+      for (let i = 0; i < slotsByCourtArr.length; i++) {
+        const s = slotsByCourtArr[i];
+        const startH = parseInt(s.start_time?.slice(0,2)||0);
+        const startM = parseInt(s.start_time?.slice(3,5)||0);
+        const startMins = startH*60 + startM;
+        
+        // Calcular duración del slot en minutos
+        const endH = parseInt(s.end_time?.slice(0,2)||0);
+        const endM = parseInt(s.end_time?.slice(3,5)||0);
+        const slotDur = (endH*60+endM) - startMins;
+        
+        if (slotDur >= 90) {
+          // Slot ya es de 90min o más — usarlo directo
+          slots90.push({...s, display_end: s.end_time, slots_used: [s.id]});
+        } else if (slotDur === 60) {
+          // Slot de 1h — buscar el siguiente consecutivo del mismo court
+          const need = 30; // faltan 30min
+          const nextSlot = slotsByCourtArr.find(n => 
+            n.court_id === s.court_id &&
+            parseInt(n.start_time?.slice(0,2)||0)*60 + parseInt(n.start_time?.slice(3,5)||0) === startMins + 60
+          );
+          if (nextSlot) {
+            // Tenemos 60+30=90min (usamos el slot actual + 30min del siguiente)
+            const endMin = startMins + 90;
+            const endHH = String(Math.floor(endMin/60)).padStart(2,'0');
+            const endMM = String(endMin%60).padStart(2,'0');
+            slots90.push({
+              ...s,
+              end_time: `${endHH}:${endMM}:00`,
+              display_end: `${endHH}:${endMM}`,
+              slots_used: [s.id, nextSlot.id],
+              price: s.price, // precio del primer slot
+            });
+          }
+          // Si no hay siguiente, no mostrar este slot (no cabe partido de 90min)
+        }
+      }
+      
+      setCreateSlots(slots90);
       setCreateSelectedSlot(null);
       // Seleccionar primera pista por defecto
       if (courts.length) setCreateSelectedCourt(courts[0].id);
@@ -448,14 +492,16 @@ export default function MatchesPage() {
       // Si hay slot seleccionado, bloquearlo y crear reserva
       if (createSelectedSlot && match?.id) {
         try {
-          await supabase.from('court_slots').update({status:'booked'}).eq('id', createSelectedSlot.id);
+          // Bloquear todos los slots usados (pueden ser 1 de 90min o 2 de 60min)
+          const slotsUsed = createSelectedSlot.slots_used || [createSelectedSlot.id];
+          await supabase.from('court_slots').update({status:'booked'}).in('id', slotsUsed);
           await supabase.from('court_bookings').insert({
             club_id: createSelectedSlot.club_id,
             court_number: createSelectedSlot.court_id,
             user_id: session.user.id,
             date: createSelectedSlot.date,
             start_time: createSelectedSlot.start_time,
-            end_time: createSelectedSlot.end_time,
+            end_time: createSelectedSlot.end_time || createSelectedSlot.display_end,
             price_cents: Math.round((createSelectedSlot.price||0)*100),
             status: 'confirmed',
             match_id: match.id,
@@ -1013,7 +1059,7 @@ export default function MatchesPage() {
                                     background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
                                     border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
                                   <div style={{fontSize:14,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
-                                  <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:1}}>{s.end_time?.slice(0,5)}</div>
+                                  <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:1}}>{(s.display_end||s.end_time)?.slice(0,5)}</div>
                                   <div style={{fontSize:12,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:3}}>{s.price}€</div>
                                 </div>
                               );
