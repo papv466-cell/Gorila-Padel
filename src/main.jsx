@@ -16,6 +16,20 @@ if ("serviceWorker" in navigator) {
       console.log("✅ SW registrado:", reg.scope);
       await navigator.serviceWorker.ready;
       console.log("✅ SW ready");
+
+      // Auto-actualizar SW cuando hay nueva versión
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        newWorker?.addEventListener("statechange", () => {
+          if (newWorker.state === "activated") {
+            console.log("🔄 SW actualizado, recargando...");
+            window.location.reload();
+          }
+        });
+      });
+
+      // Comprobar actualizaciones cada 60s
+      setInterval(() => reg.update(), 60000);
     } catch (e) {
       console.warn("❌ SW register error:", e);
     }
