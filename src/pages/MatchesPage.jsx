@@ -432,73 +432,22 @@ export default function MatchesPage() {
       const courtIds = courts.map(c=>c.id);
       const {data: rawSlots} = await supabase.from('court_slots').select('*, club_courts(name,court_type)').in('court_id', courtIds).eq('date', date).eq('status','available').order('start_time');
       
-      // Construir bloques de 90min sin solapamiento
-      // Lógica: recorrer slots ordenados por hora, marcar los usados
-      const slots90 = [];
-      const usedSlotIds = new Set();
-
-      // Agrupar por pista
-      const courtIds2 = [...new Set((rawSlots||[]).map(s=>s.court_id))];
-      
-      for (const courtId of courtIds2) {
-        const courtSlots = (rawSlots||[])
-          .filter(s => s.court_id === courtId)
-          .sort((a,b) => a.start_time.localeCompare(b.start_time));
-        
-        let i = 0;
-        while (i < courtSlots.length) {
-          const s = courtSlots[i];
-          if (usedSlotIds.has(s.id)) { i++; continue; }
-          
-          const startH = parseInt(s.start_time.slice(0,2));
-          const startM = parseInt(s.start_time.slice(3,5));
-          const startMins = startH*60 + startM;
-          const endH = parseInt(s.end_time.slice(0,2));
-          const endM = parseInt(s.end_time.slice(3,5));
-          const slotDur = (endH*60+endM) - startMins;
-          
-          if (slotDur >= 90) {
-            // Slot ya cubre 90min
-            const endMin = startMins + 90;
-            const endHH = String(Math.floor(endMin/60)).padStart(2,'0');
-            const endMM = String(endMin%60).padStart(2,'0');
-            slots90.push({...s, display_end:`${endHH}:${endMM}`, slots_used:[s.id]});
-            usedSlotIds.add(s.id);
-            i++;
-          } else if (slotDur === 60) {
-            // Necesitamos el siguiente slot consecutivo
-            const nextStart = startMins + 60;
-            const next = courtSlots.find(n =>
-              !usedSlotIds.has(n.id) &&
-              parseInt(n.start_time.slice(0,2))*60 + parseInt(n.start_time.slice(3,5)) === nextStart
-            );
-            if (next) {
-              const endMin = startMins + 90;
-              const endHH = String(Math.floor(endMin/60)).padStart(2,'0');
-              const endMM = String(endMin%60).padStart(2,'0');
-              slots90.push({
-                ...s,
-                end_time: `${endHH}:${endMM}:00`,
-                display_end: `${endHH}:${endMM}`,
-                slots_used: [s.id, next.id],
-                price: s.price,
-              });
-              // Marcar ambos como usados para evitar solapamiento
-              usedSlotIds.add(s.id);
-              usedSlotIds.add(next.id);
-              i++;
-            } else {
-              // No hay slot siguiente — este slot no puede usarse para partido
-              i++;
-            }
-          } else {
-            i++;
-          }
-        }
-      }
-      
-      // Ordenar por hora de inicio
-      slots90.sort((a,b) => a.start_time.localeCompare(b.start_time));
+      // Mostrar slots directamente — ya son de 90min desde el admin
+      const slots90 = (rawSlots||[]).map(s => {
+        const startH = parseInt(s.start_time.slice(0,2));
+        const startM = parseInt(s.start_time.slice(3,5));
+        const startMins = startH*60 + startM;
+        const endH = parseInt((s.end_time||'').slice(0,2)||0);
+        const endM = parseInt((s.end_time||'').slice(3,5)||0);
+        const slotDur = (endH*60+endM) - startMins;
+        const displayEndMins = startMins + 90;
+        const displayEnd = `${String(Math.floor(displayEndMins/60)).padStart(2,'0')}:${String(displayEndMins%60).padStart(2,'0')}`;
+        return {
+          ...s,
+          display_end: slotDur >= 90 ? s.end_time?.slice(0,5) : displayEnd,
+          slots_used: [s.id],
+        };
+      }).sort((a,b) => a.start_time.localeCompare(b.start_time));
       setCreateSlots(slots90);
       setCreateSelectedSlot(null);
       // Seleccionar primera pista por defecto

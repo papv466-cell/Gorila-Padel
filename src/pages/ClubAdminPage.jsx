@@ -19,7 +19,12 @@ const TAB_LABELS = {
   bonos: "🎟️ Bonos"
 };
 
-const HOURS = Array.from({length:16}, (_,i) => `${(i+8).toString().padStart(2,'0')}:00`);
+const HOURS = Array.from({length:11}, (_,i) => {
+  const totalMins = 8*60 + i*90;
+  const h = String(Math.floor(totalMins/60)).padStart(2,'0');
+  const m = String(totalMins%60).padStart(2,'0');
+  return `${h}:${m}`;
+});
 const DAYS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 function getWeekDates(offset = 0) {
@@ -414,9 +419,10 @@ export default function ClubAdminPage() {
     try {
       setSaving(true);
       const {court, date, hour} = slotModal;
-      const [h] = hour.split(':');
-      const endH = String(Number(h) + Math.round(slotForm.duration/60)).padStart(2,'0');
-      const endTime = `${endH}:00`;
+      const [hStr, mStr] = hour.split(':');
+      const startMins = parseInt(hStr)*60 + parseInt(mStr||0);
+      const endMins = startMins + 90;
+      const endTime = `${String(Math.floor(endMins/60)).padStart(2,'0')}:${String(endMins%60).padStart(2,'0')}:00`;
       const {data, error} = await supabase.from('court_slots').insert({
         club_id: clubAdmin.club_id,
         court_id: court.id,
@@ -505,7 +511,7 @@ export default function ClubAdminPage() {
             court_id: court.id,
             date: dateToISO(date),
             start_time: hour,
-            end_time: `${String(Number(h)+1).padStart(2,'0')}:00`,
+            end_time: (()=>{ const sm=parseInt(h)*60+parseInt(hour.split(':')[1]||0)+90; return `${String(Math.floor(sm/60)).padStart(2,'0')}:${String(sm%60).padStart(2,'0')}:00`; })(),
             price,
             status: 'available',
             source: 'gorila',
