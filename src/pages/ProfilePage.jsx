@@ -14,13 +14,33 @@ function initials(name = "") {
 
 /* ─── Badges ─── */
 const ALL_BADGES = [
-  { key: "first_match",    label: "Primer Partido",    emoji: "🎾", desc: "Jugaste tu primer partido",           check: (s) => s.matches_played >= 1 },
-  { key: "five_matches",   label: "5 Partidos",        emoji: "🔥", desc: "Has jugado 5 partidos",              check: (s) => s.matches_played >= 5 },
-  { key: "ten_matches",    label: "Veterano",          emoji: "🦍", desc: "Has jugado 10 partidos",             check: (s) => s.matches_played >= 10 },
-  { key: "twenty_matches", label: "Gorila Pro",        emoji: "👑", desc: "Has jugado 20 partidos",             check: (s) => s.matches_played >= 20 },
-  { key: "clean_sheet",    label: "Tarjeta Limpia",    emoji: "✅", desc: "0 tarjetas rojas",                   check: (s) => s.matches_played >= 3 && s.red_cards === 0 },
-  { key: "top_rated",      label: "Top Valorado",      emoji: "⭐", desc: "Valoración media ≥ 4.5",            check: (s) => s.avg_rating >= 4.5 && s.rating_count >= 3 },
-  { key: "social",         label: "Sociable",          emoji: "🤝", desc: "Recibiste 5 valoraciones",           check: (s) => s.rating_count >= 5 },
+  // Partidos jugados
+  { key: "first_match",     label: "Primer Saque",     emoji: "🎾", desc: "Jugaste tu primer partido",          check: s => s.matches_played >= 1 },
+  { key: "five_matches",    label: "En Racha",         emoji: "🔥", desc: "Has jugado 5 partidos",             check: s => s.matches_played >= 5 },
+  { key: "ten_matches",     label: "Veterano",         emoji: "🦍", desc: "Has jugado 10 partidos",            check: s => s.matches_played >= 10 },
+  { key: "twenty_matches",  label: "Gorila Pro",       emoji: "👑", desc: "Has jugado 20 partidos",            check: s => s.matches_played >= 20 },
+  { key: "fifty_matches",   label: "Leyenda Gorila",   emoji: "🏆", desc: "Has jugado 50 partidos",            check: s => s.matches_played >= 50 },
+  { key: "hundred_matches", label: "100 Partidos",     emoji: "💯", desc: "100 partidos jugados",              check: s => s.matches_played >= 100 },
+  // Fair play
+  { key: "clean_sheet",     label: "Tarjeta Limpia",   emoji: "✅", desc: "0 tarjetas rojas con 3+ partidos",  check: s => s.matches_played >= 3 && s.red_cards === 0 },
+  { key: "fair_play_king",  label: "Fair Play",        emoji: "🤝", desc: "0 tarjetas rojas con 20+ partidos", check: s => s.matches_played >= 20 && s.red_cards === 0 },
+  // Valoraciones
+  { key: "top_rated",       label: "Top Valorado",     emoji: "⭐", desc: "Valoración media ≥ 4.5",           check: s => s.avg_rating >= 4.5 && s.rating_count >= 3 },
+  { key: "perfect_score",   label: "Perfecto",         emoji: "💎", desc: "Valoración media 5.0",             check: s => s.avg_rating >= 5.0 && s.rating_count >= 5 },
+  { key: "social",          label: "Sociable",         emoji: "😄", desc: "Recibiste 10 valoraciones",         check: s => s.rating_count >= 10 },
+  { key: "influencer",      label: "Influencer",       emoji: "📣", desc: "Recibiste 25 valoraciones",         check: s => s.rating_count >= 25 },
+  // Organización
+  { key: "organizer",       label: "Organizador",      emoji: "📋", desc: "Creaste 5 partidos",               check: s => s.created_count >= 5 },
+  { key: "super_organizer", label: "Super Org.",       emoji: "🗓️", desc: "Creaste 20 partidos",              check: s => s.created_count >= 20 },
+  // SOS
+  { key: "sos_hero",        label: "Héroe SOS",        emoji: "🆘", desc: "Respondiste a un SOS",             check: s => s.sos_count >= 1 },
+  { key: "sos_legend",      label: "Leyenda SOS",      emoji: "🚨", desc: "Respondiste a 5 SOS",              check: s => s.sos_count >= 5 },
+  // Clubs
+  { key: "explorer",        label: "Explorador",       emoji: "🗺️", desc: "Jugaste en 3 clubs distintos",     check: s => s.clubs_count >= 3 },
+  { key: "globetrotter",    label: "Trotamundos",      emoji: "✈️", desc: "Jugaste en 10 clubs distintos",    check: s => s.clubs_count >= 10 },
+  // Reservas
+  { key: "booker",          label: "Reservón",         emoji: "📅", desc: "Hiciste tu primera reserva",       check: s => s.bookings_count >= 1 },
+  { key: "regular",         label: "Regular",          emoji: "🏠", desc: "10 reservas en el mismo club",     check: s => s.same_club_bookings >= 10 },
 ];
 
 function computeBadges(stats) {
@@ -71,6 +91,41 @@ export default function ProfilePage() {
   const shownAvatar = (form.avatar_url || "").trim() || defaultAvatarUrl;
   const badges = useMemo(() => computeBadges(stats), [stats]);
   const earnedBadges = badges.filter(b => b.earned);
+
+  /* ─── Load extra stats para badges ─── */
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    loadExtraStats(session.user.id);
+  }, [session?.user?.id]);
+
+  async function loadExtraStats(userId) {
+    try {
+      // Clubs distintos
+      const {data: clubMatches} = await supabase.from('match_players')
+        .select('matches(club_id)').eq('player_uuid', userId);
+      const uniqueClubs = new Set((clubMatches||[]).map(r=>r.matches?.club_id).filter(Boolean));
+
+      // Reservas
+      const {data: bookings} = await supabase.from('court_bookings')
+        .select('club_id').eq('user_id', userId);
+      const clubBookingCounts = {};
+      (bookings||[]).forEach(b=>{ clubBookingCounts[b.club_id]=(clubBookingCounts[b.club_id]||0)+1; });
+      const maxSameClub = Math.max(...Object.values(clubBookingCounts), 0);
+
+      // Partidos creados
+      const {data: created} = await supabase.from('matches')
+        .select('id', {count:'exact'}).eq('created_by_user', userId);
+
+      setStats(prev => ({
+        ...prev,
+        clubs_count: uniqueClubs.size,
+        bookings_count: (bookings||[]).length,
+        same_club_bookings: maxSameClub,
+        created_count: (created||[]).length,
+        sos_count: 0, // TODO: cuando se implemente SOS tracking
+      }));
+    } catch(e) { console.error(e); }
+  }
 
   /* ─── Load stats + ratings ─── */
   async function loadStats(uid) {
