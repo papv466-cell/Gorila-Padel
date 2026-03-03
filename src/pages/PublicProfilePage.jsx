@@ -83,9 +83,9 @@ export default function PublicProfilePage() {
       const [profRes, createdRes, playedRes, matchesRes, ratingsRes] = await Promise.allSettled([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.from('matches').select('*', { count: 'exact', head: true }).eq('created_by_user', userId),
-        supabase.from('join_requests').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'approved'),
-        supabase.from('matches').select('*, join_requests(user_id)').eq('created_by_user', userId).gte('start_at', new Date().toISOString()).order('start_at').limit(5),
-        supabase.from('player_ratings').select('*, rater:profiles!player_ratings_rater_id_fkey(name, handle, avatar_url)').eq('rated_user_id', userId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('match_players').select('*', { count: 'exact', head: true }).eq('player_uuid', userId),
+        supabase.from('matches').select('*, match_players(player_uuid)').eq('created_by_user', userId).gte('start_at', new Date().toISOString()).order('start_at').limit(5),
+        supabase.from('player_ratings').select('*, rater:profiles!player_ratings_from_user_id_fkey(name, handle, avatar_url)').eq('to_user_id', userId).order('created_at', { ascending: false }).limit(10),
       ]);
 
       if (profRes.status === 'fulfilled') setUser(profRes.value.data);
@@ -102,7 +102,7 @@ export default function PublicProfilePage() {
 
       if (matchesRes.status === 'fulfilled') {
         const matches = matchesRes.value.data || [];
-        setActiveMatches(matches.filter(m => (m.join_requests?.length || 0) < 4));
+        setActiveMatches(matches.filter(m => (m.match_players?.length || 0) < 4));
       }
     } catch (err) {
       console.error(err);
