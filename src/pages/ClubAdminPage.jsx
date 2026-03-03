@@ -376,7 +376,7 @@ export default function ClubAdminPage() {
       if (existing.status === 'booked') return;
       if (window.confirm(`¿Eliminar slot ${hour} del ${dateToISO(date)}?`)) {
         await supabase.from('court_slots').delete().eq('id', existing.id);
-        setSlots(prev => prev.filter(s => s.id !== existing.id));
+        await loadSlots(clubAdmin.club_id);
       }
       return;
     }
@@ -401,7 +401,7 @@ export default function ClubAdminPage() {
         price: slotForm.status === 'blocked' ? 0 : Number(slotForm.price)||0,
         status: slotForm.status,
         source: 'gorila',
-        block_reason: slotForm.status === 'blocked' ? (slotForm.block_reason||'Bloqueado') : null,
+        block_reason: slotForm.status === 'blocked' ? ((slotForm.block_reason||'').trim()||'Bloqueado') : null,
       }).select().single();
       if (error) throw error;
       setSlots(prev => [...prev, data]);
@@ -1325,7 +1325,7 @@ export default function ClubAdminPage() {
               )}
 
               <div style={{display:'flex',gap:8,marginTop:4}}>
-                <button onClick={createSlot} disabled={saving||(slotForm.status==='blocked'&&!slotForm.block_reason.trim())}
+                <button onClick={createSlot} disabled={saving||(slotForm.status==='blocked'&&!(slotForm.block_reason||'').trim())}
                   style={{...S.btn(slotForm.status==='blocked'?'red':'green'),flex:1,
                     opacity:saving||(slotForm.status==='blocked'&&!slotForm.block_reason.trim())?0.5:1}}>
                   {saving?'Guardando…':slotForm.status==='blocked'?'🚫 Bloquear slot':'✅ Publicar slot'}
