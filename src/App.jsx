@@ -31,6 +31,7 @@ import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
 import LeaguePage from "./pages/LeaguePage";
 import CourtCheckoutPage from "./pages/CourtCheckoutPage";
+import OnboardingModal from "./components/OnboardingModal";
 import ClubPage from "./pages/ClubPage";
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -73,6 +74,22 @@ async function sonarGorila() {
 }
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingSession, setOnboardingSession] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        // Verificar si es nuevo usuario
+        const { data: profile } = await supabase.from("profiles")
+          .select("onboarding_done").eq("id", session.user.id).maybeSingle();
+        if (profile && !profile.onboarding_done) {
+          setOnboardingSession(session);
+          setShowOnboarding(true);
+        }
+      }
+    });
+  }, []);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -328,5 +345,11 @@ export default function App() {
         }}
       />
     </div>
+    {showOnboarding && onboardingSession && (
+      <OnboardingModal
+        session={onboardingSession}
+        onClose={() => { setShowOnboarding(false); setOnboardingSession(null); }}
+      />
+    )}
   );
 }
