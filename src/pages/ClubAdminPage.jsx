@@ -590,7 +590,7 @@ export default function ClubAdminPage() {
           <div style={{padding:'10px 12px', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
             <button onClick={()=>setWeekOffset(w=>w-1)} style={{...S.btn(''), padding:'6px 12px', fontSize:16}}>‹</button>
             <div style={{fontSize:13, fontWeight:800, color:'#fff'}}>
-              {weekDates[0].toLocaleDateString('es',{day:'numeric',month:'short'})} — {weekDates[6].toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}
+              {weekDates[0].toLocaleDateString('es',{day:'numeric',month:'short'})} — {weekDates[weekDates.length-1].toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}
             </div>
             <button onClick={()=>setWeekOffset(w=>w+1)} style={{...S.btn(''), padding:'6px 12px', fontSize:16}}>›</button>
           </div>
