@@ -1,5 +1,5 @@
 // src/pages/ClubAdminPage.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
@@ -89,7 +89,9 @@ export default function ClubAdminPage() {
   const [bulkAction, setBulkAction] = useState(null); // 'delete' | 'price' | 'block'
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkBlockReason, setBulkBlockReason] = useState('');
-  const [calDays, setCalDays] = useState(7); // días visibles en calendario
+  const [calDays, setCalDays] = useState(7);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStarted = useRef(false);
   const [bonos, setBonos] = useState([]);
   const [bonoForm, setBonoForm] = useState({nombre:'', tipo:'horas', horas_incluidas:10, precio_cents:1500, duracion_dias:30, activo:true});
   const [showNewBono, setShowNewBono] = useState(false);
@@ -692,8 +694,10 @@ export default function ClubAdminPage() {
 
           {/* Grid calendario */}
           {activeCourt ? (
-            <div style={{overflowX:'auto', padding:'0 0 20px'}}>
-              <div style={{minWidth:340}}>
+            <div style={{overflowX:'auto', padding:'0 0 20px'}}
+              onMouseUp={()=>{ dragStarted.current=false; setTimeout(()=>setIsDragging(false),50); }}
+              onMouseLeave={()=>{ dragStarted.current=false; setTimeout(()=>setIsDragging(false),50); }}>
+              <div style={{minWidth:340, userSelect:'none'}}>
                 {/* Header días */}
                 <div style={{display:'grid', gridTemplateColumns:'48px repeat(7,1fr)', borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
                   <div/>
@@ -716,14 +720,41 @@ export default function ClubAdminPage() {
                       const isPast = date < new Date() && dateToISO(date) !== dateToISO(new Date());
                       const colors = slot ? STATUS_COLORS[slot.source==='playtomic'?'playtomic':slot.status] : null;
                       return (
-                        <div key={di} onClick={()=>!isPast && handleCellClick(activeCourt, date, hour)}
+                        <div key={di}
+                          onClick={()=>{ if(!isDragging) handleCellClick(activeCourt, date, hour); }}
+                          onMouseDown={()=>{
+                            if(!selectMode||!slot||slot.status==='booked') return;
+                            dragStarted.current=true; setIsDragging(false);
+                            setSelectedSlots(prev=>prev.includes(slot.id)?prev.filter(x=>x!==slot.id):[...prev,slot.id]);
+                          }}
+                          onMouseEnter={()=>{
+                            if(!dragStarted.current||!selectMode||!slot||slot.status==='booked') return;
+                            setIsDragging(true);
+                            setSelectedSlots(prev=>prev.includes(slot.id)?prev:[...prev,slot.id]);
+                          }}
+                          onMouseUp={()=>{ dragStarted.current=false; setTimeout(()=>setIsDragging(false),50); }}
+                          onTouchStart={()=>{
+                            if(!selectMode||!slot||slot.status==='booked') return;
+                            dragStarted.current=true;
+                            setSelectedSlots(prev=>prev.includes(slot.id)?prev.filter(x=>x!==slot.id):[...prev,slot.id]);
+                          }}
+                          onTouchMove={e=>{
+                            if(!dragStarted.current||!selectMode) return;
+                            const touch = e.touches[0];
+                            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                            const slotId = el?.dataset?.slotid;
+                            if(slotId) setSelectedSlots(prev=>prev.includes(slotId)?prev:[...prev,slotId]);
+                          }}
+                          data-slotid={slot?.id||''}
                           style={{
-                            margin:'1px', borderRadius:4, minHeight:36, cursor:isPast?'default':selectMode&&slot&&slot.status!=='booked'?'cell':'pointer',
-                            background: slot && selectedSlots.includes(slot.id) ? 'rgba(59,130,246,0.3)' : slot?colors.bg:isPast?'rgba(255,255,255,0.01)':'rgba(255,255,255,0.02)',
+                            margin:'1px', borderRadius:4, minHeight:36,
+                            cursor:isPast?'default':selectMode&&slot&&slot.status!=='booked'?'crosshair':'pointer',
+                            background: slot && selectedSlots.includes(slot.id) ? 'rgba(59,130,246,0.35)' : slot?colors.bg:isPast?'rgba(255,255,255,0.01)':'rgba(255,255,255,0.02)',
                             border: slot && selectedSlots.includes(slot.id) ? '2px solid #60a5fa' : slot?`1px solid ${colors.border}`:'1px solid transparent',
                             display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                            transition:'all .15s',
-                            outline: selectMode && slot && slot.status!=='booked' ? '1px dashed rgba(96,165,250,0.3)' : 'none',
+                            transition:'background .1s, border .1s',
+                            outline: selectMode && slot && slot.status!=='booked' ? '1px dashed rgba(96,165,250,0.2)' : 'none',
+                            userSelect:'none',
                           }}>
                           {slot && (
                             <>
