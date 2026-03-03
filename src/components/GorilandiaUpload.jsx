@@ -1,12 +1,19 @@
 // src/components/GorilandiaUpload.jsx
 import { useState } from 'react';
 
-export default function GorilandiaUpload({ onClose, onSubmit, uploading }) {
+export default function GorilandiaUpload({ onClose, onSubmit, uploading, matchData, matchPlayers }) {
+  // Si viene de post-partido, prerellenar caption con resultado
+  const defaultCaption = matchData
+    ? `🏓 Partido en ${matchData.club_name||'el club'} · ${String(matchData.start_at||'').slice(11,16)}${matchData.result ? ` · ${matchData.result}` : ''} 🦍`
+    : '';
   const [files, setFiles] = useState([]);
-  const [caption, setCaption] = useState('');
+  const [caption, setCaption] = useState(defaultCaption);
   const [type, setType] = useState('photo');
   const [previews, setPreviews] = useState([]);
   const [currentPreview, setCurrentPreview] = useState(0);
+  const [taggedPlayers, setTaggedPlayers] = useState(
+    matchPlayers ? matchPlayers.map(p=>p.player_uuid) : []
+  );
 
   function handleFileChange(e) {
     const selected = Array.from(e.target.files);
@@ -28,7 +35,7 @@ export default function GorilandiaUpload({ onClose, onSubmit, uploading }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (files.length === 0) { alert('Selecciona al menos un archivo'); return; }
-    onSubmit({ files, caption, type });
+    onSubmit({ files, caption, type, taggedPlayers, matchId: matchData?.id });
   }
 
   return (
@@ -46,6 +53,39 @@ export default function GorilandiaUpload({ onClose, onSubmit, uploading }) {
         </div>
 
         <div style={{ padding: '0 16px 24px' }}>
+          {/* Partido etiquetado */}
+          {matchData && (
+            <div style={{marginBottom:14,padding:12,borderRadius:12,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.2)'}}>
+              <div style={{fontSize:11,fontWeight:800,color:'#74B800',marginBottom:8}}>🏓 PARTIDO ETIQUETADO</div>
+              <div style={{fontSize:13,color:'#fff',fontWeight:800}}>{matchData.club_name}</div>
+              <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>{String(matchData.start_at||'').slice(0,10)} · {String(matchData.start_at||'').slice(11,16)}</div>
+              {matchPlayers?.length > 0 && (
+                <div style={{marginTop:10}}>
+                  <div style={{fontSize:10,fontWeight:800,color:'rgba(255,255,255,0.4)',marginBottom:6}}>JUGADORES</div>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {matchPlayers.map(p=>{
+                      const tagged = taggedPlayers.includes(p.player_uuid);
+                      return (
+                        <div key={p.player_uuid} onClick={()=>setTaggedPlayers(prev=>tagged?prev.filter(x=>x!==p.player_uuid):[...prev,p.player_uuid])}
+                          style={{display:'flex',alignItems:'center',gap:6,padding:'5px 10px',borderRadius:20,cursor:'pointer',
+                            background:tagged?'rgba(116,184,0,0.2)':'rgba(255,255,255,0.06)',
+                            border:tagged?'1px solid #74B800':'1px solid rgba(255,255,255,0.1)'}}>
+                          {p.avatar_url
+                            ? <img src={p.avatar_url} style={{width:20,height:20,borderRadius:999,objectFit:'cover'}} alt=""/>
+                            : <span style={{fontSize:14}}>🦍</span>
+                          }
+                          <span style={{fontSize:11,fontWeight:800,color:tagged?'#74B800':'rgba(255,255,255,0.6)'}}>
+                            {tagged?'✓ ':''}{p.name||p.handle||'Jugador'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Tipo */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
             {[{ key: 'photo', label: '📷 Foto' }, { key: 'video', label: '🎥 Video' }].map(t => (

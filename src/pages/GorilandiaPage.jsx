@@ -5,6 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { getFeed, createPost, uploadMedia } from '../services/gorilandia';
 import GorilandiaPost from '../components/GorilandiaPost';
 import GorilandiaUpload from '../components/GorilandiaUpload';
+import { useSearchParams } from 'react-router-dom';
 
 export default function GorilandiaPage() {
   const navigate = useNavigate();
@@ -12,12 +13,73 @@ export default function GorilandiaPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [postMatchData, setPostMatchData] = useState(null);
+  const [postMatchPlayers, setPostMatchPlayers] = useState([]);
+  const [searchParams] = useSearchParams();
   const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const newpost = searchParams.get('newpost');
+    const matchId = searchParams.get('matchId');
+    if (newpost === '1' && matchId) {
+      // Cargar datos del partido para prerellenar
+      supabase.from('matches').select('id, club_name, start_at, duration_min').eq('id', matchId).maybeSingle()
+        .then(({data: match}) => {
+          if (!match) return;
+          // Cargar resultado si existe
+          supabase.from('match_results').select('sets, winner_side').eq('match_id', matchId).maybeSingle()
+            .then(({data: result}) => {
+              const resultStr = result?.sets ? result.sets.map(s=>`${s.a}-${s.b}`).join(' / ') : '';
+              setPostMatchData({...match, result: resultStr});
+            });
+          // Cargar jugadores
+          supabase.from('match_players').select('player_uuid, profiles_public(name, handle, avatar_url)').eq('match_id', matchId)
+            .then(({data: players}) => {
+              setPostMatchPlayers((players||[]).map(p=>({
+                player_uuid: p.player_uuid,
+                name: p.profiles_public?.name,
+                handle: p.profiles_public?.handle,
+                avatar_url: p.profiles_public?.avatar_url,
+              })));
+            });
+          setShowUpload(true);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data?.session ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(s));
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const newpost = searchParams.get('newpost');
+    const matchId = searchParams.get('matchId');
+    if (newpost === '1' && matchId) {
+      // Cargar datos del partido para prerellenar
+      supabase.from('matches').select('id, club_name, start_at, duration_min').eq('id', matchId).maybeSingle()
+        .then(({data: match}) => {
+          if (!match) return;
+          // Cargar resultado si existe
+          supabase.from('match_results').select('sets, winner_side').eq('match_id', matchId).maybeSingle()
+            .then(({data: result}) => {
+              const resultStr = result?.sets ? result.sets.map(s=>`${s.a}-${s.b}`).join(' / ') : '';
+              setPostMatchData({...match, result: resultStr});
+            });
+          // Cargar jugadores
+          supabase.from('match_players').select('player_uuid, profiles_public(name, handle, avatar_url)').eq('match_id', matchId)
+            .then(({data: players}) => {
+              setPostMatchPlayers((players||[]).map(p=>({
+                player_uuid: p.player_uuid,
+                name: p.profiles_public?.name,
+                handle: p.profiles_public?.handle,
+                avatar_url: p.profiles_public?.avatar_url,
+              })));
+            });
+          setShowUpload(true);
+        });
+    }
   }, []);
 
   useEffect(() => { loadFeed(); }, []);
@@ -100,7 +162,13 @@ export default function GorilandiaPage() {
       </div>
 
       {showUpload && (
-        <GorilandiaUpload onClose={() => setShowUpload(false)} onSubmit={handleCreatePost} uploading={uploading} />
+        <GorilandiaUpload 
+          onClose={() => { setShowUpload(false); setPostMatchData(null); setPostMatchPlayers([]); }} 
+          onSubmit={handleCreatePost} 
+          uploading={uploading}
+          matchData={postMatchData}
+          matchPlayers={postMatchPlayers}
+        />
       )}
     </div>
   );
