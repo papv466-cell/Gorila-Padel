@@ -36,13 +36,13 @@ export default function GorilandiaPage() {
               setPostMatchData({...match, result: resultStr});
             });
           // Cargar jugadores
-          supabase.from('match_players').select('player_uuid, profiles_public(name, handle, avatar_url)').eq('match_id', matchId)
+          supabase.from('match_players').select('player_uuid').eq('match_id', matchId)
             .then(({data: players}) => {
               setPostMatchPlayers((players||[]).map(p=>({
                 player_uuid: p.player_uuid,
-                name: p.profiles_public?.name,
-                handle: p.profiles_public?.handle,
-                avatar_url: p.profiles_public?.avatar_url,
+                name: null,
+                handle: null,
+                avatar_url: null,
               })));
             });
           setShowUpload(true);
@@ -71,13 +71,13 @@ export default function GorilandiaPage() {
               setPostMatchData({...match, result: resultStr});
             });
           // Cargar jugadores
-          supabase.from('match_players').select('player_uuid, profiles_public(name, handle, avatar_url)').eq('match_id', matchId)
+          supabase.from('match_players').select('player_uuid').eq('match_id', matchId)
             .then(({data: players}) => {
               setPostMatchPlayers((players||[]).map(p=>({
                 player_uuid: p.player_uuid,
-                name: p.profiles_public?.name,
-                handle: p.profiles_public?.handle,
-                avatar_url: p.profiles_public?.avatar_url,
+                name: null,
+                handle: null,
+                avatar_url: null,
               })));
             });
           setShowUpload(true);
@@ -93,7 +93,7 @@ export default function GorilandiaPage() {
       // Últimos partidos jugados por cualquier jugador
       const {data: recentMatches} = await supabase
         .from('match_players')
-        .select('match_id, player_uuid, matches(id, club_name, start_at, level, duration_min), profiles_public(name, handle, avatar_url)')
+        .select('match_id, player_uuid, matches(id, club_name, start_at, level, duration_min)')
         .order('created_at', {ascending: false})
         .limit(40);
 
@@ -112,7 +112,7 @@ export default function GorilandiaPage() {
         items.push({
           type: 'match_played',
           id: `mp_${r.match_id}_${r.player_uuid}`,
-          player: r.profiles_public,
+          player: null,
           match: r.matches,
           created_at: r.matches.start_at,
         });
