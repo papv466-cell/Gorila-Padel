@@ -85,7 +85,7 @@ export default function PublicProfilePage() {
         supabase.from('matches').select('*', { count: 'exact', head: true }).eq('created_by_user', userId),
         supabase.from('match_players').select('*', { count: 'exact', head: true }).eq('player_uuid', userId),
         supabase.from('matches').select('*, match_players(player_uuid)').eq('created_by_user', userId).gte('start_at', new Date().toISOString()).order('start_at').limit(5),
-        supabase.from('player_ratings').select('*, rater:profiles!player_ratings_from_user_id_fkey(name, handle, avatar_url)').eq('to_user_id', userId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('player_ratings').select('*').eq('to_user_id', userId).order('created_at', { ascending: false }).limit(10),
       ]);
 
       if (profRes.status === 'fulfilled') setUser(profRes.value.data);
