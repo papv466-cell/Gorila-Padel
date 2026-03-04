@@ -109,7 +109,7 @@ export default function MatchesPage() {
   const [searchParams] = useSearchParams();
   const normStatus = s => String(s||"").trim().toLowerCase();
   const aliveRef = useRef(true);
-  useEffect(() => { aliveRef.current=true; return ()=>{ aliveRef.current=false; }; }, []);
+  useEffect(() => { aliveRef.current=true; }, []);
 
   const todayISO = toDateInputValue(new Date());
   const qs = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -291,7 +291,7 @@ export default function MatchesPage() {
     if (!session) return;
     const ch = supabase.channel("matches-changes").on("postgres_changes",{event:"*",schema:"public",table:"matches"},()=>load()).subscribe();
     return () => supabase.removeChannel(ch);
-  }, [session]);
+  }, [session?.user?.id]); // eslint-disable-line
   useEffect(() => {
     const u1 = subscribeMatchesRealtime(p=>{ const t=p?.eventType,r=p?.new||p?.old; if(!r?.id) return; if(t==="DELETE") setItems(prev=>removeMatch(prev,r.id)); else setItems(prev=>upsertMatchSorted(prev,r)); });
     const u2 = subscribeJoinRequestsRealtime(()=>load());

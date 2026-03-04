@@ -104,6 +104,28 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
+  // ✅ Refrescar sesión cuando la página vuelve a estar visible
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          const { data, error } = await supabase.auth.getSession();
+          if (!error && data.session) {
+            setSession(data.session);
+          } else if (!data.session) {
+            // Intentar refresh
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            if (refreshed.session) {
+              setSession(refreshed.session);
+            }
+          }
+        } catch {}
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // ✅ Sesión Supabase
   useEffect(() => {
     let alive = true;

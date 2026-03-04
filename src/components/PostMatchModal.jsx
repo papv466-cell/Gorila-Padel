@@ -1,5 +1,5 @@
 // src/components/PostMatchModal.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
@@ -29,6 +29,103 @@ export default function PostMatchModal({ match, players, session, onClose }) {
   const [saving, setSaving] = useState(false);
 
   const otherPlayers = (players || []).filter(p => p.player_uuid !== session?.user?.id);
+  const canvasRef = useRef(null);
+
+  const generarYCompartir = useCallback(async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+
+      // Fondo negro
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      // Gradiente verde en la parte superior
+      const grad = ctx.createLinearGradient(0, 0, 1080, 600);
+      grad.addColorStop(0, 'rgba(116,184,0,0.3)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 600);
+
+      // Logo texto
+      ctx.fillStyle = '#74B800';
+      ctx.font = 'bold 52px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Gorila Pádel 🦍', 540, 140);
+
+      // Club y fecha
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '36px Arial';
+      ctx.fillText(match?.club_name || 'Pádel', 540, 210);
+
+      const fecha = match?.start_at ? new Date(match.start_at).toLocaleDateString('es-ES', {day:'numeric',month:'long'}) : '';
+      ctx.fillText(fecha, 540, 260);
+
+      // Marcador
+      const setsValidos = sets.filter(s => s.a !== '' || s.b !== '');
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 120px Arial';
+      const marcador = setsValidos.map(s => `${s.a}-${s.b}`).join('  ');
+      ctx.fillText(marcador || '?-?', 540, 480);
+
+      // Ganador
+      const ganador = winner || calcWinner();
+      if (ganador) {
+        ctx.fillStyle = '#74B800';
+        ctx.font = 'bold 48px Arial';
+        ctx.fillText(ganador === 'a' ? '🏆 ¡Victoria!' : '💪 Buen partido', 540, 580);
+      }
+
+      // Línea separadora
+      ctx.strokeStyle = 'rgba(116,184,0,0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(100, 640);
+      ctx.lineTo(980, 640);
+      ctx.stroke();
+
+      // Jugadores
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '34px Arial';
+      ctx.fillText('👥 ' + (players||[]).map(p=>p.profiles_public?.name||p.handle||'Jugador').join(' · '), 540, 720);
+
+      // Nivel
+      ctx.fillStyle = 'rgba(116,184,0,0.8)';
+      ctx.font = 'bold 32px Arial';
+      ctx.fillText(`Nivel: ${match?.level || ''}`, 540, 790);
+
+      // Hashtags
+      ctx.fillStyle = 'rgba(116,184,0,0.6)';
+      ctx.font = '30px Arial';
+      ctx.fillText('#GorilaoPadel #PadelInclusivoSinLimites', 540, 1800);
+      ctx.fillText('gorilapadel.com', 540, 1860);
+
+      // Descargar o compartir
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'gorila-resultado.png', { type: 'image/png' });
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Mi partido en Gorila Pádel',
+            text: `Resultado: ${marcador} 🦍`,
+          });
+        } else {
+          // Fallback: descargar
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'gorila-resultado.png';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
+
+    } catch(e) {
+      console.error('Error generando imagen:', e);
+    }
+  }, [sets, winner, match, players]);
 
   function addSet() { if (sets.length < 3) setSets([...sets, { a: "", b: "" }]); }
 
@@ -211,12 +308,23 @@ export default function PostMatchModal({ match, players, session, onClose }) {
           </>
         )}
 
-        {/* STEP 4 — Gracias */}
+        {/* STEP 4 — Gracias + Compartir */}
         {step === 4 && (
           <div style={{textAlign:"center",padding:"20px 0"}}>
             <div style={{fontSize:60,marginBottom:12}}>🦍</div>
             <div style={{fontSize:22,fontWeight:900,color:"#74B800",marginBottom:8}}>¡Buen partido!</div>
             <div style={{fontSize:14,color:"rgba(255,255,255,0.5)",marginBottom:24}}>Tus valoraciones han sido enviadas</div>
+
+            {/* Compartir resultado */}
+            <div style={{padding:16,borderRadius:14,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:900,color:"#fff",marginBottom:4}}>📲 Comparte tu resultado</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:12}}>Genera una imagen para Instagram Stories</div>
+              <canvas ref={canvasRef} style={{display:"none"}} />
+              <button onClick={generarYCompartir} style={{...S.btn("green"),fontSize:13,marginBottom:8}}>
+                📸 Generar imagen para compartir
+              </button>
+            </div>
+
             <button onClick={onClose} style={S.btn("green")}>Cerrar</button>
           </div>
         )}
