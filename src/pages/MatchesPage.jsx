@@ -128,8 +128,26 @@ export default function MatchesPage() {
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   useEffect(() => {
-    supabase.auth.getSession().then(({data:{session}}) => { setSession(session); setAuthReady(true); });
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,s) => setSession(s));
+    supabase.auth.getSession().then(({data:{session:s}}) => {
+      setSession(s ?? null);
+      setAuthReady(true);
+    });
+    // No suscribirse a onAuthStateChange aqui — App.jsx ya lo gestiona globalmente
+    // Solo escuchar cambios de usuario diferente (login/logout)
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_event, s) => {
+      if (_event === 'SIGNED_OUT') { setSession(null); setAuthReady(true); return; }
+      if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
+        // Solo actualizar si es un usuario diferente
+        setSession(prev => {
+          if (prev?.user?.id && prev.user.id === s?.user?.id) return prev;
+          setAuthReady(true);
+          return s ?? null;
+        });
+        return;
+      }
+      setSession(s ?? null);
+      setAuthReady(true);
+    });
     return () => subscription.unsubscribe();
   }, []);
 

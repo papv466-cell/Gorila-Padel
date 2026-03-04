@@ -52,7 +52,7 @@ export default function GorilandiaPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data?.session ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(s));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s));
     return () => subscription.unsubscribe();
   }, []);
 

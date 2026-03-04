@@ -53,8 +53,11 @@ export default function HomePage() {
       else setLoading(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => {
-      setSession(s);
-      if (s?.user) loadAll(s.user);
+      setSession(prev => {
+        if (prev?.user?.id === s?.user?.id && prev?.user?.id) return prev;
+        if (s?.user) loadAll(s.user);
+        return s ?? null;
+      });
     });
     return () => subscription.unsubscribe();
   }, []);

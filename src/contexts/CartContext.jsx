@@ -1,5 +1,5 @@
 // src/contexts/CartContext.jsx
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 const CartContext = createContext(null);
@@ -8,21 +8,28 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const userIdRef = useRef(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      if (user) loadCart(user.id);
+      if (user) {
+        userIdRef.current = user.id;
+        setUser(user);
+        loadCart(user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user || null;
+      const currentId = currentUser?.id ?? null;
+
+      // Si es el mismo usuario, ignorar completamente
+      if (currentId && currentId === userIdRef.current) return;
+
+      userIdRef.current = currentId;
       setUser(currentUser);
-      if (currentUser) {
-        loadCart(currentUser.id);
-      } else {
-        setItems([]);
-      }
+      if (currentUser) loadCart(currentUser.id);
+      else setItems([]);
     });
 
     return () => subscription.unsubscribe();
@@ -69,7 +76,6 @@ export function CartProvider({ children }) {
     const { data: existing } = await supabase
       .from('store_cart').select('*')
       .eq('user_id', user.id).eq('product_id', productId).maybeSingle();
-
     if (existing) {
       const { error } = await supabase.from('store_cart')
         .update({ quantity: existing.quantity + quantity }).eq('id', existing.id);

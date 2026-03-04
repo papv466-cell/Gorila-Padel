@@ -54,14 +54,14 @@ export default function InclusiveMatchesPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const aliveRef = useRef(true);
-  useEffect(() => { aliveRef.current = true; return () => { aliveRef.current = false; }; }, []);
+  useEffect(() => { aliveRef.current = true; }, []);
 
   /* ─── Auth ─── */
   const [session, setSession] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setAuthReady(true); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(s));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s));
     return () => subscription.unsubscribe();
   }, []);
 

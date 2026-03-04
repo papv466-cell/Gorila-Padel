@@ -34,7 +34,7 @@ export default function Navbar({ showBack = false, onBack }) {
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s ?? null);
+      setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null));
     });
 
     return () => {
