@@ -232,7 +232,7 @@ export default function ProfilePage() {
       })();
     });
     return () => { alive = false; };
-  }, [navigate, toast]);
+  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Save ─── */
   async function save(payloadOverride = null) {
