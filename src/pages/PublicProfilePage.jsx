@@ -196,6 +196,11 @@ export default function PublicProfilePage() {
 
             {/* Badges */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+              {user.gorila_sin_limites && (
+                <div style={{ padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 900, background: 'linear-gradient(135deg,rgba(116,184,0,0.25),rgba(155,232,0,0.15))', color: '#9BE800', border: '1px solid rgba(116,184,0,0.5)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  🦍 Gorila Sin Límites
+                </div>
+              )}
               {user.level && (
                 <div style={{ padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 900, background: `${levelColor}20`, color: levelColor, border: `1px solid ${levelColor}40` }}>
                   🎾 {levelLabel}

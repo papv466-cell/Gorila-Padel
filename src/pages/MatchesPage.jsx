@@ -826,9 +826,11 @@ export default function MatchesPage() {
                         const player = leftTeam[idx];
                         const avatar = player?.avatar||player?.avatar_url;
                         const pid = player?.isCreator ? creatorId : player?.id;
+                        const gsl = pid ? rosterProfilesById?.[pid]?.gorila_sin_limites : false;
                         return (
-                          <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default"}} /> : <span style={{fontSize:28}}>🦍</span>}
+                          <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid #74B800":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"#74B800",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
                           </div>
                         );
                       })}
@@ -839,9 +841,11 @@ export default function MatchesPage() {
                         const player = rightTeam[idx];
                         const avatar = player?.avatar_url||player?.avatar;
                         const pid = player?.id;
+                        const gsl = pid ? rosterProfilesById?.[pid]?.gorila_sin_limites : false;
                         return (
-                          <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default"}} /> : <span style={{fontSize:28}}>🦍</span>}
+                          <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid #74B800":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"#74B800",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
                           </div>
                         );
                       })}
