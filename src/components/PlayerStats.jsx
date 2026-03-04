@@ -52,7 +52,7 @@ export default function PlayerStats({ userId, compact = false }) {
         supabase.from('profiles_public').select('matches_played, red_cards').eq('id', userId).maybeSingle(),
         supabase.from('player_ratings').select('rating, vibe, created_at, match_id').eq('to_user_id', userId).order('created_at', { ascending: false }),
         supabase.from('matches').select('id, club_name, start_at, level').eq('created_by_user', userId).order('start_at', { ascending: false }).limit(20),
-        supabase.from('join_requests').select('match_id, matches(id, club_name, start_at, level)').eq('user_id', userId).eq('status', 'approved').order('created_at', { ascending: false }).limit(20),
+        supabase.from('match_join_requests').select('match_id, matches(id, club_name, start_at, level)').eq('user_id', userId).eq('status', 'approved').order('created_at', { ascending: false }).limit(20),
       ]);
 
       const pub = pubRes.status === 'fulfilled' ? pubRes.value.data : null;
