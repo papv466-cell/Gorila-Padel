@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import PlayerStats from '../components/PlayerStats';
 
 const LEVEL_LABELS = { iniciacion: 'Iniciación', medio: 'Medio', avanzado: 'Avanzado', competicion: 'Competición' };
 const LEVEL_COLORS = { iniciacion: '#74B800', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6' };
