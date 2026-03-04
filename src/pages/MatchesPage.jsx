@@ -305,7 +305,7 @@ export default function MatchesPage() {
   useEffect(() => {
     const onPush = e => { const p=e?.detail||{}; const t=String(p.title||"Gorila Pádel"); const b=String(p.body||""); toast.success(b?`${t}: ${b}`:t); };
     if (typeof window!=="undefined") { window.addEventListener("gp:push",onPush); return ()=>window.removeEventListener("gp:push",onPush); }
-  }, [toast]);
+  }, []); // eslint-disable-line
 
   /* ─── Calendar ─── */
   const calendarDays = useMemo(() => {
