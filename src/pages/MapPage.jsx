@@ -162,10 +162,12 @@ export default function MapPage() {
         const { data: sessionData } = await supabase.auth.getSession();
         setSession(sessionData?.session||null);
         const rows = await fetchClubsFromGoogleSheet();
-        const { data: courts } = await supabase.from("private_courts").select("*");
-        setPrivateCourts(Array.isArray(courts) ? courts : []);
         if (!alive) return;
         setClubs(Array.isArray(rows) ? rows : []);
+        try {
+          const { data: courts } = await supabase.from("private_courts").select("*");
+          setPrivateCourts(Array.isArray(courts) ? courts : []);
+        } catch { setPrivateCourts([]); }
       } catch {
         if (!alive) return;
         setClubs([]);
