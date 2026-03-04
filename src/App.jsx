@@ -124,6 +124,10 @@ export default function App() {
       if (!alive) return;
       setSession(newSession ?? null);
       setSessionReady(true);
+      // Si el token expira y no puede refrescarse, redirigir al login
+      if (!newSession && _event === 'SIGNED_OUT') {
+        navigate('/login', { replace: true });
+      }
     });
 
     return () => {
