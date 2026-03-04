@@ -18,7 +18,7 @@ export async function getFeed(limit = 20, offset = 0) {
   const userIds = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
   const { data: users } = await supabase
     .from('profiles')
-    .select('id, email, name, avatar_url')
+    .select('id, name, avatar_url')
     .in('id', userIds);
 
   let usersMap = {};
@@ -30,7 +30,7 @@ export async function getFeed(limit = 20, offset = 0) {
     ...post,
     user: usersMap[post.user_id] || { 
       id: post.user_id, 
-      email: 'Usuario', 
+      handle: 'Usuario', 
       full_name: 'Usuario' 
     }
   }));
@@ -137,7 +137,7 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
           // Obtener nombre del que dio like
           const { data: likerProfile } = await supabase
             .from('profiles')
-            .select('name, email')
+            .select('name, handle')
             .eq('id', user.id)
             .single();
       
@@ -146,7 +146,7 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
       
           await notifySocialLike({
             postId,
-            likerName: likerProfile?.name || likerProfile?.email || 'Alguien',
+            likerName: likerProfile?.name || likerProfile?.handle || 'Alguien',
             userId: post.user_id
           });
           
@@ -172,13 +172,13 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
         // Obtener nombre del que dio like
         const { data: likerProfile } = await supabase
           .from('profiles')
-          .select('name, email')
+          .select('name, handle')
           .eq('id', user.id)
           .single();
 
         await notifySocialLike({
           postId,
-          likerName: likerProfile?.name || likerProfile?.email || 'Alguien',
+          likerName: likerProfile?.name || likerProfile?.handle || 'Alguien',
           userId: post.user_id
         });
       }
@@ -244,7 +244,7 @@ export async function getComments(postId) {
   const userIds = [...new Set(comments.map(c => c.user_id).filter(Boolean))];
   const { data: users } = await supabase
     .from('profiles')
-    .select('id, email, name, avatar_url')
+    .select('id, name, avatar_url')
     .in('id', userIds);
 
   let usersMap = {};
@@ -256,7 +256,7 @@ export async function getComments(postId) {
     ...comment,
     user: usersMap[comment.user_id] || {
       id: comment.user_id,
-      email: 'Usuario',
+      handle: 'Usuario',
       full_name: 'Usuario'
     }
   }));
@@ -292,13 +292,13 @@ export async function createComment(postId, text) {
       // Obtener nombre del comentarista
       const { data: commenterProfile } = await supabase
         .from('profiles')
-        .select('name, email')
+        .select('name, handle')
         .eq('id', user.id)
         .single();
 
       await notifySocialComment({
         postId,
-        commenterName: commenterProfile?.name || commenterProfile?.email || 'Alguien',
+        commenterName: commenterProfile?.name || commenterProfile?.handle || 'Alguien',
         comment: text.trim(),
         userId: post.user_id
       });
