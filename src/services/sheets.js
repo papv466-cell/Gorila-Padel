@@ -3,14 +3,10 @@
 const CACHE_KEY = 'gp:clubs';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas
 
-/**
- * Obtiene clubs desde Google Sheets
- */
 export async function fetchClubsFromGoogleSheet() {
   console.log('🌐 Cargando clubs desde servidor...');
   
   try {
-    // Intentar obtener del cache primero
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       console.log('📦 Encontré cache, verificando validez...');
@@ -27,7 +23,6 @@ export async function fetchClubsFromGoogleSheet() {
       console.log('📭 No hay cache, obteniendo datos frescos...');
     }
 
-    // Obtener datos frescos del servidor
     console.log('🔄 Llamando a /api/google-sheets...');
     const response = await fetch('/api/google-sheets');
     
@@ -40,12 +35,10 @@ export async function fetchClubsFromGoogleSheet() {
     const data = await response.json();
     console.log('📦 Datos recibidos:', data);
 
-    // Parsear los datos
     console.log('🔄 Parseando datos...');
     const clubs = parseSheetData(data);
     console.log('✅ Clubs parseados:', clubs.length);
 
-    // Guardar en cache
     if (clubs.length > 0) {
       localStorage.setItem(
         CACHE_KEY,
@@ -61,7 +54,6 @@ export async function fetchClubsFromGoogleSheet() {
     console.error('❌ Detalles del error:', error.message);
     console.error('❌ Stack:', error.stack);
     
-    // Intentar usar cache viejo si hay error
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       console.warn('⚠️ Usando cache antiguo como fallback');
@@ -73,24 +65,11 @@ export async function fetchClubsFromGoogleSheet() {
   }
 }
 
-/**
- * Parsea los datos de Google Sheets al formato de la app
- */
 function parseSheetData(data) {
   console.log('🔍 Parseando datos de Google Sheets...');
   
-  if (!data) {
-    console.error('❌ No hay data');
-    return [];
-  }
-  
-  if (!data.values) {
-    console.error('❌ data.values es undefined');
-    return [];
-  }
-  
-  if (data.values.length < 2) {
-    console.error('❌ No hay suficientes filas:', data.values.length);
+  if (!data || !data.values || data.values.length < 2) {
+    console.error('❌ Datos inválidos');
     return [];
   }
 
@@ -99,27 +78,29 @@ function parseSheetData(data) {
   console.log('📊 Número de filas:', rows.length);
 
   const clubs = rows
-    .map((row, index) => {
+    .map((row) => {
       const club = {};
       headers.forEach((header, i) => {
-        club[header] = row[i] || '';
+        const normalizedHeader = header
+          .toLowerCase()
+          .replace(/\s+/g, '')
+          .replace(/[áàâä]/g, 'a')
+          .replace(/[éèêë]/g, 'e')
+          .replace(/[íìîï]/g, 'i')
+          .replace(/[óòôö]/g, 'o')
+          .replace(/[úùûü]/g, 'u');
+        
+        club[normalizedHeader] = row[i] || '';
       });
       
-      // Convertir lat/lon a números
       if (club.lat) club.lat = parseFloat(club.lat);
       if (club.lon) club.lon = parseFloat(club.lon);
-      // Añadir alias para compatibilidad
       club.lng = club.lon;
+      club.urlimagen = club.urlimagen || club.imagen || '';
       
       return club;
     })
-    .filter(club => {
-      const isValid = club.name && club.lat && club.lon;
-      if (!isValid) {
-        console.warn('⚠️ Club sin datos completos:', club);
-      }
-      return isValid;
-    });
+    .filter(club => club.name && club.lat && club.lon);
 
   console.log('✅ Clubs válidos:', clubs.length);
   if (clubs.length > 0) {
@@ -128,15 +109,11 @@ function parseSheetData(data) {
   return clubs;
 }
 
-/**
- * Limpia el cache de clubs
- */
 export function clearClubsCache() {
   localStorage.removeItem(CACHE_KEY);
   console.log('🗑️ Cache de clubs eliminado');
 }
 
-// Exponer función globalmente para debugging
 if (typeof window !== 'undefined') {
   window.clearClubsCache = clearClubsCache;
 }
