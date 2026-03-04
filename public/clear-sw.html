@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Limpiando...</title></head>
+<body>
+<h1>🦍 Limpiando caché...</h1>
+<script>
+navigator.serviceWorker.getRegistrations().then(regs => {
+  regs.forEach(reg => reg.unregister());
+  caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+  setTimeout(() => {
+    alert('✅ Limpiado! Ahora refresca');
+    location.href = '/';
+  }, 2000);
+});
+</script>
+</body>
+</html>
+

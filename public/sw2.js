@@ -1,6 +1,6 @@
 // public/sw.js
 
-const SW_VERSION = "2.0.0";
+const SW_VERSION = "3.0.0";
 const CACHE_NAME = "gp-cache-" + SW_VERSION;
 
 self.addEventListener("install", (e) => {
