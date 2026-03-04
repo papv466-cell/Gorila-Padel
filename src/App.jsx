@@ -108,8 +108,14 @@ export default function App() {
   useEffect(() => {
     let alive = true;
 
+    // Timeout de seguridad: si en 5s no responde Supabase, salimos del splash
+    const safetyTimer = setTimeout(() => {
+      if (alive && !sessionReady) setSessionReady(true);
+    }, 5000);
+
     supabase.auth.getSession().then(({ data, error }) => {
       if (!alive) return;
+      clearTimeout(safetyTimer);
       if (!error) setSession(data.session ?? null);
       setSessionReady(true);
     });
