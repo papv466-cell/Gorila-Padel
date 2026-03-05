@@ -479,14 +479,12 @@ export default function ProfilePage() {
                 </button>
               </div>
             )}
-            {!isClubAdmin && (
-              <div style={{marginTop:14}}>
-                <button onClick={()=>navigate("/registrar-club")}
-                  style={{width:"100%",padding:"12px",borderRadius:12,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.25)",color:"rgba(116,184,0,0.8)",fontWeight:900,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  🏟️ ¿Tienes un club? Regístralo gratis
-                </button>
-              </div>
-            )}
+            <div style={{marginTop:8}}>
+              <button onClick={()=>navigate("/registrar-club")}
+                style={{width:"100%",padding:"10px",borderRadius:12,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.25)",color:"rgba(116,184,0,0.8)",fontWeight:900,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                🏟️ ¿Tienes un club? Regístralo gratis
+              </button>
+            </div>
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <button className="pfBtn pfBtnPrimary" onClick={() => save()} disabled={saving || uploading}>
                 {saving ? "Guardando…" : "Guardar"}
