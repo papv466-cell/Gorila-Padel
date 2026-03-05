@@ -95,8 +95,7 @@ export default function ClubRegisterPage() {
     const t = setTimeout(async () => {
       try {
         setAddressSearching(true);
-        const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
-        const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=establishment|geocode&components=country:es&language=es&key=${key}`);
+        const res = await fetch(`/api/places?input=${encodeURIComponent(q)}`);
         const data = await res.json();
         setAddressSuggestions(data.predictions || []);
       } catch {}
@@ -107,8 +106,7 @@ export default function ClubRegisterPage() {
 
   async function pickAddress(item) {
     try {
-      const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
-      const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&fields=geometry,formatted_address,address_components&language=es&key=${key}`);
+      const res = await fetch(`/api/places?place_id=${item.place_id}`);
       const data = await res.json();
       const result = data.result;
       if (!result) return;
