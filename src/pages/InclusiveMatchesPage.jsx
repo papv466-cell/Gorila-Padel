@@ -48,7 +48,7 @@ const IS = {
   color: "#fff", fontSize: 13, boxSizing: "border-box",
 };
 
-export default function InclusiveMatchesPage() {
+export default function InclusiveMatchesPage({ session: sessionProp, session: sessionProp }) {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,7 +57,7 @@ export default function InclusiveMatchesPage() {
   useEffect(() => { aliveRef.current = true; }, []);
 
   /* ─── Auth ─── */
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(sessionProp ?? null);
   const [authReady, setAuthReady] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setAuthReady(true); });

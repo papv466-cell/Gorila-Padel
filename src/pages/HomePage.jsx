@@ -33,9 +33,9 @@ function localDateStr(dateStr) {
 
 const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
-export default function HomePage() {
+export default function HomePage({ session: sessionProp, session: sessionProp }) {
   const navigate = useNavigate();
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(sessionProp ?? null);
   const [profile, setProfile] = useState(null);
   const [matches, setMatches] = useState([]);
   const [ranking, setRanking] = useState(null);

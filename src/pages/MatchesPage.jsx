@@ -102,7 +102,7 @@ const IS = {
   color:"#fff", fontSize:13, boxSizing:"border-box",
 };
 
-export default function MatchesPage() {
+export default function MatchesPage({ session: sessionProp, session: sessionProp }) {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,8 +125,8 @@ export default function MatchesPage() {
   const openRequestsParam = qs.get("openRequests")||"";
 
   /* ─── Auth ─── */
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [session, setSession] = useState(sessionProp ?? null);
+  const [authReady, setAuthReady] = useState(!!sessionProp);
   useEffect(() => {
     supabase.auth.getSession().then(({data:{session:s}}) => {
       setSession(s ?? null);

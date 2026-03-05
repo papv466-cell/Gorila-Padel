@@ -265,7 +265,7 @@ export default function App() {
       <main className="appMain">
         {!isAuthShell ? <PWAInstallPrompt /> : null}
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage session={session} />} />
           <Route path="/tienda" element={<StoreCatalog />} />
           <Route path="/tienda/producto/:slug" element={<ProductDetail />} />
           <Route path="/tienda/carrito" element={<CartPage />} />
@@ -287,10 +287,10 @@ export default function App() {
           <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/mapa" element={<RequireAuth session={session} sessionReady={sessionReady}><MapPage /></RequireAuth>} />
-          <Route path="/partidos" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage /></RequireAuth>} />
-          <Route path="/clases" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage /></RequireAuth>} />
-          <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage /></RequireAuth>} />
+          <Route path="/mapa" element={<RequireAuth session={session} sessionReady={sessionReady}><MapPage session={session} /></RequireAuth>} />
+          <Route path="/partidos" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
+          <Route path="/clases" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
+          <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage /></RequireAuth>} />
           <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
           <Route path="/registrar-club" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubRegisterPage /></RequireAuth>} />
@@ -308,7 +308,7 @@ export default function App() {
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
-          <Route path="/club/:clubId" element={<ClubPage />} />
+          <Route path="/club/:clubId" element={<ClubPage session={session} />} />
         </Routes>
       </main>
       {!isAuthShell && <CartFloatingButton />}

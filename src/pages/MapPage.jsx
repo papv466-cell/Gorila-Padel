@@ -111,7 +111,7 @@ function makeCourtIcon(isSelected) {
 }
 
 /* ─── Componente principal ─── */
-export default function MapPage() {
+export default function MapPage({ session: sessionProp, session: sessionProp }) {
   const navigate = useNavigate();
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +134,7 @@ export default function MapPage() {
   const [selectedCourt, setSelectedCourt] = useState(null);
   const [courtForm, setCourtForm] = useState({name:"",description:"",lat:null,lng:null});
   const [courtSaving, setCourtSaving] = useState(false);
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(sessionProp ?? null);
   const geoTimerRef = useRef(null);
 
   const [favIds, setFavIds] = useState(() => {

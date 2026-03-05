@@ -45,13 +45,13 @@ const IS = {
   color:"#fff", fontSize:13, boxSizing:"border-box",
 };
 
-export default function ClubPage() {
+export default function ClubPage({ session: sessionProp, session: sessionProp }) {
   const { clubId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(sessionProp ?? null);
   const [club, setClub] = useState(null);
   const [matches, setMatches] = useState([]);
   const [classes, setClasses] = useState([]);

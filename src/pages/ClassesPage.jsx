@@ -53,13 +53,13 @@ function getActiveClass() {
 const IS = { width: "100%", padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 13, boxSizing: "border-box" };
 const LB = { fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: ".04em", display: "block", marginBottom: 5 };
 
-export default function ClassesPage() {
+export default function ClassesPage({ session: sessionProp, session: sessionProp }) {
   const navigate = useNavigate();
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [session, setSession] = useState(sessionProp ?? null);
+  const [authReady, setAuthReady] = useState(!!sessionProp);
   const [teacherReady, setTeacherReady] = useState(false);
   const [teacherLoading, setTeacherLoading] = useState(false);
   const [isTeacher, setIsTeacher] = useState(false);
