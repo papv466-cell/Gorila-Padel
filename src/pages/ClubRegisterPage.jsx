@@ -95,27 +95,34 @@ export default function ClubRegisterPage() {
     const t = setTimeout(async () => {
       try {
         setAddressSearching(true);
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&countrycodes=es`);
+        const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
+        const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=establishment|geocode&components=country:es&language=es&key=${key}`);
         const data = await res.json();
-        setAddressSuggestions(data || []);
+        setAddressSuggestions(data.predictions || []);
       } catch {}
       finally { setAddressSearching(false); }
     }, 400);
     setAddressTimeout(t);
   }
 
-  function pickAddress(item) {
-    const addr = item.address || {};
-    const streetName = addr.road || addr.pedestrian || addr.street || "";
-    const houseNumber = addr.house_number || "";
-    const fullStreet = [streetName, houseNumber].filter(Boolean).join(" ");
-    const cityName = addr.city || addr.town || addr.village || addr.municipality || addr.county || "";
-    setAddress(fullStreet);
-    setCity(cityName);
-    setLat(parseFloat(item.lat));
-    setLng(parseFloat(item.lon));
-    setAddressQuery(item.display_name.split(",").slice(0, 3).join(","));
-    setAddressSuggestions([]);
+  async function pickAddress(item) {
+    try {
+      const key = import.meta.env.VITE_GOOGLE_PLACES_KEY;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${item.place_id}&fields=geometry,formatted_address,address_components&language=es&key=${key}`);
+      const data = await res.json();
+      const result = data.result;
+      if (!result) return;
+      const comps = result.address_components || [];
+      const get = (type) => comps.find(c => c.types.includes(type))?.long_name || "";
+      const street = [get("route"), get("street_number")].filter(Boolean).join(" ");
+      const cityName = get("locality") || get("administrative_area_level_2") || get("administrative_area_level_1");
+      setAddress(street || result.formatted_address);
+      setCity(cityName);
+      setLat(result.geometry.location.lat);
+      setLng(result.geometry.location.lng);
+      setAddressQuery(result.formatted_address);
+      setAddressSuggestions([]);
+    } catch (e) { console.error(e); }
   }
 
   async function geocodeAddress() {
@@ -221,8 +228,8 @@ export default function ClubRegisterPage() {
                         style={{ padding: "10px 12px", cursor: "pointer", borderBottom: i < addressSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", fontSize: 12, color: "#fff" }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(116,184,0,0.08)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                        <div style={{ fontWeight: 700 }}>{item.display_name.split(",").slice(0, 2).join(",")}</div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{item.display_name.split(",").slice(2, 4).join(",")}</div>
+                        <div style={{ fontWeight: 700 }}>{item.structured_formatting?.main_text || item.description}</div>
+                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{item.structured_formatting?.secondary_text || ""}</div>
                       </div>
                     ))}
                   </div>
