@@ -52,7 +52,8 @@ export default function HomePage() {
       if (data?.session?.user) loadAll(data.session.user);
       else setLoading(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (_event === 'TOKEN_REFRESHED') return;
       setSession(prev => {
         if (prev?.user?.id === s?.user?.id && prev?.user?.id) return prev;
         if (s?.user) loadAll(s.user);

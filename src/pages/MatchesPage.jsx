@@ -132,21 +132,13 @@ export default function MatchesPage() {
       setSession(s ?? null);
       setAuthReady(true);
     });
-    // No suscribirse a onAuthStateChange aqui — App.jsx ya lo gestiona globalmente
-    // Solo escuchar cambios de usuario diferente (login/logout)
     const {data:{subscription}} = supabase.auth.onAuthStateChange((_event, s) => {
-      if (_event === 'SIGNED_OUT') { setSession(null); setAuthReady(true); return; }
-      if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
-        // Solo actualizar si es un usuario diferente
-        setSession(prev => {
-          if (prev?.user?.id && prev.user.id === s?.user?.id) return prev;
-          setAuthReady(true);
-          return s ?? null;
-        });
-        return;
-      }
-      setSession(s ?? null);
-      setAuthReady(true);
+      if (_event === 'SIGNED_OUT') { setSession(null); return; }
+      if (_event === 'TOKEN_REFRESHED') return; // ignorar — evita remount
+      setSession(prev => {
+        if (prev?.user?.id && prev.user.id === s?.user?.id) return prev;
+        return s ?? null;
+      });
     });
     return () => subscription.unsubscribe();
   }, []);

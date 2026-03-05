@@ -36,7 +36,7 @@ export default function LeaguePage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({data})=>setSession(data?.session??null));
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,s)=>setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s));
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_event,s)=>{ if(_event==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
     return ()=>subscription.unsubscribe();
   }, []);
 

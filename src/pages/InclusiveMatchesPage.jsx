@@ -61,7 +61,7 @@ export default function InclusiveMatchesPage() {
   const [authReady, setAuthReady] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setAuthReady(true); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if(_event==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
     return () => subscription.unsubscribe();
   }, []);
 
