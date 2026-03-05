@@ -128,6 +128,11 @@ export default function App() {
       }
 
       sessionUserIdRef.current = newUserId;
+      // No actualizar session si es TOKEN_REFRESHED con el mismo usuario — evita remount
+      if (_event === 'TOKEN_REFRESHED' && newUserId && newUserId === (session?.user?.id ?? null)) {
+        setSessionReady(true);
+        return;
+      }
       setSession(newSession ?? null);
       setSessionReady(true);
 
