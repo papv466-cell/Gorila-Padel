@@ -161,7 +161,7 @@ export default function ClubRegisterPage() {
         phone: phone.trim(), email: email.trim(), website: website.trim(),
         social_instagram: instagram.trim(), social_whatsapp: whatsapp.trim(),
         price_per_hour: pricePerHour ? Number(pricePerHour) : null,
-        amenities: Array.from(selectedServices).join(","),
+        amenities: Array.from(selectedServices),
         courts_info: courts,
         owner_user_id: session.user.id,
         status: "pending", active: false, verified: false,
