@@ -417,11 +417,23 @@ export default function MatchesPage() {
     if (!q||q.length<2) return [];
     return (clubsSheet||[]).filter(c=>String(c?.name||"").toLowerCase().includes(q)).slice(0,10);
   }, [clubQuery, clubsSheet]);
-  function pickClub(c) {
-    const newClubId = String(c?.id??"");
-    setForm(prev => { loadAvailableSlots(newClubId, prev.date); return {...prev,clubId:newClubId,clubName:String(c?.name??"")}; });
-    setClubQuery(String(c?.name??""));
+  async function pickClub(c) {
+    const sheetId = String(c?.id??"");
+    const clubName = String(c?.name??"");
+    setClubQuery(clubName);
     setShowClubSuggest(false);
+
+    // Buscar id real en Supabase por nombre
+    let realClubId = sheetId;
+    try {
+      const { data } = await supabase.from('clubs').select('id').ilike('name', clubName).limit(1).single();
+      if (data?.id) realClubId = data.id;
+    } catch {}
+
+    setForm(prev => {
+      loadAvailableSlots(realClubId, prev.date);
+      return {...prev, clubId: realClubId, clubName: clubName};
+    });
   }
 
   /* ─── Search profiles ─── */
