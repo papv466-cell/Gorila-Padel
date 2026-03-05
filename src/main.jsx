@@ -15,4 +15,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   ,
 )
 
-console.log('🚫 Service Worker desactivado')
+// Limpiar SW y cachés antiguos automáticamente
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
+  });
+}
