@@ -485,6 +485,14 @@ export default function ProfilePage() {
                 🏟️ ¿Tienes un club? Regístralo gratis
               </button>
             </div>
+            {session?.user?.id === "1e0db2e1-e959-41f0-bcaf-2bb46fd425da" && (
+              <div style={{marginTop:8}}>
+                <button onClick={()=>navigate("/super-admin")}
+                  style={{width:"100%",padding:"10px",borderRadius:12,background:"rgba(255,0,0,0.08)",border:"1px solid rgba(255,0,0,0.25)",color:"rgba(255,100,100,0.9)",fontWeight:900,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  🔐 Super Admin
+                </button>
+              </div>
+            )}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <button className="pfBtn pfBtnPrimary" onClick={() => save()} disabled={saving || uploading}>
                 {saving ? "Guardando…" : "Guardar"}
