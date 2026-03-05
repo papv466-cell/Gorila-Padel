@@ -94,7 +94,7 @@ export default function ClubPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if(_event==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if(_event==='TOKEN_REFRESHED'||_event==='SIGNED_IN') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
     return () => subscription.unsubscribe();
   }, []);
 

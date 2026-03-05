@@ -134,7 +134,11 @@ export default function MatchesPage() {
     });
     const {data:{subscription}} = supabase.auth.onAuthStateChange((_event, s) => {
       if (_event === 'SIGNED_OUT') { setSession(null); return; }
-      if (_event === 'TOKEN_REFRESHED') return; // ignorar — evita remount
+      if (_event === 'TOKEN_REFRESHED') return;
+      if (_event === 'SIGNED_IN' && s?.user?.id) {
+        setSession(prev => prev?.user?.id === s.user.id ? prev : s);
+        return;
+      }
       setSession(prev => {
         if (prev?.user?.id && prev.user.id === s?.user?.id) return prev;
         return s ?? null;

@@ -53,7 +53,7 @@ export default function TeachersPage() {
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(({ data }) => { if (!alive) return; setSession(data?.session ?? null); setAuthReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; if(_e==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null)); setAuthReady(true); });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; if(_e==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null)); setAuthReady(prev => prev ? prev : true); });
     return () => { alive = false; sub?.subscription?.unsubscribe?.(); };
   }, []);
 
