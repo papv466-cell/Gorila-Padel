@@ -231,16 +231,38 @@ export default function MatchesPage() {
     }
     try {
       setSlotsLoading(true);
+      // Cargar todos los slots del día (available + booked) para calcular solapamientos
       const { data } = await supabase
         .from('court_slots')
         .select('*, club_courts(name, court_type)')
         .eq('club_id', clubId)
         .eq('date', date)
-        .eq('status', 'available')
         .order('start_time');
-      setAvailableSlots(data || []);
+
+      const allSlots = data || [];
+
+      // Filtrar slots que solapan con partidos de 90 min ya reservados
+      const bookedSlots = allSlots.filter(s => s.status === 'booked');
+      const available = allSlots.filter(s => {
+        if (s.status !== 'available') return false;
+        const sMin = timeToMin(s.start_time);
+        // Comprobar si este slot cae dentro de una ventana booked en la misma pista
+        return !bookedSlots.some(b => {
+          if (String(b.court_id) !== String(s.court_id)) return false;
+          const bMin = timeToMin(b.start_time);
+          return sMin >= bMin && sMin < bMin + 90;
+        });
+      });
+
+      setAvailableSlots(available);
     } catch { setAvailableSlots([]); }
     finally { setSlotsLoading(false); }
+  }
+
+  function timeToMin(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
   }
 
   function closeAllModals() { setChatOpenFor(null); setRequestsOpenFor(null); setInviteOpenFor(null); setCedeOpenFor(null); }

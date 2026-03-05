@@ -95,12 +95,47 @@ export default function InclusiveMatchesPage() {
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState(null);
   const [showClubSuggest, setShowClubSuggest] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
 
   const clubSuggestions = useMemo(() => {
     const q = clubName.trim().toLowerCase();
     if (q.length < 2) return [];
     return clubsSheet.filter(c => String(c.name || "").toLowerCase().includes(q)).slice(0, 10);
   }, [clubName, clubsSheet]);
+
+  function timeToMin(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  async function loadAvailableSlots(cId, date) {
+    if (!cId || !date) { setAvailableSlots([]); return; }
+    try {
+      setSlotsLoading(true);
+      const { data } = await supabase
+        .from('court_slots')
+        .select('*, club_courts(name, court_type)')
+        .eq('club_id', cId)
+        .eq('date', date)
+        .order('start_time');
+      const allSlots = data || [];
+      const bookedSlots = allSlots.filter(s => s.status === 'booked');
+      const available = allSlots.filter(s => {
+        if (s.status !== 'available') return false;
+        const sMin = timeToMin(s.start_time);
+        return !bookedSlots.some(b => {
+          if (String(b.court_id) !== String(s.court_id)) return false;
+          const bMin = timeToMin(b.start_time);
+          return sMin >= bMin && sMin < bMin + 90;
+        });
+      });
+      setAvailableSlots(available);
+    } catch { setAvailableSlots([]); }
+    finally { setSlotsLoading(false); }
+  }
 
   async function load() {
     try {
@@ -440,7 +475,14 @@ export default function InclusiveMatchesPage() {
                 {showClubSuggest && clubSuggestions.length > 0 && (
                   <div style={{ background: "#2a2a2a", borderRadius: 10, marginTop: 6, maxHeight: 180, overflowY: "auto", border: "1px solid rgba(255,255,255,0.1)" }}>
                     {clubSuggestions.map((c, idx) => (
-                      <div key={c.id || idx} onClick={() => { setClubName(c.name); setClubId(String(c.id || "")); setShowClubSuggest(false); }}
+                      <div key={c.id || idx} onClick={async () => {
+                            setClubName(c.name); setShowClubSuggest(false);
+                            let realId = String(c.id || "");
+                            try { const {data} = await supabase.from('clubs').select('id').ilike('name', c.name).limit(1).single(); if (data?.id) realId = data.id; } catch {}
+                            setClubId(realId);
+                            const dateStr = startAt ? startAt.slice(0,10) : "";
+                            if (dateStr) loadAvailableSlots(realId, dateStr);
+                          }}
                         style={{ padding: 10, cursor: "pointer", color: "#fff", fontSize: 13, borderBottom: idx < clubSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
                         {c.name}
                       </div>
@@ -469,13 +511,54 @@ export default function InclusiveMatchesPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>
                   <label style={{ color: "#fff", display: "block", marginBottom: 6, fontSize: 12, fontWeight: 700 }}>Fecha y hora *</label>
-                  <input type="datetime-local" value={startAt} onChange={e => setStartAt(e.target.value)} style={IS} />
+                  <input type="datetime-local" value={startAt} onChange={e => {
+                    setStartAt(e.target.value);
+                    const dateStr = e.target.value.slice(0,10);
+                    if (clubId && dateStr) loadAvailableSlots(clubId, dateStr);
+                  }} style={IS} />
                 </div>
                 <div>
                   <label style={{ color: "#fff", display: "block", marginBottom: 6, fontSize: 12, fontWeight: 700 }}>Duración (min)</label>
                   <input type="number" min="30" step="15" value={durationMin} onChange={e => setDurationMin(e.target.value)} style={IS} />
                 </div>
               </div>
+
+              {/* HORAS LIBRES */}
+              {clubId && (
+                <div>
+                  <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 12, fontWeight: 700 }}>
+                    🏟️ Pistas disponibles ese día
+                    {slotsLoading && <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:6}}>Cargando…</span>}
+                  </label>
+                  {!slotsLoading && availableSlots.length === 0 && (
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"8px 0"}}>No hay pistas libres para este día</div>
+                  )}
+                  {availableSlots.length > 0 && (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {availableSlots.map(slot => {
+                        const slotTime = slot.start_time?.slice(0,5);
+                        const isSelected = selectedSlotId === slot.id;
+                        return (
+                          <button key={slot.id} onClick={() => {
+                            setSelectedSlotId(slot.id);
+                            const dateStr = startAt.slice(0,10) || new Date().toISOString().slice(0,10);
+                            setStartAt(`${dateStr}T${slotTime}`);
+                          }}
+                            style={{padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:900,
+                              background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.07)",
+                              color:isSelected?"#000":"rgba(255,255,255,0.8)",
+                              outline:isSelected?"none":"1px solid rgba(255,255,255,0.1)"}}>
+                            🕐 {slotTime}
+                            <span style={{display:"block",fontSize:9,fontWeight:700,opacity:0.7,marginTop:1}}>
+                              {slot.club_courts?.name || "Pista"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* JUGADORES + PRECIO */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
