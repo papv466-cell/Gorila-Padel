@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import ClubAdminPage from "./pages/ClubAdminPage";
+import ClubRegisterPage from "./pages/ClubRegisterPage";
+import SuperAdminPage from "./pages/SuperAdminPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -279,6 +281,8 @@ export default function App() {
           <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage /></RequireAuth>} />
           <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
+          <Route path="/registrar-club" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubRegisterPage /></RequireAuth>} />
+          <Route path="/super-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><SuperAdminPage /></RequireAuth>} />
           <Route path="/profesores" element={<RequireAuth session={session} sessionReady={sessionReady}><TeachersPage /></RequireAuth>} />
           <Route path="/profesores/:id" element={<RequireAuth session={session} sessionReady={sessionReady}><TeacherProfilePage /></RequireAuth>} />
           <Route path="/juega" element={<RequireAuth session={session} sessionReady={sessionReady}><PlayHubPage /></RequireAuth>} />
