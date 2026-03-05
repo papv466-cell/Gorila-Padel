@@ -165,7 +165,7 @@ export default function SuperAdminPage() {
 
               {club.amenities && (
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>
-                  ✅ {club.amenities.split(",").join(" · ")}
+                  ✅ {(Array.isArray(club.amenities) ? club.amenities : club.amenities.split(",")).join(" · ")}
                 </div>
               )}
 
