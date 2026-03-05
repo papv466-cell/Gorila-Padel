@@ -511,7 +511,7 @@ export default function ClubAdminPage() {
             court_id: court.id,
             date: dateToISO(date),
             start_time: hour,
-            end_time: (()=>{ const sm=parseInt(h)*60+parseInt(hour.split(':')[1]||0)+90; return `${String(Math.floor(sm/60)).padStart(2,'0')}:${String(sm%60).padStart(2,'0')}:00`; })(),
+            end_time: (()=>{ const sm=parseInt(h)*60+parseInt(hour.split(':')[1]||0)+90; const eh=Math.floor(sm/60); const em=sm%60; if(eh>=24) return '23:59:00'; return `${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}:00`; })(),
             price,
             status: 'available',
             source: 'gorila',
