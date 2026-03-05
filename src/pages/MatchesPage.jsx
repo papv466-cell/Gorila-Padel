@@ -200,6 +200,8 @@ export default function MatchesPage() {
 
   /* ─── Crear ─── */
   const [openCreate, setOpenCreate] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [clubsSheet, setClubsSheet] = useState([]);
@@ -219,6 +221,26 @@ export default function MatchesPage() {
     clubName:"", clubId:"", date:todayISO, time:"19:00",
     durationMin:90, level:"medio", alreadyPlayers:1, pricePerPlayer:"",
   });
+
+  // Cargar slots disponibles cuando cambia club o fecha en el modal crear
+  async function loadAvailableSlots(clubId, date) {
+    if (!clubId || !date || clubId.startsWith('private:')) {
+      setAvailableSlots([]);
+      return;
+    }
+    try {
+      setSlotsLoading(true);
+      const { data } = await supabase
+        .from('court_slots')
+        .select('*, club_courts(name, court_type)')
+        .eq('club_id', clubId)
+        .eq('date', date)
+        .eq('status', 'available')
+        .order('start_time');
+      setAvailableSlots(data || []);
+    } catch { setAvailableSlots([]); }
+    finally { setSlotsLoading(false); }
+  }
 
   function closeAllModals() { setChatOpenFor(null); setRequestsOpenFor(null); setInviteOpenFor(null); setCedeOpenFor(null); }
   function goLogin() { navigate("/login",{replace:true,state:{from:location.pathname+location.search}}); }
@@ -395,7 +417,12 @@ export default function MatchesPage() {
     if (!q||q.length<2) return [];
     return (clubsSheet||[]).filter(c=>String(c?.name||"").toLowerCase().includes(q)).slice(0,10);
   }, [clubQuery, clubsSheet]);
-  function pickClub(c) { setForm(prev=>({...prev,clubId:String(c?.id??""),clubName:String(c?.name??"")})); setClubQuery(String(c?.name??"")); setShowClubSuggest(false); }
+  function pickClub(c) {
+    const newClubId = String(c?.id??"");
+    setForm(prev => { loadAvailableSlots(newClubId, prev.date); return {...prev,clubId:newClubId,clubName:String(c?.name??"")}; });
+    setClubQuery(String(c?.name??""));
+    setShowClubSuggest(false);
+  }
 
   /* ─── Search profiles ─── */
   async function searchPublicProfiles(q) {
@@ -935,13 +962,47 @@ export default function MatchesPage() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Fecha</label>
-                  <input type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} disabled={saving} style={IS} />
+                  <input type="date" value={form.date} onChange={e=>{ setForm({...form,date:e.target.value}); loadAvailableSlots(form.clubId, e.target.value); }} disabled={saving} style={IS} />
                 </div>
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Hora</label>
                   <input type="time" step="900" value={form.time} onChange={e=>{ const [h,min]=e.target.value.split(":"); const rm=Math.round(+min/15)*15; setForm({...form,time:`${h}:${String(rm%60).padStart(2,"0")}`}); }} disabled={saving} style={IS} />
                 </div>
               </div>
+
+              {/* ── HORAS LIBRES DEL CLUB ── */}
+              {form.clubId && !form.clubId.startsWith('private:') && (
+                <div>
+                  <label style={{color:"#fff",display:"block",marginBottom:8,fontSize:12,fontWeight:700}}>
+                    🏟️ Pistas disponibles ese día
+                    {slotsLoading && <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:6}}>Cargando…</span>}
+                  </label>
+                  {!slotsLoading && availableSlots.length === 0 && (
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",padding:"8px 0"}}>No hay pistas libres para este día</div>
+                  )}
+                  {availableSlots.length > 0 && (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {availableSlots.map(slot => {
+                        const slotTime = slot.start_time?.slice(0,5);
+                        const isSelected = form.time === slotTime;
+                        return (
+                          <button key={slot.id} onClick={()=>setForm(prev=>({...prev,time:slotTime}))}
+                            disabled={saving}
+                            style={{padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:900,
+                              background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.07)",
+                              color:isSelected?"#000":"rgba(255,255,255,0.8)",
+                              outline:isSelected?"none":"1px solid rgba(255,255,255,0.1)"}}>
+                            🕐 {slotTime}
+                            <span style={{display:"block",fontSize:9,fontWeight:700,opacity:0.7,marginTop:1}}>
+                              {slot.club_courts?.name || "Pista"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Nivel</label>
                 <select value={form.level} onChange={e=>setForm({...form,level:e.target.value})} disabled={saving} style={IS}>
