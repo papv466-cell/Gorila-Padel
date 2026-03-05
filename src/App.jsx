@@ -80,9 +80,20 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(() => {
+    try {
+      const raw = localStorage.getItem('sb-auth-token');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed?.currentSession || null;
+      }
+    } catch {}
+    return null;
+  });
   // Si ya hubo sesión antes, no mostrar splash al volver
-  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionReady, setSessionReady] = useState(() => {
+    try { return !!localStorage.getItem('sb-session-exists'); } catch { return false; }
+  });
   const sessionUserIdRef = useRef(null);
 
   const [minSplashDone, setMinSplashDone] = useState(false);
