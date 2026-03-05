@@ -48,6 +48,10 @@ export default function ClubRegisterPage() {
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
   const [geocoding, setGeocoding] = useState(false);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [addressSearching, setAddressSearching] = useState(false);
+  const [addressTimeout, setAddressTimeout] = useState(null);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
@@ -82,6 +86,36 @@ export default function ClubRegisterPage() {
       setLogoUrl(pub.publicUrl);
     } catch (e) { alert("Error subiendo imagen: " + e.message); }
     finally { setLogoUploading(false); }
+  }
+
+  async function searchAddress(q) {
+    setAddressQuery(q);
+    if (addressTimeout) clearTimeout(addressTimeout);
+    if (q.length < 3) { setAddressSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        setAddressSearching(true);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&countrycodes=es`);
+        const data = await res.json();
+        setAddressSuggestions(data || []);
+      } catch {}
+      finally { setAddressSearching(false); }
+    }, 400);
+    setAddressTimeout(t);
+  }
+
+  function pickAddress(item) {
+    const addr = item.address || {};
+    const streetName = addr.road || addr.pedestrian || addr.street || "";
+    const houseNumber = addr.house_number || "";
+    const fullStreet = [streetName, houseNumber].filter(Boolean).join(" ");
+    const cityName = addr.city || addr.town || addr.village || addr.municipality || addr.county || "";
+    setAddress(fullStreet);
+    setCity(cityName);
+    setLat(parseFloat(item.lat));
+    setLng(parseFloat(item.lon));
+    setAddressQuery(item.display_name.split(",").slice(0, 3).join(","));
+    setAddressSuggestions([]);
   }
 
   async function geocodeAddress() {
@@ -173,15 +207,32 @@ export default function ClubRegisterPage() {
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Nombre del club *</label>
               <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Club Pádel Málaga" style={IS} />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Ciudad *</label>
-                <input value={city} onChange={e => setCity(e.target.value)} placeholder="Málaga" style={IS} />
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Dirección *</label>
+              <div style={{ position: "relative" }}>
+                <input value={addressQuery} onChange={e => searchAddress(e.target.value)}
+                  placeholder="Busca la dirección del club..."
+                  style={{ ...IS, paddingRight: addressSearching ? 36 : 14 }} />
+                {addressSearching && <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>⏳</div>}
+                {addressSuggestions.length > 0 && (
+                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 99, background: "#1a1a1a", border: "1px solid rgba(116,184,0,0.25)", borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                    {addressSuggestions.map((item, i) => (
+                      <div key={i} onClick={() => pickAddress(item)}
+                        style={{ padding: "10px 12px", cursor: "pointer", borderBottom: i < addressSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", fontSize: 12, color: "#fff" }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(116,184,0,0.08)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                        <div style={{ fontWeight: 700 }}>{item.display_name.split(",").slice(0, 2).join(",")}</div>
+                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{item.display_name.split(",").slice(2, 4).join(",")}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Dirección</label>
-                <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle Principal 123" style={IS} />
-              </div>
+              {lat && (
+                <div style={{ marginTop: 6, fontSize: 11, color: "#74B800", fontWeight: 700 }}>
+                  ✅ Ubicación: {city} · {address} ({lat.toFixed(4)}, {lng.toFixed(4)})
+                </div>
+              )}
             </div>
             <div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Descripción (opcional)</label>
@@ -212,13 +263,7 @@ export default function ClubRegisterPage() {
               </div>
             </div>
 
-            {/* Geocoding */}
-            {(address || city) && (
-              <button onClick={geocodeAddress} disabled={geocoding}
-                style={{ padding: "9px 14px", borderRadius: 10, background: lat ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", border: lat ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.1)", color: lat ? "#74B800" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 800, cursor: "pointer", width: "100%" }}>
-                {geocoding ? "⏳ Buscando ubicación…" : lat ? `✅ Ubicación encontrada (${lat.toFixed(4)}, ${lng.toFixed(4)})` : "📍 Verificar ubicación en el mapa"}
-              </button>
-            )}
+
 
             <button onClick={() => { if (!name.trim() || !city.trim()) { setError("Nombre y ciudad son obligatorios"); return; } setError(null); setStep(2); }}
               style={{ padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer", marginTop: 8 }}>
