@@ -43,6 +43,11 @@ export default function ClubRegisterPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
+  const [geocoding, setGeocoding] = useState(false);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [address, setAddress] = useState("");
@@ -65,6 +70,32 @@ export default function ClubRegisterPage() {
     });
   }, []);
 
+  async function uploadLogo(file) {
+    if (!file) return;
+    try {
+      setLogoUploading(true);
+      const ext = file.name.split(".").pop();
+      const path = `club-logos/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      setLogoUrl(pub.publicUrl);
+    } catch (e) { alert("Error subiendo imagen: " + e.message); }
+    finally { setLogoUploading(false); }
+  }
+
+  async function geocodeAddress() {
+    const query = [address, city].filter(Boolean).join(", ");
+    if (!query.trim()) return;
+    try {
+      setGeocoding(true);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+      const data = await res.json();
+      if (data?.[0]) { setLat(parseFloat(data[0].lat)); setLng(parseFloat(data[0].lon)); }
+    } catch {}
+    finally { setGeocoding(false); }
+  }
+
   function toggleService(key) {
     setSelectedServices(prev => {
       const next = new Set(prev);
@@ -86,7 +117,7 @@ export default function ClubRegisterPage() {
     try {
       setSaving(true); setError(null);
       const { error: err } = await supabase.from("clubs").insert({
-        name: name.trim(), city: city.trim(), address: address.trim(),
+        name: name.trim(), city: city.trim(), address: address.trim(), urlimagen: logoUrl || null, lat: lat || null, lon: lng || null,
         description: description.trim(), opening_time: openingTime, closing_time: closingTime,
         phone: phone.trim(), email: email.trim(), website: website.trim(),
         social_instagram: instagram.trim(), social_whatsapp: whatsapp.trim(),
@@ -166,6 +197,29 @@ export default function ClubRegisterPage() {
                 <input type="time" value={closingTime} onChange={e => setClosingTime(e.target.value)} style={IS} />
               </div>
             </div>
+            {/* Logo */}
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>Logo o foto del club</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {logoUrl
+                  ? <img src={logoUrl} alt="logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)" }} />
+                  : <div style={{ width: 64, height: 64, borderRadius: 12, background: "rgba(116,184,0,0.1)", border: "2px dashed rgba(116,184,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🏟️</div>
+                }
+                <label style={{ padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 12, fontWeight: 800, cursor: logoUploading ? "not-allowed" : "pointer" }}>
+                  {logoUploading ? "⏳ Subiendo…" : "📷 Subir imagen"}
+                  <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => uploadLogo(e.target.files[0])} disabled={logoUploading} />
+                </label>
+              </div>
+            </div>
+
+            {/* Geocoding */}
+            {(address || city) && (
+              <button onClick={geocodeAddress} disabled={geocoding}
+                style={{ padding: "9px 14px", borderRadius: 10, background: lat ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", border: lat ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.1)", color: lat ? "#74B800" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 800, cursor: "pointer", width: "100%" }}>
+                {geocoding ? "⏳ Buscando ubicación…" : lat ? `✅ Ubicación encontrada (${lat.toFixed(4)}, ${lng.toFixed(4)})` : "📍 Verificar ubicación en el mapa"}
+              </button>
+            )}
+
             <button onClick={() => { if (!name.trim() || !city.trim()) { setError("Nombre y ciudad son obligatorios"); return; } setError(null); setStep(2); }}
               style={{ padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer", marginTop: 8 }}>
               Siguiente →
