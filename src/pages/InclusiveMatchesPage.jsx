@@ -9,7 +9,7 @@ import {
   createInclusiveMatch,
   subscribeInclusiveRealtime,
 } from "../services/inclusiveMatches";
-import { fetchClubsFromGoogleSheet } from "../services/sheets";
+import { fetchClubsFromSupabase } from "../services/sheets";
 
 /* ─── Constantes ─── */
 const NEEDS = [
@@ -154,7 +154,7 @@ export default function InclusiveMatchesPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    fetchClubsFromGoogleSheet().then(r => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => setClubsSheet([]));
+    fetchClubsFromSupabase().then(r => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => setClubsSheet([]));
     load();
     const unsub = subscribeInclusiveRealtime(() => load());
     return () => unsub?.();

@@ -1,4 +1,5 @@
 // src/services/sheets.js
+import { supabase } from "./supabaseClient";
 
 const CACHE_KEY = 'gp:clubs';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 horas
@@ -116,4 +117,25 @@ export function clearClubsCache() {
 
 if (typeof window !== 'undefined') {
   window.clearClubsCache = clearClubsCache;
+}
+
+// Cargar clubs desde Supabase (reemplaza Google Sheets)
+export async function fetchClubsFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from("clubs")
+      .select("*")
+      .eq("active", true)
+      .eq("status", "approved")
+      .order("name");
+    if (error) throw error;
+    return (data || []).map(c => ({
+      ...c,
+      lng: c.lon,
+      urlimagen: c.urlimagen || "",
+    }));
+  } catch (e) {
+    console.error("Error cargando clubs desde Supabase:", e);
+    return [];
+  }
 }

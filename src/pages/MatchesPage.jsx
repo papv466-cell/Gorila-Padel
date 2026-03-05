@@ -14,7 +14,7 @@ import {
 } from "../services/matches";
 
 import { fetchProfilesByIds } from "../services/profilesPublic";
-import { fetchClubsFromGoogleSheet } from "../services/sheets";
+import { fetchClubsFromSupabase } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 import { scheduleEndWarningsForEvent, unscheduleEventWarnings } from "../services/gorilaSound";
 import { notifyMatchInvite, notifyMatchTransferReceived } from "../services/notifications";
@@ -348,7 +348,7 @@ export default function MatchesPage() {
 
   useEffect(() => { if(authReady) load(); }, [authReady, session?.user?.id]);
   useEffect(() => {
-    fetchClubsFromGoogleSheet().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>setClubsSheet([]));
+    fetchClubsFromSupabase().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>setClubsSheet([]));
   }, []);
   useEffect(() => {
     if (!session) return;

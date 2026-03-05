@@ -1,7 +1,7 @@
 // src/pages/MapPage.jsx
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchClubsFromGoogleSheet } from "../services/sheets";
+import { fetchClubsFromSupabase } from "../services/sheets";
 import { supabase } from "../services/supabaseClient";
 import pelotaTenis from "../assets/map/gorila-marker.png";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
@@ -161,7 +161,7 @@ export default function MapPage() {
         setLoading(true);
         const { data: sessionData } = await supabase.auth.getSession();
         setSession(sessionData?.session||null);
-        const rows = await fetchClubsFromGoogleSheet();
+        const rows = await fetchClubsFromSupabase();
         if (!alive) return;
         setClubs(Array.isArray(rows) ? rows : []);
         try {

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "../components/ToastProvider";
-import { fetchClubsFromGoogleSheet } from "../services/sheets";
+import { fetchClubsFromSupabase } from "../services/sheets";
 import { ensurePushSubscription } from "../services/push";
 import { scheduleGorilaForEnd, clearGorilaTimers } from "../services/gorilaSound";
 
@@ -95,7 +95,7 @@ export default function ClassesPage() {
   const [bookingId, setBookingId] = useState(null);
 
   useEffect(() => {
-    fetchClubsFromGoogleSheet().then((r) => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => setClubsSheet([]));
+    fetchClubsFromSupabase().then((r) => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => setClubsSheet([]));
   }, []);
 
   const clubsAll = useMemo(() => {
