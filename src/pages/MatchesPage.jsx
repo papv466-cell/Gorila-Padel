@@ -202,6 +202,7 @@ export default function MatchesPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [clubsSheet, setClubsSheet] = useState([]);
@@ -471,8 +472,16 @@ export default function MatchesPage() {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
-      await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      const matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      // Marcar slot como booked si se seleccionó uno
+      if (form.selectedSlotId) {
+        try {
+          await supabase.from('court_slots').update({ status: 'booked', booked_by_match_id: matchResult?.id || null }).eq('id', form.selectedSlotId);
+        } catch(slotErr) { console.warn('No se pudo marcar slot:', slotErr); }
+      }
       setSelectedDay(form.date); setOpenCreate(false);
+      setSelectedSlotId(null);
+      setAvailableSlots([]);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
       toast.success("Partido creado ✅"); await load(); setViewMode("mine");
       try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
@@ -996,9 +1005,9 @@ export default function MatchesPage() {
                     <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                       {availableSlots.map(slot => {
                         const slotTime = slot.start_time?.slice(0,5);
-                        const isSelected = form.time === slotTime;
+                        const isSelected = selectedSlotId === slot.id;
                         return (
-                          <button key={slot.id} onClick={()=>setForm(prev=>({...prev,time:slotTime}))}
+                          <button key={slot.id} onClick={()=>{ setSelectedSlotId(slot.id); setForm(prev=>({...prev,time:slotTime,selectedSlotId:slot.id})); }}
                             disabled={saving}
                             style={{padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:900,
                               background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.07)",
