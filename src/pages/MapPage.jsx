@@ -111,7 +111,7 @@ function makeCourtIcon(isSelected) {
 }
 
 /* ─── Componente principal ─── */
-export default function MapPage({ session: sessionProp, session: sessionProp }) {
+export default function MapPage({ session: sessionProp }) {
   const navigate = useNavigate();
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);

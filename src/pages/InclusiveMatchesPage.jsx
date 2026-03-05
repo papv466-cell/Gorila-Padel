@@ -48,7 +48,7 @@ const IS = {
   color: "#fff", fontSize: 13, boxSizing: "border-box",
 };
 
-export default function InclusiveMatchesPage({ session: sessionProp, session: sessionProp }) {
+export default function InclusiveMatchesPage({ session: sessionProp }) {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,12 +58,8 @@ export default function InclusiveMatchesPage({ session: sessionProp, session: se
 
   /* ─── Auth ─── */
   const [session, setSession] = useState(sessionProp ?? null);
-  const [authReady, setAuthReady] = useState(false);
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setAuthReady(true); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if(_event==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
-    return () => subscription.unsubscribe();
-  }, []);
+  const authReady = !!sessionProp;
+  useEffect(() => { if (sessionProp) setSession(sessionProp); }, [sessionProp?.user?.id]);
 
   function goLogin() { navigate("/login", { replace: true, state: { from: location.pathname + location.search } }); }
 

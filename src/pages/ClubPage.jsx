@@ -45,7 +45,7 @@ const IS = {
   color:"#fff", fontSize:13, boxSizing:"border-box",
 };
 
-export default function ClubPage({ session: sessionProp, session: sessionProp }) {
+export default function ClubPage({ session: sessionProp }) {
   const { clubId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -93,10 +93,8 @@ export default function ClubPage({ session: sessionProp, session: sessionProp })
   });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => { if(_event==='TOKEN_REFRESHED'||_event==='SIGNED_IN') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : s); });
-    return () => subscription.unsubscribe();
-  }, []);
+    if (sessionProp) setSession(sessionProp);
+  }, [sessionProp?.user?.id]);
 
   useEffect(() => { load(); }, [clubId]);
 

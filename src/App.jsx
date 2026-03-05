@@ -82,9 +82,7 @@ export default function App() {
 
   const [session, setSession] = useState(null);
   // Si ya hubo sesión antes, no mostrar splash al volver
-  const [sessionReady, setSessionReady] = useState(() => {
-    try { return !!localStorage.getItem('sb-session-exists'); } catch { return false; }
-  });
+  const [sessionReady, setSessionReady] = useState(false);
   const sessionUserIdRef = useRef(null);
 
   const [minSplashDone, setMinSplashDone] = useState(false);
@@ -184,6 +182,18 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
+  // Detectar vuelta al foco y no hacer nada — las páginas ya tienen datos
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        // Solo refrescar token silenciosamente sin disparar eventos
+        supabase.auth.getSession().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
   useEffect(() => {
     if (!session?.user?.id) return;
     import("./services/push").then(({ ensurePushSubscription }) => {
@@ -251,7 +261,7 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener("message", onMsg);
   }, [navigate]);
 
-  if (!sessionReady || !minSplashDone) return <SplashPage />;
+  if (!sessionReady) return <SplashPage />;
 
   const showBack = !isAuthShell && location.pathname !== "/";
   const onBack = () => {

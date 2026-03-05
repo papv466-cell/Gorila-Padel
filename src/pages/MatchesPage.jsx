@@ -102,7 +102,7 @@ const IS = {
   color:"#fff", fontSize:13, boxSizing:"border-box",
 };
 
-export default function MatchesPage({ session: sessionProp, session: sessionProp }) {
+export default function MatchesPage({ session: sessionProp }) {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -126,26 +126,9 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
 
   /* ─── Auth ─── */
   const [session, setSession] = useState(sessionProp ?? null);
-  const [authReady, setAuthReady] = useState(!!sessionProp);
   useEffect(() => {
-    supabase.auth.getSession().then(({data:{session:s}}) => {
-      setSession(s ?? null);
-      setAuthReady(true);
-    });
-    const {data:{subscription}} = supabase.auth.onAuthStateChange((_event, s) => {
-      if (_event === 'SIGNED_OUT') { setSession(null); return; }
-      if (_event === 'TOKEN_REFRESHED') return;
-      if (_event === 'SIGNED_IN' && s?.user?.id) {
-        setSession(prev => prev?.user?.id === s.user.id ? prev : s);
-        return;
-      }
-      setSession(prev => {
-        if (prev?.user?.id && prev.user.id === s?.user?.id) return prev;
-        return s ?? null;
-      });
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+    if (sessionProp) setSession(sessionProp);
+  }, [sessionProp?.user?.id]);
 
   /* ─── Data ─── */
   const [items, setItems] = useState([]);
@@ -306,9 +289,9 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
     return enriched;
   }
 
-  async function load() {
+  async function load(silent=false) {
     try {
-      setStatus({loading:true,error:null});
+      if (!silent) setStatus({loading:true,error:null});
       const list = await fetchMatches({limit:400});
       if (!aliveRef.current) return;
       const unique = uniqById(list);
@@ -342,7 +325,9 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
     }
   }
 
-  useEffect(() => { if(authReady) load(); }, [authReady, session?.user?.id]);
+  const itemsRef = useRef([]);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { if(session?.user?.id) load(itemsRef.current.length > 0); }, [session?.user?.id]);
   useEffect(() => {
     fetchClubsFromSupabase().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>setClubsSheet([]));
   }, []);
@@ -416,7 +401,7 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
 
   /* ─── Sonidos fin partido ─── */
   useEffect(() => {
-    if (!authReady) return;
+    if (!session?.user?.id) return;
     const uid = session?.user?.id ? String(session.user.id) : "";
     const desired = new Set();
     for (const m of visibleList||[]) {
@@ -428,7 +413,7 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
       scheduleEndWarningsForEvent({key,endMs,warn5MinTimes:2,endTimes:4});
     }
     unscheduleEventWarnings(key=>key.startsWith("match:")&&!desired.has(key));
-  }, [authReady, session?.user?.id, visibleList, myReqStatus]);
+  }, [session?.user?.id, visibleList, myReqStatus]);
 
   /* ─── Club suggestions (modal crear) ─── */
   const clubSuggestions = useMemo(() => {
@@ -476,12 +461,12 @@ export default function MatchesPage({ session: sessionProp, session: sessionProp
   }, [inviteQuery]);
 
   /* ─── Open from URL params ─── */
-  useEffect(() => { if(!openChatParam||!authReady) return; if(!session){goLogin();return;} try{window.sessionStorage?.removeItem?.("openChat");}catch{} openChat(openChatParam); }, [openChatParam,authReady,session]);
-  useEffect(() => { if(!openRequestsParam||!authReady) return; if(!session){goLogin();return;} openRequests(openRequestsParam); }, [openRequestsParam,authReady,session]);
+  useEffect(() => { if(!openChatParam||!session?.user?.id) return; if(!session){goLogin();return;} try{window.sessionStorage?.removeItem?.("openChat");}catch{} openChat(openChatParam); }, [openChatParam,session]);
+  useEffect(() => { if(!openRequestsParam||!session?.user?.id) return; if(!session){goLogin();return;} openRequests(openRequestsParam); }, [openRequestsParam,session]);
   useEffect(() => {
-    if(!createParam||!authReady) return; if(!session){goLogin();return;}
+    if(!createParam||!session?.user?.id) return; if(!session){goLogin();return;}
     const isPrivateCourt = !!courtIdParam; setOpenCreate(true); setForm(prev=>({...prev,clubId:isPrivateCourt?"private:"+courtIdParam:clubIdParam||prev.clubId,clubName:isPrivateCourt?courtNameParam:clubNameParam||prev.clubName,date:selectedDay||prev.date||todayISO,isPrivateCourt,lat:isPrivateCourt?courtLatParam:null,lng:isPrivateCourt?courtLngParam:null})); setClubQuery(isPrivateCourt?courtNameParam:clubNameParam||""); setShowClubSuggest(false);
-  }, [createParam,clubIdParam,clubNameParam,authReady,session,todayISO,selectedDay]);
+  }, [createParam,clubIdParam,clubNameParam,session,todayISO,selectedDay]);
 
   /* ─── Actions ─── */
   async function handleCreate() {
