@@ -81,7 +81,10 @@ export default function App() {
   const navigate = useNavigate();
 
   const [session, setSession] = useState(null);
-  const [sessionReady, setSessionReady] = useState(false);
+  // Si ya hubo sesión antes, no mostrar splash al volver
+  const [sessionReady, setSessionReady] = useState(() => {
+    try { return !!localStorage.getItem('sb-session-exists'); } catch { return false; }
+  });
   const sessionUserIdRef = useRef(null);
 
   const [minSplashDone, setMinSplashDone] = useState(false);
@@ -135,6 +138,10 @@ export default function App() {
       }
       setSession(newSession ?? null);
       setSessionReady(true);
+      try {
+        if (newSession) localStorage.setItem('sb-session-exists', '1');
+        else localStorage.removeItem('sb-session-exists');
+      } catch {}
 
       if (_event === 'SIGNED_OUT') {
         navigate('/login', { replace: true });
