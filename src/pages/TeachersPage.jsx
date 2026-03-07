@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import { useSession } from "../contexts/SessionContext";
 import { useToast } from "../components/ToastProvider";
 import {
   ALL_SPECIALTY_CATEGORIES,
@@ -37,8 +38,9 @@ export default function TeachersPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
+  // ✅ FIX: usar SessionContext global en vez de gestionar auth propio
+  const { session, sessionReady: authReady } = useSession();
+
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [favMap, setFavMap] = useState({});
@@ -50,12 +52,7 @@ export default function TeachersPage() {
   const [openFilterCat, setOpenFilterCat] = useState(null);
   const [onlyFav, setOnlyFav] = useState(false);
 
-  useEffect(() => {
-    let alive = true;
-    supabase.auth.getSession().then(({ data }) => { if (!alive) return; setSession(data?.session ?? null); setAuthReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; if(_e==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null)); setAuthReady(prev => prev ? prev : true); });
-    return () => { alive = false; sub?.subscription?.unsubscribe?.(); };
-  }, []);
+  // ✅ FIX: eliminado useEffect con getSession() + onAuthStateChange() propio
 
   async function loadAll() {
     try {
@@ -128,6 +125,7 @@ export default function TeachersPage() {
     } finally { setLoading(false); }
   }
 
+  // ✅ FIX: depende de authReady y session?.user?.id del contexto global
   useEffect(() => { if (!authReady) return; loadAll(); }, [authReady, session?.user?.id]);
 
   const filtered = useMemo(() => {

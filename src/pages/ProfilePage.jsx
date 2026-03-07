@@ -12,33 +12,25 @@ function initials(name = "") {
   return parts.map((p) => p[0].toUpperCase()).join("");
 }
 
-/* ─── Badges ─── */
 const ALL_BADGES = [
-  // Partidos jugados
   { key: "first_match",     label: "Primer Saque",     emoji: "🎾", desc: "Jugaste tu primer partido",          check: s => s.matches_played >= 1 },
   { key: "five_matches",    label: "En Racha",         emoji: "🔥", desc: "Has jugado 5 partidos",             check: s => s.matches_played >= 5 },
   { key: "ten_matches",     label: "Veterano",         emoji: "🦍", desc: "Has jugado 10 partidos",            check: s => s.matches_played >= 10 },
   { key: "twenty_matches",  label: "Gorila Pro",       emoji: "👑", desc: "Has jugado 20 partidos",            check: s => s.matches_played >= 20 },
   { key: "fifty_matches",   label: "Leyenda Gorila",   emoji: "🏆", desc: "Has jugado 50 partidos",            check: s => s.matches_played >= 50 },
   { key: "hundred_matches", label: "100 Partidos",     emoji: "💯", desc: "100 partidos jugados",              check: s => s.matches_played >= 100 },
-  // Fair play
   { key: "clean_sheet",     label: "Tarjeta Limpia",   emoji: "✅", desc: "0 tarjetas rojas con 3+ partidos",  check: s => s.matches_played >= 3 && s.red_cards === 0 },
   { key: "fair_play_king",  label: "Fair Play",        emoji: "🤝", desc: "0 tarjetas rojas con 20+ partidos", check: s => s.matches_played >= 20 && s.red_cards === 0 },
-  // Valoraciones
   { key: "top_rated",       label: "Top Valorado",     emoji: "⭐", desc: "Valoración media ≥ 4.5",           check: s => s.avg_rating >= 4.5 && s.rating_count >= 3 },
   { key: "perfect_score",   label: "Perfecto",         emoji: "💎", desc: "Valoración media 5.0",             check: s => s.avg_rating >= 5.0 && s.rating_count >= 5 },
   { key: "social",          label: "Sociable",         emoji: "😄", desc: "Recibiste 10 valoraciones",         check: s => s.rating_count >= 10 },
   { key: "influencer",      label: "Influencer",       emoji: "📣", desc: "Recibiste 25 valoraciones",         check: s => s.rating_count >= 25 },
-  // Organización
   { key: "organizer",       label: "Organizador",      emoji: "📋", desc: "Creaste 5 partidos",               check: s => s.created_count >= 5 },
   { key: "super_organizer", label: "Super Org.",       emoji: "🗓️", desc: "Creaste 20 partidos",              check: s => s.created_count >= 20 },
-  // SOS
   { key: "sos_hero",        label: "Héroe SOS",        emoji: "🆘", desc: "Respondiste a un SOS",             check: s => s.sos_count >= 1 },
   { key: "sos_legend",      label: "Leyenda SOS",      emoji: "🚨", desc: "Respondiste a 5 SOS",              check: s => s.sos_count >= 5 },
-  // Clubs
   { key: "explorer",        label: "Explorador",       emoji: "🗺️", desc: "Jugaste en 3 clubs distintos",     check: s => s.clubs_count >= 3 },
   { key: "globetrotter",    label: "Trotamundos",      emoji: "✈️", desc: "Jugaste en 10 clubs distintos",    check: s => s.clubs_count >= 10 },
-  // Reservas
   { key: "booker",          label: "Reservón",         emoji: "📅", desc: "Hiciste tu primera reserva",       check: s => s.bookings_count >= 1 },
   { key: "regular",         label: "Regular",          emoji: "🏠", desc: "10 reservas en el mismo club",     check: s => s.same_club_bookings >= 10 },
 ];
@@ -53,13 +45,15 @@ const IS = {
   color: "#fff", fontSize: 13, boxSizing: "border-box",
 };
 
-export default function ProfilePage() {
+export default function ProfilePage({ session: sessionProp }) {
   const navigate = useNavigate();
   const toast = useToast();
   const favRef = useRef(null);
   const statsRef = useRef(null);
 
-  const [session, setSession] = useState(null);
+  // Usar la session del prop en lugar de gestionar auth propio
+  const session = sessionProp ?? null;
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -70,12 +64,9 @@ export default function ProfilePage() {
     handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false, sos_radius_km: 50, notify_morning: false, notify_afternoon: false, followed_clubs: [],
   });
 
-  /* ─── Stats ─── */
   const [stats, setStats] = useState({ matches_played: 0, red_cards: 0, avg_rating: 0, rating_count: 0 });
   const [ratings, setRatings] = useState([]);
-  const [ratingsLoading, setRatingsLoading] = useState(false);
 
-  /* ─── Favoritos ─── */
   const [favLoading, setFavLoading] = useState(false);
   const [clubsSheet, setClubsSheet] = useState([]);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
@@ -92,7 +83,6 @@ export default function ProfilePage() {
   const badges = useMemo(() => computeBadges(stats), [stats]);
   const earnedBadges = badges.filter(b => b.earned);
 
-  /* ─── Load extra stats para badges ─── */
   useEffect(() => {
     if (!session?.user?.id) return;
     loadExtraStats(session.user.id);
@@ -100,34 +90,30 @@ export default function ProfilePage() {
 
   async function loadExtraStats(userId) {
     try {
-      // Clubs distintos
-      const {data: clubMatches} = await supabase.from('match_players')
+      const { data: clubMatches } = await supabase.from('match_players')
         .select('matches(club_id)').eq('player_uuid', userId);
-      const uniqueClubs = new Set((clubMatches||[]).map(r=>r.matches?.club_id).filter(Boolean));
+      const uniqueClubs = new Set((clubMatches || []).map(r => r.matches?.club_id).filter(Boolean));
 
-      // Reservas
-      const {data: bookings} = await supabase.from('court_bookings')
+      const { data: bookings } = await supabase.from('court_bookings')
         .select('club_id').eq('user_id', userId);
       const clubBookingCounts = {};
-      (bookings||[]).forEach(b=>{ clubBookingCounts[b.club_id]=(clubBookingCounts[b.club_id]||0)+1; });
+      (bookings || []).forEach(b => { clubBookingCounts[b.club_id] = (clubBookingCounts[b.club_id] || 0) + 1; });
       const maxSameClub = Math.max(...Object.values(clubBookingCounts), 0);
 
-      // Partidos creados
-      const {data: created} = await supabase.from('matches')
-        .select('id', {count:'exact'}).eq('created_by_user', userId);
+      const { data: created } = await supabase.from('matches')
+        .select('id', { count: 'exact' }).eq('created_by_user', userId);
 
       setStats(prev => ({
         ...prev,
         clubs_count: uniqueClubs.size,
-        bookings_count: (bookings||[]).length,
+        bookings_count: (bookings || []).length,
         same_club_bookings: maxSameClub,
-        created_count: (created||[]).length,
-        sos_count: 0, // TODO: cuando se implemente SOS tracking
+        created_count: (created || []).length,
+        sos_count: 0,
       }));
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
   }
 
-  /* ─── Load stats + ratings ─── */
   async function loadStats(uid) {
     try {
       const { data: pub } = await supabase
@@ -146,19 +132,19 @@ export default function ProfilePage() {
       const rows = Array.isArray(ratingRows) ? ratingRows : [];
       const avg = rows.length ? rows.reduce((s, r) => s + (Number(r.rating) || 0), 0) / rows.length : 0;
 
-      setStats({
+      setStats(prev => ({
+        ...prev,
         matches_played: Number(pub?.matches_played) || 0,
         red_cards: Number(pub?.red_cards) || 0,
         avg_rating: avg,
         rating_count: rows.length,
-      });
+      }));
       setRatings(rows);
     } catch (e) {
       console.error("loadStats error:", e);
     }
   }
 
-  /* ─── Load favorites ─── */
   async function loadFavorites(uid) {
     if (!uid) { setFavorites([]); return; }
     try {
@@ -208,33 +194,31 @@ export default function ProfilePage() {
     } catch (e) { toast?.error?.(e?.message || "No se pudo eliminar"); } finally { setFavLoading(false); }
   }
 
-  /* ─── Init ─── */
+  // Carga de datos del perfil — ya no gestiona auth, usa session del prop
   useEffect(() => {
+    if (!session?.user) {
+      navigate("/login", { replace: true });
+      return;
+    }
     let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      const s = data?.session ?? null;
-      setSession(s);
-      if (!s?.user) { navigate("/login", { replace: true }); return; }
-      (async () => {
-        try {
-          setLoading(true); setErr(null);
-          const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled,sos_radius_km,notify_morning,notify_afternoon,followed_clubs").eq("id", s.user.id).maybeSingle();
-          if (error) throw error;
-          const handle = prof?.handle ?? "";
-          const name = (prof?.name ?? "").trim() || handle;
-          setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
-          await Promise.all([loadFavorites(s.user.id), loadStats(s.user.id)]);
-          fetchClubsFromGoogleSheet().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>{});
-          supabase.from("club_admins").select("id").eq("user_id",s.user.id).eq("status","approved").maybeSingle().then(({data})=>setIsClubAdmin(!!data));
-        } catch (e) { setErr(e?.message || "No se pudo cargar el perfil"); }
-        finally { setLoading(false); }
-      })();
-    });
+    (async () => {
+      try {
+        setLoading(true); setErr(null);
+        const { data: prof, error } = await supabase.from("profiles").select("name,handle,sex,level,handedness,birthdate,avatar_url,sos_enabled,sos_radius_km,notify_morning,notify_afternoon,followed_clubs").eq("id", session.user.id).maybeSingle();
+        if (error) throw error;
+        const handle = prof?.handle ?? "";
+        const name = (prof?.name ?? "").trim() || handle;
+        if (!alive) return;
+        setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
+        await Promise.all([loadFavorites(session.user.id), loadStats(session.user.id)]);
+        fetchClubsFromGoogleSheet().then(r => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => {});
+        supabase.from("club_admins").select("id").eq("user_id", session.user.id).eq("status", "approved").maybeSingle().then(({ data }) => { if (alive) setIsClubAdmin(!!data); });
+      } catch (e) { if (alive) setErr(e?.message || "No se pudo cargar el perfil"); }
+      finally { if (alive) setLoading(false); }
+    })();
     return () => { alive = false; };
-  }, [navigate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Save ─── */
   async function save(payloadOverride = null) {
     if (!session?.user) return;
     setErr(null);
@@ -285,13 +269,14 @@ export default function ProfilePage() {
     } finally { setUploading(false); }
   }
 
+  if (!session) return null; // App.jsx redirigirá a login
+
   if (loading) return (
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
       <div className="pageWrap"><div className="container" style={{ color: "rgba(255,255,255,0.5)", padding: 40, textAlign: "center" }}>Cargando perfil…</div></div>
     </div>
   );
 
-  /* ─── RENDER ─── */
   return (
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
       <style>{`
@@ -311,7 +296,6 @@ export default function ProfilePage() {
       <div className="pageWrap">
         <div className="container" style={{ padding: "0 16px", maxWidth: 680, margin: "0 auto" }}>
 
-          {/* ── HEADER ── */}
           <div style={{ padding: "14px 0 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🦍 Mi Perfil</h1>
@@ -322,7 +306,6 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          {/* ── AVATAR + DATOS ── */}
           <div className="pfSection">
             <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
@@ -413,57 +396,50 @@ export default function ProfilePage() {
               </div>
               {form.sos_enabled && (
                 <div className="pfField">
-                  <label className="pfLabel">📡 Radio de avisos SOS: <span style={{color:"#74B800",fontWeight:900}}>{form.sos_radius_km} km</span></label>
-                  <input type="range" min={5} max={200} step={5} value={form.sos_radius_km||50}
-                    onChange={e=>setForm(p=>({...p,sos_radius_km:Number(e.target.value)}))}
-                    style={{width:"100%",accentColor:"#74B800",cursor:"pointer"}} />
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:2}}>
+                  <label className="pfLabel">📡 Radio de avisos SOS: <span style={{ color: "#74B800", fontWeight: 900 }}>{form.sos_radius_km} km</span></label>
+                  <input type="range" min={5} max={200} step={5} value={form.sos_radius_km || 50}
+                    onChange={e => setForm(p => ({ ...p, sos_radius_km: Number(e.target.value) }))}
+                    style={{ width: "100%", accentColor: "#74B800", cursor: "pointer" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
                     <span>5 km</span><span>50 km</span><span>100 km</span><span>200 km</span>
                   </div>
                 </div>
               )}
-
-              {/* Turno preferido */}
               <div className="pfField">
                 <label className="pfLabel">🔔 Notificaciones de nuevos partidos</label>
-                <div style={{display:"flex",gap:8}}>
-                  {[{key:"notify_morning",label:"🌅 Mañana",sub:"Antes de las 14h"},{key:"notify_afternoon",label:"🌆 Tarde",sub:"Después de las 14h"}].map(({key,label,sub})=>(
-                    <div key={key} onClick={()=>setForm(p=>({...p,[key]:!p[key]}))}
-                      style={{flex:1,padding:"10px 12px",borderRadius:10,background:form[key]?"rgba(116,184,0,0.12)":"rgba(255,255,255,0.04)",border:form[key]?"1px solid rgba(116,184,0,0.4)":"1px solid rgba(255,255,255,0.1)",cursor:"pointer",textAlign:"center"}}>
-                      <div style={{fontSize:18,marginBottom:2}}>{label.split(" ")[0]}</div>
-                      <div style={{fontSize:12,fontWeight:800,color:form[key]?"#74B800":"#fff"}}>{label.split(" ")[1]}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{sub}</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{ key: "notify_morning", label: "🌅 Mañana", sub: "Antes de las 14h" }, { key: "notify_afternoon", label: "🌆 Tarde", sub: "Después de las 14h" }].map(({ key, label, sub }) => (
+                    <div key={key} onClick={() => setForm(p => ({ ...p, [key]: !p[key] }))}
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: form[key] ? "rgba(116,184,0,0.12)" : "rgba(255,255,255,0.04)", border: form[key] ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: "center" }}>
+                      <div style={{ fontSize: 18, marginBottom: 2 }}>{label.split(" ")[0]}</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: form[key] ? "#74B800" : "#fff" }}>{label.split(" ")[1]}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{sub}</div>
                     </div>
                   ))}
                 </div>
               </div>
-
-              {/* Clubs favoritos para notificaciones */}
               <div className="pfField">
-                <label className="pfLabel">🏢 Clubs que sigues <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,fontSize:10}}>(te avisamos de nuevos partidos)</span></label>
-                <input placeholder="Buscar club…" value={clubSearchQ} onChange={e=>setClubSearchQ(e.target.value)}
-                  style={{padding:"9px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",marginBottom:8}} />
-                {(form.followed_clubs||[]).length>0 && (
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-                    {(form.followed_clubs||[]).map(c=>(
-                      <div key={c} style={{padding:"4px 10px",borderRadius:999,background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",gap:6}}>
+                <label className="pfLabel">🏢 Clubs que sigues <span style={{ color: "rgba(255,255,255,0.4)", fontWeight: 400, fontSize: 10 }}>(te avisamos de nuevos partidos)</span></label>
+                <input placeholder="Buscar club…" value={clubSearchQ} onChange={e => setClubSearchQ(e.target.value)}
+                  style={{ padding: "9px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 13, outline: "none", width: "100%", boxSizing: "border-box", marginBottom: 8 }} />
+                {(form.followed_clubs || []).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {(form.followed_clubs || []).map(c => (
+                      <div key={c} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", color: "#74B800", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
                         {c}
-                        <span onClick={()=>setForm(p=>({...p,followed_clubs:(p.followed_clubs||[]).filter(x=>x!==c)}))} style={{cursor:"pointer",opacity:0.6,fontSize:11}}>✕</span>
+                        <span onClick={() => setForm(p => ({ ...p, followed_clubs: (p.followed_clubs || []).filter(x => x !== c) }))} style={{ cursor: "pointer", opacity: 0.6, fontSize: 11 }}>✕</span>
                       </div>
                     ))}
                   </div>
                 )}
-                {clubSearchQ.length>=2 && (
-                  <div style={{background:"#1a1a1a",borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",overflow:"hidden",maxHeight:180,overflowY:"auto"}}>
-                    {clubsSheet.filter(c=>c.name&&c.name.toLowerCase().includes(clubSearchQ.toLowerCase())&&!(form.followed_clubs||[]).includes(c.name)).slice(0,8).map(c=>(
-                      <div key={c.id||c.name} onClick={()=>{setForm(p=>({...p,followed_clubs:[...(p.followed_clubs||[]),c.name]}));setClubSearchQ("");}}
-                        style={{padding:"9px 12px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:13,color:"#fff"}}>
-                        🏢 {c.name} {c.city?<span style={{color:"rgba(255,255,255,0.4)",fontSize:11}}>· {c.city}</span>:""}
+                {clubSearchQ.length >= 2 && (
+                  <div style={{ background: "#1a1a1a", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", maxHeight: 180, overflowY: "auto" }}>
+                    {clubsSheet.filter(c => c.name && c.name.toLowerCase().includes(clubSearchQ.toLowerCase()) && !(form.followed_clubs || []).includes(c.name)).slice(0, 8).map(c => (
+                      <div key={c.id || c.name} onClick={() => { setForm(p => ({ ...p, followed_clubs: [...(p.followed_clubs || []), c.name] })); setClubSearchQ(""); }}
+                        style={{ padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.05)", fontSize: 13, color: "#fff" }}>
+                        🏢 {c.name} {c.city ? <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>· {c.city}</span> : ""}
                       </div>
                     ))}
-                    {clubsSheet.filter(c=>c.name&&c.name.toLowerCase().includes(clubSearchQ.toLowerCase())&&!(form.followed_clubs||[]).includes(c.name)).length===0 && (
-                      <div style={{padding:"9px 12px",fontSize:12,color:"rgba(255,255,255,0.3)"}}>No se encontraron clubs</div>
-                    )}
                   </div>
                 )}
               </div>
@@ -472,23 +448,23 @@ export default function ProfilePage() {
             {err && <div style={{ marginTop: 10, color: "#ff6b6b", fontWeight: 700, fontSize: 13 }}>{err}</div>}
 
             {isClubAdmin && (
-              <div style={{marginTop:14}}>
-                <button onClick={()=>navigate("/club-admin")}
-                  style={{width:"100%",padding:"12px",borderRadius:12,background:"linear-gradient(135deg,#1a2a00,#2a4000)",border:"1px solid rgba(116,184,0,0.4)",color:"#74B800",fontWeight:900,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <div style={{ marginTop: 14 }}>
+                <button onClick={() => navigate("/club-admin")}
+                  style={{ width: "100%", padding: "12px", borderRadius: 12, background: "linear-gradient(135deg,#1a2a00,#2a4000)", border: "1px solid rgba(116,184,0,0.4)", color: "#74B800", fontWeight: 900, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🏟️ Panel de administración del club
                 </button>
               </div>
             )}
-            <div style={{marginTop:8}}>
-              <button onClick={()=>navigate("/registrar-club")}
-                style={{width:"100%",padding:"10px",borderRadius:12,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.25)",color:"rgba(116,184,0,0.8)",fontWeight:900,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => navigate("/registrar-club")}
+                style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.25)", color: "rgba(116,184,0,0.8)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 🏟️ ¿Tienes un club? Regístralo gratis
               </button>
             </div>
             {session?.user?.id === "1e0db2e1-e959-41f0-bcaf-2bb46fd425da" && (
-              <div style={{marginTop:8}}>
-                <button onClick={()=>navigate("/super-admin")}
-                  style={{width:"100%",padding:"10px",borderRadius:12,background:"rgba(255,0,0,0.08)",border:"1px solid rgba(255,0,0,0.25)",color:"rgba(255,100,100,0.9)",fontWeight:900,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <div style={{ marginTop: 8 }}>
+                <button onClick={() => navigate("/super-admin")}
+                  style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(255,0,0,0.08)", border: "1px solid rgba(255,0,0,0.25)", color: "rgba(255,100,100,0.9)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🔐 Super Admin
                 </button>
               </div>
@@ -503,11 +479,8 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* ── STATS + BADGES ── */}
           <div ref={statsRef} className="pfSection">
             <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📊 Mis Stats Gorila</div>
-
-            {/* Stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
               <div className="statBox">
                 <div style={{ fontSize: 22, fontWeight: 900, color: "#74B800" }}>{stats.matches_played}</div>
@@ -530,40 +503,28 @@ export default function ProfilePage() {
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>T. Rojas</div>
               </div>
             </div>
-
-            {/* Badges */}
             <div style={{ fontWeight: 900, color: "rgba(255,255,255,0.7)", fontSize: 13, marginBottom: 10 }}>🏅 Badges</div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {badges.map(b => (
-                <div key={b.key} title={b.desc}
-                  className="badgePill"
-                  style={{
-                    background: b.earned ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.04)",
-                    border: b.earned ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)",
-                    color: b.earned ? "#fff" : "rgba(255,255,255,0.3)",
-                    filter: b.earned ? "none" : "grayscale(1)",
-                  }}>
+                <div key={b.key} title={b.desc} className="badgePill"
+                  style={{ background: b.earned ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.04)", border: b.earned ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)", color: b.earned ? "#fff" : "rgba(255,255,255,0.3)", filter: b.earned ? "none" : "grayscale(1)" }}>
                   <span style={{ fontSize: 16 }}>{b.emoji}</span>
                   <span style={{ fontSize: 11 }}>{b.label}</span>
                 </div>
               ))}
             </div>
-
-            {/* Tarjeta roja warning */}
             {stats.red_cards >= 3 && (
               <div style={{ marginTop: 14, background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 10, padding: "10px 12px", fontSize: 12, color: "#ff6b6b" }}>
-                🟥 Tienes {stats.red_cards} tarjeta{stats.red_cards > 1 ? "s" : ""} roja{stats.red_cards > 1 ? "s" : ""} por no presentarte a partidos. Juega más partidos para reducirlas.
+                🟥 Tienes {stats.red_cards} tarjeta{stats.red_cards > 1 ? "s" : ""} roja{stats.red_cards > 1 ? "s" : ""} por no presentarte a partidos.
               </div>
             )}
           </div>
 
-          {/* ── STATS AVANZADAS ── */}
           <div className="pfSection">
             <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📈 Estadísticas avanzadas</div>
             <PlayerStats userId={session?.user?.id} />
           </div>
 
-          {/* ── VALORACIONES RECIBIDAS ── */}
           {ratings.length > 0 && (
             <div className="pfSection">
               <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>
@@ -576,7 +537,7 @@ export default function ProfilePage() {
                 {ratings.slice(0, 10).map((r, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)" }}>
                     <div style={{ display: "flex", gap: 2 }}>
-                      {[1,2,3,4,5].map(s => (
+                      {[1, 2, 3, 4, 5].map(s => (
                         <span key={s} style={{ fontSize: 12, color: Number(r.rating) >= s ? "#FFD700" : "rgba(255,255,255,0.2)" }}>★</span>
                       ))}
                     </div>
@@ -590,7 +551,6 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* ── FAVORITOS ── */}
           <div ref={favRef} className="pfSection">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15 }}>
@@ -601,7 +561,6 @@ export default function ProfilePage() {
                 {favLoading ? "…" : "Actualizar"}
               </button>
             </div>
-
             {favLoading ? (
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Cargando…</div>
             ) : favorites.length === 0 ? (

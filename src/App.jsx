@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import ClubAdminPage from "./pages/ClubAdminPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
@@ -47,6 +47,7 @@ import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
 
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
+import { useSession } from "./contexts/SessionContext";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { unlockGorilaAudio } from "./services/gorilaSound";
 
@@ -80,21 +81,11 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [session, setSession] = useState(() => {
-    try {
-      const raw = localStorage.getItem('sb-auth-token');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return parsed?.currentSession || null;
-      }
-    } catch {}
-    return null;
-  });
-  // Si ya hubo sesión antes, no mostrar splash al volver
-  const [sessionReady, setSessionReady] = useState(() => {
-    try { return !!localStorage.getItem('sb-session-exists'); } catch { return false; }
-  });
-  const sessionUserIdRef = useRef(null);
+  // ✅ FIX: usar SessionContext global en vez de gestionar auth propio
+  const { session, sessionReady } = useSession();
+
+  // ✅ FIX: eliminados useState de session/sessionReady, useRef sessionUserIdRef,
+  //         y el useEffect completo con getSession() + onAuthStateChange()
 
   const [minSplashDone, setMinSplashDone] = useState(false);
   useEffect(() => {
@@ -102,83 +93,18 @@ export default function App() {
     return () => clearTimeout(t);
   }, []);
 
+  // Onboarding: detectar nuevo login
   useEffect(() => {
-    let alive = true;
-
-    const safetyTimer = setTimeout(() => {
-      if (alive) setSessionReady(true);
-    }, 5000);
-
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (!alive) return;
-      clearTimeout(safetyTimer);
-      if (!error && data.session) {
-        sessionUserIdRef.current = data.session.user.id;
-        setSession(data.session);
-      }
-      setSessionReady(true);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      if (!alive) return;
-
-      const newUserId = newSession?.user?.id ?? null;
-
-      if (newUserId && newUserId === sessionUserIdRef.current) {
-        setSessionReady(true);
-        if (_event === 'SIGNED_IN') {
-          try {
-            const { data: profile } = await supabase.from("profiles")
-              .select("onboarding_done").eq("id", newUserId).maybeSingle();
-            if (profile && !profile.onboarding_done) {
-              setOnboardingSession(newSession);
-              setShowOnboarding(true);
-            }
-          } catch {}
+    if (!session?.user?.id) return;
+    supabase.from("profiles")
+      .select("onboarding_done").eq("id", session.user.id).maybeSingle()
+      .then(({ data: profile }) => {
+        if (profile && !profile.onboarding_done) {
+          setOnboardingSession(session);
+          setShowOnboarding(true);
         }
-        return;
-      }
-
-           // Guardar el userId anterior ANTES de actualizar la ref
-      const prevUserId = sessionUserIdRef.current;
-      sessionUserIdRef.current = newUserId;
-
-      // Si es el mismo usuario, no re-renderizar toda la app
-      if (newUserId && newUserId === prevUserId) {
-        if (_event === 'TOKEN_REFRESHED' || _event === 'SIGNED_IN') {
-          setSessionReady(true);
-          return;
-        }
-      }
-      setSession(newSession ?? null);
-      setSessionReady(true);
-      try {
-        if (newSession) localStorage.setItem('sb-session-exists', '1');
-        else localStorage.removeItem('sb-session-exists');
-      } catch {}
-
-      if (_event === 'SIGNED_OUT') {
-        navigate('/login', { replace: true });
-      }
-
-      if (_event === 'SIGNED_IN' && newSession?.user) {
-        try {
-          const { data: profile } = await supabase.from("profiles")
-            .select("onboarding_done").eq("id", newSession.user.id).maybeSingle();
-          if (profile && !profile.onboarding_done) {
-            setOnboardingSession(newSession);
-            setShowOnboarding(true);
-          }
-        } catch(e) { console.warn("onboarding check failed:", e); }
-      }
-    });
-
-    return () => {
-      alive = false;
-      clearTimeout(safetyTimer);
-      sub?.subscription?.unsubscribe?.();
-    };
-  }, []);
+      }).catch(() => {});
+  }, [session?.user?.id]);
 
   const isAuthShell = useMemo(() => {
     const p = location.pathname;
@@ -198,11 +124,10 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
-  // Detectar vuelta al foco y no hacer nada — las páginas ya tienen datos
+  // Detectar vuelta al foco — refrescar token silenciosamente sin disparar eventos
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
-        // Solo refrescar token silenciosamente sin disparar eventos
         supabase.auth.getSession().catch(() => {});
       }
     };
@@ -277,7 +202,24 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener("message", onMsg);
   }, [navigate]);
 
-  if (!sessionReady) return <SplashPage />;
+  // SIGNED_OUT: redirigir a login
+  useEffect(() => {
+    if (!sessionReady) return;
+    if (session === null && !isAuthShell) {
+      // Solo redirigir si había sesión antes (evitar redirect en carga inicial)
+      try {
+        if (localStorage.getItem('sb-session-existed')) {
+          localStorage.removeItem('sb-session-existed');
+          navigate('/login', { replace: true });
+        }
+      } catch {}
+    }
+    if (session?.user?.id) {
+      try { localStorage.setItem('sb-session-existed', '1'); } catch {}
+    }
+  }, [session, sessionReady]);
+
+  if (!sessionReady || !minSplashDone) return <SplashPage />;
 
   const showBack = !isAuthShell && location.pathname !== "/";
   const onBack = () => {

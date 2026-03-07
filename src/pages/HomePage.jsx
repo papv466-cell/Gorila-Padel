@@ -9,15 +9,14 @@ function timeUntil(dateStr) {
   if (diff < 0) return null;
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
-  if (h > 48) return `${Math.floor(h/24)}d`;
+  if (h > 48) return `${Math.floor(h / 24)}d`;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
 
 function localTimeStr(dateStr) {
-  try {
-    return new Date(dateStr).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-  } catch { return ""; }
+  try { return new Date(dateStr).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }); }
+  catch { return ""; }
 }
 
 function localDateStr(dateStr) {
@@ -35,41 +34,38 @@ const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef44
 
 export default function HomePage({ session: sessionProp }) {
   const navigate = useNavigate();
-  const [session, setSession] = useState(sessionProp ?? null);
+  // Usar session del prop — App.jsx ya gestiona el auth de forma centralizada
+  const session = sessionProp ?? null;
+
   const [profile, setProfile] = useState(null);
   const [matches, setMatches] = useState([]);
-  const [ranking, setRanking] = useState(null);
   const [gorilandiaFeed, setGorilandiaFeed] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 13 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
 
+  // Cargar datos cuando cambia el usuario
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data?.session ?? null);
-      if (data?.session?.user) loadAll(data.session.user);
-      else setLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      if (_event === 'TOKEN_REFRESHED') return;
-      setSession(prev => {
-        if (prev?.user?.id === s?.user?.id && prev?.user?.id) return prev;
-        if (s?.user) loadAll(s.user);
-        return s ?? null;
-      });
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+    if (session?.user) {
+      loadAll(session.user);
+    } else {
+      setLoading(false);
+      setProfile(null);
+      setMatches([]);
+      setGorilandiaFeed([]);
+      setProducts([]);
+    }
+  }, [session?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAll(user) {
     try {
       setLoading(true);
-      const [profRes, matchRes, rankRes, feedRes, prodRes] = await Promise.allSettled([
+      const [profRes, matchRes, feedRes, prodRes] = await Promise.allSettled([
         supabase.from("profiles").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
-        supabase.from("player_ratings").select("*").eq("to_user_id", user.id).limit(1),
         getFeed(),
         supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("active", true).order("created_at", { ascending: false }).limit(4),
       ]);
@@ -93,7 +89,6 @@ export default function HomePage({ session: sessionProp }) {
         .ghCtaBtn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(116,184,0,0.4) !important; }
       `}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 20px 60px", textAlign: "center" }}>
-        {/* Hero */}
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
           <img src="/imglogog.png" alt="Gorila Pádel" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(116,184,0,0.1)", padding: 12, border: "1px solid rgba(116,184,0,0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
           <h1 style={{ fontSize: 38, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.1 }}>
@@ -102,8 +97,6 @@ export default function HomePage({ session: sessionProp }) {
           <p style={{ fontSize: 16, color: "rgba(255,255,255,0.55)", margin: "0 0 8px" }}>Rápido. Fácil. Salvaje.</p>
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Partidos · Clubs · Clases · Tienda</p>
         </div>
-
-        {/* CTAs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32, animation: "ghHeroIn .6s ease .2s both" }}>
           <button className="ghCtaBtn" onClick={() => navigate("/login")}
             style={{ padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
@@ -114,8 +107,6 @@ export default function HomePage({ session: sessionProp }) {
             Ver partidos disponibles →
           </button>
         </div>
-
-        {/* Features */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, animation: "ghHeroIn .6s ease .4s both" }}>
           {[
             { icon: "🏓", title: "Partidos", desc: "Crea o únete" },
@@ -139,7 +130,6 @@ export default function HomePage({ session: sessionProp }) {
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
       <style>{`
         @keyframes ghIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes ghShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         .ghSection { animation: ghIn .4s ease both; }
         .ghMatchCard { transition: transform .2s, box-shadow .2s; cursor: pointer; flex-shrink: 0; }
         .ghMatchCard:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.4) !important; }
@@ -155,7 +145,6 @@ export default function HomePage({ session: sessionProp }) {
 
       <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 14px 80px" }}>
 
-        {/* ── SALUDO ── */}
         <div className="ghSection" style={{ padding: "16px 0 20px", animationDelay: "0s" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -176,7 +165,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
-        {/* ── CTA PRINCIPAL ── */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".05s" }}>
           <button onClick={() => navigate("/partidos")}
             style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
@@ -191,7 +179,6 @@ export default function HomePage({ session: sessionProp }) {
           </button>
         </div>
 
-        {/* ── PRÓXIMOS PARTIDOS ── */}
         {matches.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -232,7 +219,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
-        {/* ── GORILANDIA ── */}
         {gorilandiaFeed.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -263,7 +249,6 @@ export default function HomePage({ session: sessionProp }) {
                   </div>
                 );
               })}
-              {/* Card "Ver más" */}
               <div className="ghGoriPost" onClick={() => navigate("/gorilandia")}
                 style={{ width: 120, height: 120, borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.2)", display: "grid", placeItems: "center", flexShrink: 0 }}>
                 <div style={{ textAlign: "center" }}>
@@ -275,7 +260,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
-        {/* ── ACCESOS RÁPIDOS ── */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".2s" }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 12 }}>⚡ Accesos rápidos</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
@@ -295,7 +279,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
-        {/* ── RANKING PERSONAL ── */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
           <div style={{ padding: "14px 16px", borderRadius: 14, background: "#111", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}
             onClick={() => navigate("/ranking")}>
@@ -308,7 +291,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
-        {/* ── NOVEDADES TIENDA ── */}
         {products.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".3s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -343,7 +325,6 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
-        {/* ── FOOTER ── */}
         <div className="ghSection" style={{ textAlign: "center", paddingTop: 8, animationDelay: ".35s" }}>
           <div style={{ display: "flex", justifyContent: "center", gap: 12, fontSize: 11, color: "rgba(255,255,255,0.2)", fontWeight: 700 }}>
             <span>verde + negro</span><span>•</span><span>gorilas everywhere</span><span>•</span><span>0 complicaciones</span>
