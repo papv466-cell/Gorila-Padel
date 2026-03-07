@@ -1,3 +1,4 @@
+// src/services/push.js
 import { supabase } from "./supabaseClient";
 
 function urlB64ToUint8Array(base64String) {
@@ -70,18 +71,13 @@ export async function ensurePushSubscription() {
     platform: navigator.platform || "",
   };
 
-  // 7) Upsert (requiere UNIQUE endpoint + policy update/insert)
+  // 7) Upsert
   const { error: upErr } = await supabase
     .from("push_subscriptions")
     .upsert(payload, { onConflict: "user_id,endpoint" });
 
-
-  if (upErr) {
-    console.error("❌ push_subscriptions upsert error:", upErr);
-    throw upErr;
-  }
-
-  console.log("✅ push_subscriptions saved", { reused, endpoint: payload.endpoint });
+  // ✅ FIX: eliminados console.log de producción
+  if (upErr) throw upErr;
 
   return { ok: true, reused, endpoint: payload.endpoint };
 }
