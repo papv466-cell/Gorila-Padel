@@ -33,6 +33,7 @@ import PublicProfilePage from './pages/PublicProfilePage';
 import RankingPage from "./pages/RankingPage";
 import LeaguePage from "./pages/LeaguePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
+import FindPlayersPage from "./pages/FindPlayersPage";
 import CourtCheckoutPage from "./pages/CourtCheckoutPage";
 import OnboardingModal from "./components/OnboardingModal";
 import ClubPage from "./pages/ClubPage";
@@ -275,6 +276,7 @@ export default function App() {
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
+          <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
           <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

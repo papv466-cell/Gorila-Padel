@@ -235,11 +235,16 @@ export default function LeaderboardPage({ session }) {
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 16px" }}>
 
           {/* HEADER */}
-          <div style={{ padding: "16px 0 12px" }}>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🏆 Ranking</h1>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-              Semana del {new Date(getWeekRange().from).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}
+          <div style={{ padding: "16px 0 12px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🏆 Ranking</h1>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                Semana del {new Date(getWeekRange().from).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}
+              </div>
             </div>
+            <button onClick={() => navigate("/jugadores")} style={{ padding: "8px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}>
+              🔍 Buscar jugadores
+            </button>
           </div>
 
           {/* FILTRO CLUB */}
