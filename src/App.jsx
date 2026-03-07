@@ -1,352 +1,300 @@
-// src/pages/LeaderboardPage.jsx
-import { useEffect, useState } from "react";
-import { supabase } from "../services/supabaseClient";
-import { useNavigate } from "react-router-dom";
-import { getLevelFromXp } from "../services/xp";
+// src/App.jsx
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import ClubAdminPage from "./pages/ClubAdminPage";
+import ClubRegisterPage from "./pages/ClubRegisterPage";
+import SuperAdminPage from "./pages/SuperAdminPage";
 
-const TABS = [
-  { id: "xp",      label: "⚡ XP",        sub: "Esta semana" },
-  { id: "partidos", label: "🎾 Partidos",  sub: "Esta semana" },
-  { id: "racha",   label: "🔥 Racha",      sub: "Días seguidos" },
-  { id: "global",  label: "🏆 Global",     sub: "Todo el tiempo" },
-];
+import MapPage from "./pages/MapPage";
+import MatchesPage from "./pages/MatchesPage";
+import ClassesPage from "./pages/ClassesPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import SplashPage from "./pages/SplashPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ProfilePage from "./pages/ProfilePage";
+import AuthConfirmPage from './pages/AuthConfirmPage';
+import GorilandiaPage from './pages/GorilandiaPage';
+import SellerRegister from './pages/SellerRegister';
+import SellerDashboard from './pages/SellerDashboard';
+import SellerProducts from './pages/SellerProducts';
+import SellerProductForm from './pages/SellerProductForm';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderConfirmed from './pages/OrderConfirmed';
+import MyOrders from './pages/MyOrders';
+import StoreCatalog from './pages/StoreCatalog';
+import ProductDetail from './pages/ProductDetail';
+import CartPage from './pages/CartPage';
+import CartFloatingButton from './components/UI/CartFloatingButton';
+import SellerOrders from './pages/SellerOrders';
+import SellerSettings from './pages/SellerSettings';
+import PublicProfilePage from './pages/PublicProfilePage';
+import RankingPage from "./pages/RankingPage";
+import LeaguePage from "./pages/LeaguePage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import CourtCheckoutPage from "./pages/CourtCheckoutPage";
+import OnboardingModal from "./components/OnboardingModal";
+import ClubPage from "./pages/ClubPage";
+import toast, { Toaster } from 'react-hot-toast';
 
-function getWeekRange() {
-  const now = new Date();
-  const day = now.getDay(); // 0=dom, 1=lun...
-  const diff = (day === 0 ? -6 : 1 - day); // lunes de esta semana
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
-  return { from: monday.toISOString(), to: sunday.toISOString() };
-}
+import HomePage from "./pages/HomePage";
+import PlayHubPage from "./pages/PlayHubPage";
+import LearnHubPage from "./pages/LearnHubPage";
+import InclusivePage from "./pages/InclusivePage";
+import TeachersPage from "./pages/TeachersPage";
+import TeacherProfilePage from "./pages/TeacherProfilePage";
+import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
 
-function Avatar({ url, name, size = 40 }) {
-  const initials = (name || "?").trim().split(" ").slice(0, 2).map(p => p[0]?.toUpperCase()).join("");
-  if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
-  return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 900, color: "#74B800", flexShrink: 0 }}>
-      {initials}
-    </div>
-  );
-}
+import Navbar from "./components/UI/Navbar";
+import { supabase } from "./services/supabaseClient";
+import { useSession } from "./contexts/SessionContext";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { unlockGorilaAudio } from "./services/gorilaSound";
 
-function MedalIcon({ pos }) {
-  if (pos === 1) return <span style={{ fontSize: 22 }}>🥇</span>;
-  if (pos === 2) return <span style={{ fontSize: 22 }}>🥈</span>;
-  if (pos === 3) return <span style={{ fontSize: 22 }}>🥉</span>;
-  return <span style={{ fontSize: 14, fontWeight: 900, color: "rgba(255,255,255,0.3)", width: 22, textAlign: "center" }}>{pos}</span>;
-}
-
-export default function LeaderboardPage({ session }) {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState("xp");
-  const [clubFilter, setClubFilter] = useState("todos");
-  const [clubs, setClubs] = useState([]);
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [myRank, setMyRank] = useState(null);
-
-  useEffect(() => { loadClubs(); }, []);
-  useEffect(() => { load(); }, [tab, clubFilter]);
-
-  async function loadClubs() {
-    // Clubs con más partidos esta semana
-    const { from, to } = getWeekRange();
-    const { data: rows } = await supabase
-      .from("matches")
-      .select("club_name")
-      .gte("start_at", from)
-      .lte("start_at", to)
-      .not("club_name", "is", null);
-    const counts = {};
-    (rows || []).forEach(r => { if (r.club_name) counts[r.club_name] = (counts[r.club_name] || 0) + 1; });
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name]) => name);
-    setClubs(sorted);
+function RequireAuth({ session, sessionReady, children }) {
+  const location = useLocation();
+  if (!sessionReady) return null;
+  if (!session) {
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
+  return children;
+}
 
-  async function load() {
-    setLoading(true);
+async function sonarGorila() {
+  try {
+    const audio = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
+    audio.volume = 1.0;
+    await audio.play();
+  } catch {
     try {
-      let rows = [];
-      const { from, to } = getWeekRange();
-
-      if (tab === "xp") {
-        // XP ganado esta semana por usuario
-        let q = supabase
-          .from("xp_events")
-          .select("user_id, xp")
-          .gte("created_at", from)
-          .lte("created_at", to);
-        const { data: xpRows } = await q;
-
-        // Agrupar por usuario
-        const byUser = {};
-        (xpRows || []).forEach(r => { byUser[r.user_id] = (byUser[r.user_id] || 0) + r.xp; });
-        const topIds = Object.entries(byUser).sort((a, b) => b[1] - a[1]).slice(0, 50);
-
-        if (topIds.length === 0) { setData([]); setLoading(false); return; }
-
-        const ids = topIds.map(([id]) => id);
-        const { data: profiles } = await supabase
-          .from("profiles_public")
-          .select("id, name, handle, avatar_url")
-          .in("id", ids);
-
-        // Si hay filtro de club — filtrar por jugadores que jugaron en ese club esta semana
-        let validIds = new Set(ids);
-        if (clubFilter !== "todos") {
-          const { data: matchRows } = await supabase
-            .from("match_players")
-            .select("player_uuid, matches!inner(club_name, start_at)")
-            .eq("matches.club_name", clubFilter)
-            .gte("matches.start_at", from)
-            .lte("matches.start_at", to);
-          validIds = new Set((matchRows || []).map(r => r.player_uuid));
-        }
-
-        const profMap = {};
-        (profiles || []).forEach(p => { profMap[p.id] = p; });
-
-        rows = topIds
-          .filter(([id]) => validIds.has(id))
-          .map(([id, xp], i) => ({ id, xp, ...profMap[id] }))
-          .filter(r => r.name || r.handle);
-
-      } else if (tab === "partidos") {
-        // Partidos jugados esta semana
-        let q = supabase
-          .from("match_players")
-          .select("player_uuid, matches!inner(club_name, start_at)")
-          .gte("matches.start_at", from)
-          .lte("matches.start_at", to);
-        if (clubFilter !== "todos") q = q.eq("matches.club_name", clubFilter);
-        const { data: mpRows } = await q;
-
-        const byUser = {};
-        (mpRows || []).forEach(r => { byUser[r.player_uuid] = (byUser[r.player_uuid] || 0) + 1; });
-        const topIds = Object.entries(byUser).sort((a, b) => b[1] - a[1]).slice(0, 50);
-        if (topIds.length === 0) { setData([]); setLoading(false); return; }
-
-        const ids = topIds.map(([id]) => id);
-        const { data: profiles } = await supabase.from("profiles_public").select("id, name, handle, avatar_url").in("id", ids);
-        const profMap = {};
-        (profiles || []).forEach(p => { profMap[p.id] = p; });
-        rows = topIds.map(([id, partidos]) => ({ id, partidos, ...profMap[id] })).filter(r => r.name || r.handle);
-
-      } else if (tab === "racha") {
-        // Racha actual — directo de profiles
-        const { data: profRows } = await supabase
-          .from("profiles")
-          .select("id, streak_days, streak_last_date")
-          .gt("streak_days", 0)
-          .order("streak_days", { ascending: false })
-          .limit(50);
-
-        if (!profRows?.length) { setData([]); setLoading(false); return; }
-        const ids = profRows.map(r => r.id);
-        const { data: profiles } = await supabase.from("profiles_public").select("id, name, handle, avatar_url").in("id", ids);
-        const profMap = {};
-        (profiles || []).forEach(p => { profMap[p.id] = p; });
-
-        // Filtrar por club si aplica
-        let validIds = new Set(ids);
-        if (clubFilter !== "todos") {
-          const { data: matchRows } = await supabase
-            .from("match_players")
-            .select("player_uuid, matches!inner(club_name, start_at)")
-            .eq("matches.club_name", clubFilter)
-            .gte("matches.start_at", from)
-            .lte("matches.start_at", to);
-          validIds = new Set((matchRows || []).map(r => r.player_uuid));
-        }
-
-        rows = profRows
-          .filter(r => validIds.has(r.id))
-          .map(r => ({ ...r, ...profMap[r.id] }))
-          .filter(r => r.name || r.handle);
-
-      } else if (tab === "global") {
-        // XP total de todos los tiempos
-        const { data: profRows } = await supabase
-          .from("profiles")
-          .select("id, xp, streak_days")
-          .gt("xp", 0)
-          .order("xp", { ascending: false })
-          .limit(50);
-
-        if (!profRows?.length) { setData([]); setLoading(false); return; }
-        const ids = profRows.map(r => r.id);
-        const { data: profiles } = await supabase.from("profiles_public").select("id, name, handle, avatar_url").in("id", ids);
-        const profMap = {};
-        (profiles || []).forEach(p => { profMap[p.id] = p; });
-
-        let validIds = new Set(ids);
-        if (clubFilter !== "todos") {
-          const { data: matchRows } = await supabase
-            .from("match_players")
-            .select("player_uuid, matches!inner(club_name)")
-            .eq("matches.club_name", clubFilter);
-          validIds = new Set((matchRows || []).map(r => r.player_uuid));
-        }
-
-        rows = profRows
-          .filter(r => validIds.has(r.id))
-          .map(r => ({ ...r, ...profMap[r.id] }))
-          .filter(r => r.name || r.handle);
-      }
-
-      setData(rows);
-
-      // Mi posición
-      if (session?.user?.id) {
-        const idx = rows.findIndex(r => r.id === session.user.id);
-        setMyRank(idx >= 0 ? idx + 1 : null);
-      }
-
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+      await unlockGorilaAudio();
+      const audio2 = new Audio(`${window.location.origin}/sounds/gorila.mp3`);
+      audio2.volume = 1.0;
+      await audio2.play();
+    } catch {}
   }
+}
 
-  function getMetric(row) {
-    if (tab === "xp") return { value: row.xp, label: "XP", color: "#74B800" };
-    if (tab === "partidos") return { value: row.partidos, label: row.partidos === 1 ? "partido" : "partidos", color: "#74B800" };
-    if (tab === "racha") return { value: row.streak_days, label: row.streak_days === 1 ? "día" : "días", color: "#F97316" };
-    if (tab === "global") {
-      const lvl = getLevelFromXp(row.xp || 0);
-      return { value: row.xp, label: `XP · Nv.${lvl.level}`, color: "#74B800" };
+export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingSession, setOnboardingSession] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { session, sessionReady } = useSession();
+
+  const [minSplashDone, setMinSplashDone] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMinSplashDone(true), 350);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Onboarding: detectar nuevo login
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    supabase.from("profiles")
+      .select("onboarding_done").eq("id", session.user.id).maybeSingle()
+      .then(({ data: profile }) => {
+        if (profile && !profile.onboarding_done) {
+          setOnboardingSession(session);
+          setShowOnboarding(true);
+        }
+      }).catch(() => {});
+  }, [session?.user?.id]);
+
+  const isAuthShell = useMemo(() => {
+    const p = location.pathname;
+    return (
+      p.startsWith("/login") ||
+      p.startsWith("/register") ||
+      p.startsWith("/registro") ||
+      p.startsWith("/forgot-password") ||
+      p.startsWith("/reset-password")
+    );
+  }, [location.pathname]);
+
+  // Redirigir a / si ya tienes sesión y estás en pantalla de auth
+  useEffect(() => {
+    if (!sessionReady) return;
+    if (!session) return;
+    if (!isAuthShell) return;
+    navigate("/", { replace: true });
+  }, [sessionReady, session, isAuthShell, navigate]);
+
+  // Detectar vuelta al foco
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    import("./services/push").then(({ ensurePushSubscription }) => {
+      ensurePushSubscription().catch(() => {});
+    });
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const { supabase } = await import("./services/supabaseClient");
+        await supabase.from("profiles").update({
+          last_lat: pos.coords.latitude,
+          last_lng: pos.coords.longitude,
+        }).eq("id", session.user.id);
+      } catch {}
+    }, () => {}, { timeout: 10000 });
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const unlock = () => { unlockGorilaAudio().catch(() => {}); };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const onMsg = (event) => {
+      const data = event?.data || {};
+      const type = String(data.type || "");
+      if (type === "NAVIGATE") {
+        const url = String(data.url || "");
+        if (url) navigate(url, { replace: false });
+        return;
+      }
+      if (type === "PUSH_RECEIVED") {
+        const title = data.title || "Gorila Pádel 🦍";
+        const body = data.body || "";
+        const url = data.url || "/partidos";
+        toast(
+          (t) => (
+            <div onClick={() => { toast.dismiss(t.id); sonarGorila(); navigate(url); }} style={{ cursor: "pointer", width: "100%" }}>
+              <div style={{ fontWeight: 700, marginBottom: 2 }}>{title}</div>
+              {body && <div style={{ opacity: 0.8, fontSize: 13 }}>{body}</div>}
+            </div>
+          ),
+          { duration: 6000, icon: "🦍", style: { background: '#1a1a1a', color: '#fff', border: '1px solid #74B800', borderRadius: '12px', padding: '14px 16px', fontSize: '14px', fontFamily: 'Outfit, sans-serif', cursor: 'pointer' } }
+        );
+        return;
+      }
+      if (type === "PUSH_CLICKED") {
+        sonarGorila();
+        const url = data.url || "/partidos";
+        if (url) navigate(url, { replace: false });
+        return;
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker.removeEventListener("message", onMsg);
+  }, [navigate]);
+
+  // ✅ FIX: SIGNED_OUT — solo redirigir si sessionReady=true Y session lleva
+  // al menos un render siendo null (evita redirect en carga inicial)
+  const sessionWasReadyRef = useRef(false);
+  useEffect(() => {
+    if (!sessionReady) return;
+    if (session !== null) {
+      // Hay sesión — marcar que existió y resetear el flag
+      sessionWasReadyRef.current = true;
+      try { localStorage.setItem('sb-session-existed', '1'); } catch {}
+      return;
     }
-  }
+    // session === null Y sessionReady === true
+    // Solo redirigir si ya habíamos tenido sesión antes en esta carga de página
+    if (!sessionWasReadyRef.current) return;
+    if (isAuthShell) return;
+    try { localStorage.removeItem('sb-session-existed'); } catch {}
+    navigate('/login', { replace: true });
+  }, [session, sessionReady, isAuthShell, navigate]);
 
-  const isTop3Style = (i) => i < 3 ? {
-    background: i === 0 ? "rgba(255,215,0,0.06)" : i === 1 ? "rgba(192,192,192,0.05)" : "rgba(205,127,50,0.05)",
-    border: i === 0 ? "1px solid rgba(255,215,0,0.2)" : i === 1 ? "1px solid rgba(192,192,192,0.15)" : "1px solid rgba(205,127,50,0.15)",
-  } : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" };
+  if (!sessionReady || !minSplashDone) return <SplashPage />;
+
+  const showBack = !isAuthShell && location.pathname !== "/";
+  const onBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
+  };
 
   return (
-    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
-      <div className="pageWrap">
-        <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 16px" }}>
-
-          {/* HEADER */}
-          <div style={{ padding: "16px 0 12px" }}>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🏆 Ranking</h1>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-              Semana del {new Date(getWeekRange().from).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}
-            </div>
-          </div>
-
-          {/* FILTRO CLUB */}
-          <div style={{ overflowX: "auto", display: "flex", gap: 6, paddingBottom: 8, marginBottom: 8, scrollbarWidth: "none" }}>
-            {["todos", ...clubs].map(c => (
-              <button key={c} onClick={() => setClubFilter(c)} style={{
-                flexShrink: 0, padding: "6px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                fontSize: 12, fontWeight: 800,
-                background: clubFilter === c ? "#74B800" : "rgba(255,255,255,0.07)",
-                color: clubFilter === c ? "#000" : "rgba(255,255,255,0.6)",
-              }}>
-                {c === "todos" ? "🌍 Todos" : c}
-              </button>
-            ))}
-          </div>
-
-          {/* TABS */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 6, marginBottom: 16 }}>
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
-                padding: "10px 4px", borderRadius: 12, border: "none", cursor: "pointer",
-                background: tab === t.id ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.04)",
-                borderBottom: tab === t.id ? "2px solid #74B800" : "2px solid transparent",
-                color: tab === t.id ? "#74B800" : "rgba(255,255,255,0.4)",
-              }}>
-                <div style={{ fontSize: 16 }}>{t.label.split(" ")[0]}</div>
-                <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>{t.label.split(" ").slice(1).join(" ")}</div>
-                <div style={{ fontSize: 9, opacity: 0.6, marginTop: 1 }}>{t.sub}</div>
-              </button>
-            ))}
-          </div>
-
-          {/* MI POSICIÓN */}
-          {myRank && !loading && (
-            <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 18 }}>📍</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: "#74B800" }}>Tu posición: #{myRank}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-                  {myRank === 1 ? "¡Eres el número 1! 🏆" : `${myRank - 1} posición${myRank - 1 > 1 ? "es" : ""} por encima de ti`}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* LISTA */}
-          {loading ? (
-            <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.3)", fontSize: 14 }}>Cargando ranking…</div>
-          ) : data.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 40 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🦍</div>
-              <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", marginBottom: 6 }}>Aún no hay datos</div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
-                {clubFilter !== "todos" ? "Nadie ha jugado en este club esta semana" : "Juega partidos para aparecer aquí"}
-              </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {data.map((row, i) => {
-                const metric = getMetric(row);
-                const isMe = row.id === session?.user?.id;
-                return (
-                  <div
-                    key={row.id}
-                    onClick={() => navigate(`/usuario/${row.id}`)}
-                    style={{
-                      ...isTop3Style(i),
-                      borderRadius: 14, padding: "12px 14px",
-                      display: "flex", alignItems: "center", gap: 12,
-                      cursor: "pointer",
-                      outline: isMe ? "2px solid rgba(116,184,0,0.5)" : "none",
-                      transition: "opacity .15s",
-                    }}
-                  >
-                    {/* Posición */}
-                    <div style={{ width: 28, display: "flex", justifyContent: "center", flexShrink: 0 }}>
-                      <MedalIcon pos={i + 1} />
-                    </div>
-
-                    {/* Avatar */}
-                    <Avatar url={row.avatar_url} name={row.name || row.handle} size={42} />
-
-                    {/* Nombre */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 900, color: isMe ? "#74B800" : "#fff", display: "flex", alignItems: "center", gap: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {row.name || row.handle || "Jugador"}
-                        {isMe && <span style={{ fontSize: 10, background: "rgba(116,184,0,0.2)", color: "#74B800", padding: "1px 6px", borderRadius: 999, fontWeight: 800, flexShrink: 0 }}>TÚ</span>}
-                      </div>
-                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
-                        @{row.handle || "—"}
-                      </div>
-                    </div>
-
-                    {/* Métrica */}
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <div style={{ fontSize: 18, fontWeight: 900, color: metric.color }}>{metric.value}</div>
-                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{metric.label}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div style={{ height: 32 }} />
-        </div>
-      </div>
+    <div className="appShell">
+      {!isAuthShell ? <Navbar showBack={showBack} onBack={onBack} /> : null}
+      <main className="appMain">
+        {!isAuthShell ? <PWAInstallPrompt /> : null}
+        <Routes>
+          <Route path="/" element={<HomePage session={session} />} />
+          <Route path="/tienda" element={<StoreCatalog />} />
+          <Route path="/tienda/producto/:slug" element={<ProductDetail />} />
+          <Route path="/tienda/carrito" element={<CartPage />} />
+          <Route path="/tienda/checkout" element={<CheckoutPage />} />
+          <Route path="/tienda/pedido-confirmado" element={<OrderConfirmed />} />
+          <Route path="/tienda/mis-pedidos" element={<MyOrders />} />
+          <Route path="/vendedor/registro" element={<SellerRegister />} />
+          <Route path="/vendedor/dashboard" element={<SellerDashboard />} />
+          <Route path="/vendedor/productos" element={<SellerProducts />} />
+          <Route path="/vendedor/productos/nuevo" element={<SellerProductForm />} />
+          <Route path="/vendedor/productos/:id" element={<SellerProductForm />} />
+          <Route path="/vendedor/pedidos" element={<SellerOrders />} />
+          <Route path="/vendedor/perfil" element={<SellerSettings />} />
+          <Route path="/gorilandia" element={<GorilandiaPage />} />
+          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
+          <Route path="/auth/confirm" element={<AuthConfirmPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/mapa" element={<RequireAuth session={session} sessionReady={sessionReady}><MapPage session={session} /></RequireAuth>} />
+          <Route path="/partidos" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
+          <Route path="/clases" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
+          <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
+          <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage session={session} /></RequireAuth>} />
+          <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
+          <Route path="/registrar-club" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubRegisterPage /></RequireAuth>} />
+          <Route path="/super-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><SuperAdminPage /></RequireAuth>} />
+          <Route path="/profesores" element={<RequireAuth session={session} sessionReady={sessionReady}><TeachersPage /></RequireAuth>} />
+          <Route path="/profesores/:id" element={<RequireAuth session={session} sessionReady={sessionReady}><TeacherProfilePage /></RequireAuth>} />
+          <Route path="/juega" element={<RequireAuth session={session} sessionReady={sessionReady}><PlayHubPage /></RequireAuth>} />
+          <Route path="/aprende" element={<RequireAuth session={session} sessionReady={sessionReady}><LearnHubPage /></RequireAuth>} />
+          <Route path="/play" element={<Navigate to="/juega" replace />} />
+          <Route path="/profile" element={<Navigate to="/perfil" replace />} />
+          <Route path="/inclusivo" element={<Navigate to="/inclusivos" replace />} />
+          <Route path="/store" element={<Navigate to="/tienda" replace />} />
+          <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
+          <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/ligas" element={<LeaguePage />} />
+          <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
+          <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
+          <Route path="/club/:clubId" element={<ClubPage session={session} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      {!isAuthShell && <CartFloatingButton />}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: { background: '#1a1a1a', color: '#fff', border: '1px solid #252525', borderRadius: '12px', padding: '16px', fontSize: '14px', fontFamily: 'Outfit, sans-serif' },
+          success: { iconTheme: { primary: '#74B800', secondary: '#000' } },
+          error: { iconTheme: { primary: '#FF4444', secondary: '#fff' } },
+        }}
+      />
+      {showOnboarding && onboardingSession && (
+        <OnboardingModal
+          session={onboardingSession}
+          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); }}
+        />
+      )}
     </div>
   );
 }
