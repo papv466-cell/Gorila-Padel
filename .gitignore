@@ -6,3 +6,12 @@ dist/
 .DS_Store
 .vercel
 .vscode/
+# Variables de entorno - NUNCA subir al repositorio
+.env
+.env.local
+*.env
+
+# Backups y temporales
+*.zip
+*.save
+dist/
