@@ -34,4 +34,17 @@ self.addEventListener('fetch', e => {
   const isStaticAsset = url.pathname.match(/\.(js|css|png|jpg|svg|ico|woff2)$/)
     && url.pathname.includes('-'); // los archivos con hash tienen guión: index-Bo-ZFzpW.js
 
-  if (!isStaticAsset) return; // si no es asset estático, ni lo
+  if (!isStaticAsset) return; // si no es asset estático, ni lo tocamos
+
+  e.respondWith(
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(e.request).then(cached => {
+        if (cached) return cached; // asset estático con hash → siempre válido
+        return fetch(e.request).then(res => {
+          if (res.ok) cache.put(e.request, res.clone());
+          return res;
+        });
+      })
+    )
+  );
+});
