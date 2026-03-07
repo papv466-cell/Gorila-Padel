@@ -1,3 +1,4 @@
+// src/services/matchMessages.js
 import { supabase } from "./supabaseClient";
 
 // Enviar mensaje + push
@@ -17,19 +18,21 @@ export async function sendMatchMessage({ matchId, message }) {
     .insert([{ match_id: matchId, user_id: userId, message: msg }])
     .select("id")
     .single();
-      // 🚀 Después de guardar el mensaje, dispara push a los demás
+
+  // ✅ FIX: mover comprobación de error ANTES de usar saved.id
+  if (error) throw error;
+
+  // 🚀 Disparar push con el id correcto (saved.id, no data.id)
   try {
     await supabase.functions.invoke("push-last-message", {
       body: {
         matchId,
-        messageId: data.id,
+        messageId: saved.id,
       },
     });
   } catch (e) {
     console.warn("push-last-message falló (no bloquea el chat):", e);
   }
-
-  if (error) throw error;
 
   // 2️⃣ Usuarios del partido (menos yo)
   const { data: participants } = await supabase

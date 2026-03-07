@@ -1,5 +1,5 @@
 // src/components/PostMatchModal.jsx
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
@@ -262,6 +262,8 @@ export default function PostMatchModal({ match, players, session, onClose }) {
   const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  // ✅ FIX: ref para evitar doble ejecución de saveAll()
+  const saveInProgress = useRef(false);
 
   const otherPlayers = (players || []).filter(p => p.player_uuid !== session?.user?.id);
 
@@ -300,6 +302,10 @@ export default function PostMatchModal({ match, players, session, onClose }) {
   }, [sets, match, players]);
 
   async function saveAll() {
+    // ✅ FIX: evitar doble ejecución (el botón "Publicar foto" y "Terminar" comparten esta función)
+    if (saveInProgress.current) return;
+    saveInProgress.current = true;
+
     try {
       setSaving(true);
       const setsFormatted = sets.filter(s => s.a !== "" || s.b !== "").map(s => ({ a: parseInt(s.a) || 0, b: parseInt(s.b) || 0 }));
@@ -313,7 +319,10 @@ export default function PostMatchModal({ match, players, session, onClose }) {
       await supabase.from("match_post_done").upsert({ match_id: match.id, user_id: session.user.id }, { onConflict: "match_id,user_id" });
       setStep(4);
     } catch (e) { alert(e.message); }
-    finally { setSaving(false); }
+    finally {
+      setSaving(false);
+      saveInProgress.current = false;
+    }
   }
 
   function addSet() { if (sets.length < 3) setSets([...sets, { a: "", b: "" }]); }
@@ -399,11 +408,12 @@ export default function PostMatchModal({ match, players, session, onClose }) {
                 </button>
               ))}
             </div>
-            <div style={{ padding: 14, borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", marginBottom: 16, textAlign: "center" }}>
+            <div style={{ padding: 16, borderRadius: 14, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", marginBottom: 16, textAlign: "center" }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>📸</div>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 4 }}>¿Foto del partido?</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Publícala en Gorilandia con el resultado</div>
-              <button onClick={() => { saveAll(); navigate(`/gorilandia?newpost=1&matchId=${match.id}`); }} style={{ ...S.btn("green"), fontSize: 12, padding: "10px" }}>📸 Publicar foto en Gorilandia</button>
+              {/* ✅ FIX: saveAll() ya no se llama aquí — solo navega, saveAll() se llama con el botón Terminar */}
+              <button onClick={() => { navigate(`/gorilandia?newpost=1&matchId=${match.id}`); }} style={{ ...S.btn("green"), fontSize: 12, padding: "10px" }}>📸 Publicar foto en Gorilandia</button>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={saveAll} disabled={saving} style={S.btn("green")}>{saving ? "Guardando…" : "✅ Terminar"}</button>

@@ -1,128 +1,83 @@
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { toggleFavorite, addToCart } from '../services/store';
-import './ProductCard.css';
+// src/services/push.js
+import { supabase } from "./supabaseClient";
 
-export default function ProductCard({ product }) {
-  const [isFav, setIsFav] = useState(false);
-  const [adding, setAdding] = useState(false);
+function urlB64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
 
-  const discount = product.old_price 
-    ? Math.round((1 - product.price / product.old_price) * 100)
-    : 0;
+export async function isPushEnabledInBrowser() {
+  try {
+    if (!("Notification" in window)) return false;
+    if (!("serviceWorker" in navigator)) return false;
+    if (!("PushManager" in window)) return false;
+    if (Notification.permission !== "granted") return false;
 
-  async function handleFavorite(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      const result = await toggleFavorite(product.id);
-      setIsFav(result.action === 'added');
-    } catch (error) {
-      console.error('Error:', error);
-    }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    return !!sub;
+  } catch {
+    return false;
+  }
+}
+
+export async function ensurePushSubscription() {
+  if (typeof window === "undefined") throw new Error("Push solo funciona en navegador.");
+  if (!("Notification" in window)) throw new Error("Este navegador no soporta notificaciones.");
+  if (!("serviceWorker" in navigator)) throw new Error("No hay Service Worker disponible.");
+  if (!("PushManager" in window)) throw new Error("Push no soportado en este navegador.");
+
+  // 1) Permiso
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") throw new Error("Permiso de notificaciones denegado.");
+
+  // 2) VAPID public (frontend)
+  const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+  if (!VAPID_PUBLIC) throw new Error("Falta VITE_VAPID_PUBLIC_KEY en tu .env");
+
+  // 3) SW ready
+  const reg = await navigator.serviceWorker.ready;
+
+  // 4) Subscription
+  let sub = await reg.pushManager.getSubscription();
+  let reused = true;
+
+  if (!sub) {
+    reused = false;
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC),
+    });
   }
 
-  async function handleQuickAdd(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (adding) return;
-    
-    setAdding(true);
-    try {
-      await addToCart(product.id, 1);
-      // TODO: Mostrar toast "Añadido al carrito"
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setTimeout(() => setAdding(false), 1000);
-    }
-  }
+  // 5) Sesión
+  const { data: sessData, error: sessErr } = await supabase.auth.getSession();
+  if (sessErr) throw sessErr;
+  const session = sessData?.session;
+  if (!session?.user) throw new Error("No hay sesión activa para guardar Push.");
 
-  return (
-    <Link 
-      to={`/store/product/${product.vendor.id}/${product.slug}`} 
-      className="product-card"
-    >
-      <div className="product-image-container">
-        <img 
-          src={product.images[0] || '/placeholder-product.png'} 
-          alt={product.name}
-          className="product-image"
-          loading="lazy"
-        />
-        
-        {/* Badges */}
-        <div className="product-badges">
-          {product.gorila_approved && (
-            <span className="badge gorila-badge">🦍 APPROVED</span>
-          )}
-          {discount > 0 && (
-            <span className="badge discount-badge">-{discount}%</span>
-          )}
-          {product.stock < 5 && product.stock > 0 && (
-            <span className="badge stock-badge">Últimas {product.stock}</span>
-          )}
-          {product.stock === 0 && (
-            <span className="badge out-badge">Agotado</span>
-          )}
-        </div>
+  // 6) Payload
+  const json = sub.toJSON();
+  const payload = {
+    user_id: session.user.id,
+    endpoint: sub.endpoint,
+    p256dh: json?.keys?.p256dh || "",
+    auth: json?.keys?.auth || "",
+    user_agent: navigator.userAgent || "",
+    platform: navigator.platform || "",
+  };
 
-        {/* Actions overlay */}
-        <div className="product-actions">
-          <button 
-            className={`action-btn favorite ${isFav ? 'active' : ''}`}
-            onClick={handleFavorite}
-            aria-label="Añadir a favoritos"
-          >
-            {isFav ? '❤️' : '🤍'}
-          </button>
-          {product.stock > 0 && (
-            <button 
-              className={`action-btn quick-add ${adding ? 'adding' : ''}`}
-              onClick={handleQuickAdd}
-              disabled={adding}
-            >
-              {adding ? '✓' : '🛒'}
-            </button>
-          )}
-        </div>
-      </div>
+  // 7) Upsert
+  const { error: upErr } = await supabase
+    .from("push_subscriptions")
+    .upsert(payload, { onConflict: "user_id,endpoint" });
 
-      <div className="product-info">
-        {/* Vendor */}
-        <div className="product-vendor">
-          <span className="vendor-name">{product.vendor.shop_name}</span>
-          {product.vendor.verified && (
-            <span className="vendor-verified" title="Vendedor verificado">✓</span>
-          )}
-        </div>
+  // ✅ FIX: eliminados console.log de producción
+  if (upErr) throw upErr;
 
-        {/* Name */}
-        <h3 className="product-name">{product.name}</h3>
-
-        {/* Rating */}
-        {product.total_reviews > 0 && (
-          <div className="product-rating">
-            <span className="rating-stars">
-              {'⭐'.repeat(Math.round(product.rating))}
-            </span>
-            <span className="rating-count">({product.total_reviews})</span>
-          </div>
-        )}
-
-        {/* Price */}
-        <div className="product-price">
-          <span className="price-current">{product.price}€</span>
-          {product.old_price && (
-            <span className="price-old">{product.old_price}€</span>
-          )}
-        </div>
-
-        {/* Brand */}
-        {product.brand && (
-          <div className="product-brand">{product.brand}</div>
-        )}
-      </div>
-    </Link>
-  );
+  return { ok: true, reused, endpoint: payload.endpoint };
 }
