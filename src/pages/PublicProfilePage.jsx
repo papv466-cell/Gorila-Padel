@@ -3,11 +3,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 import PlayerStats from '../components/PlayerStats';
+import { getLevelFromXp, ACHIEVEMENTS } from '../services/xp';
 
 const LEVEL_LABELS = { iniciacion: 'Iniciación', medio: 'Medio', avanzado: 'Avanzado', competicion: 'Competición' };
 const LEVEL_COLORS = { iniciacion: '#74B800', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6' };
 const HAND_LABELS = { right: 'Diestro', left: 'Zurdo' };
 const SEX_LABELS = { M: '♂ Masculino', F: '♀ Femenino', X: '⚧ Mixto' };
+
+// Solo los logros con key (filtra los niveles)
+const ACHIEVEMENT_LIST = ACHIEVEMENTS.filter(a => a.key);
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr);
@@ -18,6 +22,104 @@ function timeAgo(dateStr) {
   return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
 }
 
+// ── Mini barra de progreso XP ──────────────────────────────────────────────
+function XPTrophy({ xp = 0, streak = 0, achievements = [] }) {
+  const lvl = getLevelFromXp(xp);
+  const progress = lvl.next
+    ? Math.round(((xp - lvl.minXp) / (lvl.next.minXp - lvl.minXp)) * 100)
+    : 100;
+
+  const unlockedKeys = new Set(achievements.map(a => a.achievement_key));
+  const unlockedList = ACHIEVEMENT_LIST.filter(a => unlockedKeys.has(a.key));
+  const lockedList   = ACHIEVEMENT_LIST.filter(a => !unlockedKeys.has(a.key));
+
+  return (
+    <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, overflow: 'hidden', marginBottom: 16 }}>
+      {/* Cabecera XP */}
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Badge nivel */}
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(116,184,0,0.12)', border: '1px solid rgba(116,184,0,0.3)', display: 'grid', placeItems: 'center', fontSize: 20 }}>
+              {lvl.level <= 2 ? '🌱' : lvl.level <= 4 ? '🎾' : lvl.level <= 6 ? '💪' : '🦍'}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: '#74B800' }}>{lvl.label}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Nivel {lvl.level} · {xp} XP</div>
+            </div>
+          </div>
+
+          {/* Racha */}
+          {streak > 0 && (
+            <div style={{ textAlign: 'center', padding: '8px 14px', borderRadius: 12, background: streak >= 7 ? 'rgba(249,115,22,0.12)' : 'rgba(255,255,255,0.05)', border: streak >= 7 ? '1px solid rgba(249,115,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontSize: 18 }}>🔥</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: streak >= 7 ? '#F97316' : '#fff' }}>{streak}</div>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>días</div>
+            </div>
+          )}
+        </div>
+
+        {/* Barra progreso */}
+        {lvl.next && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+              <span>{lvl.label}</span>
+              <span>{lvl.next.label} · {lvl.next.minXp - xp} XP</span>
+            </div>
+            <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'linear-gradient(90deg,#74B800,#9BE800)', transition: 'width .6s ease' }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Logros desbloqueados */}
+      {unlockedList.length > 0 && (
+        <div style={{ padding: '14px 20px', borderBottom: lockedList.length > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+          <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+            🏅 Logros desbloqueados ({unlockedList.length})
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {unlockedList.map(a => (
+              <div key={a.key} title={a.desc} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: 'rgba(116,184,0,0.1)', border: '1px solid rgba(116,184,0,0.25)' }}>
+                <span style={{ fontSize: 16 }}>{a.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: '#9BE800' }}>{a.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Logros bloqueados (en gris, inspiracional) */}
+      {lockedList.length > 0 && (
+        <div style={{ padding: '12px 20px' }}>
+          <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+            🔒 Por desbloquear
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {lockedList.map(a => (
+              <div key={a.key} title={a.desc} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', opacity: 0.5 }}>
+                <span style={{ fontSize: 14, filter: 'grayscale(1)' }}>{a.emoji}</span>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,0.3)' }}>{a.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Estado vacío */}
+      {unlockedList.length === 0 && xp === 0 && (
+        <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
+          Aún sin logros. ¡Juega tu primer partido!
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente principal ───────────────────────────────────────────────────
 export default function PublicProfilePage() {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -25,15 +127,18 @@ export default function PublicProfilePage() {
   const [stats, setStats] = useState(null);
   const [activeMatches, setActiveMatches] = useState([]);
   const [ratings, setRatings] = useState([]);
-  const [tab, setTab] = useState('info'); // info | partidos | valoraciones
+  const [tab, setTab] = useState('info');
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followCount, setFollowCount] = useState(0);
   const [followSaving, setFollowSaving] = useState(false);
+  // XP y logros
+  const [xpData, setXpData] = useState({ xp: 0, streak_days: 0 });
+  const [achievements, setAchievements] = useState([]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({data})=>setSession(data?.session??null));
+    supabase.auth.getSession().then(({ data }) => setSession(data?.session ?? null));
   }, []);
 
   useEffect(() => { loadUserProfile(); }, [userId]);
@@ -43,12 +148,12 @@ export default function PublicProfilePage() {
   }, [session?.user?.id, userId]);
 
   async function loadFollowData() {
-    const [{data: isF}, {count}] = await Promise.all([
+    const [{ data: isF }, { count }] = await Promise.all([
       supabase.from('player_follows').select('follower_id').eq('follower_id', session.user.id).eq('following_id', userId).maybeSingle(),
-      supabase.from('player_follows').select('*', {count:'exact',head:true}).eq('following_id', userId),
+      supabase.from('player_follows').select('*', { count: 'exact', head: true }).eq('following_id', userId),
     ]);
     setIsFollowing(!!isF);
-    setFollowCount(count||0);
+    setFollowCount(count || 0);
   }
 
   async function toggleFollow() {
@@ -59,12 +164,11 @@ export default function PublicProfilePage() {
       if (isFollowing) {
         await supabase.from('player_follows').delete().eq('follower_id', session.user.id).eq('following_id', userId);
         setIsFollowing(false);
-        setFollowCount(c=>Math.max(0,c-1));
+        setFollowCount(c => Math.max(0, c - 1));
       } else {
-        await supabase.from('player_follows').insert({follower_id: session.user.id, following_id: userId});
+        await supabase.from('player_follows').insert({ follower_id: session.user.id, following_id: userId });
         setIsFollowing(true);
-        setFollowCount(c=>c+1);
-        // Notificar al jugador
+        setFollowCount(c => c + 1);
         await supabase.from('notifications').insert({
           user_id: userId,
           type: 'new_follower',
@@ -73,7 +177,7 @@ export default function PublicProfilePage() {
           data: { follower_id: session.user.id }
         });
       }
-    } catch(e) { console.error(e); }
+    } catch (e) { console.error(e); }
     finally { setFollowSaving(false); }
   }
 
@@ -81,8 +185,10 @@ export default function PublicProfilePage() {
     try {
       setLoading(true);
 
-      const [profRes, createdRes, playedRes, matchesRes, ratingsRes] = await Promise.allSettled([
+      const [profRes, xpRes, achRes, createdRes, playedRes, matchesRes, ratingsRes] = await Promise.allSettled([
         supabase.from('profiles').select('*').eq('id', userId).single(),
+        supabase.from('profiles').select('xp, streak_days').eq('id', userId).single(),
+        supabase.from('user_achievements').select('achievement_key, unlocked_at').eq('user_id', userId),
         supabase.from('matches').select('*', { count: 'exact', head: true }).eq('created_by_user', userId),
         supabase.from('match_players').select('*', { count: 'exact', head: true }).eq('player_uuid', userId),
         supabase.from('matches').select('*, match_players(player_uuid)').eq('created_by_user', userId).gte('start_at', new Date().toISOString()).order('start_at').limit(5),
@@ -90,6 +196,8 @@ export default function PublicProfilePage() {
       ]);
 
       if (profRes.status === 'fulfilled') setUser(profRes.value.data);
+      if (xpRes.status === 'fulfilled' && xpRes.value.data) setXpData(xpRes.value.data);
+      if (achRes.status === 'fulfilled') setAchievements(achRes.value.data || []);
 
       const created = createdRes.status === 'fulfilled' ? createdRes.value.count || 0 : 0;
       const played = playedRes.status === 'fulfilled' ? playedRes.value.count || 0 : 0;
@@ -172,21 +280,21 @@ export default function PublicProfilePage() {
                   ? <img src={user.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 32, fontWeight: 900, background: `linear-gradient(135deg, ${levelColor}, ${levelColor}99)`, color: '#000' }}>{displayName[0].toUpperCase()}</div>}
               </div>
-              <div style={{ paddingBottom: 4, flex:1 }}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+              <div style={{ paddingBottom: 4, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{displayName}</h1>
                   {session?.user?.id && session.user.id !== userId && (
                     <button onClick={toggleFollow} disabled={followSaving}
-                      style={{padding:'7px 14px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:900,fontSize:12,flexShrink:0,
-                        background:isFollowing?'rgba(116,184,0,0.15)':'linear-gradient(135deg,#74B800,#9BE800)',
-                        color:isFollowing?'#74B800':'#000',
-                        border:isFollowing?'1px solid rgba(116,184,0,0.4)':'none'}}>
-                      {followSaving?'…':isFollowing?'✓ Siguiendo':'+ Seguir'}
+                      style={{ padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: 12, flexShrink: 0,
+                        background: isFollowing ? 'rgba(116,184,0,0.15)' : 'linear-gradient(135deg,#74B800,#9BE800)',
+                        color: isFollowing ? '#74B800' : '#000',
+                        border: isFollowing ? '1px solid rgba(116,184,0,0.4)' : 'none' }}>
+                      {followSaving ? '…' : isFollowing ? '✓ Siguiendo' : '+ Seguir'}
                     </button>
                   )}
                 </div>
-                <div style={{display:'flex',alignItems:'center',gap:12,marginTop:4}}>
-                  {followCount>0 && <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}><span style={{color:'#fff',fontWeight:800}}>{followCount}</span> seguidores</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                  {followCount > 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}><span style={{ color: '#fff', fontWeight: 800 }}>{followCount}</span> seguidores</div>}
                 </div>
                 {user.handle && user.name && (
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>@{user.handle}</div>
@@ -234,6 +342,13 @@ export default function PublicProfilePage() {
           </div>
         </div>
 
+        {/* ── TROFEO XP ── */}
+        <XPTrophy
+          xp={xpData.xp || 0}
+          streak={xpData.streak_days || 0}
+          achievements={achievements}
+        />
+
         {/* ── TABS ── */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, background: '#111', borderRadius: 12, padding: 4, border: '1px solid rgba(255,255,255,0.07)' }}>
           {[
@@ -256,24 +371,6 @@ export default function PublicProfilePage() {
           </div>
         )}
 
-        {tab === 'info_old' && (
-          <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 20 }}>
-            {user.bio ? (
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: 0 }}>{user.bio}</p>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.25)', fontSize: 13 }}>
-                Sin bio
-              </div>
-            )}
-            {user.birthdate && (
-              <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 13, color: 'rgba(255,255,255,0.5)', display: 'flex', gap: 8 }}>
-                <span>🎂</span>
-                <span>{new Date(user.birthdate).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ── TAB PARTIDOS ── */}
         {tab === 'partidos' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -283,7 +380,7 @@ export default function PublicProfilePage() {
                 Sin partidos activos
               </div>
             ) : activeMatches.map(match => {
-              const spots = 4 - (match.join_requests?.length || 0);
+              const spots = 4 - (match.match_players?.length || 0);
               const lc = LEVEL_COLORS[match.level] || '#74B800';
               return (
                 <div key={match.id} className="ppMatchCard"
@@ -303,14 +400,14 @@ export default function PublicProfilePage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 4 }}>
                       {[...Array(4)].map((_, i) => {
-                        const filled = i < (match.join_requests?.length || 0);
+                        const filled = i < (match.match_players?.length || 0);
                         return (
                           <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="18" height="18">
-                            <rect x="29" y="42" width="6" height="14" rx="3" fill={filled ? '#111' : 'rgba(255,255,255,0.15)'}/>
-                            <ellipse cx="32" cy="28" rx="13" ry="16" fill={filled ? '#74B800' : 'rgba(255,255,255,0.15)'} stroke={filled ? '#111' : 'rgba(255,255,255,0.1)'} strokeWidth="2"/>
-                            <circle cx="28" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
-                            <circle cx="36" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
-                            <circle cx="32" cy="30" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'}/>
+                            <rect x="29" y="42" width="6" height="14" rx="3" fill={filled ? '#111' : 'rgba(255,255,255,0.15)'} />
+                            <ellipse cx="32" cy="28" rx="13" ry="16" fill={filled ? '#74B800' : 'rgba(255,255,255,0.15)'} stroke={filled ? '#111' : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
+                            <circle cx="28" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
+                            <circle cx="36" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
+                            <circle cx="32" cy="30" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
                           </svg>
                         );
                       })}
