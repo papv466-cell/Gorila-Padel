@@ -36,40 +36,48 @@ export function CartProvider({ children }) {
   }, []);
 
   async function loadCart(userId) {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('store_cart')
-        .select(`
-          id,
-          user_id,
-          product_id,
-          quantity,
-          created_at,
-          product:store_products(
-            id,
-            title,
-            price,
-            images,
-            slug,
-            stock_quantity,
-            seller:store_sellers(
-              id,
-              business_name
-            )
-          )
-        `)
-        .eq('user_id', userId);
+  try {
+    setLoading(true);
 
-      if (error) { console.error('Error cargando carrito:', error); setItems([]); return; }
-      setItems(data || []);
-    } catch (err) {
-      console.error('Error loadCart:', err);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
+    // Timeout de seguridad: si tarda más de 8 segundos, continuar sin carrito
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 8000)
+    );
+
+    const queryPromise = supabase
+      .from('store_cart')
+      .select(`
+        id,
+        user_id,
+        product_id,
+        quantity,
+        created_at,
+        product:store_products(
+          id,
+          title,
+          price,
+          images,
+          slug,
+          stock_quantity,
+          seller:store_sellers(
+            id,
+            business_name
+          )
+        )
+      `)
+      .eq('user_id', userId);
+
+        const result = await Promise.race([queryPromise, timeoutPromise]);
+    const { data, error } = result;
+
+    if (error) { setItems([]); return; }
+    setItems(data || []);
+  } catch (err) {
+    setItems([]); // timeout o error → carrito vacío, app sigue funcionando
+  } finally {
+    setLoading(false); // SIEMPRE se ejecuta
   }
+}
 
   async function addItem(productId, quantity = 1) {
     if (!user) throw new Error('Debes iniciar sesión');

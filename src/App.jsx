@@ -139,9 +139,12 @@ export default function App() {
         return;
       }
 
+           // Guardar el userId anterior ANTES de actualizar la ref
+      const prevUserId = sessionUserIdRef.current;
       sessionUserIdRef.current = newUserId;
-      // No actualizar session si es el mismo usuario — evita remount
-      if (newUserId && newUserId === sessionUserIdRef.current) {
+
+      // Si es el mismo usuario, no re-renderizar toda la app
+      if (newUserId && newUserId === prevUserId) {
         if (_event === 'TOKEN_REFRESHED' || _event === 'SIGNED_IN') {
           setSessionReady(true);
           return;
