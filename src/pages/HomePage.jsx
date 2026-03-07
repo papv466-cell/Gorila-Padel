@@ -30,11 +30,77 @@ function localDateStr(dateStr) {
   } catch { return ""; }
 }
 
+function getWeekStart() {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString();
+}
+
 const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
+
+// ── Banner Gorila Sin Límites ─────────────────────────────────────────────
+function GorilaMovimientoBanner({ stats, onPress }) {
+  const { weekCount = 0, totalCount = 0, playersCount = 0 } = stats || {};
+  return (
+    <div onClick={onPress} style={{ marginBottom: 24, borderRadius: 18, overflow: "hidden", cursor: "pointer", position: "relative", background: "linear-gradient(135deg,#0d1f00,#1a3d00)", border: "1px solid rgba(116,184,0,0.3)" }}>
+      {/* Fondo decorativo */}
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 50%, rgba(116,184,0,0.12), transparent 60%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(116,184,0,0.05)", pointerEvents: "none" }} />
+
+      <div style={{ padding: "18px 20px", position: "relative" }}>
+        {/* Cabecera */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 28 }}>♿</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "#9BE800", letterSpacing: 0.3 }}>GORILA SIN LÍMITES</div>
+              <div style={{ fontSize: 10, color: "rgba(116,184,0,0.6)", fontWeight: 700 }}>El pádel es para todos</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 18, color: "rgba(116,184,0,0.5)" }}>→</div>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+          {[
+            { value: weekCount, label: "esta semana", icon: "📅" },
+            { value: totalCount, label: "en total", icon: "🏅" },
+            { value: playersCount, label: "jugadores", icon: "🦍" },
+          ].map((s, i) => (
+            <div key={i} style={{ textAlign: "center", padding: "10px 6px", borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.15)" }}>
+              <div style={{ fontSize: 14, marginBottom: 2 }}>{s.icon}</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: "#9BE800", lineHeight: 1 }}>
+                {s.value > 0 ? s.value : "—"}
+              </div>
+              <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginTop: 2 }}>partidos {s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {weekCount > 0 && (
+          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>🔥</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#9BE800" }}>
+              {weekCount} partido{weekCount !== 1 ? "s" : ""} inclusivo{weekCount !== 1 ? "s" : ""} esta semana · ¡únete al movimiento!
+            </span>
+          </div>
+        )}
+        {weekCount === 0 && (
+          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", textAlign: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "rgba(116,184,0,0.7)" }}>Sé el primero en crear un partido inclusivo esta semana 💪</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage({ session: sessionProp }) {
   const navigate = useNavigate();
-  // Usar session del prop — App.jsx ya gestiona el auth de forma centralizada
   const session = sessionProp ?? null;
 
   const [profile, setProfile] = useState(null);
@@ -42,12 +108,12 @@ export default function HomePage({ session: sessionProp }) {
   const [gorilandiaFeed, setGorilandiaFeed] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [inclusiveStats, setInclusiveStats] = useState({ weekCount: 0, totalCount: 0, playersCount: 0 });
 
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 13 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
 
-  // Cargar datos cuando cambia el usuario
   useEffect(() => {
     if (session?.user) {
       loadAll(session.user);
@@ -63,16 +129,35 @@ export default function HomePage({ session: sessionProp }) {
   async function loadAll(user) {
     try {
       setLoading(true);
-      const [profRes, matchRes, feedRes, prodRes] = await Promise.allSettled([
+      const weekStart = getWeekStart();
+
+      const [profRes, matchRes, feedRes, prodRes, incWeekRes, incTotalRes, incPlayersRes] = await Promise.allSettled([
         supabase.from("profiles").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
         getFeed(),
         supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("active", true).order("created_at", { ascending: false }).limit(4),
+        // Partidos inclusivos esta semana
+        supabase.from("inclusive_matches").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
+        // Partidos inclusivos totales
+        supabase.from("inclusive_matches").select("*", { count: "exact", head: true }),
+        // Jugadores únicos en inclusivos
+        supabase.from("match_players").select("player_uuid, matches!inner(id)").eq("matches.sos_active", true).limit(1000),
       ]);
+
       if (profRes.status === "fulfilled") setProfile(profRes.value.data);
       if (matchRes.status === "fulfilled") setMatches(matchRes.value.data || []);
       if (feedRes.status === "fulfilled") setGorilandiaFeed((Array.isArray(feedRes.value) ? feedRes.value : []).slice(0, 6));
       if (prodRes.status === "fulfilled") setProducts(prodRes.value.data || []);
+
+      // Stats inclusivos
+      const weekCount   = incWeekRes.status === "fulfilled"    ? incWeekRes.value.count || 0 : 0;
+      const totalCount  = incTotalRes.status === "fulfilled"   ? incTotalRes.value.count || 0 : 0;
+      const playersCount = incPlayersRes.status === "fulfilled"
+        ? new Set((incPlayersRes.value.data || []).map(r => r.player_uuid)).size
+        : 0;
+
+      setInclusiveStats({ weekCount, totalCount, playersCount });
+
     } finally { setLoading(false); }
   }
 
@@ -145,6 +230,7 @@ export default function HomePage({ session: sessionProp }) {
 
       <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 14px 80px" }}>
 
+        {/* Saludo */}
         <div className="ghSection" style={{ padding: "16px 0 20px", animationDelay: "0s" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
@@ -165,6 +251,7 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
+        {/* CTA principal */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".05s" }}>
           <button onClick={() => navigate("/partidos")}
             style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
@@ -179,6 +266,15 @@ export default function HomePage({ session: sessionProp }) {
           </button>
         </div>
 
+        {/* ── GORILA SIN LÍMITES ── */}
+        <div className="ghSection" style={{ animationDelay: ".08s" }}>
+          <GorilaMovimientoBanner
+            stats={inclusiveStats}
+            onPress={() => navigate("/inclusivos")}
+          />
+        </div>
+
+        {/* Partidos próximos */}
         {matches.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -219,6 +315,7 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
+        {/* Gorilandia feed */}
         {gorilandiaFeed.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -260,14 +357,15 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
+        {/* Accesos rápidos — /ranking → /leaderboard */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".2s" }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 12 }}>⚡ Accesos rápidos</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
             {[
-              { icon: "🗺️", label: "Mapa", path: "/mapa" },
-              { icon: "📚", label: "Clases", path: "/clases" },
-              { icon: "🛍️", label: "Tienda", path: "/tienda" },
-              { icon: "🏆", label: "Ranking", path: "/ranking" },
+              { icon: "🗺️", label: "Mapa",    path: "/mapa" },
+              { icon: "📚", label: "Clases",  path: "/clases" },
+              { icon: "🛍️", label: "Tienda",  path: "/tienda" },
+              { icon: "🏆", label: "Ranking", path: "/leaderboard" },
             ].map(q => (
               <button key={q.label} className="ghQuickBtn"
                 onClick={() => navigate(q.path)}
@@ -279,9 +377,10 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
+        {/* Widget ranking → /leaderboard */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
           <div style={{ padding: "14px 16px", borderRadius: 14, background: "#111", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}
-            onClick={() => navigate("/ranking")}>
+            onClick={() => navigate("/leaderboard")}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>🏆</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 2 }}>Tu posición</div>
@@ -291,6 +390,7 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
+        {/* Tienda */}
         {products.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".3s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
