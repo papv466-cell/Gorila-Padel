@@ -2,6 +2,8 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import { processMatchXp } from "../services/xp";
+import { showXPToast } from "./XPToast";
 
 const VIBES = [
   { key: "fair_play", label: "Fair Play", icon: "🤝" },
@@ -317,6 +319,20 @@ export default function PostMatchModal({ match, players, session, onClose }) {
       }
       if (mood) await supabase.from("match_moods").upsert({ match_id: match.id, user_id: session.user.id, mood }, { onConflict: "match_id,user_id" });
       await supabase.from("match_post_done").upsert({ match_id: match.id, user_id: session.user.id }, { onConflict: "match_id,user_id" });
+
+      // ✅ XP + logros
+      const finalWinner2 = winner || calcWinner();
+      const won = finalWinner2 === "a"; // simplificación: pareja A = el usuario
+      const { newAchievements } = await processMatchXp({
+        userId: session.user.id,
+        matchId: match.id,
+        won,
+        isInclusive: !!match.is_inclusive,
+        isCreator: match.created_by_user === session.user.id,
+        matchStartAt: match.start_at,
+      });
+      showXPToast({ xpGained: won ? 35 : 20, newAchievements });
+
       setStep(4);
     } catch (e) { alert(e.message); }
     finally {
