@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import ClubAdminPage from "./pages/ClubAdminPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
@@ -81,11 +81,7 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ FIX: usar SessionContext global en vez de gestionar auth propio
   const { session, sessionReady } = useSession();
-
-  // ✅ FIX: eliminados useState de session/sessionReady, useRef sessionUserIdRef,
-  //         y el useEffect completo con getSession() + onAuthStateChange()
 
   const [minSplashDone, setMinSplashDone] = useState(false);
   useEffect(() => {
@@ -117,6 +113,7 @@ export default function App() {
     );
   }, [location.pathname]);
 
+  // Redirigir a / si ya tienes sesión y estás en pantalla de auth
   useEffect(() => {
     if (!sessionReady) return;
     if (!session) return;
@@ -124,7 +121,7 @@ export default function App() {
     navigate("/", { replace: true });
   }, [sessionReady, session, isAuthShell, navigate]);
 
-  // Detectar vuelta al foco — refrescar token silenciosamente sin disparar eventos
+  // Detectar vuelta al foco
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
@@ -202,22 +199,24 @@ export default function App() {
     return () => navigator.serviceWorker.removeEventListener("message", onMsg);
   }, [navigate]);
 
-  // SIGNED_OUT: redirigir a login
+  // ✅ FIX: SIGNED_OUT — solo redirigir si sessionReady=true Y session lleva
+  // al menos un render siendo null (evita redirect en carga inicial)
+  const sessionWasReadyRef = useRef(false);
   useEffect(() => {
     if (!sessionReady) return;
-    if (session === null && !isAuthShell) {
-      // Solo redirigir si había sesión antes (evitar redirect en carga inicial)
-      try {
-        if (localStorage.getItem('sb-session-existed')) {
-          localStorage.removeItem('sb-session-existed');
-          navigate('/login', { replace: true });
-        }
-      } catch {}
-    }
-    if (session?.user?.id) {
+    if (session !== null) {
+      // Hay sesión — marcar que existió y resetear el flag
+      sessionWasReadyRef.current = true;
       try { localStorage.setItem('sb-session-existed', '1'); } catch {}
+      return;
     }
-  }, [session, sessionReady]);
+    // session === null Y sessionReady === true
+    // Solo redirigir si ya habíamos tenido sesión antes en esta carga de página
+    if (!sessionWasReadyRef.current) return;
+    if (isAuthShell) return;
+    try { localStorage.removeItem('sb-session-existed'); } catch {}
+    navigate('/login', { replace: true });
+  }, [session, sessionReady, isAuthShell, navigate]);
 
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
@@ -259,7 +258,7 @@ export default function App() {
           <Route path="/partidos" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
           <Route path="/clases" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
           <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
-          <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage /></RequireAuth>} />
+          <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage session={session} /></RequireAuth>} />
           <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
           <Route path="/registrar-club" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubRegisterPage /></RequireAuth>} />
           <Route path="/super-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><SuperAdminPage /></RequireAuth>} />
@@ -272,11 +271,11 @@ export default function App() {
           <Route path="/inclusivo" element={<Navigate to="/inclusivos" replace />} />
           <Route path="/store" element={<Navigate to="/tienda" replace />} />
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       {!isAuthShell && <CartFloatingButton />}
