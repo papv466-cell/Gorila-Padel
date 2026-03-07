@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   try {
-    // ✅ CORS (solo para local)
+    // CORS (solo para local)
     const origin = req.headers.origin || "";
     const isLocal = origin.includes("localhost") || origin.includes("127.0.0.1");
     if (isLocal) {
@@ -14,7 +14,6 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-    // ✅ ENV LIMPIO (backend)
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
@@ -71,7 +70,6 @@ export default async function handler(req, res) {
     if (chatUsersErr) return res.status(500).send(chatUsersErr.message);
     for (const r of chatUsers || []) if (r.user_id) recipients.add(r.user_id);
 
-    // No mandarse a uno mismo
     recipients.delete(msg.user_id);
 
     const recipientIds = Array.from(recipients);
@@ -87,7 +85,7 @@ export default async function handler(req, res) {
 
     if (subsErr) return res.status(500).send(subsErr.message);
 
-    // 🔥 CRÍTICO: si hay varias subs del mismo user, quédate con la MÁS NUEVA
+    // Si hay varias subs del mismo user, quedarse con la más nueva
     const byUser = new Map();
     for (const s of subs || []) {
       const prev = byUser.get(s.user_id);
@@ -119,13 +117,8 @@ export default async function handler(req, res) {
         );
         sent++;
       } catch (e) {
-        // No exponer detalles del error
-        console.error('[PUSH_CHAT_ERROR]', e);
-        
-        return res.status(500).json({ 
-          ok: false, 
-          error: 'Error al enviar notificaciones'
-        });
+        // ✅ FIX: acumular errores sin cortar el loop — los demás usuarios sí reciben la notificación
+        errors.push({ endpoint: s.endpoint?.slice(0, 40), err: e?.message });
       }
     }
 
@@ -137,8 +130,6 @@ export default async function handler(req, res) {
       recipients: recipientIds.length,
       subs: finalSubs.length,
       sent,
-      recipientIds,
-      errors,
     });
   } catch (e) {
     return res.status(500).send(e?.message || "Server error");

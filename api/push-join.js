@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   try {
-    // ✅ CORS básico (por si pruebas desde local contra Vercel)
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -12,16 +11,14 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
-        const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
+    const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
-        const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
-        const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+    if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    if (!VAPID_PUBLIC || !VAPID_PRIVATE) return res.status(500).send("Missing VAPID public/private keys");
 
-        if (!SUPABASE_URL || !SERVICE_ROLE) return res.status(500).send("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-        if (!VAPID_PUBLIC || !VAPID_PRIVATE) return res.status(500).send("Missing VAPID public/private keys");
-
-        webpush.setVapidDetails("mailto:papv466@gmail.com", VAPID_PUBLIC, VAPID_PRIVATE);
-        ;
+    webpush.setVapidDetails("mailto:papv466@gmail.com", VAPID_PUBLIC, VAPID_PRIVATE);
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false },
@@ -31,10 +28,10 @@ export default async function handler(req, res) {
     const { matchId, requestId } = body || {};
 
     if (!matchId || !requestId) {
-      return res.status(400).json({ ok: false, error: "Missing matchId or requestId", got: { matchId, requestId } });
+      return res.status(400).json({ ok: false, error: "Missing matchId or requestId" });
     }
 
-    // 1) match (para creador)
+    // 1) match
     const { data: match, error: matchErr } = await supabase
       .from("matches")
       .select("id, club_name, created_by_user, start_at")
@@ -42,15 +39,15 @@ export default async function handler(req, res) {
       .single();
 
     if (matchErr || !match) {
-      return res.status(500).json({ ok: false, where: "matches", error: matchErr?.message || "Match not found" });
+      return res.status(500).json({ ok: false, error: matchErr?.message || "Match not found" });
     }
 
     const creatorId = match.created_by_user;
     if (!creatorId) {
-      return res.status(200).json({ ok: true, sent: 0, reason: "no creator", matchId });
+      return res.status(200).json({ ok: true, sent: 0, reason: "no creator" });
     }
 
-    // 2) request (para saber quién solicita)
+    // 2) request
     const { data: reqRow, error: reqErr } = await supabase
       .from("match_join_requests")
       .select("id, match_id, user_id, status, created_at")
@@ -58,47 +55,25 @@ export default async function handler(req, res) {
       .single();
 
     if (reqErr || !reqRow) {
-      return res.status(500).json({ ok: false, where: "match_join_requests", error: reqErr?.message || "Request not found" });
+      return res.status(500).json({ ok: false, error: reqErr?.message || "Request not found" });
     }
 
     if (reqRow.user_id === creatorId) {
-      return res.status(200).json({ ok: true, sent: 0, reason: "self", creatorId, requesterId: reqRow.user_id });
+      return res.status(200).json({ ok: true, sent: 0, reason: "self" });
     }
 
-    // ✅ 3) buscar subs del creador
+    // 3) subs del creador
     const { data: subs, error: subsErr } = await supabase
       .from("push_subscriptions")
       .select("id, user_id, endpoint, p256dh, auth, updated_at, created_at")
       .eq("user_id", creatorId);
 
     if (subsErr) {
-      return res.status(500).json({ ok: false, where: "push_subscriptions", error: subsErr.message, creatorId });
+      return res.status(500).json({ ok: false, error: subsErr.message });
     }
 
-    // 🔍 DEBUG: te devolvemos lo que encontró (sin exponer keys completas)
-    const subsPreview = (subs || []).map((s) => ({
-      id: s.id,
-      user_id: s.user_id,
-      endpoint_head: String(s.endpoint || "").slice(0, 60),
-      hasKeys: !!(s.p256dh && s.auth),
-      updated_at: s.updated_at,
-      created_at: s.created_at,
-    }));
-
     if (!subs || subs.length === 0) {
-      return res.status(200).json({
-        ok: true,
-        sent: 0,
-        reason: "no subs",
-        debug: {
-          matchId,
-          requestId,
-          creatorId,
-          requesterId: reqRow.user_id,
-          subsFound: 0,
-          subsPreview,
-        },
-      });
+      return res.status(200).json({ ok: true, sent: 0, reason: "no subs" });
     }
 
     const payload = JSON.stringify({
@@ -120,29 +95,18 @@ export default async function handler(req, res) {
         );
         sent++;
       } catch (e) {
-        console.error('[PUSH_JOIN_ERROR]', e);
-        
-        return res.status(500).json({ 
-          ok: false, 
-          error: 'Error al enviar notificación'
-        });
+        // ✅ FIX: acumular errores sin cortar el loop — si un dispositivo falla, los demás siguen
+        errors.push({ endpoint: s.endpoint?.slice(0, 40), err: e?.message });
       }
     }
 
+    // ✅ FIX: eliminado subsPreview de la respuesta (exponía datos internos)
     return res.status(200).json({
       ok: true,
       sent,
       subs: subs.length,
-      errors,
-      debug: {
-        matchId,
-        requestId,
-        creatorId,
-        requesterId: reqRow.user_id,
-        subsPreview,
-      },
     });
   } catch (e) {
-    return res.status(500).json({ ok: false, where: "catch", error: e?.message || "Server error" });
+    return res.status(500).json({ ok: false, error: e?.message || "Server error" });
   }
 }
