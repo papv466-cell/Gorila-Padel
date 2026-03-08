@@ -79,8 +79,13 @@ export function CartProvider({ children }) {
   }
 }
 
-  async function addItem(productId, quantity = 1) {
-    if (!user) throw new Error('Debes iniciar sesión');
+  const addingRef = useRef(new Set());
+
+async function addItem(productId, quantity = 1) {
+  if (!user) throw new Error('Debes iniciar sesión');
+  if (addingRef.current.has(productId)) return;
+  addingRef.current.add(productId);
+  try {
     const { data: existing } = await supabase
       .from('store_cart').select('*')
       .eq('user_id', user.id).eq('product_id', productId).maybeSingle();
@@ -94,7 +99,10 @@ export function CartProvider({ children }) {
       if (error) throw error;
     }
     await loadCart(user.id);
+  } finally {
+    addingRef.current.delete(productId);
   }
+}
 
   async function updateQuantity(cartItemId, quantity) {
     if (!user) return;
