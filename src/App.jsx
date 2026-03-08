@@ -5,6 +5,9 @@ import ClubAdminPage from "./pages/ClubAdminPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
 import SuperAdminPage from "./pages/SuperAdminPage";
 import ChallengesPage from "./pages/ChallengesPage";
+import PullsPage from "./pages/PullsPage";
+import JuegazPlusPage from "./pages/JuegazPlusPage";
+import PullsPage from "./pages/PullsPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -249,10 +252,13 @@ export default function App() {
           <Route path="/vendedor/productos/:id" element={<SellerProductForm />} />
           <Route path="/vendedor/pedidos" element={<SellerOrders />} />
           <Route path="/vendedor/perfil" element={<SellerSettings />} />
-<Route path="/gorilandia" element={<GorilandiaPage session={session} />} />          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
+          <Route path="/gorilandia" element={<GorilandiaPage session={session} />} />          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
           <Route path="/auth/confirm" element={<AuthConfirmPage />} />
+          <Route path="/juega-plus" element={<RequireAuth session={session} sessionReady={sessionReady}><JuegazPlusPage session={session} /></RequireAuth>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/retos" element={<RequireAuth session={session} sessionReady={sessionReady}><ChallengesPage session={session} /></RequireAuth>} />
+          <Route path="/pulls" element={<RequireAuth session={session} sessionReady={sessionReady}><PullsPage session={session} /></RequireAuth>} />
           <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -277,8 +283,7 @@ export default function App() {
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
-          <Route path="/retos" element={<RequireAuth session={session} sessionReady={sessionReady}><ChallengesPage session={session} /></RequireAuth>} />
-          <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
+<Route path="/pulls" element={<RequireAuth session={session} sessionReady={sessionReady}><PullsPage session={session} /></RequireAuth>} />          <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
