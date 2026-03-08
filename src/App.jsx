@@ -7,7 +7,6 @@ import SuperAdminPage from "./pages/SuperAdminPage";
 import ChallengesPage from "./pages/ChallengesPage";
 import PullsPage from "./pages/PullsPage";
 import JuegazPlusPage from "./pages/JuegazPlusPage";
-import PullsPage from "./pages/PullsPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -283,7 +282,6 @@ export default function App() {
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
-<Route path="/pulls" element={<RequireAuth session={session} sessionReady={sessionReady}><PullsPage session={session} /></RequireAuth>} />          <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
