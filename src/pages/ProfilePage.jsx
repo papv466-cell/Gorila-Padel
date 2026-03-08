@@ -70,6 +70,7 @@ export default function ProfilePage({ session: sessionProp }) {
   const [favLoading, setFavLoading] = useState(false);
   const [clubsSheet, setClubsSheet] = useState([]);
   const [isClubAdmin, setIsClubAdmin] = useState(false);
+  const [myClubId, setMyClubId] = useState(null);
   const [clubSearchQ, setClubSearchQ] = useState("");
   const [favorites, setFavorites] = useState([]);
 
@@ -212,7 +213,8 @@ export default function ProfilePage({ session: sessionProp }) {
         setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
         await Promise.all([loadFavorites(session.user.id), loadStats(session.user.id)]);
         fetchClubsFromGoogleSheet().then(r => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => {});
-        supabase.from("club_admins").select("id").eq("user_id", session.user.id).eq("status", "approved").maybeSingle().then(({ data }) => { if (alive) setIsClubAdmin(!!data); });
+        supabase.from("club_admins").select("id").eq("user_id", session.user.id).eq("status", "approved").maybeSingle().then(({ data }) => { if (alive && data) setIsClubAdmin(true); });
+        supabase.from("clubs").select("id").eq("owner_user_id", session.user.id).maybeSingle().then(({ data }) => { if (alive && data) { setIsClubAdmin(true); setMyClubId(data.id); } });
       } catch (e) { if (alive) setErr(e?.message || "No se pudo cargar el perfil"); }
       finally { if (alive) setLoading(false); }
     })();
@@ -449,18 +451,20 @@ export default function ProfilePage({ session: sessionProp }) {
 
             {isClubAdmin && (
               <div style={{ marginTop: 14 }}>
-                <button onClick={() => navigate("/club-admin")}
+                <button onClick={() => navigate(myClubId ? `/club-admin?clubId=${myClubId}` : "/club-admin")}
                   style={{ width: "100%", padding: "12px", borderRadius: 12, background: "linear-gradient(135deg,#1a2a00,#2a4000)", border: "1px solid rgba(116,184,0,0.4)", color: "#74B800", fontWeight: 900, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🏟️ Panel de administración del club
                 </button>
               </div>
             )}
-            <div style={{ marginTop: 8 }}>
-              <button onClick={() => navigate("/registrar-club")}
-                style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.25)", color: "rgba(116,184,0,0.8)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                🏟️ ¿Tienes un club? Regístralo gratis
-              </button>
-            </div>
+            {!isClubAdmin && (
+              <div style={{ marginTop: 8 }}>
+                <button onClick={() => navigate("/registrar-club")}
+                  style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.25)", color: "rgba(116,184,0,0.8)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  🏟️ ¿Tienes un club? Regístralo gratis
+                </button>
+              </div>
+            )}
             {session?.user?.id === "1e0db2e1-e959-41f0-bcaf-2bb46fd425da" && (
               <div style={{ marginTop: 8 }}>
                 <button onClick={() => navigate("/super-admin")}
