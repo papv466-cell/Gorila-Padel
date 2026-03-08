@@ -193,6 +193,7 @@ export default function MatchesPage({ session: sessionProp }) {
 
   // CAMBIO 2: Reemplazar moodOpenFor por payModalMatch
   const [payModalMatch, setPayModalMatch] = useState(null);
+  const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
 
   const [postOpenFor, setPostOpenFor] = useState(null);
   const [postResult, setPostResult] = useState(null);
@@ -487,16 +488,10 @@ export default function MatchesPage({ session: sessionProp }) {
       setAvailableSlots([]);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
 // Si hay precio, insertar también al creador en match_join_requests con autorización pendiente
+toast.success("Partido creado ✅"); await load(); setViewMode("mine");
 if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.id) {
-  await supabase.from("match_join_requests").insert({
-    match_id: matchResult.id,
-    user_id: session.user.id,
-    status: "approved",
-    paid: true,
-    mood: "win",
-  });
-}
-toast.success("Partido creado ✅"); await load(); setViewMode("mine");      try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
+  setCreatorAuthMatch({ ...matchResult, price_per_player: form.pricePerPlayer });
+}    try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
     } catch(e) { setSaveError(e?.message||"No se pudo crear"); toast.error(e?.message||"Error"); } finally { setSaving(false); }
   }
 
@@ -1453,6 +1448,19 @@ toast.success("Partido creado ✅"); await load(); setViewMode("mine");      try
           }}
         />
       )}
+
+      {creatorAuthMatch && (
+  <MatchPaymentModal
+    match={creatorAuthMatch}
+    session={session}
+    isCreatorAuth={true}
+    onClose={() => setCreatorAuthMatch(null)}
+    onJoined={async () => {
+      setCreatorAuthMatch(null);
+      await load();
+    }}
+  />
+)}
 
       {/* ── MODAL JUGAR AHORA ── */}
       {jugarAhora && (

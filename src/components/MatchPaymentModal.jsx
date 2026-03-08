@@ -120,8 +120,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
 }
 
 // ── Modal principal ──────────────────────────────────────────────────────────
-export default function MatchPaymentModal({ match, session, onClose, onJoined }) {
-  const [step, setStep] = useState("mood"); // mood | paying | success
+export default function MatchPaymentModal({ match, session, onClose, onJoined, isCreatorAuth = false }) {  const [step, setStep] = useState(isCreatorAuth ? "auth" : "mood");
   const [mood, setMood] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
@@ -133,6 +132,32 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
   const serviceFeeCents = isPrivateCourt || pricePerPlayer === 0 ? 50 : 30;
   const totalPreview = (pricePerPlayer + serviceFeeCents / 100).toFixed(2);
   const levelColor = LEVEL_COLORS[match.level] || "#74B800";
+
+  async function handleCreatorAuth() {
+  setStep("paying");
+  setLoading(true);
+  setError(null);
+  try {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    const token = currentSession?.access_token;
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-authorization`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ matchId: match.id, userId: session.user.id, paymentMethodId: null }),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "Error al crear autorización");
+    setClientSecret(data.clientSecret);
+    setPaymentData(data);
+  } catch (e) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+}
 
   async function handleMoodSelect(selectedMood) {
     setMood(selectedMood);
@@ -191,6 +216,30 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
             </div>
           </div>
         </div>
+
+{step === "auth" && (
+  <>
+    <div style={{ textAlign: "center", marginBottom: 20 }}>
+      <div style={{ fontSize: 28, marginBottom: 6 }}>🔒</div>
+      <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>Reserva tu plaza</div>
+      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4, lineHeight: 1.5 }}>
+        Se retendrán <strong style={{ color: "#74B800" }}>€{pricePerPlayer.toFixed(2)}</strong> en tu tarjeta.<br/>
+        El cobro se hará efectivo 24h antes del partido.
+      </div>
+    </div>
+    {error && (
+      <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontSize: 13, fontWeight: 800, marginBottom: 14 }}>
+        ⚠️ {error}
+      </div>
+    )}
+    <button onClick={handleCreatorAuth} style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
+      🔒 Añadir tarjeta y reservar
+    </button>
+    <button onClick={onClose} style={{ width: "100%", marginTop: 10, padding: "11px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
+      Cancelar
+    </button>
+  </>
+)}
 
         {/* ── STEP: MOOD ── */}
         {step === "mood" && (
