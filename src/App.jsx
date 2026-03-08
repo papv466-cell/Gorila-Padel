@@ -7,6 +7,7 @@ import SuperAdminPage from "./pages/SuperAdminPage";
 import ChallengesPage from "./pages/ChallengesPage";
 import PullsPage from "./pages/PullsPage";
 import JuegazPlusPage from "./pages/JuegazPlusPage";
+import TrainingsPage from "./pages/TrainingsPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -256,6 +257,7 @@ export default function App() {
           <Route path="/juega-plus" element={<RequireAuth session={session} sessionReady={sessionReady}><JuegazPlusPage session={session} /></RequireAuth>} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/entrenamientos" element={<RequireAuth session={session} sessionReady={sessionReady}><TrainingsPage session={session} /></RequireAuth>} />
           <Route path="/retos" element={<RequireAuth session={session} sessionReady={sessionReady}><ChallengesPage session={session} /></RequireAuth>} />
           <Route path="/pulls" element={<RequireAuth session={session} sessionReady={sessionReady}><PullsPage session={session} /></RequireAuth>} />
           <Route path="/registro" element={<RegisterPage />} />

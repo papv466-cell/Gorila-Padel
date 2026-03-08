@@ -32,7 +32,7 @@ export default function JuegazPlusPage({ session }) {
       title: "Entrenamientos",
       desc: "Sesiones de entrenamiento con grupos reducidos",
       color: "#8b5cf6",
-      soon: true,
+      soon: false,
     },
   ];
 
