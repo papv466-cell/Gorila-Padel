@@ -249,8 +249,7 @@ export default function App() {
           <Route path="/vendedor/productos/:id" element={<SellerProductForm />} />
           <Route path="/vendedor/pedidos" element={<SellerOrders />} />
           <Route path="/vendedor/perfil" element={<SellerSettings />} />
-          <Route path="/gorilandia" element={<GorilandiaPage />} />
-          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
+<Route path="/gorilandia" element={<GorilandiaPage session={session} />} />          <Route path="/usuario/:userId" element={<PublicProfilePage />} />
           <Route path="/auth/confirm" element={<AuthConfirmPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
