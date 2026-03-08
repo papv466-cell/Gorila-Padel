@@ -5,6 +5,9 @@ import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
 import "./MatchesPage.css";
 
+// CAMBIO 1: Import del nuevo modal de pago
+import MatchPaymentModal from "../components/MatchPaymentModal";
+
 import {
   createMatch, fetchMatches, submitMatchResult, getMatchResult, submitPlayerRating, getMyRatingsForMatch, giveRedCard, triggerSOS,fetchMyRequestsForMatchIds, fetchApprovedCounts,
   requestJoin, cancelMyJoin, fetchPendingRequests, fetchMatchMessages,
@@ -187,7 +190,10 @@ export default function MatchesPage({ session: sessionProp }) {
   const [clubsSheet, setClubsSheet] = useState([]);
   const [clubQuery, setClubQuery] = useState("");
   const [showClubSuggest, setShowClubSuggest] = useState(false);
-  const [moodOpenFor, setMoodOpenFor] = useState(null);
+
+  // CAMBIO 2: Reemplazar moodOpenFor por payModalMatch
+  const [payModalMatch, setPayModalMatch] = useState(null);
+
   const [postOpenFor, setPostOpenFor] = useState(null);
   const [postResult, setPostResult] = useState(null);
   const [postRoster, setPostRoster] = useState([]);
@@ -210,7 +216,6 @@ export default function MatchesPage({ session: sessionProp }) {
     }
     try {
       setSlotsLoading(true);
-      // Cargar todos los slots del día (available + booked) para calcular solapamientos
       const { data } = await supabase
         .from('court_slots')
         .select('*, club_courts(name, court_type)')
@@ -219,13 +224,10 @@ export default function MatchesPage({ session: sessionProp }) {
         .order('start_time');
 
       const allSlots = data || [];
-
-      // Filtrar slots que solapan con partidos de 90 min ya reservados
       const bookedSlots = allSlots.filter(s => s.status === 'booked');
       const available = allSlots.filter(s => {
         if (s.status !== 'available') return false;
         const sMin = timeToMin(s.start_time);
-        // Comprobar si este slot cae dentro de una ventana booked en la misma pista
         return !bookedSlots.some(b => {
           if (String(b.court_id) !== String(s.court_id)) return false;
           const bMin = timeToMin(b.start_time);
@@ -427,7 +429,6 @@ export default function MatchesPage({ session: sessionProp }) {
     setClubQuery(clubName);
     setShowClubSuggest(false);
 
-    // Buscar id real en Supabase por nombre
     let realClubId = sheetId;
     try {
       const { data } = await supabase.from('clubs').select('id').ilike('name', clubName).limit(1).single();
@@ -476,7 +477,6 @@ export default function MatchesPage({ session: sessionProp }) {
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
       const matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
-      // Marcar slot como booked si se seleccionó uno
       if (form.selectedSlotId) {
         try {
           await supabase.from('court_slots').update({ status: 'booked', booked_by_match_id: matchResult?.id || null }).eq('id', form.selectedSlotId);
@@ -557,7 +557,7 @@ export default function MatchesPage({ session: sessionProp }) {
     const match = visibleList.find(m => m.id === matchId);
     if (!match) return;
     setPostOpenFor(matchId);
-    setPostScoreL(0); setPostScoreR(0); setPostNotes(""); setPostRatings({}); setPostVibes({});
+    setPostSets([{l:0,r:0}]); setPostNotes(""); setPostRatings({}); setPostVibes({});
     try {
       const [result, myRatings] = await Promise.all([getMatchResult(matchId), getMyRatingsForMatch(matchId)]);
       setPostResult(result || null);
@@ -693,8 +693,6 @@ export default function MatchesPage({ session: sessionProp }) {
           {/* ── PANEL FILTROS ── */}
           {filtersOpen && (
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:10,marginBottom:8,display:"flex",flexDirection:"column",gap:8}}>
-
-              {/* BUSCADOR INTELIGENTE DE CLUBS */}
               <div style={{position:"relative"}}>
                 {filterClubObj ? (
                   <div style={{display:"flex",alignItems:"center",gap:6,padding:"7px 10px",borderRadius:9,background:"rgba(116,184,0,0.12)",border:"1px solid rgba(116,184,0,0.35)"}}>
@@ -749,8 +747,6 @@ export default function MatchesPage({ session: sessionProp }) {
                   </>
                 )}
               </div>
-
-              {/* NIVEL */}
               <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
                 {["","iniciacion","medio","alto"].map(lvl=>(
                   <button key={lvl} onClick={()=>setFilterLevel(lvl)}
@@ -761,16 +757,12 @@ export default function MatchesPage({ session: sessionProp }) {
                   </button>
                 ))}
               </div>
-
-              {/* ÚLTIMA HORA */}
               <button onClick={()=>setFilterUltimaHora(f=>!f)}
                 style={{padding:"6px 10px",borderRadius:8,border:filterUltimaHora?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
                   background:filterUltimaHora?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",
                   color:filterUltimaHora?"#74B800":"#fff"}}>
                 ⚡ Última Hora — partidos en menos de 2h
               </button>
-
-              {/* CERCA DE MÍ */}
               <div>
                 <button onClick={async () => {
                   if (filterNearMe) { setFilterNearMe(false); return; }
@@ -812,8 +804,6 @@ export default function MatchesPage({ session: sessionProp }) {
                   </div>
                 )}
               </div>
-
-              {/* LIMPIAR */}
               {hasFilters && (
                 <button onClick={()=>{setFilterLevel("");setFilterUltimaHora(false);setFilterClubSearch("");setFilterClubObj(null);setClubFilterQuery("");setFilterNearMe(false);}}
                   style={{padding:"5px 10px",borderRadius:8,border:"none",cursor:"pointer",fontSize:11,fontWeight:800,background:"rgba(220,38,38,0.2)",color:"#ff6b6b"}}>
@@ -860,7 +850,7 @@ export default function MatchesPage({ session: sessionProp }) {
                 <li key={m.id} className="mCard">
                   <div className="mHead">
                     <div style={{fontSize:13,fontWeight:900,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                      <span style={{cursor:"pointer", textDecoration:"underline"}} 
+                      <span style={{cursor:"pointer", textDecoration:"underline"}}
                       onClick={e=>{e.stopPropagation(); navigate(`/club/${m.club_id}?name=${encodeURIComponent(m.club_name)}`)}}>
                       📍 {m.club_name}
                     </span>
@@ -906,7 +896,7 @@ export default function MatchesPage({ session: sessionProp }) {
                     <span className="gpInfoChip">🗓️ {formatWhen(m.start_at)}</span>
                     <span className="gpInfoChip">⏱️ {m.duration_min}min</span>
                     <span className="gpInfoChip">🎚️ {String(m.level||"").toUpperCase()}</span>
-                    {m.price_per_player ? <span className="gpInfoChip">💶 {m.price_per_player}€</span> : null}
+                    {m.price_per_player ? <span className="gpInfoChip">💶 {m.price_per_player}€ <span style={{opacity:0.6,fontSize:8}}>+0,30€</span></span> : null}
                     {filterNearMe && userLat && userLng && (() => {
                       const club = clubsSheet.find(c => String(c.name||"").toLowerCase() === String(m.club_name||"").toLowerCase());
                       if (!club?.lat || !club?.lng) return null;
@@ -919,7 +909,12 @@ export default function MatchesPage({ session: sessionProp }) {
                   </div>
                   <div className="mActions">
                     {!session && <button className="mBtn primary" onClick={goLogin}>PARTICIPAR</button>}
-                    {session&&!isCreator&&!myStatus2&&left>0 && <button className="mBtn primary" onClick={()=>setMoodOpenFor(m.id)}>PARTICIPAR</button>}
+
+                    {/* CAMBIO 3: Botón PARTICIPAR abre payModalMatch en lugar de moodOpenFor */}
+                    {session&&!isCreator&&!myStatus2&&left>0 && (
+                      <button className="mBtn primary" onClick={()=>setPayModalMatch(m)}>PARTICIPAR</button>
+                    )}
+
                     {session&&!isCreator&&myStatus2==="approved" && (
                       <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin({matchId: m.id}); setMyReqStatus(prev=>{const n={...prev};delete n[m.id];return n;}); setInPlayersByMatchId(prev=>{const n={...prev};delete n[String(m.id)];return n;}); setPlayersByMatchId(prev=>{const n={...prev};if(n[String(m.id)])n[String(m.id)]=n[String(m.id)].filter(p=>String(p?.id||p?.player_uuid||'')!==String(session?.user?.id||''));return n;}); setApprovedCounts(prev=>({...prev,[m.id]:Math.max(0,(prev[m.id]||1)-1)})); toast.success("Has salido"); setTimeout(()=>load(),500); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
                     )}
@@ -993,8 +988,6 @@ export default function MatchesPage({ session: sessionProp }) {
                   <input type="time" step="900" value={form.time} onChange={e=>{ const [h,min]=e.target.value.split(":"); const rm=Math.round(+min/15)*15; setForm({...form,time:`${h}:${String(rm%60).padStart(2,"0")}`}); }} disabled={saving} style={IS} />
                 </div>
               </div>
-
-              {/* ── HORAS LIBRES DEL CLUB ── */}
               {form.clubId && !form.clubId.startsWith('private:') && (
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:8,fontSize:12,fontWeight:700}}>
@@ -1061,7 +1054,7 @@ export default function MatchesPage({ session: sessionProp }) {
       {/* ══════════════════════════════
           MODAL: CHAT
       ══════════════════════════════ */}
-            {chatOpenFor && (
+      {chatOpenFor && (
         <div onClick={()=>setChatOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:30000,display:"flex",alignItems:"flex-end",justifyContent:"center",paddingBottom:"env(safe-area-inset-bottom)",overscrollBehavior:"contain"}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"min(640px,100%)",background:"#0f0f0f",borderRadius:"20px 20px 0 0",border:"1px solid rgba(255,255,255,0.1)",display:"flex",flexDirection:"column",maxHeight:"80vh",overflow:"hidden"}}>
             <div style={{padding:"14px 16px 10px",borderBottom:"1px solid rgba(255,255,255,0.07)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
@@ -1162,6 +1155,7 @@ export default function MatchesPage({ session: sessionProp }) {
                         {r.mood==="win"?"🔥 Viene a ganar":r.mood==="fun"?"😎 A pasarlo bien":r.mood==="beer"?"🍺 Penúltimo Sed":""}
                       </div>
                     )}
+                    {r.paid && <div style={{fontSize:10,color:"#74B800",marginTop:2,fontWeight:800}}>💳 Pago confirmado</div>}
                   </div>
                   <div style={{display:"flex",gap:6}}>
                     <button onClick={()=>handleApprove(r.id)} style={{padding:"7px 12px",borderRadius:8,background:"#74B800",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>Aprobar</button>
@@ -1391,46 +1385,18 @@ export default function MatchesPage({ session: sessionProp }) {
       )}
 
       {/* ══════════════════════════════
-          MODAL: GORILA MOOD
+          CAMBIO 4: MODAL PAGO (reemplaza GORILA MOOD)
       ══════════════════════════════ */}
-      {moodOpenFor && (
-        <div onClick={()=>setMoodOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:40000,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 env(safe-area-inset-bottom)"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:"#1a1a1a",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",border:"1px solid rgba(116,184,0,0.25)"}}>
-            <div style={{width:40,height:4,background:"rgba(255,255,255,0.2)",borderRadius:999,margin:"0 auto 20px"}} />
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:32}}>🦍</div>
-              <div style={{fontSize:18,fontWeight:900,color:"#fff",marginTop:6}}>¿Con qué Gorila Mood vienes?</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4}}>El creador verá tu actitud</div>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {[
-                {key:"win", emoji:"🔥", label:"Vengo a ganar", desc:"Sin piedad"},
-                {key:"fun", emoji:"😎", label:"A pasarlo bien", desc:"El resultado da igual"},
-                {key:"beer", emoji:"🍺", label:"Lo importante es el Penúltimo Sed", desc:"Prioridades claras"},
-              ].map(mood=>(
-                <button key={mood.key}
-                  onClick={async()=>{
-                    const matchId = moodOpenFor;
-                    setMoodOpenFor(null);
-                    try { await requestJoin(matchId, mood.key); toast.success(`Solicitud enviada ${mood.emoji}`); await load(); }
-                    catch(e) { toast.error(e?.message||"Error"); }
-                  }}
-                  style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:14,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",cursor:"pointer",textAlign:"left"}}
-                  onMouseOver={e=>e.currentTarget.style.background="rgba(116,184,0,0.15)"}
-                  onMouseOut={e=>e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
-                  <span style={{fontSize:32,flexShrink:0}}>{mood.emoji}</span>
-                  <div>
-                    <div style={{color:"#fff",fontWeight:900,fontSize:15}}>{mood.label}</div>
-                    <div style={{color:"rgba(255,255,255,0.5)",fontSize:12,marginTop:2}}>{mood.desc}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button onClick={()=>setMoodOpenFor(null)} style={{width:"100%",marginTop:14,padding:"11px",borderRadius:12,background:"rgba(255,255,255,0.06)",border:"none",color:"rgba(255,255,255,0.5)",fontWeight:700,cursor:"pointer",fontSize:13}}>
-              Cancelar
-            </button>
-          </div>
-        </div>
+      {payModalMatch && (
+        <MatchPaymentModal
+          match={payModalMatch}
+          session={session}
+          onClose={() => setPayModalMatch(null)}
+          onJoined={async () => {
+            setPayModalMatch(null);
+            await load();
+          }}
+        />
       )}
 
       {/* ── MODAL JUGAR AHORA ── */}
@@ -1451,7 +1417,6 @@ export default function MatchesPage({ session: sessionProp }) {
 
             {!jugarAhoraData.loading && (
               <>
-                {/* Pistas libres */}
                 {jugarAhoraData.slots.length > 0 && (
                   <div style={{marginBottom:20}}>
                     <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>🏟️ Pistas libres ahora</div>
@@ -1472,7 +1437,6 @@ export default function MatchesPage({ session: sessionProp }) {
                   </div>
                 )}
 
-                {/* Partidos con hueco */}
                 {jugarAhoraData.matches.length > 0 && (
                   <div style={{marginBottom:20}}>
                     <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>🏓 Partidos con hueco</div>
