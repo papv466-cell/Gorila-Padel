@@ -915,9 +915,55 @@ export default function MatchesPage({ session: sessionProp }) {
                       <button className="mBtn primary" onClick={()=>setPayModalMatch(m)}>PARTICIPAR</button>
                     )}
 
-                    {session&&!isCreator&&myStatus2==="approved" && (
-                      <button className="mBtn leave" onClick={async()=>{ try{ await cancelMyJoin({matchId: m.id}); setMyReqStatus(prev=>{const n={...prev};delete n[m.id];return n;}); setInPlayersByMatchId(prev=>{const n={...prev};delete n[String(m.id)];return n;}); setPlayersByMatchId(prev=>{const n={...prev};if(n[String(m.id)])n[String(m.id)]=n[String(m.id)].filter(p=>String(p?.id||p?.player_uuid||'')!==String(session?.user?.id||''));return n;}); setApprovedCounts(prev=>({...prev,[m.id]:Math.max(0,(prev[m.id]||1)-1)})); toast.success("Has salido"); setTimeout(()=>load(),500); }catch(e){ toast.error(e?.message||"Error"); } }}>Salir</button>
-                    )}
+                    {session&&!isCreator&&myStatus2==="approved" && (() => {
+  const hoursLeft = m.start_at ? (new Date(m.start_at) - new Date()) / (1000 * 60 * 60) : 999;
+  const blocked = hoursLeft < 24;
+  return (
+    <button
+      className="mBtn leave"
+      disabled={blocked}
+      title={blocked ? "No puedes salir — faltan menos de 24h para el partido" : "Salir del partido"}
+      style={blocked ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+      onClick={async () => {
+        if (blocked) return;
+        if (!window.confirm("¿Seguro que quieres salir? Los 0,30€ de comisión no se devuelven.")) return;
+        try {
+          // Liberar autorización de precio de pista si existe
+          const { data: joinReq } = await supabase
+            .from("match_join_requests")
+            .select("stripe_authorization_id, authorization_captured")
+            .eq("match_id", m.id)
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+
+          if (joinReq?.stripe_authorization_id && !joinReq.authorization_captured) {
+            await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/release-match-authorization`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                },
+                body: JSON.stringify({ authorizationId: joinReq.stripe_authorization_id }),
+              }
+            );
+          }
+
+          await cancelMyJoin({ matchId: m.id });
+          setMyReqStatus(prev => { const n = { ...prev }; delete n[m.id]; return n; });
+          setInPlayersByMatchId(prev => { const n = { ...prev }; delete n[String(m.id)]; return n; });
+          setPlayersByMatchId(prev => { const n = { ...prev }; if (n[String(m.id)]) n[String(m.id)] = n[String(m.id)].filter(p => String(p?.id || p?.player_uuid || '') !== String(session?.user?.id || '')); return n; });
+          setApprovedCounts(prev => ({ ...prev, [m.id]: Math.max(0, (prev[m.id] || 1) - 1) }));
+          toast.success("Has salido del partido");
+          setTimeout(() => load(), 500);
+        } catch (e) { toast.error(e?.message || "Error"); }
+      }}
+    >
+      {blocked ? "🔒 Bloqueado" : "Salir"}
+    </button>
+  );
+})()}
                     {isCreator && <button className="mBtn icon" onClick={()=>openRequests(m.id)} title="Solicitudes">📥</button>}
                     {session&&(isCreator||myStatus2==="approved"||iAmInPlayers) && (
                       <button className="mBtn icon" onClick={()=>{closeAllModals();setCedeOpenFor(m.id);setCedeQuery("");setCedeResults([]);}} title="Ceder plaza">🤝</button>
