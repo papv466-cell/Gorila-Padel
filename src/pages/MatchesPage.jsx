@@ -486,8 +486,17 @@ export default function MatchesPage({ session: sessionProp }) {
       setSelectedSlotId(null);
       setAvailableSlots([]);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
-      toast.success("Partido creado ✅"); await load(); setViewMode("mine");
-      try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
+// Si hay precio, insertar también al creador en match_join_requests con autorización pendiente
+if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.id) {
+  await supabase.from("match_join_requests").insert({
+    match_id: matchResult.id,
+    user_id: session.user.id,
+    status: "approved",
+    paid: true,
+    mood: "win",
+  });
+}
+toast.success("Partido creado ✅"); await load(); setViewMode("mine");      try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
     } catch(e) { setSaveError(e?.message||"No se pudo crear"); toast.error(e?.message||"Error"); } finally { setSaving(false); }
   }
 
