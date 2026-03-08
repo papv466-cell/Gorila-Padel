@@ -451,7 +451,7 @@ export async function approveRequest({ requestId }) {
     console.error("Error registrando donacion:", e);
   }
 
-  // Simular reparto 30cts si el partido llega a 4 jugadores
+ // Simular reparto 30cts si el partido llega a 4 jugadores
   try {
     const { data: match } = await supabase
       .from("matches")
