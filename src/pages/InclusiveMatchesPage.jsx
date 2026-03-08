@@ -61,6 +61,10 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
   const authReady = !!sessionProp;
   useEffect(() => { if (sessionProp) setSession(sessionProp); }, [sessionProp?.user?.id]);
 
+  useEffect(() => {
+  if (authReady && !session) goLogin();
+}, [authReady, session?.user?.id]);
+
   function goLogin() { navigate("/login", { replace: true, state: { from: location.pathname + location.search } }); }
 
   /* ─── Data ─── */
