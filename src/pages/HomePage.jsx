@@ -324,8 +324,7 @@ export default function HomePage({ session: sessionProp }) {
             </div>
             <div className="ghScrollRow">
               {gorilandiaFeed.map((post, i) => {
-                const media = post.media_urls?.[0] || post.media?.[0];
-                const isVideo = post.type === "video";
+const media = post.media_url || post.media_urls?.[0] || post.media?.[0];                const isVideo = post.type === "video";
                 return (
                   <div key={post.id || i} className="ghGoriPost"
                     onClick={() => navigate("/gorilandia")}
