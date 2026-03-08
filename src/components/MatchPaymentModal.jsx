@@ -1,16 +1,16 @@
 // src/components/MatchPaymentModal.jsx
 // Modal completo: mood → pago Stripe → confirmación
-import { useEffect, useState } from "react";
+// Todos los partidos pagan (mínimo 0,50€ comisión de servicio)
+import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { supabase } from "../services/supabaseClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-
 const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
 // ── Formulario Stripe interno ────────────────────────────────────────────────
-function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onError }) {
+function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -19,20 +19,19 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onErro
   const total = (totalCents / 100).toFixed(2);
   const price = (pricePerPlayerCents / 100).toFixed(2);
   const fee = ((totalCents - pricePerPlayerCents) / 100).toFixed(2);
+  const isFree = matchData.isFree;
+  const isPrivate = matchData.isPrivateCourt;
 
   async function handlePay() {
     if (!stripe || !elements) return;
     setLoading(true); setError(null);
-
     const { error: submitError } = await elements.submit();
     if (submitError) { setError(submitError.message); setLoading(false); return; }
-
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: { return_url: `${window.location.origin}/partidos` },
       redirect: "if_required",
     });
-
     if (confirmError) { setError(confirmError.message); setLoading(false); return; }
     if (paymentIntent?.status === "succeeded") { onSuccess(paymentIntent); return; }
     setLoading(false);
@@ -45,25 +44,47 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onErro
         <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
           Resumen
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Coste pista</span>
-          <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{price}</span>
-        </div>
+
+        {/* Línea coste pista — solo si no es gratuito */}
+        {!isFree && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Coste pista</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{price}</span>
+          </div>
+        )}
+
+        {/* Línea comisión */}
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
           <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
             Comisión servicio
             <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>
-              Gorila (0,10€) · Club (0,10€) · {matchData.foundationName ? matchData.foundationName : "Asociación"} (0,10€)
+              {matchData.feeLabel || (isPrivate
+                ? `Gorila (0,40€) · ${matchData.foundationName || "Asociación"} (0,10€)`
+                : isFree
+                  ? `Gorila (0,30€) · Club (0,10€) · ${matchData.foundationName || "Asociación"} (0,10€)`
+                  : `Gorila (0,10€) · Club (0,10€) · ${matchData.foundationName || "Asociación"} (0,10€)`
+              )}
             </span>
           </span>
           <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{fee}</span>
         </div>
+
+        {/* Badge fundación */}
         {matchData.foundationName && (
           <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.2)", fontSize: 11, color: "#9BE800", display: "flex", gap: 6, alignItems: "center" }}>
             <span>🤝</span>
             <span>0,10€ van a <strong>{matchData.foundationName}</strong></span>
           </div>
         )}
+
+        {/* Nota pista privada */}
+        {isPrivate && (
+          <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 11, color: "rgba(255,255,255,0.4)", display: "flex", gap: 6, alignItems: "center" }}>
+            <span>🔒</span>
+            <span>Pista privada — comisión sin parte de club</span>
+          </div>
+        )}
+
         <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "10px 0" }} />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span style={{ fontSize: 15, fontWeight: 900, color: "#fff" }}>Total</span>
@@ -71,8 +92,11 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onErro
         </div>
       </div>
 
-      {/* Stripe Elements */}
-      <PaymentElement options={{ layout: { type: "tabs", defaultCollapsed: false } }} />
+      {/* Stripe Elements — soporta Google Pay, Apple Pay, Bizum automáticamente */}
+      <PaymentElement options={{
+        layout: { type: "tabs", defaultCollapsed: false },
+        wallets: { applePay: "auto", googlePay: "auto" },
+      }} />
 
       {error && (
         <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 10, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#ef4444", fontSize: 13, fontWeight: 800 }}>
@@ -89,7 +113,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onErro
       </button>
 
       <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
-        🔒 Pago seguro con Stripe · Test: 4242 4242 4242 4242
+        🔒 Pago seguro con Stripe · Acepta Google Pay, Apple Pay y Bizum
       </div>
     </div>
   );
@@ -97,27 +121,21 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, onErro
 
 // ── Modal principal ──────────────────────────────────────────────────────────
 export default function MatchPaymentModal({ match, session, onClose, onJoined }) {
-  const [step, setStep] = useState("mood"); // mood | paying | success | free
+  const [step, setStep] = useState("mood"); // mood | paying | success
   const [mood, setMood] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const hasFee = parseFloat(match.price_per_player || 0) > 0;
+  const isPrivateCourt = String(match.club_id || "").startsWith("private:");
+  const pricePerPlayer = parseFloat(match.price_per_player || 0);
+  const serviceFeeCents = isPrivateCourt || pricePerPlayer === 0 ? 50 : 30;
+  const totalPreview = (pricePerPlayer + serviceFeeCents / 100).toFixed(2);
   const levelColor = LEVEL_COLORS[match.level] || "#74B800";
 
   async function handleMoodSelect(selectedMood) {
     setMood(selectedMood);
-
-    if (!hasFee) {
-      // Sin precio → unirse directo sin pago
-      setStep("free");
-      await joinFree(selectedMood);
-      return;
-    }
-
-    // Con precio → crear payment intent
     setStep("paying");
     setLoading(true);
     setError(null);
@@ -125,22 +143,16 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
-
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-payment`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ matchId: match.id, userId: session.user.id }),
         }
       );
-
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Error al crear el pago");
-
       setClientSecret(data.clientSecret);
       setPaymentData(data);
     } catch (e) {
@@ -150,27 +162,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
     }
   }
 
-  async function joinFree(selectedMood) {
-    try {
-      setLoading(true);
-      // Insertar solicitud directamente como pending (el creador aprueba)
-      await supabase.from("match_join_requests").insert({
-        match_id: match.id,
-        user_id: session.user.id,
-        status: "pending",
-        mood: selectedMood,
-      });
-      setStep("success");
-      setTimeout(() => { onJoined?.(); onClose?.(); }, 1800);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handlePaySuccess(paymentIntent) {
-    // El webhook aprueba automáticamente, pero optimistamente mostramos éxito
+  async function handlePaySuccess() {
     setStep("success");
     setTimeout(() => { onJoined?.(); onClose?.(); }, 2000);
   }
@@ -186,16 +178,16 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 40000, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 0 env(safe-area-inset-bottom)", backdropFilter: "blur(4px)" }}>
       <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1a1a1a", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", border: "1px solid rgba(116,184,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
 
-        {/* Handle */}
         <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 999, margin: "0 auto 20px" }} />
 
         {/* Info partido */}
         <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, padding: "12px 14px", marginBottom: 20, display: "flex", gap: 12, alignItems: "center" }}>
           <div style={{ width: 42, height: 42, borderRadius: 10, background: `${levelColor}20`, border: `1px solid ${levelColor}40`, display: "grid", placeItems: "center", fontSize: 20, flexShrink: 0 }}>🎾</div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>{match.club_name}</div>
+            <div style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>{match.club_name || "Pista privada"}</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
               {matchDate} · {matchTime} · <span style={{ color: levelColor }}>{match.level}</span>
+              {isPrivateCourt && <span style={{ marginLeft: 6, color: "rgba(255,255,255,0.3)" }}>· 🔒 Privada</span>}
             </div>
           </div>
         </div>
@@ -207,13 +199,13 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
               <div style={{ fontSize: 28, marginBottom: 6 }}>🦍</div>
               <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>¿Con qué Gorila Mood vienes?</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
-                {hasFee ? `Después pagarás €${(parseFloat(match.price_per_player) + 0.30).toFixed(2)}` : "Solicitud gratuita — el creador aprueba"}
+                Pagarás €{totalPreview} (incluye comisión de servicio)
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { key: "win",  emoji: "🔥", label: "Vengo a ganar",              desc: "Sin piedad" },
-                { key: "fun",  emoji: "😎", label: "A pasarlo bien",             desc: "El resultado da igual" },
+                { key: "win",  emoji: "🔥", label: "Vengo a ganar",                    desc: "Sin piedad" },
+                { key: "fun",  emoji: "😎", label: "A pasarlo bien",                   desc: "El resultado da igual" },
                 { key: "beer", emoji: "🍺", label: "Lo importante es el Penúltimo Sed", desc: "Prioridades claras" },
               ].map(m => (
                 <button key={m.key} onClick={() => handleMoodSelect(m.key)}
@@ -281,7 +273,6 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
                   pricePerPlayerCents={paymentData.pricePerPlayerCents}
                   matchData={paymentData.matchData}
                   onSuccess={handlePaySuccess}
-                  onError={setError}
                 />
               </Elements>
             )}
@@ -289,16 +280,12 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined })
         )}
 
         {/* ── STEP: SUCCESS ── */}
-        {(step === "success" || step === "free") && (
+        {step === "success" && (
           <div style={{ textAlign: "center", padding: "20px 0 10px" }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>🦍</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>
-              {hasFee ? "¡Pago confirmado!" : "¡Solicitud enviada!"}
-            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¡Pago confirmado!</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
-              {hasFee
-                ? `Ya estás dentro del partido en ${match.club_name}`
-                : "El creador recibirá tu solicitud y te notificaremos cuando te apruebe"}
+              Ya estás dentro del partido en {match.club_name || "pista privada"}
             </div>
             {paymentData?.matchData?.foundationName && (
               <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.25)", fontSize: 13, color: "#9BE800" }}>
