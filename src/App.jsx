@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import ClubAdminPage from "./pages/ClubAdminPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
 import SuperAdminPage from "./pages/SuperAdminPage";
+import ChallengesPage from "./pages/ChallengesPage";
 
 import MapPage from "./pages/MapPage";
 import MatchesPage from "./pages/MatchesPage";
@@ -277,6 +278,7 @@ export default function App() {
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
+          <Route path="/retos" element={<RequireAuth session={session} sessionReady={sessionReady}><ChallengesPage session={session} /></RequireAuth>} />
           <Route path="/reserva/pago" element={<CourtCheckoutPage />} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

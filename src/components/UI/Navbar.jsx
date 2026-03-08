@@ -24,6 +24,7 @@ export default function Navbar({ showBack = false, onBack }) {
     { to: "/gorilandia",  label: "Gorilandia",  icon: "🦍" },
     { to: "/clases",      label: "Clases",      icon: "📚" },
     { to: "/inclusivos",  label: "Inclusivos",  icon: "♿" },
+    { to: "/retos",       label: "Retos",       icon: "⚔️" },
     { to: "/perfil",      label: "Perfil",      icon: "👤" },
     { to: "/tienda",      label: "Tienda",      icon: "🛍️" },
   ], []);
