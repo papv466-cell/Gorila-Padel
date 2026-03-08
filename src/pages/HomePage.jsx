@@ -135,7 +135,7 @@ export default function HomePage({ session: sessionProp }) {
         supabase.from("profiles").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
         getFeed(),
-        supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("active", true).order("created_at", { ascending: false }).limit(4),
+        supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("is_active", true).order("created_at", { ascending: false }).limit(4),
         // Partidos inclusivos esta semana
         supabase.from("inclusive_matches").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
         // Partidos inclusivos totales
