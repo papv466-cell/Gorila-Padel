@@ -3,8 +3,9 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const TABS = ["calendario", "reservas", "espera", "precios", "comunicacion", "torneos", "informe", "valoraciones", "stats", "donaciones", "bonos", "config"];
+const TABS = ["horarios", "calendario", "reservas", "espera", "precios", "comunicacion", "torneos", "informe", "valoraciones", "stats", "donaciones", "bonos", "config"];
 const TAB_LABELS = {
+  horarios: "🕐 Horarios",
   calendario: "📅 Calendario",
   reservas: "📋 Reservas",
   espera: "⏳ Espera",
@@ -57,7 +58,10 @@ export default function ClubAdminPage() {
   const [clubAdmin, setClubAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("calendario");
-  const [courts, setCourts] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ court_id: '', day_of_week: 0, open_time: '09:00', close_time: '22:00', slot_duration_min: 90, price: 10, active: true });
+ const [courts, setCourts] = useState([]);
   const [slots, setSlots] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
@@ -142,6 +146,7 @@ export default function ClubAdminPage() {
     await Promise.all([
       loadCourts(adminData.club_id),
         loadSlots(data.club_id),
+        loadSchedules(data.club_id),
         loadBookings(data.club_id),
         loadDonations(data.club_id),
         loadFoundations(),
@@ -363,6 +368,36 @@ export default function ClubAdminPage() {
     setSlots(data||[]);
   }
 
+  async function loadSchedules(clubId) {
+  const { data } = await supabase.from('court_schedules').select('*, club_courts(name)').eq('club_id', clubId).order('court_id').order('day_of_week');
+  setSchedules(data || []);
+}
+
+async function saveSchedule() {
+  if (!scheduleForm.court_id) return;
+  setSavingSchedule(true);
+  try {
+    await supabase.from('court_schedules').insert({
+      club_id: clubAdmin.club_id,
+      court_id: Number(scheduleForm.court_id),
+      day_of_week: Number(scheduleForm.day_of_week),
+      open_time: scheduleForm.open_time,
+      close_time: scheduleForm.close_time,
+      slot_duration_min: Number(scheduleForm.slot_duration_min),
+      price: Number(scheduleForm.price),
+      active: true,
+    });
+    await loadSchedules(clubAdmin.club_id);
+    await supabase.rpc('generate_court_slots', { weeks_ahead: 4 });
+  } finally { setSavingSchedule(false); }
+}
+
+async function deleteSchedule(id) {
+  if (!window.confirm('¿Eliminar este horario recurrente?')) return;
+  await supabase.from('court_schedules').delete().eq('id', id);
+  await loadSchedules(clubAdmin.club_id);
+}
+
   async function loadBookings(clubId) {
     const {data} = await supabase.from('court_bookings').select('*, profiles(name, handle, avatar_url)').eq('club_id', clubId).order('date', {ascending:false}).limit(50);
     setBookings(data||[]);
@@ -553,6 +588,88 @@ export default function ClubAdminPage() {
     btn: (c) => ({ padding:'10px 16px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:900, fontSize:13, background:c==='green'?'linear-gradient(135deg,#74B800,#9BE800)':c==='red'?'rgba(220,38,38,0.15)':c==='blue'?'rgba(59,130,246,0.15)':'rgba(255,255,255,0.08)', color:c==='green'?'#000':c==='red'?'#ff6b6b':c==='blue'?'#60a5fa':'#fff' }),
     badge: (s) => ({ padding:'3px 8px', borderRadius:999, fontSize:10, fontWeight:800, background:s==='confirmed'||s==='available'?'rgba(116,184,0,0.15)':s==='pending'?'rgba(255,165,0,0.15)':'rgba(220,38,38,0.15)', color:s==='confirmed'||s==='available'?'#74B800':s==='pending'?'#FFA500':'#ff6b6b' }),
   };
+
+  {/* ── HORARIOS RECURRENTES ── */}
+{tab === 'horarios' && (
+  <div style={{ padding: 16 }}>
+    <div style={{ fontWeight: 900, color: '#74B800', fontSize: 16, marginBottom: 16 }}>🕐 Horarios recurrentes</div>
+    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
+      Define el horario base de cada pista. Los slots se generarán automáticamente para las próximas 4 semanas.
+    </p>
+
+    {/* Formulario nuevo horario */}
+    <div style={{ background: '#1a1a1a', borderRadius: 12, padding: 16, marginBottom: 20, border: '1px solid rgba(116,184,0,0.2)' }}>
+      <div style={{ fontWeight: 800, color: '#fff', marginBottom: 12 }}>➕ Nuevo horario</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>PISTA</label>
+          <select value={scheduleForm.court_id} onChange={e => setScheduleForm(p => ({ ...p, court_id: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }}>
+            <option value="">Seleccionar...</option>
+            {courts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>DÍA</label>
+          <select value={scheduleForm.day_of_week} onChange={e => setScheduleForm(p => ({ ...p, day_of_week: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }}>
+            {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map((d, i) => <option key={i} value={i}>{d}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>ABRE</label>
+          <input type="time" value={scheduleForm.open_time} onChange={e => setScheduleForm(p => ({ ...p, open_time: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>CIERRA</label>
+          <input type="time" value={scheduleForm.close_time} onChange={e => setScheduleForm(p => ({ ...p, close_time: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>DURACIÓN (min)</label>
+          <select value={scheduleForm.slot_duration_min} onChange={e => setScheduleForm(p => ({ ...p, slot_duration_min: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }}>
+            <option value={60}>60 min</option>
+            <option value={90}>90 min</option>
+            <option value={120}>120 min</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'block', marginBottom: 4 }}>PRECIO (€)</label>
+          <input type="number" value={scheduleForm.price} onChange={e => setScheduleForm(p => ({ ...p, price: e.target.value }))}
+            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }} />
+        </div>
+      </div>
+      <button onClick={saveSchedule} disabled={savingSchedule || !scheduleForm.court_id}
+        style={{ marginTop: 14, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer' }}>
+        {savingSchedule ? 'Guardando...' : '✅ Guardar y generar slots'}
+      </button>
+    </div>
+
+    {/* Lista de horarios existentes */}
+    {schedules.length === 0 ? (
+      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>No hay horarios configurados aún.</div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {schedules.map(s => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#1a1a1a', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div>
+              <span style={{ fontWeight: 800, color: '#fff', fontSize: 13 }}>{s.club_courts?.name}</span>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginLeft: 10 }}>
+                {['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'][s.day_of_week]} · {s.open_time?.slice(0,5)}–{s.close_time?.slice(0,5)} · {s.slot_duration_min}min · {s.price}€
+              </span>
+            </div>
+            <button onClick={() => deleteSchedule(s.id)}
+              style={{ padding: '5px 12px', borderRadius: 8, background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)', color: '#ff6b6b', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>
+              Eliminar
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
   if (loading) return <div style={{...S.page, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(255,255,255,0.4)'}}>Cargando...</div>;
 
