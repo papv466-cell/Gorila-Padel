@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleReaction, getPostReactions, getUserReaction, getComments, createComment } from '../services/gorilandia';
+import { supabase } from '../services/supabaseClient';
 
 const REACTIONS = [
   { key: 'gorila', emoji: '🦍' },
@@ -123,8 +124,24 @@ export default function GorilandiaPost({ post, session, onReload }) {
           <div className="glUserName" onClick={() => navigate(`/usuario/${post.user_id}`)}>{userName}</div>
           <div className="glPostTime">{timeAgo(post.created_at)}</div>
         </div>
-        {post.type === 'video' && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>🎥 VIDEO</span>}
-      </div>
+{post.type === 'video' && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>🎥 VIDEO</span>}
+{session?.user?.id === post.user_id && (
+  <button
+    onClick={async () => {
+      if (!window.confirm("¿Eliminar esta publicación?")) return;
+      try {
+        const { error } = await supabase.from("gorilandia_posts").delete().eq("id", post.id);
+        if (error) throw error;
+        onReload?.();
+      } catch (e) {
+        alert(e.message || "Error al eliminar");
+      }
+    }}
+    style={{ background: "none", border: "none", color: "rgba(255,100,100,0.6)", cursor: "pointer", fontSize: 16, padding: "4px 6px", borderRadius: 8 }}
+    title="Eliminar publicación">
+    🗑️
+  </button>
+)}      </div>
 
       {/* MEDIA */}
       {mediaUrls.length > 0 && (
