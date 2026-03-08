@@ -122,12 +122,25 @@ export default function ClubAdminPage() {
   }, []);
 
   async function loadAdmin(userId) {
-    try {
-      const {data} = await supabase.from('club_admins').select('*').eq('user_id', userId).eq('status','approved').maybeSingle();
-      if (!data) { setLoading(false); return; }
-      setClubAdmin(data);
-      await Promise.all([
-        loadCourts(data.club_id),
+  try {
+    let adminData = null;
+
+    // Comprobar si es staff admin
+    const {data: staffData} = await supabase.from('club_admins').select('*').eq('user_id', userId).eq('status','approved').maybeSingle();
+    if (staffData) {
+      adminData = staffData;
+    } else {
+      // Comprobar si es owner del club
+      const {data: ownedClub} = await supabase.from('clubs').select('id').eq('owner_user_id', userId).limit(1).maybeSingle();
+      if (ownedClub) {
+        adminData = { user_id: userId, club_id: ownedClub.id, status: 'approved', role: 'owner' };
+      }
+    }
+
+    if (!adminData) { setLoading(false); return; }
+    setClubAdmin(adminData);
+    await Promise.all([
+      loadCourts(adminData.club_id),
         loadSlots(data.club_id),
         loadBookings(data.club_id),
         loadDonations(data.club_id),
