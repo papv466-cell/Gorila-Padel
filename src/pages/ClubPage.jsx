@@ -78,6 +78,9 @@ export default function ClubPage({ session: sessionProp }) {
   const [followSaving, setFollowSaving] = useState(false);
   const [waitlist, setWaitlist] = useState({}); // {slotId: true/false}
   const [waitlistSaving, setWaitlistSaving] = useState(null);
+  const [externalBooking, setExternalBooking] = useState(null); // {url, provider, mode}
+  const [bookingView, setBookingView] = useState('grid'); // grid | external
+  const [allSlots, setAllSlots] = useState([]); // todos slots del día, todas pistas
   const [createSlots, setCreateSlots] = useState([]);
   const [createSelectedSlot, setCreateSelectedSlot] = useState(null);
   const [createSelectedCourt, setCreateSelectedCourt] = useState(null);
@@ -206,7 +209,12 @@ export default function ClubPage({ session: sessionProp }) {
         }
       }
 
-      // 5. Clases del club
+      // 5. External booking config desde Supabase
+      const normalizedId = clubId.toLowerCase();
+      const { data: clubDb } = await supabase.from('clubs').select('external_booking_url,external_booking_provider,booking_mode').eq('id', normalizedId).maybeSingle();
+      if (clubDb) setExternalBooking({ url: clubDb.external_booking_url, provider: clubDb.external_booking_provider || 'none', mode: clubDb.booking_mode || 'gorila' });
+
+      // 6. Clases del club
       const { data: classRows } = await supabase
         .from("classes")
         .select("*")
@@ -296,17 +304,33 @@ export default function ClubPage({ session: sessionProp }) {
 
   async function loadSlots(courtId, date) {
     if (!courtId || !date) return;
-    // Cargar todos los slots (disponibles Y ocupados) para mostrar lista de espera
-    const {data: allSlots} = await supabase.from('court_slots').select('*')
+    const {data: slotsData} = await supabase.from('court_slots').select('*')
       .eq('court_id', courtId).eq('date', date)
       .in('status', ['available','booked','pending'])
       .order('start_time');
-    setSlots(allSlots||[]);
-    // Cargar waitlist del usuario
-    if (session?.user?.id && allSlots?.length) {
+    setSlots(slotsData||[]);
+    if (session?.user?.id && slotsData?.length) {
       const {data: wl} = await supabase.from('slot_waitlist')
         .select('slot_id').eq('user_id', session.user.id)
-        .in('slot_id', allSlots.map(s=>s.id));
+        .in('slot_id', slotsData.map(s=>s.id));
+      const wlMap = {};
+      (wl||[]).forEach(w=>{ wlMap[w.slot_id]=true; });
+      setWaitlist(wlMap);
+    }
+  }
+
+  async function loadAllSlotsGrid(date) {
+    if (!date || !courts.length) return;
+    const courtIds = courts.map(c=>c.id);
+    const {data: slotsData} = await supabase.from('court_slots').select('*')
+      .in('court_id', courtIds).eq('date', date)
+      .in('status', ['available','booked','pending'])
+      .order('start_time');
+    setAllSlots(slotsData||[]);
+    if (session?.user?.id && slotsData?.length) {
+      const {data: wl} = await supabase.from('slot_waitlist')
+        .select('slot_id').eq('user_id', session.user.id)
+        .in('slot_id', slotsData.map(s=>s.id));
       const wlMap = {};
       (wl||[]).forEach(w=>{ wlMap[w.slot_id]=true; });
       setWaitlist(wlMap);
@@ -639,114 +663,181 @@ export default function ClubPage({ session: sessionProp }) {
 
               {tab === "reservar" && (
                 <div>
-                  {courts.length === 0 ? (
+                  {/* FASE 2: Banner si el club usa sistema externo */}
+                  {externalBooking?.url && externalBooking?.mode !== 'gorila' && (
+                    <div style={{marginBottom:14,padding:'12px 14px',borderRadius:12,background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.25)',display:'flex',gap:10,alignItems:'center'}}>
+                      <span style={{fontSize:22}}>
+                        {externalBooking.provider==='playtomic'?'🔵':externalBooking.provider==='matchi'?'🟣':'🌐'}
+                      </span>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:900,color:'#fff'}}>
+                          {externalBooking.provider==='playtomic'?'Este club usa Playtomic':externalBooking.provider==='matchi'?'Este club usa MATCHi':'Reserva externa disponible'}
+                        </div>
+                        <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2}}>
+                          {externalBooking.mode==='both'?'También puedes reservar aquí abajo':'Reserva directamente en su plataforma'}
+                        </div>
+                      </div>
+                      <a href={externalBooking.url} target="_blank" rel="noopener noreferrer"
+                        style={{padding:'8px 12px',borderRadius:8,background:'rgba(59,130,246,0.2)',border:'1px solid rgba(59,130,246,0.4)',color:'#60a5fa',fontWeight:900,fontSize:12,textDecoration:'none',flexShrink:0}}>
+                        Abrir →
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Si solo usa sistema externo, no mostrar más */}
+                  {externalBooking?.mode === 'external' ? (
+                    <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.4)',fontSize:13}}>
+                      <div style={{fontSize:36,marginBottom:8}}>🔗</div>
+                      Las reservas de este club se gestionan en su plataforma externa.
+                    </div>
+                  ) : courts.length === 0 ? (
                     <div style={{textAlign:'center',padding:40,color:'rgba(255,255,255,0.3)',fontSize:14}}>
                       <div style={{fontSize:36,marginBottom:8}}>🏟️</div>
                       Este club aún no tiene pistas configuradas en Gorila
                     </div>
                   ) : (
                     <>
-                      {/* Selector fecha arriba */}
-                      <input type="date" value={selectedDate} min={new Date().toISOString().split('T')[0]}
-                        onChange={e=>{
-                          setSelectedDate(e.target.value);
-                          loadSlots(selectedCourt, e.target.value);
-                        }}
-                        style={{padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',marginBottom:14}} />
-
-                      {/* Pistas — adaptativo según cantidad */}
-                      <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Elige pista</div>
-                      {courts.length <= 4 ? (
-                        <div style={{display:'grid',gridTemplateColumns:`repeat(${courts.length},1fr)`,gap:8,marginBottom:14}}>
-                          {courts.map(c=>{
-                            const isSelected = selectedCourt===c.id;
-                            const courtSlots = slots.filter(s=>s.court_id===c.id);
-                            const hasSlots = courtSlots.length > 0;
-                            return (
-                              <div key={c.id} onClick={()=>{setSelectedCourt(c.id); loadSlots(c.id,selectedDate);}}
-                                style={{padding:'12px 8px',borderRadius:12,cursor:'pointer',textAlign:'center',
-                                  background:isSelected?'linear-gradient(135deg,rgba(116,184,0,0.2),rgba(155,232,0,0.1))':hasSlots?'rgba(116,184,0,0.06)':'rgba(255,255,255,0.03)',
-                                  border:isSelected?'1px solid #74B800':hasSlots?'1px solid rgba(116,184,0,0.2)':'1px solid rgba(255,255,255,0.07)'}}>
-                                <div style={{fontSize:20,marginBottom:4}}>{c.court_type==='indoor'?'🏠':'☀️'}</div>
-                                <div style={{fontSize:11,fontWeight:900,color:isSelected?'#74B800':hasSlots?'#fff':'rgba(255,255,255,0.3)'}}>{c.name}</div>
-                                <div style={{fontSize:10,marginTop:3,fontWeight:800,
-                                  color:isSelected?'#74B800':hasSlots?'rgba(116,184,0,0.7)':'rgba(255,255,255,0.2)'}}>
-                                  {hasSlots ? `${courtSlots.length} hora${courtSlots.length!==1?'s':''}` : 'sin horas'}
-                                </div>
-                              </div>
-                            );
-                          })}
+                      {/* SELECTOR FECHA + VISTA */}
+                      <div style={{display:'flex',gap:8,marginBottom:14,alignItems:'center'}}>
+                        <input type="date" value={selectedDate} min={new Date().toISOString().split('T')[0]}
+                          onChange={e=>{
+                            setSelectedDate(e.target.value);
+                            if(bookingView==='grid') loadAllSlotsGrid(e.target.value);
+                            else loadSlots(selectedCourt, e.target.value);
+                          }}
+                          style={{flex:1,padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none'}} />
+                        <div style={{display:'flex',background:'rgba(255,255,255,0.06)',borderRadius:8,overflow:'hidden',flexShrink:0}}>
+                          <button onClick={()=>{setBookingView('grid');loadAllSlotsGrid(selectedDate);}}
+                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='grid'?'#74B800':'transparent',color:bookingView==='grid'?'#000':'rgba(255,255,255,0.5)'}}>⊞</button>
+                          <button onClick={()=>{setBookingView('list');loadSlots(selectedCourt,selectedDate);}}
+                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='list'?'#74B800':'transparent',color:bookingView==='list'?'#000':'rgba(255,255,255,0.5)'}}>☰</button>
                         </div>
-                      ) : (
-                        <div style={{marginBottom:14}}>
-                          <select value={selectedCourt||''} onChange={e=>{setSelectedCourt(e.target.value); loadSlots(e.target.value,selectedDate);}}
-                            style={{width:'100%',padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',marginBottom:8}}>
-                            {courts.map(c=>{
-                              const n = slots.filter(s=>s.court_id===c.id).length;
-                              return <option key={c.id} value={c.id} style={{background:'#1a1a1a'}}>{c.court_type==='indoor'?'🏠':'☀️'} {c.name} {n>0?`· ${n} horas`:'· sin horas'}</option>;
-                            })}
-                          </select>
-                          {/* Mini indicadores disponibilidad */}
-                          <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                            {courts.map(c=>{
-                              const n = slots.filter(s=>s.court_id===c.id).length;
-                              return (
-                                <div key={c.id} onClick={()=>{setSelectedCourt(c.id); loadSlots(c.id,selectedDate);}}
-                                  style={{padding:'3px 8px',borderRadius:6,cursor:'pointer',fontSize:10,fontWeight:800,
-                                    background:selectedCourt===c.id?'rgba(116,184,0,0.2)':n>0?'rgba(116,184,0,0.08)':'rgba(255,255,255,0.04)',
-                                    border:selectedCourt===c.id?'1px solid #74B800':n>0?'1px solid rgba(116,184,0,0.2)':'1px solid rgba(255,255,255,0.06)',
-                                    color:selectedCourt===c.id?'#74B800':n>0?'rgba(116,184,0,0.7)':'rgba(255,255,255,0.2)'}}>
-                                  {n>0?`${n}h`:'–'}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                      </div>
 
-                      {/* Horas disponibles */}
-                      {selectedCourt && (()=>{
-                        const courtSlots = slots.filter(s=>s.court_id===selectedCourt);
-                        if (!courtSlots.length) return (
+                      {/* FASE 1: CUADRÍCULA HORA × PISTA (vista grid) */}
+                      {bookingView==='grid' && (()=>{
+                        const hours = [...new Set(allSlots.map(s=>s.start_time?.slice(0,5)))].sort();
+                        if (!hours.length) return (
                           <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.3)',fontSize:13,background:'rgba(255,255,255,0.02)',borderRadius:12,border:'1px solid rgba(255,255,255,0.05)'}}>
-                            <div style={{fontSize:28,marginBottom:8}}>🕐</div>
-                            No hay horas disponibles para este día
+                            <div style={{fontSize:28,marginBottom:8}}>🕐</div>No hay horas disponibles para este día
                           </div>
                         );
                         return (
-                          <>
-                            <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>
-                              Horas disponibles · {courts.find(c=>c.id===selectedCourt)?.name}
+                          <div style={{overflowX:'auto'}}>
+                            <table style={{width:'100%',borderCollapse:'separate',borderSpacing:4}}>
+                              <thead>
+                                <tr>
+                                  <th style={{fontSize:10,color:'rgba(255,255,255,0.3)',fontWeight:800,padding:'4px 6px',textAlign:'left',minWidth:44}}>HORA</th>
+                                  {courts.map(c=>(
+                                    <th key={c.id} style={{fontSize:10,color:'rgba(255,255,255,0.6)',fontWeight:900,padding:'4px 6px',textAlign:'center',minWidth:80}}>
+                                      {c.court_type==='indoor'?'🏠':'☀️'} {c.name}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {hours.map(hour=>(
+                                  <tr key={hour}>
+                                    <td style={{fontSize:12,fontWeight:900,color:'rgba(255,255,255,0.4)',padding:'4px 6px',verticalAlign:'middle'}}>{hour}</td>
+                                    {courts.map(c=>{
+                                      const s = allSlots.find(sl=>sl.court_id===c.id&&sl.start_time?.slice(0,5)===hour);
+                                      if (!s) return <td key={c.id} style={{padding:4}}><div style={{height:48,borderRadius:8,background:'rgba(255,255,255,0.02)',border:'1px dashed rgba(255,255,255,0.05)'}} /></td>;
+                                      const isAvailable = s.status==='available';
+                                      const inWL = waitlist[s.id];
+                                      return (
+                                        <td key={c.id} style={{padding:4}}>
+                                          <div onClick={()=>isAvailable?setBookingSlot(s):null}
+                                            style={{height:48,borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1,cursor:isAvailable?'pointer':'default',transition:'all .15s',
+                                              background:isAvailable?'rgba(116,184,0,0.12)':inWL?'rgba(245,158,11,0.1)':'rgba(255,255,255,0.04)',
+                                              border:isAvailable?'1px solid rgba(116,184,0,0.3)':inWL?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)'}}>
+                                            {isAvailable ? (
+                                              <>
+                                                <div style={{fontSize:11,fontWeight:900,color:'#74B800'}}>{s.price}€</div>
+                                                <div style={{fontSize:9,color:'rgba(116,184,0,0.6)'}}>Libre</div>
+                                              </>
+                                            ) : inWL ? (
+                                              <div style={{fontSize:9,fontWeight:900,color:'#f59e0b'}}>⏳ Espera</div>
+                                            ) : (
+                                              <>
+                                                <div style={{fontSize:9,color:'rgba(255,255,255,0.3)'}}>Ocupada</div>
+                                                <button onClick={e=>{e.stopPropagation();toggleWaitlist(s);}} disabled={waitlistSaving===s.id}
+                                                  style={{marginTop:2,padding:'2px 5px',borderRadius:4,border:'none',cursor:'pointer',fontSize:8,fontWeight:900,background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.4)'}}>
+                                                  {waitlistSaving===s.id?'…':'+ Espera'}
+                                                </button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                            <div style={{display:'flex',gap:10,marginTop:10,fontSize:10,color:'rgba(255,255,255,0.3)'}}>
+                              <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(116,184,0,0.3)',display:'inline-block'}}/>Libre</span>
+                              <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(255,255,255,0.08)',display:'inline-block'}}/>Ocupada</span>
+                              <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(245,158,11,0.2)',display:'inline-block'}}/>En espera</span>
                             </div>
-                            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
-                              {courtSlots.map(s=>{
-                                const isAvailable = s.status==='available';
-                                const inWaitlist = waitlist[s.id];
-                                return (
-                                  <div key={s.id}
-                                    onClick={()=>isAvailable?setBookingSlot(s):null}
-                                    style={{padding:'12px 6px',borderRadius:12,textAlign:'center',transition:'all .15s',
-                                      background:isAvailable?'rgba(116,184,0,0.08)':inWaitlist?'rgba(245,158,11,0.08)':'rgba(255,255,255,0.03)',
-                                      border:isAvailable?'1px solid rgba(116,184,0,0.25)':inWaitlist?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)',
-                                      cursor:isAvailable?'pointer':'default',opacity:isAvailable?1:0.8}}>
-                                    <div style={{fontSize:15,fontWeight:900,color:isAvailable?'#74B800':inWaitlist?'#f59e0b':'rgba(255,255,255,0.4)'}}>{s.start_time?.slice(0,5)}</div>
-                                    <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>{s.end_time?.slice(0,5)}</div>
-                                    <div style={{fontSize:12,fontWeight:800,color:isAvailable?'#fff':'rgba(255,255,255,0.3)',marginTop:4}}>{isAvailable?`${s.price}€`:'Ocupada'}</div>
-                                    {!isAvailable && (
-                                      <button onClick={e=>{e.stopPropagation();toggleWaitlist(s);}} disabled={waitlistSaving===s.id}
-                                        style={{marginTop:5,padding:'3px 6px',borderRadius:6,border:'none',cursor:'pointer',fontSize:9,fontWeight:900,
-                                          background:inWaitlist?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.08)',
-                                          color:inWaitlist?'#f59e0b':'rgba(255,255,255,0.5)'}}>
-                                        {waitlistSaving===s.id?'…':inWaitlist?'⏳ En espera':'+ Espera'}
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
+                          </div>
                         );
                       })()}
+
+                      {/* VISTA LISTA (original mejorada) */}
+                      {bookingView==='list' && (
+                        <>
+                          <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Elige pista</div>
+                          <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
+                            {courts.map(c=>{
+                              const isSelected = selectedCourt===c.id;
+                              const n = slots.filter(s=>s.court_id===c.id&&s.status==='available').length;
+                              return (
+                                <button key={c.id} onClick={()=>{setSelectedCourt(c.id);loadSlots(c.id,selectedDate);}}
+                                  style={{padding:'8px 12px',borderRadius:10,cursor:'pointer',border:'none',fontWeight:900,fontSize:12,
+                                    background:isSelected?'linear-gradient(135deg,#74B800,#9BE800)':n>0?'rgba(116,184,0,0.08)':'rgba(255,255,255,0.04)',
+                                    color:isSelected?'#000':n>0?'#74B800':'rgba(255,255,255,0.3)'}}>
+                                  {c.court_type==='indoor'?'🏠':'☀️'} {c.name} {n>0?`· ${n}h`:''}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {selectedCourt && (()=>{
+                            const courtSlots = slots.filter(s=>s.court_id===selectedCourt);
+                            if (!courtSlots.length) return (
+                              <div style={{textAlign:'center',padding:32,color:'rgba(255,255,255,0.3)',fontSize:13,background:'rgba(255,255,255,0.02)',borderRadius:12}}>
+                                <div style={{fontSize:28,marginBottom:8}}>🕐</div>No hay horas disponibles
+                              </div>
+                            );
+                            return (
+                              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                                {courtSlots.map(s=>{
+                                  const isAvailable = s.status==='available';
+                                  const inWaitlist = waitlist[s.id];
+                                  return (
+                                    <div key={s.id} onClick={()=>isAvailable?setBookingSlot(s):null}
+                                      style={{padding:'12px 6px',borderRadius:12,textAlign:'center',transition:'all .15s',
+                                        background:isAvailable?'rgba(116,184,0,0.08)':inWaitlist?'rgba(245,158,11,0.08)':'rgba(255,255,255,0.03)',
+                                        border:isAvailable?'1px solid rgba(116,184,0,0.25)':inWaitlist?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)',
+                                        cursor:isAvailable?'pointer':'default',opacity:isAvailable?1:0.8}}>
+                                      <div style={{fontSize:15,fontWeight:900,color:isAvailable?'#74B800':inWaitlist?'#f59e0b':'rgba(255,255,255,0.4)'}}>{s.start_time?.slice(0,5)}</div>
+                                      <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>{s.end_time?.slice(0,5)}</div>
+                                      <div style={{fontSize:12,fontWeight:800,color:isAvailable?'#fff':'rgba(255,255,255,0.3)',marginTop:4}}>{isAvailable?`${s.price}€`:'Ocupada'}</div>
+                                      {!isAvailable && (
+                                        <button onClick={e=>{e.stopPropagation();toggleWaitlist(s);}} disabled={waitlistSaving===s.id}
+                                          style={{marginTop:5,padding:'3px 6px',borderRadius:6,border:'none',cursor:'pointer',fontSize:9,fontWeight:900,
+                                            background:inWaitlist?'rgba(245,158,11,0.2)':'rgba(255,255,255,0.08)',
+                                            color:inWaitlist?'#f59e0b':'rgba(255,255,255,0.5)'}}>
+                                          {waitlistSaving===s.id?'…':inWaitlist?'⏳ En espera':'+ Espera'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+                        </>
+                      )}
                     </>
                   )}
                 </div>

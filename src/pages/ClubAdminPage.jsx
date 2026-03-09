@@ -75,6 +75,10 @@ export default function ClubAdminPage() {
   const [showNewCourt, setShowNewCourt] = useState(false);
   const [courtForm, setCourtForm] = useState({ name:'', court_type:'outdoor' });
   const [playtomicUrl, setPlaytomicUrl] = useState('');
+  const [externalBookingUrl, setExternalBookingUrl] = useState('');
+  const [externalProvider, setExternalProvider] = useState('none');
+  const [bookingMode, setBookingMode] = useState('gorila');
+  const [savingExternalBooking, setSavingExternalBooking] = useState(false);
   const [waitlist, setWaitlist] = useState([]);
   const [pricing, setPricing] = useState([]);
   const [broadcasts, setBroadcasts] = useState([]);
@@ -143,6 +147,17 @@ export default function ClubAdminPage() {
 
     if (!adminData) { setLoading(false); return; }
     setClubAdmin(adminData);
+
+    // Cargar config external booking
+    try {
+      const {data: clubDb} = await supabase.from('clubs').select('external_booking_url,external_booking_provider,booking_mode').eq('id', adminData.club_id).maybeSingle();
+      if (clubDb) {
+        setExternalBookingUrl(clubDb.external_booking_url || '');
+        setExternalProvider(clubDb.external_booking_provider || 'none');
+        setBookingMode(clubDb.booking_mode || 'gorila');
+      }
+    } catch {}
+
     await Promise.all([
       loadCourts(adminData.club_id),
         loadSlots(data.club_id),
@@ -1150,19 +1165,75 @@ async function deleteSchedule(id) {
               </button>
             </div>
 
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🔵 Sincronización Playtomic</div>
-            <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:10, lineHeight:1.6}}>
-              Pega la URL pública de tu club en Playtomic y sincronizaremos automáticamente los horarios ocupados. No necesitas gestionar dos calendarios.
+            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🔗 Integración con plataformas externas</div>
+            <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:14, lineHeight:1.6}}>
+              Si ya usas Playtomic, MATCHi u otra plataforma, configúralo aquí. Tus usuarios verán el enlace directo y podrán reservar sin confusión.
             </div>
-            <input placeholder="https://playtomic.io/es/venues/tu-club" value={playtomicUrl}
-              onChange={e=>setPlaytomicUrl(e.target.value)} style={{...S.input, marginBottom:8}} />
-            <button onClick={()=>alert('Sincronización Playtomic próximamente disponible')} disabled={syncing}
-              style={{...S.btn('blue'), width:'100%'}}>
-              {syncing?'Sincronizando…':'🔄 Sincronizar con Playtomic'}
+
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.4)', marginBottom:6}}>PLATAFORMA</div>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:6}}>
+                {[
+                  {key:'none', label:'Solo Gorila', emoji:'🦍'},
+                  {key:'playtomic', label:'Playtomic', emoji:'🔵'},
+                  {key:'matchi', label:'MATCHi', emoji:'🟣'},
+                  {key:'other', label:'Otra web', emoji:'🌐'},
+                ].map(p=>(
+                  <div key={p.key} onClick={()=>setExternalProvider(p.key)}
+                    style={{padding:'10px 6px', borderRadius:10, cursor:'pointer', textAlign:'center',
+                      background:externalProvider===p.key?'rgba(116,184,0,0.15)':'rgba(255,255,255,0.04)',
+                      border:externalProvider===p.key?'1px solid #74B800':'1px solid rgba(255,255,255,0.08)'}}>
+                    <div style={{fontSize:18, marginBottom:4}}>{p.emoji}</div>
+                    <div style={{fontSize:10, fontWeight:900, color:externalProvider===p.key?'#74B800':'rgba(255,255,255,0.5)'}}>{p.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {externalProvider !== 'none' && (
+              <>
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.4)', marginBottom:6}}>URL DE TU CLUB</div>
+                  <input placeholder={externalProvider==='playtomic'?'https://playtomic.io/es/venues/tu-club':externalProvider==='matchi'?'https://matchi.com/facilities/tu-club':'https://tu-web.com/reservar'}
+                    value={externalBookingUrl} onChange={e=>setExternalBookingUrl(e.target.value)} style={{...S.input}} />
+                </div>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.4)', marginBottom:6}}>MODO DE RESERVA</div>
+                  <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6}}>
+                    {[
+                      {key:'gorila', label:'Solo Gorila', desc:'Reservas solo aquí'},
+                      {key:'external', label:'Solo externa', desc:'Redirigir a su web'},
+                      {key:'both', label:'Ambas', desc:'El usuario elige'},
+                    ].map(m=>(
+                      <div key={m.key} onClick={()=>setBookingMode(m.key)}
+                        style={{padding:'10px 8px', borderRadius:10, cursor:'pointer', textAlign:'center',
+                          background:bookingMode===m.key?'rgba(116,184,0,0.15)':'rgba(255,255,255,0.04)',
+                          border:bookingMode===m.key?'1px solid #74B800':'1px solid rgba(255,255,255,0.08)'}}>
+                        <div style={{fontSize:12, fontWeight:900, color:bookingMode===m.key?'#74B800':'#fff'}}>{m.label}</div>
+                        <div style={{fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:2}}>{m.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <button onClick={async()=>{
+              setSavingExternalBooking(true);
+              try {
+                const {error} = await supabase.from('clubs').update({
+                  external_booking_url: externalProvider==='none'?null:externalBookingUrl||null,
+                  external_booking_provider: externalProvider,
+                  booking_mode: externalProvider==='none'?'gorila':bookingMode,
+                }).eq('id', clubAdmin.club_id);
+                if (error) throw error;
+                alert('✅ Configuración guardada');
+              } catch(e) { alert(e.message); }
+              finally { setSavingExternalBooking(false); }
+            }} disabled={savingExternalBooking}
+              style={{...S.btn('green'), width:'100%'}}>
+              {savingExternalBooking?'Guardando…':'💾 Guardar configuración'}
             </button>
-            <div style={{fontSize:10, color:'rgba(255,255,255,0.2)', marginTop:6, textAlign:'center'}}>
-              Los slots de Playtomic aparecerán en azul en el calendario
-            </div>
           </div>
 
           <div style={S.card}>
