@@ -5,6 +5,7 @@ import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import PlayerStats from "../components/PlayerStats";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ToastProvider";
+import XPBar from "../components/XPBar";
 
 function initials(name = "") {
   const parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
@@ -64,7 +65,9 @@ export default function ProfilePage({ session: sessionProp }) {
     handedness: "right", birthdate: "", avatar_url: "", sos_enabled: false, sos_radius_km: 50, notify_morning: false, notify_afternoon: false, followed_clubs: [],
   });
 
-  const [stats, setStats] = useState({ matches_played: 0, red_cards: 0, avg_rating: 0, rating_count: 0 });
+  const [stats, setStats] = useState({ matches_played: 0, red_cards: 0, avg_rating: 0, rating_count: 0, pulls_played: 0, trainings_played: 0, challenges_played: 0, current_streak: 0 });
+  const [activityHistory, setActivityHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [ratings, setRatings] = useState([]);
 
   const [favLoading, setFavLoading] = useState(false);
@@ -104,6 +107,47 @@ export default function ProfilePage({ session: sessionProp }) {
       const { data: created } = await supabase.from('matches')
         .select('id', { count: 'exact' }).eq('created_by_user', userId);
 
+      // Pulls jugados
+      const { data: pullsData } = await supabase.from('pull_joiners')
+        .select('id').eq('user_id', userId).eq('status', 'approved');
+
+      // Entrenamientos jugados
+      const { data: trainingsData } = await supabase.from('training_joiners')
+        .select('id').eq('user_id', userId).eq('status', 'approved');
+
+      // Retos jugados
+      const { data: challengesData } = await supabase.from('challenges')
+        .select('id').eq('status', 'completed')
+        .or(`challenger_1.eq.${userId},challenger_2.eq.${userId},challenged_1.eq.${userId},challenged_2.eq.${userId}`);
+
+      // Historial reciente (partidos + pulls + entrenamientos)
+      setHistoryLoading(true);
+      const [matchHistory, pullHistory, trainingHistory] = await Promise.all([
+        supabase.from('match_join_requests').select('match_id, created_at, matches(club_name, start_at, level)').eq('user_id', userId).eq('status', 'approved').order('created_at', { ascending: false }).limit(10),
+        supabase.from('pull_joiners').select('pull_id, created_at, pulls(title, start_at, level)').eq('user_id', userId).eq('status', 'approved').order('created_at', { ascending: false }).limit(10),
+        supabase.from('training_joiners').select('training_id, created_at, trainings(title, start_at, level)').eq('user_id', userId).eq('status', 'approved').order('created_at', { ascending: false }).limit(10),
+      ]);
+
+      const history = [
+        ...(matchHistory.data || []).map(r => ({ type: 'match', id: r.match_id, date: r.matches?.start_at || r.created_at, label: r.matches?.club_name || 'Partido', level: r.matches?.level })),
+        ...(pullHistory.data || []).map(r => ({ type: 'pull', id: r.pull_id, date: r.pulls?.start_at || r.created_at, label: r.pulls?.title || 'Pull', level: r.pulls?.level })),
+        ...(trainingHistory.data || []).map(r => ({ type: 'training', id: r.training_id, date: r.trainings?.start_at || r.created_at, label: r.trainings?.title || 'Entrenamiento', level: r.trainings?.level })),
+      ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 15);
+
+      setActivityHistory(history);
+      setHistoryLoading(false);
+
+      // Racha: días consecutivos con actividad
+      const allDates = history.map(h => new Date(h.date).toDateString());
+      const uniqueDates = [...new Set(allDates)].map(d => new Date(d)).sort((a,b) => b-a);
+      let streak = 0;
+      const today = new Date(); today.setHours(0,0,0,0);
+      for (let i = 0; i < uniqueDates.length; i++) {
+        const d = new Date(uniqueDates[i]); d.setHours(0,0,0,0);
+        const expected = new Date(today); expected.setDate(today.getDate() - i);
+        if (d.getTime() === expected.getTime()) streak++; else break;
+      }
+
       setStats(prev => ({
         ...prev,
         clubs_count: uniqueClubs.size,
@@ -111,6 +155,10 @@ export default function ProfilePage({ session: sessionProp }) {
         same_club_bookings: maxSameClub,
         created_count: (created || []).length,
         sos_count: 0,
+        pulls_played: (pullsData || []).length,
+        trainings_played: (trainingsData || []).length,
+        challenges_played: (challengesData || []).length,
+        current_streak: streak,
       }));
     } catch (e) { console.error(e); }
   }
@@ -298,14 +346,31 @@ export default function ProfilePage({ session: sessionProp }) {
       <div className="pageWrap">
         <div className="container" style={{ padding: "0 16px", maxWidth: 680, margin: "0 auto" }}>
 
-          <div style={{ padding: "14px 0 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🦍 Mi Perfil</h1>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{session?.user?.email}</div>
+          <div style={{ padding: "14px 0 10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div>
+                <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff" }}>🦍 Mi Perfil</h1>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>{session?.user?.email}</div>
+              </div>
+              <button className="pfBtn pfBtnGhost" onClick={() => statsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                📊 Stats
+              </button>
             </div>
-            <button className="pfBtn pfBtnGhost" onClick={() => statsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-              📊 Mis stats
-            </button>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+              {[
+                { emoji: "🎾", label: "Partidos", path: "/partidos" },
+                { emoji: "🤝", label: "Pulls", path: "/pulls" },
+                { emoji: "🏋️", label: "Entrenos", path: "/entrenamientos" },
+                { emoji: "⚔️", label: "Retos", path: "/retos" },
+                { emoji: "🏆", label: "Ranking", path: "/leaderboard" },
+              ].map(b => (
+                <button key={b.path} onClick={() => navigate(b.path)}
+                  style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 800, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 58 }}>
+                  <span style={{ fontSize: 18 }}>{b.emoji}</span>
+                  <span style={{ fontSize: 10 }}>{b.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="pfSection">
@@ -485,23 +550,54 @@ export default function ProfilePage({ session: sessionProp }) {
 
           <div ref={statsRef} className="pfSection">
             <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📊 Mis Stats Gorila</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 16 }}>
+
+            {/* XP Bar */}
+            <div style={{ marginBottom: 16 }}>
+              <XPBar userId={session?.user?.id} />
+            </div>
+
+            {/* Racha */}
+            {stats.current_streak > 0 && (
+              <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 12, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 24 }}>🔥</span>
+                <div>
+                  <div style={{ fontWeight: 900, color: "#f59e0b", fontSize: 14 }}>{stats.current_streak} día{stats.current_streak > 1 ? "s" : ""} de racha</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>¡Sigue jugando para mantenerla!</div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 8 }}>
               <div className="statBox">
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#74B800" }}>{stats.matches_played}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>Partidos</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.matches_played}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🎾 Partidos</div>
               </div>
               <div className="statBox">
-                <div style={{ fontSize: 22, fontWeight: 900, color: stats.avg_rating >= 4 ? "#74B800" : "#fff" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.pulls_played || 0}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🤝 Pulls</div>
+              </div>
+              <div className="statBox">
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.trainings_played || 0}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🏋️ Entrenos</div>
+              </div>
+              <div className="statBox">
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.challenges_played || 0}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>⚔️ Retos</div>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
+              <div className="statBox">
+                <div style={{ fontSize: 20, fontWeight: 900, color: stats.avg_rating >= 4 ? "#74B800" : "#fff" }}>
                   {stats.rating_count > 0 ? stats.avg_rating.toFixed(1) : "—"}
                 </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>Valoración</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>⭐ Valoración</div>
               </div>
               <div className="statBox">
-                <div style={{ fontSize: 22, fontWeight: 900, color: "rgba(255,255,255,0.6)" }}>{stats.rating_count}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>Reseñas</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "rgba(255,255,255,0.6)" }}>{stats.rating_count}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>💬 Reseñas</div>
               </div>
               <div className="statBox" style={{ borderColor: stats.red_cards > 0 ? "rgba(220,38,38,0.3)" : "rgba(255,255,255,0.07)" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: stats.red_cards > 0 ? "#ff6b6b" : "#74B800" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: stats.red_cards > 0 ? "#ff6b6b" : "#74B800" }}>
                   {stats.red_cards > 0 ? "🟥".repeat(Math.min(stats.red_cards, 3)) : "✅"}
                 </div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>T. Rojas</div>
@@ -554,6 +650,40 @@ export default function ProfilePage({ session: sessionProp }) {
               </div>
             </div>
           )}
+
+          {/* HISTORIAL DE ACTIVIDAD */}
+          <div className="pfSection">
+            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>📅 Mi actividad reciente</div>
+            {historyLoading ? (
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Cargando…</div>
+            ) : activityHistory.length === 0 ? (
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>Aún no tienes actividad registrada</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {activityHistory.map((a, i) => {
+                  const typeConfig = {
+                    match: { emoji: "🎾", color: "#74B800", label: "Partido" },
+                    pull: { emoji: "🤝", color: "#8b5cf6", label: "Pull" },
+                    training: { emoji: "🏋️", color: "#3b82f6", label: "Entrenamiento" },
+                  }[a.type] || { emoji: "🎾", color: "#74B800", label: "" };
+                  const dateStr = a.date ? new Date(a.date).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{typeConfig.emoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.label}</div>
+                        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>
+                          <span style={{ color: typeConfig.color, fontWeight: 700 }}>{typeConfig.label}</span>
+                          {a.level && <span> · {a.level}</span>}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>{dateStr}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <div ref={favRef} className="pfSection">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
