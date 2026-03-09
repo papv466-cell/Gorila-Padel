@@ -769,6 +769,12 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   color:filterUltimaHora?"#74B800":"#fff"}}>
                 ⚡ Última Hora — partidos en menos de 2h
               </button>
+              <button onClick={()=>setFilterSoloLibres(f=>!f)}
+                style={{padding:"6px 10px",borderRadius:8,border:filterSoloLibres?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
+                  background:filterSoloLibres?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",
+                  color:filterSoloLibres?"#74B800":"#fff"}}>
+                🟢 Solo con plazas libres
+              </button>
               <div>
                 <button onClick={async () => {
                   if (filterNearMe) { setFilterNearMe(false); return; }
