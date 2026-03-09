@@ -1,7 +1,7 @@
 // src/components/MatchPaymentModal.jsx
 // Modal completo: mood → pago Stripe → confirmación
 // Todos los partidos pagan (mínimo 0,50€ comisión de servicio)
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { supabase } from "../services/supabaseClient";
@@ -126,6 +126,12 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   const [paymentData, setPaymentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Lanzar autorización automáticamente al abrir
+  useEffect(() => {
+    if (isCreatorAuth) handleCreatorAuth();
+    else { setLoading(false); setStep("mood"); }
+  }, []);
 
   const isPrivateCourt = String(match.club_id || "").startsWith("private:");
   const pricePerPlayer = parseFloat(match.price_per_player || 0);
