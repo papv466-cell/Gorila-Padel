@@ -311,7 +311,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
               </div>
             )}
 
-            {clientSecret && stripePromise && !loading && paymentData?.matchData && (
+            {clientSecret && stripePromise && !loading && (
               <Elements
                 stripe={stripePromise}
                 options={{
@@ -331,9 +331,9 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                 }}
               >
                 <PayForm
-                  totalCents={paymentData.totalCents}
-                  pricePerPlayerCents={paymentData.pricePerPlayerCents}
-                  matchData={paymentData.matchData}
+                  totalCents={paymentData?.totalCents || paymentData?.amountCents || 0}
+                  pricePerPlayerCents={paymentData?.pricePerPlayerCents || 0}
+                  matchData={paymentData?.matchData || { isFree: false, isPrivateCourt: false, feeLabel: '', foundationName: null }}
                   onSuccess={handlePaySuccess}
                 />
               </Elements>
