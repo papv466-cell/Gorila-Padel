@@ -130,7 +130,6 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
 
   // Lanzar autorización automáticamente al abrir
   useEffect(() => {
-    console.log("🔍 Modal abierto, isCreatorAuth:", isCreatorAuth, "step inicial:", step);
     if (isCreatorAuth) handleCreatorAuth();
     else { setLoading(false); setStep("mood"); }
   }, []);
@@ -148,7 +147,6 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   try {
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     const token = currentSession?.access_token;
-    console.log("🔍 handleCreatorAuth token:", token ? "OK" : "MISSING", "matchId:", match.id);
     const res = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-authorization`,
       {
@@ -158,8 +156,6 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       }
     );
     const data = await res.json();
-    console.log("🔍 create-match-authorization response:", res.status, data);
-    console.log("🔍 stripePromise:", stripePromise, "VITE_KEY:", import.meta.env.VITE_STRIPE_PUBLIC_KEY);
     if (!res.ok || data.error) throw new Error(data.error || "Error al crear autorización");
     setClientSecret(data.clientSecret);
     setPaymentData(data);
@@ -188,7 +184,6 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         }
       );
       const data = await res.json();
-      console.log("🔍 create-match-payment response:", res.status, data);
       if (!res.ok || data.error) throw new Error(data.error || "Error al crear el pago");
       setClientSecret(data.clientSecret);
       setPaymentData(data);
