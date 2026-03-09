@@ -212,7 +212,7 @@ export default function HomePage({ session: sessionProp }) {
 
   /* ── LOGUEADO ── */
   return (
-    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
+    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh", overflowX: "hidden", maxWidth: "100vw" }}>
       <style>{`
         @keyframes ghIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .ghSection { animation: ghIn .4s ease both; }
@@ -226,6 +226,8 @@ export default function HomePage({ session: sessionProp }) {
         .ghGoriPost:hover { transform: scale(1.03); }
         .ghScrollRow { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; max-width: 100%; }
         .ghScrollRow::-webkit-scrollbar { display: none; }
+        .ghSection { max-width: 100%; overflow: hidden; }
+        .ghMatchCard { flex-shrink: 0; }
         .ghSection { max-width: 100%; overflow: hidden; }
         .ghMatchCard { flex-shrink: 0; }
         .ghScrollRow::-webkit-scrollbar { display: none; }
