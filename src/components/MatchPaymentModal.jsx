@@ -299,7 +299,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
               </div>
             )}
 
-            {clientSecret && stripePromise && !loading && (
+            {clientSecret && stripePromise && !loading && paymentData?.matchData && (
               <Elements
                 stripe={stripePromise}
                 options={{
