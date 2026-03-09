@@ -327,6 +327,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                       borderRadius: "10px",
                     },
                   },
+                  ...(clientSecret.includes('seti_') ? { mode: 'setup' } : {}),
                 }}
               >
                 <PayForm
