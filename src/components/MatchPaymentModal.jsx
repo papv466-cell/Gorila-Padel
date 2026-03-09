@@ -183,6 +183,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         }
       );
       const data = await res.json();
+      console.log("🔍 create-match-payment response:", res.status, data);
       if (!res.ok || data.error) throw new Error(data.error || "Error al crear el pago");
       setClientSecret(data.clientSecret);
       setPaymentData(data);
