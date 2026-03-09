@@ -91,7 +91,7 @@ function GorilaMovimientoBanner({ stats, onPress }) {
         )}
         {weekCount === 0 && (
           <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", textAlign: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "rgba(116,184,0,0.7)" }}>Sé el primero en crear un partido inclusivo esta semana 💪</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "rgba(116,184,0,0.7)", wordBreak: "break-word" }}>Sé el primero en crear un partido inclusivo esta semana 💪</span>
           </div>
         )}
       </div>
@@ -166,7 +166,7 @@ export default function HomePage({ session: sessionProp }) {
 
   /* ── NO LOGUEADO ── */
   if (!session && !loading) return (
-    <div className="page" style={{ background: "#0a0a0a", minHeight: "100vh", overflowX: "hidden" }}>
+    <div className="page" style={{ background: "#0a0a0a", minHeight: "100vh", overflowX: "hidden", width: "100%", maxWidth: "100vw" }}>
       <style>{`
         @keyframes ghHeroIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
         @keyframes ghPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
@@ -224,11 +224,14 @@ export default function HomePage({ session: sessionProp }) {
         .ghProductCard:hover { transform: translateY(-3px); }
         .ghGoriPost { transition: transform .15s; cursor: pointer; flex-shrink: 0; }
         .ghGoriPost:hover { transform: scale(1.03); }
-        .ghScrollRow { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .ghScrollRow { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; scrollbar-width: none; max-width: 100%; }
+        .ghScrollRow::-webkit-scrollbar { display: none; }
+        .ghSection { max-width: 100%; overflow: hidden; }
+        .ghMatchCard { flex-shrink: 0; }
         .ghScrollRow::-webkit-scrollbar { display: none; }
       `}</style>
 
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 14px 80px" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "0 14px 80px", overflowX: "hidden", width: "100%", boxSizing: "border-box" }}>
 
         {/* Saludo */}
         <div className="ghSection" style={{ padding: "16px 0 20px", animationDelay: "0s" }}>
@@ -267,7 +270,7 @@ export default function HomePage({ session: sessionProp }) {
         </div>
 
         {/* ── GORILA SIN LÍMITES ── */}
-        <div className="ghSection" style={{ animationDelay: ".08s" }}>
+        <div className="ghSection" style={{ animationDelay: ".08s", overflow: "hidden" }}>
           <GorilaMovimientoBanner
             stats={inclusiveStats}
             onPress={() => navigate("/inclusivos")}
@@ -276,7 +279,7 @@ export default function HomePage({ session: sessionProp }) {
 
         {/* Partidos próximos */}
         {matches.length > 0 && (
-          <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s" }}>
+          <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🏓 Partidos próximos</div>
               <Link to="/partidos" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todos →</Link>
@@ -317,7 +320,7 @@ export default function HomePage({ session: sessionProp }) {
 
         {/* Gorilandia feed */}
         {gorilandiaFeed.length > 0 && (
-          <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s" }}>
+          <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🎬 Gorilandia</div>
               <Link to="/gorilandia" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todo →</Link>
