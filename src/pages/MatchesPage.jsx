@@ -159,10 +159,10 @@ export default function MatchesPage({ session: sessionProp }) {
   const [geoLoading, setGeoLoading] = useState(false);
   const [jugarAhora, setJugarAhora] = useState(false);
   const [jugarAhoraData, setJugarAhoraData] = useState({ slots:[], matches:[], loading:false });
-  const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe||filterSoloLibres);
   const [filterSoloLibres, setFilterSoloLibres] = useState(false);
   const [matchWaitlist, setMatchWaitlist] = useState(new Set());
   const [unreadChats, setUnreadChats] = useState({});
+  const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe||filterSoloLibres);
 
   /* ─── Modals ─── */
   const [requestsOpenFor, setRequestsOpenFor] = useState(null);
