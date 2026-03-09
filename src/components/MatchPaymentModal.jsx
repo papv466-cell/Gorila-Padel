@@ -200,8 +200,8 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
     : "";
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 40000, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 0 env(safe-area-inset-bottom)", backdropFilter: "blur(4px)" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1a1a1a", borderRadius: "20px 20px 0 0", padding: "24px 20px 32px", border: "1px solid rgba(116,184,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 40000, display: "flex", alignItems: "flex-end", justifyContent: "center", backdropFilter: "blur(4px)" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1a1a1a", borderRadius: "20px 20px 0 0", padding: "24px 20px calc(32px + env(safe-area-inset-bottom))", border: "1px solid rgba(116,184,0,0.2)", maxHeight: "85vh", overflowY: "auto" }}>
 
         <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 999, margin: "0 auto 20px" }} />
 
