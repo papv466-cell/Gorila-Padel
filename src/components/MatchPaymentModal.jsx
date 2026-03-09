@@ -120,7 +120,8 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
 }
 
 // ── Modal principal ──────────────────────────────────────────────────────────
-export default function MatchPaymentModal({ match, session, onClose, onJoined, isCreatorAuth = false }) {  const [step, setStep] = useState(isCreatorAuth ? "auth" : "mood");
+export default function MatchPaymentModal({ match, session, onClose, onJoined, isCreatorAuth = false }) {
+  const [step, setStep] = useState(isCreatorAuth ? "paying" : "mood");
   const [mood, setMood] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
