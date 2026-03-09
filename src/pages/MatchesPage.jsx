@@ -159,7 +159,10 @@ export default function MatchesPage({ session: sessionProp }) {
   const [geoLoading, setGeoLoading] = useState(false);
   const [jugarAhora, setJugarAhora] = useState(false);
   const [jugarAhoraData, setJugarAhoraData] = useState({ slots:[], matches:[], loading:false });
-  const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe);
+  const hasFilters = !!(filterLevel||filterUltimaHora||filterClubSearch||filterNearMe||filterSoloLibres);
+  const [filterSoloLibres, setFilterSoloLibres] = useState(false);
+  const [matchWaitlist, setMatchWaitlist] = useState(new Set());
+  const [unreadChats, setUnreadChats] = useState({});
 
   /* ─── Modals ─── */
   const [requestsOpenFor, setRequestsOpenFor] = useState(null);
@@ -384,15 +387,14 @@ export default function MatchesPage({ session: sessionProp }) {
       const now = Date.now(), in2h = now + 2*60*60*1000;
       list = list.filter(m => { const t = safeParseDate(m.start_at)?.getTime(); return t && t >= now && t <= in2h; });
     }
-    if (filterNearMe && userLat && userLng) {
+    if (filterSoloLibres) {
       list = list.filter(m => {
-        const club = clubsSheet.find(c => String(c.name||"").toLowerCase() === String(m.club_name||"").toLowerCase());
-        if (!club?.lat || !club?.lng) return false;
-        return haversineKm(userLat, userLng, club.lat, club.lng) <= filterDistKm;
+        const occupied = 1 + (approvedCounts[m.id]||0);
+        return occupied < 4;
       });
     }
     return list;
-  }, [items, clubIdParam, selectedDay, filterLevel, filterClubSearch, filterClubObj, filterUltimaHora, filterNearMe, filterDistKm, userLat, userLng, clubsSheet]);
+  }, [items, clubIdParam, selectedDay, filterLevel, filterClubSearch, filterClubObj, filterUltimaHora, filterNearMe, filterDistKm, userLat, userLng, clubsSheet, filterSoloLibres, approvedCounts]);
 
   const myList = useMemo(() => {
     if (!session) return [];
@@ -910,6 +912,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     <span className="gpInfoChip" style={{marginLeft:"auto",color:left>0?"rgba(116,184,0,0.9)":"rgba(255,100,0,0.9)"}}>
                       {left>0 ? `${left} plaza${left>1?"s":""} libre${left>1?"s":""}` : "Completo"}
                     </span>
+                    <button onClick={e=>{e.stopPropagation();if(navigator.share){navigator.share({title:`Partido en ${m.club_name}`,text:`¡Únete a mi partido en ${m.club_name}!`,url:window.location.href});}else{navigator.clipboard.writeText(window.location.href);toast.success("Enlace copiado");}}} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,padding:"2px 4px",color:"rgba(255,255,255,0.5)"}} title="Compartir">📤</button>
                   </div>
                   <div className="mActions">
                     {!session && <button className="mBtn primary" onClick={goLogin}>PARTICIPAR</button>}
@@ -972,7 +975,27 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     {session&&(isCreator||myStatus2==="approved"||iAmInPlayers) && (
                       <button className="mBtn icon" onClick={()=>{closeAllModals();setCedeOpenFor(m.id);setCedeQuery("");setCedeResults([]);}} title="Ceder plaza">🤝</button>
                     )}
-                    {session&&iAmInside && <button className="mBtn icon" onClick={()=>openChat(m.id)} title="Chat">💬</button>}
+                    {session&&iAmInside && (
+                      <button className="mBtn icon" onClick={()=>openChat(m.id)} title="Chat" style={{position:"relative"}}>
+                        💬{unreadChats[m.id]>0&&<span style={{position:"absolute",top:-4,right:-4,background:"#ef4444",color:"#fff",borderRadius:999,fontSize:9,fontWeight:900,minWidth:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 2px"}}>{unreadChats[m.id]}</span>}
+                      </button>
+                    )}
+                    {session&&!isCreator&&!myStatus2&&left===0 && (
+                      <button className="mBtn" onClick={async()=>{
+                        const mid=String(m.id);
+                        if(matchWaitlist.has(mid)){
+                          await supabase.from("activity_waitlist").delete().eq("user_id",session.user.id).eq("activity_type","match").eq("activity_id",mid);
+                          setMatchWaitlist(prev=>{const n=new Set(prev);n.delete(mid);return n;});
+                          toast.success("Saliste de la lista de espera");
+                        } else {
+                          await supabase.from("activity_waitlist").insert({user_id:session.user.id,activity_type:"match",activity_id:mid});
+                          setMatchWaitlist(prev=>new Set([...prev,mid]));
+                          toast.success("⏳ Apuntado a lista de espera");
+                        }
+                      }} style={{background:matchWaitlist.has(String(m.id))?"rgba(245,158,11,0.15)":"rgba(255,165,0,0.1)",color:"#FFA500",border:"1px solid rgba(255,165,0,0.3)",fontSize:11,padding:"6px 10px",borderRadius:8,cursor:"pointer",fontWeight:900}}>
+                        {matchWaitlist.has(String(m.id)) ? "⏳ En espera" : "⏳ Lista espera"}
+                      </button>
+                    )}
                     {session&&isCreator && (
                       <button className="mBtn icon" onClick={()=>{closeAllModals();setInviteOpenFor(m.id);setInviteQuery("");setInviteResults([]);setInviteSelected([]);}} title="Invitar">📣</button>
                     )}
