@@ -130,6 +130,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
 
   // Lanzar autorización automáticamente al abrir
   useEffect(() => {
+    console.log("🔍 Modal abierto, isCreatorAuth:", isCreatorAuth, "step inicial:", step);
     if (isCreatorAuth) handleCreatorAuth();
     else { setLoading(false); setStep("mood"); }
   }, []);
