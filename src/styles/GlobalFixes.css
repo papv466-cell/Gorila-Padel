@@ -1428,3 +1428,53 @@ html {
   }
 }
   
+/* ========== FIX MÓVIL UNIVERSAL 375px ========== */
+
+/* Evitar zoom en inputs iOS (font-size mínimo 16px) */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Todos los contenedores no se salen del viewport */
+.page, [class*="Page"], [class*="page"] {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Padding horizontal consistente en páginas */
+@media (max-width: 430px) {
+  /* Inputs no se salen */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="number"],
+  input[type="tel"],
+  textarea,
+  select {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+  }
+
+  /* Botones no se salen */
+  button {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Imágenes no se salen */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Grids no se salen */
+  [style*="display:grid"],
+  [style*="display: grid"] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+}
