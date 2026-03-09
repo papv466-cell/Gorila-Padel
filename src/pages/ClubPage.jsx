@@ -67,6 +67,10 @@ export default function ClubPage({ session: sessionProp }) {
   const [selectedCourt, setSelectedCourt] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [bookingSlot, setBookingSlot] = useState(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitPlayers, setSplitPlayers] = useState([]); // [{handle, user_id}]
+  const [splitSearch, setSplitSearch] = useState('');
+  const [splitSearchResults, setSplitSearchResults] = useState([]);
   const [bookingSaving, setBookingSaving] = useState(false);
   const [myRating, setMyRating] = useState(null);
   const [ratingValue, setRatingValue] = useState(5);
@@ -358,6 +362,15 @@ export default function ClubPage({ session: sessionProp }) {
       toast.success('🎟️ Bono activado correctamente');
     } catch(e) { toast.error(e.message); }
     finally { setBuyingBono(null); }
+  }
+
+  async function searchSplitPlayers(q) {
+    if (!q || q.length < 2) { setSplitSearchResults([]); return; }
+    const {data} = await supabase.from('profiles').select('id,name,handle,avatar_url')
+      .or(`handle.ilike.%${q}%,name.ilike.%${q}%`)
+      .neq('id', session?.user?.id)
+      .limit(5);
+    setSplitSearchResults(data||[]);
   }
 
   async function bookSlot(slot) {
@@ -985,25 +998,94 @@ export default function ClubPage({ session: sessionProp }) {
                         </div>
                       );
                     })()}
+                    {/* SPLIT DE PAGO */}
+                    {(()=>{
+                      const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
+                      if (bonoActivo || !bookingSlot.price) return null;
+                      const totalPlayers = 1 + splitPlayers.length;
+                      const pricePer = (bookingSlot.price / 4).toFixed(2);
+                      return (
+                        <div style={{marginBottom:16}}>
+                          <div onClick={()=>{setSplitEnabled(!splitEnabled);setSplitPlayers([]);setSplitSearch('');setSplitSearchResults([]);}}
+                            style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderRadius:10,background:splitEnabled?'rgba(116,184,0,0.1)':'rgba(255,255,255,0.04)',border:splitEnabled?'1px solid rgba(116,184,0,0.3)':'1px solid rgba(255,255,255,0.08)',cursor:'pointer',marginBottom:splitEnabled?10:0}}>
+                            <div>
+                              <div style={{fontSize:13,fontWeight:900,color:splitEnabled?'#74B800':'#fff'}}>💸 Dividir entre 4</div>
+                              <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>Cada jugador paga {pricePer}€</div>
+                            </div>
+                            <div style={{width:36,height:20,borderRadius:10,background:splitEnabled?'#74B800':'rgba(255,255,255,0.15)',position:'relative',transition:'all .2s'}}>
+                              <div style={{position:'absolute',top:2,left:splitEnabled?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'all .2s'}}/>
+                            </div>
+                          </div>
+                          {splitEnabled && (
+                            <div>
+                              <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',marginBottom:6}}>INVITA A TUS COMPAÑEROS ({splitPlayers.length}/3)</div>
+                              {splitPlayers.map(p=>(
+                                <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.2)',marginBottom:6}}>
+                                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                                    {p.avatar_url ? <img src={p.avatar_url} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:24,height:24,borderRadius:'50%',background:'rgba(116,184,0,0.2)',display:'grid',placeItems:'center',fontSize:10}}>🦍</div>}
+                                    <div style={{fontSize:12,fontWeight:800,color:'#fff'}}>@{p.handle||p.name}</div>
+                                  </div>
+                                  <button onClick={()=>setSplitPlayers(prev=>prev.filter(x=>x.id!==p.id))}
+                                    style={{padding:'3px 8px',borderRadius:6,background:'rgba(239,68,68,0.15)',border:'none',color:'#ff6b6b',fontSize:11,fontWeight:900,cursor:'pointer'}}>✕</button>
+                                </div>
+                              ))}
+                              {splitPlayers.length < 3 && (
+                                <div style={{position:'relative'}}>
+                                  <input placeholder="Buscar jugador por nombre o @handle…"
+                                    value={splitSearch}
+                                    onChange={e=>{setSplitSearch(e.target.value);searchSplitPlayers(e.target.value);}}
+                                    style={{width:'100%',padding:'8px 12px',borderRadius:8,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',boxSizing:'border-box'}}/>
+                                  {splitSearchResults.length > 0 && (
+                                    <div style={{position:'absolute',top:'100%',left:0,right:0,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',borderRadius:8,zIndex:100,marginTop:4}}>
+                                      {splitSearchResults.filter(r=>!splitPlayers.find(p=>p.id===r.id)).map(r=>(
+                                        <div key={r.id} onClick={()=>{setSplitPlayers(prev=>[...prev,r]);setSplitSearch('');setSplitSearchResults([]);}}
+                                          style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+                                          {r.avatar_url ? <img src={r.avatar_url} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:28,height:28,borderRadius:'50%',background:'rgba(116,184,0,0.2)',display:'grid',placeItems:'center',fontSize:12}}>🦍</div>}
+                                          <div>
+                                            <div style={{fontSize:12,fontWeight:800,color:'#fff'}}>{r.name}</div>
+                                            <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>@{r.handle}</div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              <div style={{marginTop:10,padding:'8px 12px',borderRadius:8,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)'}}>
+                                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:4}}>
+                                  <span>Total pista</span><span>{bookingSlot.price}€</span>
+                                </div>
+                                <div style={{display:'flex',justifyContent:'space-between',fontSize:14,fontWeight:900,color:'#74B800'}}>
+                                  <span>Tú pagas</span><span>{(bookingSlot.price/4).toFixed(2)}€</span>
+                                </div>
+                                {splitPlayers.length > 0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:4}}>Los demás recibirán un link de pago</div>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginBottom:16,textAlign:'center'}}>
                       La reserva quedará pendiente hasta que el club la confirme
                     </div>
                     <div style={{display:'flex',gap:8}}>
                       {(()=>{
                         const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
+                        const priceToPay = splitEnabled ? (bookingSlot.price/4).toFixed(2) : bookingSlot.price;
                         return bonoActivo ? (
                           <button onClick={()=>bookSlot(bookingSlot)} disabled={bookingSaving}
                             style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
                             {bookingSaving?'Reservando…':'✅ Confirmar con bono'}
                           </button>
                         ) : (
-                          <button onClick={()=>navigate(`/reserva/pago?slotId=${bookingSlot.id}`)}
+                          <button onClick={()=>navigate(`/reserva/pago?slotId=${bookingSlot.id}${splitEnabled?`&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`:''}`)}
                             style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
-                            💳 Pagar {bookingSlot.price}€
+                            💳 Pagar {priceToPay}€{splitEnabled?' (tu parte)':''}
                           </button>
                         );
                       })()}
-                      <button onClick={()=>setBookingSlot(null)}
+                      <button onClick={()=>{setBookingSlot(null);setSplitEnabled(false);setSplitPlayers([]);}}
                         style={{padding:'12px 16px',borderRadius:12,background:'rgba(255,255,255,0.08)',border:'none',color:'#fff',fontWeight:900,cursor:'pointer'}}>
                         Cancelar
                       </button>
