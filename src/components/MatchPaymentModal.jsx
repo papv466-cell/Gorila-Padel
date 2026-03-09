@@ -159,6 +159,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
     );
     const data = await res.json();
     console.log("🔍 create-match-authorization response:", res.status, data);
+    console.log("🔍 stripePromise:", stripePromise, "VITE_KEY:", import.meta.env.VITE_STRIPE_PUBLIC_KEY);
     if (!res.ok || data.error) throw new Error(data.error || "Error al crear autorización");
     setClientSecret(data.clientSecret);
     setPaymentData(data);
