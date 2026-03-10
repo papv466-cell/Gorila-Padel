@@ -1,7 +1,6 @@
 // src/components/NotificationBell.jsx
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../services/supabaseClient";
 import {
   getUserNotifications,
   getUnreadCount,
@@ -9,220 +8,188 @@ import {
   markAllAsRead,
   subscribeToNotifications,
 } from "../services/notifications";
-import { playGorila, unlockGorilaAudio } from "../services/gorilaSound";
 import "./NotificationBell.css";
-
-const GORILA_SOUND = `${window.location.origin}/sounds/gorila.mp3`;
 
 async function sonarGorila() {
   try {
-    const audio = new Audio(GORILA_SOUND);
+    const audio = new Audio("/sounds/gorila.mp3");
     audio.volume = 1.0;
     await audio.play();
-  } catch {
-    // fallback a Web Audio API
-    try {
-      await unlockGorilaAudio();
-      await playGorila(1);
-    } catch {}
-  }
+  } catch {}
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ session }) {
   const navigate = useNavigate();
-  const [session, setSession] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const panelRef = useRef(null);
+  const userId = session?.user?.id;
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data?.session ?? null);
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null));
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe?.();
-    };
-  }, []);
-
-  // Cargar contador de no leídas y suscribirse a notificaciones
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
+    if (!userId) return;
     loadUnreadCount();
-
-    const unsub = subscribeToNotifications(session.user.id, (newNotification) => {
-      setUnreadCount((prev) => prev + 1);
-
-      // Mostrar notificación nativa del navegador
-      if (Notification.permission === "granted") {
-        new Notification(newNotification.title, {
-          body: newNotification.body,
+    const unsub = subscribeToNotifications(userId, (newNotif) => {
+      setUnreadCount(prev => prev + 1);
+      setNotifications(prev => [newNotif, ...prev]);
+      if (document.hidden && Notification.permission === "granted") {
+        new Notification(newNotif.title, {
+          body: newNotif.body,
           icon: "/icon-192.png",
           badge: "/icon-192.png",
-          tag: newNotification.id,
+          tag: newNotif.id,
         });
       }
     });
-
     return () => unsub?.();
-  }, [session?.user?.id]);
+  }, [userId]);
 
-  // Cerrar panel al hacer click fuera
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (panelRef.current && !panelRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
+    const handler = (e) => {
+      if (e.data?.type === "NOTIFICATION_CLICK" && e.data.url) navigate(e.data.url);
+    };
+    navigator.serviceWorker?.addEventListener("message", handler);
+    return () => navigator.serviceWorker?.removeEventListener("message", handler);
+  }, [navigate]);
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
-    }
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [isOpen]);
 
   async function loadUnreadCount() {
-    if (!session?.user?.id) return;
-    const count = await getUnreadCount(session.user.id);
+    if (!userId) return;
+    const count = await getUnreadCount(userId);
     setUnreadCount(count);
   }
 
   async function loadNotifications() {
-    if (!session?.user?.id) return;
+    if (!userId) return;
     setLoading(true);
-    const data = await getUserNotifications({ userId: session.user.id, limit: 20 });
+    const data = await getUserNotifications({ userId, limit: 30 });
     setNotifications(data);
     setLoading(false);
   }
 
   function togglePanel() {
-    if (!isOpen) {
-      loadNotifications();
-    }
-    setIsOpen(!isOpen);
+    if (!isOpen) loadNotifications();
+    setIsOpen(v => !v);
   }
 
-  async function handleNotificationClick(notification) {
-    // 🦍 Sonar aquí — hay gesto del usuario garantizado
+  async function handleNotificationClick(notif) {
     sonarGorila();
-
-    await markAsClicked(notification.id);
-
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-    );
+    await markAsClicked(notif.id);
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
     setIsOpen(false);
-
-    const { type, data } = notification;
-
-    // 1️⃣ Si la notificación trae URL directa → úsala
-    if (data?.url) {
-      navigate(data.url);
-      return;
-    }
-
-    // 2️⃣ Fallback para notificaciones antiguas sin url en data
-    if (type?.includes("request")) {
-      navigate(data?.matchId ? `/partidos?openRequests=${data.matchId}` : "/partidos");
-    } else if (type?.startsWith("match_") || type === "sos_match" || type === "new_match") {
-      navigate(data?.matchId ? `/partidos?openChat=${data.matchId}` : "/partidos");
-    } else if (type?.startsWith("social_")) {
-      navigate("/gorilandia");
-    } else if (type?.startsWith("store_")) {
-      navigate("/tienda");
-    } else {
-      navigate("/");
-    }
+    const { type, data } = notif;
+    if (data?.url) { navigate(data.url); return; }
+    if (type?.includes("request")) navigate(data?.matchId ? `/partidos?openRequests=${data.matchId}` : "/partidos");
+    else if (type?.startsWith("match_") || type === "sos_match" || type === "new_match") navigate(data?.matchId ? `/partidos?openChat=${data.matchId}` : "/partidos");
+    else if (type?.startsWith("social_")) navigate("/gorilandia");
+    else if (type?.startsWith("store_")) navigate("/tienda");
+    else if (type?.startsWith("booking_")) navigate("/perfil");
+    else navigate("/");
   }
 
   async function handleMarkAllAsRead() {
-    if (!session?.user?.id) return;
-    await markAllAsRead(session.user.id);
+    if (!userId) return;
+    await markAllAsRead(userId);
     setUnreadCount(0);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   }
 
-  function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Ahora";
-    if (diffMins < 60) return `Hace ${diffMins} min`;
-    if (diffHours < 24) return `Hace ${diffHours}h`;
-    if (diffDays < 7) return `Hace ${diffDays}d`;
-    return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  function formatTime(ts) {
+    const d = new Date(ts), now = new Date();
+    const mins = Math.floor((now - d) / 60000);
+    if (mins < 1) return "Ahora";
+    if (mins < 60) return `${mins}m`;
+    if (mins < 1440) return `${Math.floor(mins/60)}h`;
+    if (mins < 10080) return `${Math.floor(mins/1440)}d`;
+    return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
   }
 
-  function getNotificationIcon(type) {
+  function getIcon(type) {
+    if (!type) return "🔔";
+    if (type.includes("request")) return "🙋";
     if (type.startsWith("match_")) return "🎾";
-    if (type.startsWith("class_")) return "🏫";
+    if (type.startsWith("class_")) return "🎓";
     if (type.startsWith("social_")) return "🦍";
     if (type.startsWith("store_")) return "🛒";
     if (type.startsWith("inclusive_")) return "♿";
-    if (type.startsWith("gamification_")) return "🏆";
-    if (type.startsWith("location_")) return "📍";
-    if (type.startsWith("engagement_")) return "💚";
+    if (type.startsWith("gamification_") || type.includes("xp") || type.includes("level")) return "🏆";
+    if (type.startsWith("booking_")) return "🏟️";
+    if (type.includes("challenge") || type.includes("reto")) return "⚔️";
     return "🔔";
   }
 
-  if (!session) return null;
+  if (!userId) return null;
+
+  const unread = notifications.filter(n => !n.read);
+  const read = notifications.filter(n => n.read);
+  const visible = showAll ? notifications : unread;
 
   return (
     <div className="notificationBell" ref={panelRef}>
-      {/* Botón campana */}
       <button className="notificationBellBtn" onClick={togglePanel} aria-label="Notificaciones">
         🔔
         {unreadCount > 0 && (
-          <span className="notificationBadge">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
+          <span className="notificationBadge">{unreadCount > 99 ? "99+" : unreadCount}</span>
         )}
       </button>
 
-      {/* Panel de notificaciones */}
       {isOpen && (
         <div className="notificationPanel">
-          {/* Header */}
           <div className="notificationPanelHeader">
-            <h3>Notificaciones</h3>
+            <div style={{display:"flex", alignItems:"center", gap:8}}>
+              <h3 style={{margin:0}}>Notificaciones</h3>
+              {unread.length > 0 && (
+                <span style={{fontSize:11, fontWeight:900, padding:"2px 8px", borderRadius:10, background:"rgba(116,184,0,0.2)", color:"#74B800"}}>
+                  {unread.length} nuevas
+                </span>
+              )}
+            </div>
             {unreadCount > 0 && (
-              <button className="notificationMarkAllBtn" onClick={handleMarkAllAsRead}>
-                Marcar todo leído
-              </button>
+              <button className="notificationMarkAllBtn" onClick={handleMarkAllAsRead}>✓ Todo leído</button>
             )}
           </div>
 
-          {/* Lista */}
+          {read.length > 0 && (
+            <div style={{display:"flex", borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+              {[["nuevas", false], ["historial", true]].map(([label, val]) => (
+                <button key={label} onClick={() => setShowAll(val)}
+                  style={{flex:1, padding:"8px", border:"none", background:"transparent", cursor:"pointer", fontSize:12, fontWeight:800,
+                    color: showAll === val ? "#74B800" : "rgba(255,255,255,0.4)",
+                    borderBottom: showAll === val ? "2px solid #74B800" : "2px solid transparent"}}>
+                  {label === "nuevas" ? `🔴 Nuevas (${unread.length})` : `📋 Historial (${read.length})`}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="notificationList">
             {loading ? (
-              <div className="notificationEmpty">Cargando...</div>
-            ) : notifications.filter(n => !n.read).length === 0 ? (
+              <div className="notificationEmpty"><div style={{fontSize:32, marginBottom:8}}>⏳</div>Cargando...</div>
+            ) : visible.length === 0 ? (
               <div className="notificationEmpty">
-                <div style={{ fontSize: 48, marginBottom: 8 }}>🔔</div>
-                <div style={{ fontWeight: 700 }}>Sin notificaciones</div>
-                <div style={{ opacity: 0.7, fontSize: 13, marginTop: 4 }}>
-                  Te avisaremos cuando algo pase
+                <div style={{fontSize:48, marginBottom:8}}>🔔</div>
+                <div style={{fontWeight:700}}>{showAll ? "Sin historial" : "¡Todo al día!"}</div>
+                <div style={{opacity:0.5, fontSize:12, marginTop:4}}>
+                  {showAll ? "No hay notificaciones anteriores" : "Te avisaremos cuando algo pase 🦍"}
                 </div>
               </div>
             ) : (
-              notifications.filter(n => !n.read).map((notif) => (
-                <div
-                  key={notif.id}
+              visible.map((notif) => (
+                <div key={notif.id}
                   className={`notificationItem ${!notif.read ? "unread" : ""}`}
-                  onClick={() => handleNotificationClick(notif)}
-                >
-                  <div className="notificationIcon">{getNotificationIcon(notif.type)}</div>
+                  onClick={() => handleNotificationClick(notif)}>
+                  <div className="notificationIcon">{getIcon(notif.type)}</div>
                   <div className="notificationContent">
                     <div className="notificationTitle">{notif.title}</div>
                     <div className="notificationBody">{notif.body}</div>

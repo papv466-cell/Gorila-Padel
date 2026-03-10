@@ -60,7 +60,7 @@ export default function Navbar({ showBack = false, onBack }) {
           </nav>
 
           <div className="headerActions">
-            {session && <NotificationBell />}
+            {session && <NotificationBell session={session} />}
             <Link to="/tienda/carrito" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 999, background: totalItems > 0 ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", border: totalItems > 0 ? "1px solid rgba(116,184,0,0.3)" : "1px solid rgba(255,255,255,0.10)", fontSize: 18, textDecoration: "none", flexShrink: 0 }}>
               🛒
               {totalItems > 0 && <div style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 999, background: "#74B800", color: "#111", fontSize: 11, fontWeight: 950, display: "grid", placeItems: "center", border: "2px solid #000" }}>{totalItems > 9 ? "9+" : totalItems}</div>}
