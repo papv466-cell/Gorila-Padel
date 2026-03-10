@@ -164,19 +164,19 @@ export default function ClubAdminPage() {
 
     await Promise.all([
       loadCourts(adminData.club_id),
-        loadSlots(data.club_id),
-        loadSchedules(data.club_id),
-        loadBookings(data.club_id),
-        loadDonations(data.club_id),
-        loadFoundations(),
-        loadStats(data.club_id),
-        loadWaitlist(data.club_id),
-        loadPricing(data.club_id),
-        loadBroadcasts(data.club_id),
-        loadRatings(data.club_id),
-        loadTournaments(data.club_id),
-        loadBonos(data.club_id),
-      ]);
+      loadSlots(adminData.club_id),
+      loadSchedules(adminData.club_id),
+      loadBookings(adminData.club_id),
+      loadDonations(adminData.club_id),
+      loadFoundations(),
+      loadStats(adminData.club_id),
+      loadWaitlist(adminData.club_id),
+      loadPricing(adminData.club_id),
+      loadBroadcasts(adminData.club_id),
+      loadRatings(adminData.club_id),
+      loadTournaments(adminData.club_id),
+      loadBonos(adminData.club_id),
+    ]);
     } catch(e) { console.error(e); }
     finally { setLoading(false); }
   }
