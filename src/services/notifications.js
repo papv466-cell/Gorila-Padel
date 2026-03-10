@@ -214,19 +214,35 @@ export async function deleteNotification(notificationId) {
  */
 async function sendPushNotification({ userId, title, body, data = {} }) {
   try {
-    const { error } = await supabase.functions.invoke("send-push-notification", {
-      body: {
-        userId,
-        title,
-        body,
-        data,
-      },
-    });
+    // Buscar todas las suscripciones push del usuario
+    const { data: subs } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, p256dh, auth")
+      .eq("user_id", userId);
 
-    if (error) throw error;
+    if (!subs || subs.length === 0) return;
+
+    // Enviar a cada suscripción
+    await Promise.allSettled(subs.map(sub =>
+      supabase.functions.invoke("push-chat", {
+        body: {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+          title,
+          body,
+          url: data?.url || "/",
+          notificationId: data?.notificationId,
+          tag: data?.notificationId || "gorila",
+        },
+      }).then(({ data: res }) => {
+        // Si la suscripción murió, eliminarla
+        if (res?.gone) {
+          supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+        }
+      })
+    ));
   } catch (error) {
     console.error("Error sending push notification:", error);
-    // No lanzar error para no bloquear la creación de la notificación
   }
 }
 
