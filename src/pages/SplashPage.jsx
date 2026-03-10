@@ -19,6 +19,14 @@ export default function SplashPage() {
       <video
         src="/splash.mp4"
         autoPlay muted loop playsInline
+        disablePictureInPicture
+        preload="auto"
+        ref={el => {
+          if (el) {
+            el.muted = true;
+            el.play().catch(() => {});
+          }
+        }}
         style={{
           position: "absolute", inset: 0,
           width: "100%", height: "100%",
