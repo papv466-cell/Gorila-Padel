@@ -287,6 +287,7 @@ export default function App() {
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="/stack" element={<GorilaStack />} />
+          <Route path="/reserva/pago" element={<RequireAuth session={session} sessionReady={sessionReady}><CourtCheckoutPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

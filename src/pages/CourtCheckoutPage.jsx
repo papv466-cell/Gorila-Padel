@@ -33,7 +33,7 @@ function PayForm({ slotData, onSuccess }) {
       {error && <div style={{marginTop:10,padding:10,borderRadius:8,background:"rgba(239,68,68,0.15)",color:"#ff6b6b",fontSize:12}}>{error}</div>}
       <button type="submit" disabled={!stripe||loading}
         style={{marginTop:16,width:"100%",padding:14,borderRadius:12,background:loading?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:loading?"not-allowed":"pointer",fontSize:14}}>
-        {loading?"Procesando…":`Pagar ${slotData?.price||0}€`}
+        {loading?"Procesando…":`Pagar ${splitEnabled?(slotData?.price/4).toFixed(2):slotData?.price||0}€`}
       </button>
       <div style={{textAlign:"center",marginTop:10,fontSize:11,color:"rgba(255,255,255,0.3)"}}>🔒 Pago seguro con Stripe</div>
     </form>
@@ -45,6 +45,8 @@ export default function CourtCheckoutPage() {
   const [searchParams] = useSearchParams();
   const slotId = searchParams.get("slotId");
   const matchId = searchParams.get("matchId");
+  const splitEnabled = searchParams.get("split") === "true";
+  const splitWith = searchParams.get("splitWith") || "";
   const [session, setSession] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [slotData, setSlotData] = useState(null);
@@ -66,7 +68,7 @@ export default function CourtCheckoutPage() {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-court-payment`,
         { method:"POST", headers:{"Content-Type":"application/json","Authorization":`Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`},
-          body: JSON.stringify({ slotId, userId: session.user.id, matchId }) }
+          body: JSON.stringify({ slotId, userId: session.user.id, matchId, split: splitEnabled, splitWith: splitWith ? splitWith.split(",") : [] }) }
       );
       const data = await res.json();
       if (!res.ok || data.error) { setError(data.error || "Error al crear pago"); return; }
@@ -93,7 +95,10 @@ export default function CourtCheckoutPage() {
           <div style={{padding:"10px 14px",borderRadius:10,background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.15)",marginBottom:20}}>
             <div style={{fontSize:13,fontWeight:900,color:"#fff"}}>{slotData.courtName}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:3}}>📅 {slotData.date} · 🕐 {slotData.startTime}–{slotData.endTime}</div>
-            <div style={{fontSize:20,fontWeight:900,color:"#74B800",marginTop:6}}>{slotData.price}€</div>
+            <div style={{fontSize:20,fontWeight:900,color:"#74B800",marginTop:6}}>
+              {splitEnabled ? `${(slotData.price/4).toFixed(2)}€` : `${slotData.price}€`}
+              {splitEnabled && <span style={{fontSize:12,color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:6}}>tu parte (1/4)</span>}
+            </div>
           </div>
         )}
 
