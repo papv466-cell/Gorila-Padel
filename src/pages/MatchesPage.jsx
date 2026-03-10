@@ -1082,7 +1082,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                         const slotTime = slot.start_time?.slice(0,5);
                         const isSelected = selectedSlotId === slot.id;
                         return (
-                          <button key={slot.id} onClick={()=>{ setSelectedSlotId(slot.id); setForm(prev=>({...prev,time:slotTime,selectedSlotId:slot.id})); }}
+                          <button key={slot.id} onClick={()=>{ setSelectedSlotId(slot.id); setForm(prev=>({...prev,time:slotTime,selectedSlotId:slot.id, pricePerPlayer: slot.price ? (slot.price/4).toFixed(2) : prev.pricePerPlayer})); }}
                             disabled={saving}
                             style={{padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:900,
                               background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.07)",
@@ -1092,6 +1092,9 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                             <span style={{display:"block",fontSize:9,fontWeight:700,opacity:0.7,marginTop:1}}>
                               {slot.club_courts?.name || "Pista"}
                             </span>
+                            {slot.price > 0 && <span style={{display:"block",fontSize:9,fontWeight:900,opacity:0.9,color:isSelected?"#000":"#74B800"}}>
+                              {(slot.price/4).toFixed(2)}€/p
+                            </span>}
                           </button>
                         );
                       })}
@@ -1114,7 +1117,14 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                 </div>
                 <div>
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Precio/jugador €</label>
-                  <input type="number" value={form.pricePerPlayer} onChange={e=>setForm({...form,pricePerPlayer:e.target.value})} disabled={saving} placeholder="0" min="0" step="0.5" style={IS} />
+                  {form.selectedSlotId && availableSlots.find(s=>s.id===form.selectedSlotId)?.price > 0 ? (
+                    <div style={{...IS, display:"flex", flexDirection:"column", gap:2, cursor:"default"}}>
+                      <div style={{fontSize:15,fontWeight:900,color:"#74B800"}}>{form.pricePerPlayer}€ <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>por jugador</span></div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>Total pista: {(parseFloat(form.pricePerPlayer)*4).toFixed(2)}€ · fijado por el club</div>
+                    </div>
+                  ) : (
+                    <input type="number" value={form.pricePerPlayer} onChange={e=>setForm({...form,pricePerPlayer:e.target.value})} disabled={saving} placeholder="0" min="0" step="0.5" style={IS} />
+                  )}
                 </div>
               </div>
               <div style={{display:"flex",gap:10,marginTop:6}}>
