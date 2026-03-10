@@ -257,6 +257,9 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
 export default function PostMatchModal({ match, players, session, onClose }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [clubRating, setClubRating] = useState(0);
+  const [clubComment, setClubComment] = useState('');
+  const [clubRatingSent, setClubRatingSent] = useState(false);
   const [sets, setSets] = useState([{ a: "", b: "" }, { a: "", b: "" }]);
   const [winner, setWinner] = useState(null);
   const [ratings, setRatings] = useState({});
@@ -455,7 +458,81 @@ export default function PostMatchModal({ match, players, session, onClose }) {
                 {sharing ? "⏳ Generando imagen…" : "📸 Generar y compartir"}
               </button>
             </div>
+            {match?.club_id && !clubRatingSent ? (
+              <button onClick={()=>setStep(5)} style={{...S.btn("green"), marginBottom:8}}>⭐ Valorar el club</button>
+            ) : null}
             <button onClick={onClose} style={S.btn("ghost")}>Cerrar</button>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 8 }}>🏟️</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>¿Qué tal el club?</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>{match?.club_name || "Valora la instalación"}</div>
+
+            {/* Estrellas */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 20 }}>
+              {[1,2,3,4,5].map(star => (
+                <span key={star} onClick={() => setClubRating(star)}
+                  style={{ fontSize: 40, cursor: "pointer", opacity: clubRating >= star ? 1 : 0.2, transition: "all .15s", transform: clubRating >= star ? "scale(1.15)" : "scale(1)" }}>
+                  ⭐
+                </span>
+              ))}
+            </div>
+
+            {/* Aspectos rápidos */}
+            {clubRating > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>¿QUÉ DESTACARÍAS?</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                  {["🎾 Buenas pistas","🚿 Vestuarios limpios","🅿️ Fácil aparcar","☕ Buen bar","👋 Personal amable","💡 Buena iluminación"].map(tag => {
+                    const sel = clubComment.includes(tag);
+                    return (
+                      <button key={tag} onClick={() => setClubComment(prev => sel ? prev.replace(tag, '').trim() : (prev + ' ' + tag).trim())}
+                        style={{ padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                          background: sel ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.06)",
+                          color: sel ? "#74B800" : "rgba(255,255,255,0.6)",
+                          outline: sel ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Comentario libre */}
+            {clubRating > 0 && (
+              <textarea placeholder="Comentario opcional…" value={clubComment.replace(/🎾.*?(?=\s|$)/g,'').trim()}
+                onChange={e => setClubComment(prev => {
+                  const tags = prev.match(/[🎾🚿🅿️☕👋💡][^🎾🚿🅿️☕👋💡]*/g) || [];
+                  return tags.join(' ') + ' ' + e.target.value;
+                })}
+                rows={2} style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 13, resize: "none", outline: "none", boxSizing: "border-box", marginBottom: 16 }} />
+            )}
+
+            <div style={{ display: "flex", gap: 8 }}>
+              {clubRating > 0 && (
+                <button onClick={async () => {
+                  try {
+                    await supabase.from('club_ratings').insert({
+                      user_id: session.user.id,
+                      club_id: match.club_id,
+                      rating: clubRating,
+                      comment: clubComment.trim() || null,
+                    });
+                    setClubRatingSent(true);
+                    setStep(4);
+                  } catch(e) { console.error(e); setStep(4); }
+                }} style={{ ...S.btn("green"), flex: 1 }}>
+                  ✅ Enviar valoración
+                </button>
+              )}
+              <button onClick={() => { setStep(4); }} style={S.btn("ghost")}>
+                {clubRating > 0 ? 'Omitir' : 'No ahora'}
+              </button>
+            </div>
           </div>
         )}
       </div>
