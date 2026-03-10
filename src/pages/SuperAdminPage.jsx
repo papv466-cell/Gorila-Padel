@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const SUPER_ADMIN_ID = "1e0db2e1-e959-41f0-bcaf-2bb46fd425da";
+
 
 export default function SuperAdminPage() {
   const navigate = useNavigate();
@@ -19,7 +19,13 @@ export default function SuperAdminPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data?.session || data.session.user.id !== SUPER_ADMIN_ID) {
+      if (!data?.session) {
+        navigate("/");
+        return;
+      }
+      // Verificar is_super_admin en BD
+      const { data: profile } = await supabase.from("profiles").select("is_super_admin").eq("id", data.session.user.id).single();
+      if (!profile?.is_super_admin) {
         navigate("/");
         return;
       }
