@@ -68,6 +68,8 @@ export default function ClubAdminPage() {
   const [foundations, setFoundations] = useState([]);
   const [selectedFoundation, setSelectedFoundation] = useState(null);
   const [savingFoundation, setSavingFoundation] = useState(false);
+  const [customFoundation, setCustomFoundation] = useState({name:'',description:'',logo:'',iban:''});
+  const [showCustomForm, setShowCustomForm] = useState(false);
   const [totalDonated, setTotalDonated] = useState(0);
   const [stats, setStats] = useState({ totalMatches:0, totalPlayers:0, totalEarned:0, totalDonated:0, occupancyByHour:[], topPlayers:[] });
   const [weekOffset, setWeekOffset] = useState(0);
@@ -155,6 +157,10 @@ export default function ClubAdminPage() {
     try {
       const {data: clubDb} = await supabase.from('clubs').select('external_booking_url,external_booking_provider,booking_mode,foundation_id').eq('id', adminData.club_id).maybeSingle();
       if (clubDb?.foundation_id) setSelectedFoundation(clubDb.foundation_id);
+      if (clubDb?.custom_foundation_name) {
+        setCustomFoundation({name:clubDb.custom_foundation_name||'',description:clubDb.custom_foundation_description||'',logo:clubDb.custom_foundation_logo||'',iban:clubDb.custom_foundation_iban||''});
+        if (!clubDb.foundation_id) setSelectedFoundation('custom');
+      }
       if (clubDb) {
         setExternalBookingUrl(clubDb.external_booking_url || '');
         setExternalProvider(clubDb.external_booking_provider || 'none');
@@ -363,10 +369,30 @@ export default function ClubAdminPage() {
   async function saveFoundation(foundationId) {
     try {
       setSavingFoundation(true);
-      const {error} = await supabase.from('clubs').update({foundation_id: foundationId}).eq('id', clubAdmin.club_id);
+      const {error} = await supabase.from('clubs').update({foundation_id: foundationId, custom_foundation_name:null, custom_foundation_iban:null}).eq('id', clubAdmin.club_id);
       if (error) throw error;
       setSelectedFoundation(foundationId);
+      setShowCustomForm(false);
       toast.success('✅ Asociación guardada');
+    } catch(e) { toast.error(e.message); }
+    finally { setSavingFoundation(false); }
+  }
+
+  async function saveCustomFoundation() {
+    if (!customFoundation.name.trim()) return;
+    try {
+      setSavingFoundation(true);
+      const {error} = await supabase.from('clubs').update({
+        foundation_id: null,
+        custom_foundation_name: customFoundation.name,
+        custom_foundation_description: customFoundation.description,
+        custom_foundation_logo: customFoundation.logo,
+        custom_foundation_iban: customFoundation.iban,
+      }).eq('id', clubAdmin.club_id);
+      if (error) throw error;
+      setSelectedFoundation('custom');
+      setShowCustomForm(false);
+      toast.success('✅ Asociación personalizada guardada');
     } catch(e) { toast.error(e.message); }
     finally { setSavingFoundation(false); }
   }
@@ -1096,6 +1122,48 @@ async function deleteSchedule(id) {
                 </div>
               );
             })}
+
+            {/* Opción personalizada */}
+            <div onClick={()=>{setShowCustomForm(!showCustomForm); setSelectedFoundation(showCustomForm?selectedFoundation:'custom');}}
+              style={{...S.card, cursor:'pointer', border: selectedFoundation==='custom' ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.08)',
+                background: selectedFoundation==='custom' ? 'rgba(116,184,0,0.08)' : 'rgba(255,255,255,0.03)', transition:'all .2s'}}>
+              <div style={{display:'flex', alignItems:'center', gap:12}}>
+                <div style={{width:48, height:48, borderRadius:12, background:'rgba(255,255,255,0.06)', display:'grid', placeItems:'center', fontSize:24, flexShrink:0}}>
+                  {customFoundation.logo?.startsWith('http') ? <img src={customFoundation.logo} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/> : (customFoundation.logo || '🏢')}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14, fontWeight:900, color: selectedFoundation==='custom'?'#74B800':'#fff'}}>
+                    {customFoundation.name || 'Otra asociación…'}
+                  </div>
+                  <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2}}>
+                    {customFoundation.name ? customFoundation.description || 'Asociación personalizada' : 'Añade tu propia asociación benéfica'}
+                  </div>
+                </div>
+                <div style={{width:22, height:22, borderRadius:'50%', border: selectedFoundation==='custom'?'none':'2px solid rgba(255,255,255,0.15)',
+                  background: selectedFoundation==='custom'?'#74B800':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
+                  {selectedFoundation==='custom' && <span style={{fontSize:12, color:'#000', fontWeight:900}}>✓</span>}
+                </div>
+              </div>
+
+              {showCustomForm && (
+                <div onClick={e=>e.stopPropagation()} style={{marginTop:14, display:'flex', flexDirection:'column', gap:8}}>
+                  {[
+                    ['name','Nombre de la asociación *','text'],
+                    ['description','Descripción','text'],
+                    ['logo','Logo URL o emoji (ej: 🏥)','text'],
+                    ['iban','IBAN bancario','text'],
+                  ].map(([field,placeholder,type])=>(
+                    <input key={field} type={type} placeholder={placeholder} value={customFoundation[field]}
+                      onChange={e=>setCustomFoundation(p=>({...p,[field]:e.target.value}))}
+                      style={{...S.input, fontSize:12}}/>
+                  ))}
+                  <button onClick={saveCustomFoundation} disabled={savingFoundation||!customFoundation.name.trim()}
+                    style={{...S.btn('green'), opacity:savingFoundation||!customFoundation.name.trim()?0.5:1}}>
+                    {savingFoundation?'Guardando…':'✅ Guardar asociación'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Historial mensual */}
