@@ -55,7 +55,6 @@ async function callApi(path, { method = "POST", session, body } = {}) {
     json = txt ? JSON.parse(txt) : null;
   } catch {}
 
-  console.log(`[API ${path}] status=${r.status}`, json ?? txt);
 
   if (!r.ok) {
     console.warn(`[API ${path}] ❌ status=${r.status}`, json ?? txt);
@@ -128,7 +127,6 @@ export async function fetchLatestChatTimes(matchIds = []) {
    CREAR PARTIDO
 ========================= */
 export async function createMatch(data) {
-  console.log('🔍 createMatch recibió:', data);
   
   // Validar nombre del club
   const clubName = sanitizeString(data.clubName, 200);
@@ -144,7 +142,6 @@ export async function createMatch(data) {
   // ✅ CORRECCIÓN: El formulario envía startAtISO, no date/time separados
   const startAt = data.startAtISO;
   
-  console.log('🔍 startAt recibido:', startAt);
   
   if (!startAt) {
     throw new Error('Fecha y hora son obligatorias');
@@ -160,7 +157,6 @@ export async function createMatch(data) {
     throw new Error('La fecha debe ser futura');
   }
 
-  console.log('✅ Validación OK, insertando en BD...');
 
   const { data: row, error } = await supabase
     .from("matches")
@@ -187,7 +183,6 @@ export async function createMatch(data) {
     throw new Error(error.message || "No se pudo crear el partido");
   }
 
-  console.log('✅ Partido creado:', row);
 
   // Notificar a usuarios con preferencias
   try {
@@ -445,7 +440,6 @@ export async function approveRequest({ requestId }) {
         .update({ paid: true })
         .eq("id", data.match_id);
 
-      console.log("Donacion registrada: 40cts para club", clubId);
     }
   } catch (e) {
     console.error("Error registrando donacion:", e);
@@ -511,7 +505,6 @@ export async function approveRequest({ requestId }) {
         .update({ paid: true })
         .eq("id", data.match_id);
 
-      console.log("✅ Donacion registrada: 40cts para club", clubId);
     }
   } catch (e) {
     console.error("Error registrando donacion:", e);

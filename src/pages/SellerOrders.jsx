@@ -42,7 +42,6 @@ export default function SellerOrders() {
         return;
       }
 
-      console.log('Seller ID:', seller.id);
 
       // Obtener items de pedidos del vendedor
       const { data: orderItems, error: itemsError } = await supabase
@@ -57,7 +56,6 @@ export default function SellerOrders() {
         return;
       }
 
-      console.log('Order items:', orderItems);
 
       if (!orderItems || orderItems.length === 0) {
         setOrders([]);
@@ -67,7 +65,6 @@ export default function SellerOrders() {
 
       // Obtener IDs únicos de pedidos
       const orderIds = [...new Set(orderItems.map(item => item.order_id))];
-      console.log('Order IDs:', orderIds);
 
       // Obtener info de los pedidos
       const { data: ordersData, error: ordersError } = await supabase
@@ -81,7 +78,6 @@ export default function SellerOrders() {
         return;
       }
 
-      console.log('Orders data:', ordersData);
 
       // Obtener IDs únicos de compradores
       const buyerIds = [...new Set(ordersData.map(o => o.buyer_id).filter(Boolean))];
@@ -113,7 +109,6 @@ export default function SellerOrders() {
       });
 
       const finalOrders = Object.values(groupedOrders);
-      console.log('Final orders:', finalOrders);
       setOrders(finalOrders);
     } catch (err) {
       console.error('Error cargando pedidos:', err);

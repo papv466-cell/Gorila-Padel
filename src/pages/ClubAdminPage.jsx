@@ -477,7 +477,6 @@ async function deleteSchedule(id) {
 
   async function loadFoundations() {
     const {data, error} = await supabase.from('foundations').select('*').eq('active', true);
-    console.log('foundations:', data, error);
     setFoundations(data||[]);
   }
 

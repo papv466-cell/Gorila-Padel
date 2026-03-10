@@ -78,12 +78,10 @@ export async function deletePost(postId) {
 // ============================================
 
 export async function toggleReaction(postId, reactionType = 'gorila') {
-  console.log('🎯 toggleReaction - postId:', postId, 'type:', reactionType);
   
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No autenticado');
   
-  console.log('👤 Usuario:', user.id);
 
   // Buscar si YA existe esta reacción específica (no cualquier reacción)
   const { data: existing } = await supabase
@@ -94,7 +92,6 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
     .eq('reaction_type', reactionType)
     .maybeSingle();
 
-  console.log('🔎 Reacción existente:', existing);
 
   if (existing) {
     // Si ya existe, la quitamos (toggle off)
@@ -102,114 +99,47 @@ export async function toggleReaction(postId, reactionType = 'gorila') {
       .from('gorilandia_reactions')
       .delete()
       .eq('id', existing.id);
-    console.log('🗑️ Reacción eliminada:', result);
     return { action: 'removed' };
   } else {
     // Si no existe, la añadimos
-    const result = await supabase
+    await supabase
       .from('gorilandia_reactions')
-      .insert({ 
-        post_id: postId, 
-        user_id: user.id, 
-        reaction_type: reactionType 
-      });
-      console.log('➕ Reacción creada:', result);
+      .insert({ post_id: postId, user_id: user.id, reaction_type: reactionType });
 
-      console.log('🔔 [1] EMPEZANDO bloque de notificación');
-      
-      // NOTIFICACIÓN: Enviar al dueño del post
-      try {
-        console.log('🔔 [2] Dentro del TRY');
-        
-        // Obtener el post para saber quién es el dueño
-        const { data: post } = await supabase
-          .from('gorilandia_posts')
-          .select('user_id')
-          .eq('id', postId)
-          .single();
-      
-        console.log('🔔 [3] Post obtenido:', post);
-      
-        // Solo notificar si NO es tu propio post
-        if (post && post.user_id !== user.id) {
-          console.log('🔔 [4] NO es mi propio post, obteniendo perfil...');
-          
-          // Obtener nombre del que dio like
-          const { data: likerProfile } = await supabase
-            .from('profiles')
-            .select('name, handle')
-            .eq('id', user.id)
-            .single();
-      
-          console.log('🔔 [5] Perfil obtenido:', likerProfile);
-          console.log('🔔 [6] Llamando a notifySocialLike...');
-      
-          await notifySocialLike({
-            postId,
-            likerName: likerProfile?.name || likerProfile?.handle || 'Alguien',
-            userId: post.user_id
-          });
-          
-          console.log('🔔 [7] ✅ Notificación enviada!');
-        } else {
-          console.log('🔔 [4] Es mi propio post, NO notificar');
-        }
-      } catch (notifError) {
-        console.error('🔔 [ERROR] Error sending like notification:', notifError);
-      }
-
-    // NOTIFICACIÓN: Enviar al dueño del post
+    // Notificar al dueño del post (solo si no es el mismo usuario)
     try {
-      // Obtener el post para saber quién es el dueño
       const { data: post } = await supabase
-        .from('gorilandia_posts')
-        .select('user_id')
-        .eq('id', postId)
-        .single();
-
-      // Solo notificar si NO es tu propio post
+        .from('gorilandia_posts').select('user_id').eq('id', postId).single();
       if (post && post.user_id !== user.id) {
-        // Obtener nombre del que dio like
         const { data: likerProfile } = await supabase
-          .from('profiles')
-          .select('name, handle')
-          .eq('id', user.id)
-          .single();
-
+          .from('profiles').select('name, handle').eq('id', user.id).single();
         await notifySocialLike({
           postId,
           likerName: likerProfile?.name || likerProfile?.handle || 'Alguien',
           userId: post.user_id
         });
       }
-    } catch (notifError) {
-      console.error('Error sending like notification:', notifError);
-    }
+    } catch {}
 
     return { action: 'added', type: reactionType };
   }
 }
 
 export async function getPostReactions(postId) {
-  console.log('🔍 Buscando reacciones para post:', postId);
   
   const { data, error } = await supabase
     .from('gorilandia_reactions')
     .select('reaction_type, user_id')
     .eq('post_id', postId);
 
-  console.log('📦 Datos recibidos:', data);
-  console.log('❌ Error:', error);
 
   if (error) throw error;
 
   const grouped = { gorila: 0, fuego: 0, fuerza: 0, risa: 0 };
   data.forEach(r => { 
-    console.log('➕ Sumando reacción:', r.reaction_type);
     if (grouped[r.reaction_type] !== undefined) grouped[r.reaction_type]++;
   });
   
-  console.log('✅ Total agrupado:', grouped);
   return grouped;
 }
 
