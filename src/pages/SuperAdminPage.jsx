@@ -18,7 +18,7 @@ export default function SuperAdminPage() {
   const [savingFoundation, setSavingFoundation] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (!data?.session) {
         navigate("/");
         return;
