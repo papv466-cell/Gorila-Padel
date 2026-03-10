@@ -356,6 +356,16 @@ export default function ClubAdminPage() {
     finally { setSaving(false); }
   }
 
+  async function deletePrice(id) {
+    if (!window.confirm('¿Eliminar esta franja de precio?')) return;
+    try {
+      const {error} = await supabase.from('club_pricing').delete().eq('id', id);
+      if (error) throw error;
+      setPricing(prev => prev.filter(p => p.id !== id));
+      setEditingPrice(null);
+    } catch(e) { alert(e.message); }
+  }
+
   async function removeFromWaitlist(id) {
     await supabase.from('slot_waitlist').delete().eq('id', id);
     setWaitlist(prev => prev.filter(w => w.id !== id));
@@ -474,7 +484,18 @@ async function deleteSchedule(id) {
       return;
     }
     setSlotModal({ court, date, hour });
-    setSlotForm({ price:'10', duration:60, status:'available' });
+    // Buscar precio dinámico según franja y tipo de día
+    const slotDate = new Date(dateToISO(date));
+    const isWeekend = slotDate.getDay() === 0 || slotDate.getDay() === 6;
+    const dayType = isWeekend ? 'weekend' : 'weekday';
+    const slotHour = parseInt(hour.split(':')[0]);
+    const matchingPrice = pricing.find(p =>
+      String(p.court_id) === String(court.id) &&
+      p.day_type === dayType &&
+      slotHour >= p.start_hour &&
+      slotHour < p.end_hour
+    );
+    setSlotForm({ price: matchingPrice ? String(matchingPrice.price) : '10', duration:60, status:'available' });
   }
 
   async function createSlot() {
@@ -1613,6 +1634,12 @@ async function deleteSchedule(id) {
                 <button onClick={savePricing} disabled={saving} style={{...S.btn('green'),flex:1}}>{saving?'Guardando…':'✅ Guardar'}</button>
                 <button onClick={()=>setEditingPrice(null)} style={S.btn('')}>Cancelar</button>
               </div>
+              {editingPrice !== 'new' && editingPrice?.id && (
+                <button onClick={()=>deletePrice(editingPrice.id)}
+                  style={{...S.btn(''),width:'100%',marginTop:4,color:'#ef4444',borderColor:'rgba(239,68,68,0.3)'}}>
+                  🗑️ Eliminar franja
+                </button>
+              )}
             </div>
           </div>
         </div>
