@@ -216,24 +216,55 @@ export default function XPBar({ userId }) {
       {/* TAB: HISTORIAL XP */}
       {tab === "history" && (
         <div style={{ padding: 12 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            {[
+              { label: "Esta semana", value: recentXp.filter(e => new Date(e.created_at) > new Date(Date.now()-7*86400000)).reduce((s,e)=>s+e.xp,0) },
+              { label: "Este mes", value: recentXp.filter(e => new Date(e.created_at) > new Date(Date.now()-30*86400000)).reduce((s,e)=>s+e.xp,0) },
+              { label: "Eventos", value: recentXp.length },
+            ].map(s => (
+              <div key={s.label} style={{ flex:1, background:"rgba(116,184,0,0.06)", border:"1px solid rgba(116,184,0,0.12)", borderRadius:10, padding:"8px 6px", textAlign:"center" }}>
+                <div style={{ fontSize:16, fontWeight:900, color:"#74B800" }}>+{s.value}</div>
+                <div style={{ fontSize:9, color:"rgba(255,255,255,0.35)", marginTop:2 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
           {recentXp.length === 0 ? (
             <div style={{ textAlign: "center", padding: 20, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+              <div style={{fontSize:40, marginBottom:8}}>⚡</div>
               Juega tu primer partido para empezar a ganar XP
             </div>
           ) : (
-            recentXp.map((e, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 4px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
-                    {REASON_LABELS[e.reason] || e.reason}
+            recentXp.map((e, i) => {
+              const info = REASON_LABELS[e.reason] || { label: e.reason, icon: "⚡" };
+              const isAchievement = e.reason?.startsWith("achievement_");
+              return (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "10px 8px", marginBottom: 4, borderRadius: 10,
+                  background: isAchievement ? "rgba(116,184,0,0.06)" : "rgba(255,255,255,0.02)",
+                  border: isAchievement ? "1px solid rgba(116,184,0,0.15)" : "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <span style={{ fontSize:22 }}>{info.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{info.label}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+                        {new Date(e.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
-                    {new Date(e.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </div>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: "#74B800", whiteSpace:"nowrap" }}>+{e.xp} XP</span>
                 </div>
-                <span style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>+{e.xp}</span>
-              </div>
-            ))
+              );
+            })
+          )}
+          {recentXp.length >= 20 && (
+            <button onClick={async () => {
+              const { supabase } = await import("../services/supabaseClient");
+              const { data } = await supabase.from("xp_events").select("xp, reason, created_at")
+                .eq("user_id", userId).order("created_at", { ascending: false }).limit(100);
+              if (data) setRecentXp(data);
+            }} style={{ width:"100%", padding:"10px", marginTop:8, borderRadius:10, border:"1px solid rgba(255,255,255,0.1)", background:"transparent", color:"rgba(255,255,255,0.5)", fontSize:12, cursor:"pointer", fontWeight:700 }}>
+              Ver más historial
+            </button>
           )}
         </div>
       )}
