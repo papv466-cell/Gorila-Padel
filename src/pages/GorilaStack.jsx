@@ -1,286 +1,487 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+// src/pages/GorilaStack.jsx — Gorila Runner 🦍
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../services/supabaseClient";
 
-const BLOCK_HEIGHT = 44;
-const GAME_WIDTH = 300;
-const INITIAL_SPEED = 2.2;
-const SPEED_INCREMENT = 0.13;
-const ITEMS = ["🦍", "🎾", "🏏", "🍌", "🦍", "🎾", "🏏", "🍌", "⚡", "🔥"];
-const COLORS = [
-  "linear-gradient(135deg,#74B800,#9BE800)",
-  "linear-gradient(135deg,#f59e0b,#fbbf24)",
-  "linear-gradient(135deg,#3b82f6,#60a5fa)",
-  "linear-gradient(135deg,#ef4444,#f87171)",
-  "linear-gradient(135deg,#8b5cf6,#a78bfa)",
-  "linear-gradient(135deg,#06b6d4,#22d3ee)",
-  "linear-gradient(135deg,#74B800,#9BE800)",
-  "linear-gradient(135deg,#f59e0b,#fbbf24)",
-];
+const W = 390, H = 520;
+const GROUND = H - 80;
+const GRAVITY = 0.6;
+const JUMP_FORCE = -13;
+const INITIAL_SPEED = 4;
 
-function getHighScore() {
-  try { return parseInt(localStorage.getItem("gorilastack_hs") || "0"); } catch { return 0; }
-}
-function setHighScore(s) {
-  try { localStorage.setItem("gorilastack_hs", String(s)); } catch {}
-}
+function getHighScore() { try { return parseInt(localStorage.getItem("gorila_runner_hs")||"0"); } catch { return 0; } }
+function setHighScore(s) { try { localStorage.setItem("gorila_runner_hs", String(s)); } catch {} }
 
 export default function GorilaStack() {
-  const [screen, setScreen] = useState("home");
-  const [blocks, setBlocks] = useState([]);
-  const [moving, setMoving] = useState(null);
-  const [score, setScore] = useState(0);
-  const [highScore, setHighScoreState] = useState(getHighScore);
-  const [combo, setCombo] = useState(0);
-  const [perfectFlash, setPerfectFlash] = useState(false);
-  const [particles, setParticles] = useState([]);
-  const [shake, setShake] = useState(false);
+  const navigate = useNavigate();
+  const canvasRef = useRef(null);
+  const stateRef = useRef(null);
   const rafRef = useRef(null);
-  const movingRef = useRef(null);
-  const blocksRef = useRef([]);
-  const scoreRef = useRef(0);
-  const comboRef = useRef(0);
-  const speedRef = useRef(INITIAL_SPEED);
-  const dirRef = useRef(1);
-  const gameActiveRef = useRef(false);
+  const [screen, setScreen] = useState("home"); // home | playing | dead
+  const [score, setScore] = useState(0);
+  const [hs, setHs] = useState(getHighScore);
+  const [topScores, setTopScores] = useState([]);
+  const [playerName, setPlayerName] = useState("");
 
-  const spawnBlock = useCallback((width, color, item) => {
-    const startX = dirRef.current > 0 ? -width : GAME_WIDTH;
-    const newMoving = { x: startX, width, color, item, dir: dirRef.current };
-    movingRef.current = newMoving;
-    setMoving({ ...newMoving });
+  // Cargar ranking global
+  async function loadRanking() {
+    try {
+      const { data } = await supabase.from("gorila_runner_scores")
+        .select("name, score").order("score", { ascending: false }).limit(10);
+      setTopScores(data || []);
+    } catch {}
+  }
+
+  useEffect(() => {
+    loadRanking();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session?.user?.id) {
+        supabase.from("profiles").select("name,handle").eq("id", data.session.user.id).single()
+          .then(({ data: p }) => { if (p) setPlayerName(p.name || p.handle || "Gorila"); });
+      }
+    });
   }, []);
 
-  const startGame = useCallback(() => {
-    const firstWidth = GAME_WIDTH * 0.6;
-    const firstX = (GAME_WIDTH - firstWidth) / 2;
-    const firstBlock = { x: firstX, width: firstWidth, color: COLORS[0], item: "🦍", y: 0 };
-    blocksRef.current = [firstBlock];
-    scoreRef.current = 0;
-    comboRef.current = 0;
-    speedRef.current = INITIAL_SPEED;
-    dirRef.current = 1;
-    gameActiveRef.current = true;
-    setBlocks([firstBlock]);
-    setScore(0);
-    setCombo(0);
-    setParticles([]);
-    setScreen("playing");
-    spawnBlock(firstWidth, COLORS[1], ITEMS[1]);
-  }, [spawnBlock]);
-
-  useEffect(() => {
-    if (screen !== "playing") return;
-    let lastTime = 0;
-    const animate = (time) => {
-      if (!gameActiveRef.current) return;
-      const delta = Math.min((time - lastTime) / 16, 3);
-      lastTime = time;
-      if (movingRef.current) {
-        const m = movingRef.current;
-        let newX = m.x + m.dir * speedRef.current * delta;
-        let newDir = m.dir;
-        if (newX + m.width >= GAME_WIDTH + 10) { newDir = -1; newX = GAME_WIDTH - m.width; }
-        if (newX <= -10) { newDir = 1; newX = 0; }
-        const updated = { ...m, x: newX, dir: newDir };
-        movingRef.current = updated;
-        dirRef.current = newDir;
-        setMoving({ ...updated });
+  async function saveScore(s) {
+    const name = playerName || "Gorila";
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.user?.id) {
+        await supabase.from("gorila_runner_scores").upsert({
+          user_id: session.session.user.id, name, score: s
+        }, { onConflict: "user_id" });
+        loadRanking();
       }
-      rafRef.current = requestAnimationFrame(animate);
+    } catch {}
+  }
+
+  function initState() {
+    return {
+      gorila: { x: 80, y: GROUND, vy: 0, onGround: true, jumping: false, frame: 0, frameTimer: 0 },
+      obstacles: [],
+      clouds: [
+        { x: 100, y: 60, w: 80, speed: 0.3 },
+        { x: 280, y: 40, w: 60, speed: 0.2 },
+        { x: 350, y: 80, w: 50, speed: 0.25 },
+      ],
+      score: 0,
+      speed: INITIAL_SPEED,
+      frame: 0,
+      nextObstacle: 90,
+      combo: 0,
+      comboTimer: 0,
+      particles: [],
+      shake: 0,
+      distance: 0,
+      level: 1,
     };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }
+
+  function startGame() {
+    setScreen("playing");
+    setScore(0);
+    stateRef.current = initState();
+    requestAnimationFrame(loop);
+  }
+
+  function jump() {
+    const s = stateRef.current;
+    if (!s) return;
+    if (s.gorila.onGround) {
+      s.gorila.vy = JUMP_FORCE;
+      s.gorila.onGround = false;
+      s.gorila.jumping = true;
+    } else if (!s.doubleJumped) {
+      // Doble salto
+      s.gorila.vy = JUMP_FORCE * 0.8;
+      s.doubleJumped = true;
+      addParticles(s, s.gorila.x + 20, s.gorila.y + 20, "#74B800", 6);
+    }
+  }
+
+  function addParticles(s, x, y, color, n = 8) {
+    for (let i = 0; i < n; i++) {
+      s.particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6 - 2,
+        alpha: 1, color, r: Math.random() * 4 + 2,
+        life: 30 + Math.random() * 20,
+      });
+    }
+  }
+
+  function spawnObstacle(s) {
+    const types = ["net", "ball", "player", "net_tall"];
+    // Más variedad según nivel
+    const available = s.level >= 3 ? types : types.slice(0, 3);
+    const type = available[Math.floor(Math.random() * available.length)];
+    const configs = {
+      net:      { w: 18, h: 40, color: "#74B800", emoji: "🥅" },
+      net_tall: { w: 18, h: 65, color: "#9BE800", emoji: "🥅" },
+      ball:     { w: 24, h: 24, color: "#fff", emoji: "🎾", rolling: true },
+      player:   { w: 32, h: 55, color: "#f97316", emoji: "🧑" },
+    };
+    const cfg = configs[type];
+    s.obstacles.push({
+      x: W + 20, y: GROUND - cfg.h + (cfg.rolling ? cfg.h/2 : 0),
+      w: cfg.w, h: cfg.h, type, ...cfg,
+      angle: 0,
+    });
+  }
+
+  function loop() {
+    const s = stateRef.current;
+    if (!s) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    s.frame++;
+    s.distance += s.speed;
+
+    // Aumentar velocidad y nivel
+    s.speed = INITIAL_SPEED + Math.floor(s.score / 10) * 0.4;
+    s.level = 1 + Math.floor(s.score / 20);
+    if (s.speed > 14) s.speed = 14;
+
+    // Gorila física
+    const g = s.gorila;
+    g.vy += GRAVITY;
+    g.y += g.vy;
+    if (g.y >= GROUND) {
+      g.y = GROUND; g.vy = 0; g.onGround = true; g.jumping = false;
+      s.doubleJumped = false;
+    }
+    g.frameTimer++;
+    if (g.frameTimer > 6) { g.frame = (g.frame + 1) % 4; g.frameTimer = 0; }
+
+    // Nubes
+    for (const c of s.clouds) { c.x -= c.speed; if (c.x + c.w < 0) c.x = W + 50; }
+
+    // Obstáculos
+    s.nextObstacle--;
+    if (s.nextObstacle <= 0) {
+      spawnObstacle(s);
+      const gap = Math.max(45, 90 - s.level * 5);
+      s.nextObstacle = gap + Math.random() * 40;
+    }
+
+    let passed = false;
+    for (let i = s.obstacles.length - 1; i >= 0; i--) {
+      const o = s.obstacles[i];
+      o.x -= s.speed;
+      if (o.rolling) o.angle += s.speed * 0.1;
+
+      // Pasó el gorila → punto
+      if (!o.scored && o.x + o.w < g.x) {
+        o.scored = true;
+        s.score++;
+        s.combo++;
+        s.comboTimer = 60;
+        passed = true;
+        addParticles(s, g.x + 20, g.y - 10, "#74B800", 5);
+        setScore(s.score);
+        if (s.score > getHighScore()) { setHighScore(s.score); setHs(s.score); }
+      }
+
+      // Colisión AABB (con margen de gracia)
+      const margin = 8;
+      if (
+        g.x + 35 - margin > o.x + margin &&
+        g.x + margin < o.x + o.w - margin &&
+        g.y + 10 > o.y - o.h + margin &&
+        g.y + 50 < o.y + margin + (o.rolling ? o.h : 0) + margin
+      ) {
+        // MUERTO
+        s.shake = 20;
+        addParticles(s, g.x + 20, g.y + 20, "#ff4444", 20);
+        stateRef.current = null;
+        // Dar tiempo al shake antes de mostrar game over
+        setTimeout(() => {
+          saveScore(s.score);
+          setScore(s.score);
+          setScreen("dead");
+        }, 400);
+        rafRef.current = requestAnimationFrame(() => drawFrame(ctx, s));
+        return;
+      }
+
+      if (o.x + o.w < -20) s.obstacles.splice(i, 1);
+    }
+
+    // Combo timer
+    if (s.comboTimer > 0) s.comboTimer--;
+    else s.combo = 0;
+
+    // Partículas
+    for (let i = s.particles.length - 1; i >= 0; i--) {
+      const p = s.particles[i];
+      p.x += p.vx; p.y += p.vy; p.vy += 0.15;
+      p.life--; p.alpha = p.life / 50;
+      if (p.life <= 0) s.particles.splice(i, 1);
+    }
+
+    // Shake
+    if (s.shake > 0) s.shake--;
+
+    drawFrame(ctx, s);
+    rafRef.current = requestAnimationFrame(loop);
+  }
+
+  function drawFrame(ctx, s) {
+    const shakeX = s.shake > 0 ? (Math.random() - 0.5) * s.shake * 0.8 : 0;
+    const shakeY = s.shake > 0 ? (Math.random() - 0.5) * s.shake * 0.4 : 0;
+
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+
+    // Fondo degradado cielo
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, "#0a0a1a");
+    sky.addColorStop(1, "#0d1a0d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // Estrellas (fondo)
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    for (let i = 0; i < 30; i++) {
+      const sx = ((i * 137 + s.frame * 0.2) % W);
+      const sy = (i * 53) % (GROUND - 20);
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+
+    // Nubes
+    for (const c of s.clouds) {
+      ctx.fillStyle = "rgba(116,184,0,0.08)";
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, c.w/2, 15, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(c.x + 20, c.y - 8, c.w/3, 12, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Suelo
+    ctx.fillStyle = "#1a2a0a";
+    ctx.fillRect(0, GROUND + 50, W, H - GROUND - 50);
+    ctx.fillStyle = "#74B800";
+    ctx.fillRect(0, GROUND + 48, W, 4);
+
+    // Línea de fondo deslizante (pista pádel)
+    ctx.strokeStyle = "rgba(116,184,0,0.15)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([30, 20]);
+    ctx.lineDashOffset = -(s.distance % 50);
+    ctx.beginPath();
+    ctx.moveTo(0, GROUND + 25);
+    ctx.lineTo(W, GROUND + 25);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Obstáculos
+    for (const o of s.obstacles) {
+      ctx.save();
+      if (o.rolling) {
+        ctx.translate(o.x + o.w/2, o.y);
+        ctx.rotate(o.angle);
+        ctx.font = `${o.w}px serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(o.emoji, 0, o.w/2);
+      } else {
+        // Cuerpo
+        const grad = ctx.createLinearGradient(o.x, o.y - o.h, o.x + o.w, o.y);
+        grad.addColorStop(0, o.color);
+        grad.addColorStop(1, o.color + "88");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(o.x, o.y - o.h, o.w, o.h, 4);
+        ctx.fill();
+        // Emoji encima
+        ctx.font = "16px serif";
+        ctx.textAlign = "center";
+        ctx.fillText(o.emoji, o.x + o.w/2, o.y - o.h - 4);
+      }
+      ctx.restore();
+    }
+
+    // GORILA
+    const g = s.gorila;
+    const bounce = g.onGround ? Math.sin(s.frame * 0.3) * 2 : 0;
+    ctx.save();
+    ctx.translate(g.x + 25, g.y + bounce);
+    // Cuerpo gorila
+    ctx.fillStyle = "#2a1a0a";
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 18, 22, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Pecho
+    ctx.fillStyle = "#4a3020";
+    ctx.beginPath();
+    ctx.ellipse(0, 12, 11, 14, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Cabeza
+    ctx.fillStyle = "#2a1a0a";
+    ctx.beginPath();
+    ctx.ellipse(0, -12, 14, 13, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Cara
+    ctx.fillStyle = "#8B6040";
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 9, 8, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Ojos
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.ellipse(-5, -13, 3, 3, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5, -13, 3, 3, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#000";
+    ctx.beginPath(); ctx.ellipse(-5, -13, 1.5, 1.5, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5, -13, 1.5, 1.5, 0, 0, Math.PI*2); ctx.fill();
+    // Raqueta
+    ctx.strokeStyle = "#74B800";
+    ctx.lineWidth = 3;
+    const armAngle = g.onGround ? Math.sin(s.frame * 0.3) * 0.3 : -0.8;
+    ctx.save();
+    ctx.rotate(armAngle);
+    ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(30, -10); ctx.stroke();
+    ctx.fillStyle = "#74B800";
+    ctx.beginPath(); ctx.ellipse(33, -13, 8, 6, -0.5, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    // Piernas animadas
+    if (g.onGround) {
+      const legPhase = s.frame * 0.4;
+      ctx.fillStyle = "#2a1a0a";
+      ctx.beginPath(); ctx.ellipse(-7, 30 + Math.sin(legPhase) * 4, 5, 8, Math.sin(legPhase)*0.3, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(7, 30 + Math.cos(legPhase) * 4, 5, 8, Math.cos(legPhase)*0.3, 0, Math.PI*2); ctx.fill();
+    } else {
+      // En el aire — piernas recogidas
+      ctx.fillStyle = "#2a1a0a";
+      ctx.beginPath(); ctx.ellipse(-7, 25, 5, 8, -0.4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(7, 25, 5, 8, 0.4, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+
+    // Partículas
+    for (const p of s.particles) {
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // HUD — Score
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.beginPath(); ctx.roundRect(W/2 - 50, 14, 100, 34, 10); ctx.fill();
+    ctx.fillStyle = "#74B800";
+    ctx.font = "bold 22px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(s.score, W/2, 37);
+
+    // Nivel
+    ctx.fillStyle = "rgba(116,184,0,0.8)";
+    ctx.font = "bold 11px system-ui";
+    ctx.fillText(`NIVEL ${s.level}`, W/2, 56);
+
+    // Combo
+    if (s.combo >= 3 && s.comboTimer > 0) {
+      ctx.save();
+      ctx.globalAlpha = s.comboTimer / 60;
+      ctx.fillStyle = "#F97316";
+      ctx.font = `bold ${18 + s.combo}px system-ui`;
+      ctx.textAlign = "center";
+      ctx.fillText(`x${s.combo} COMBO! 🔥`, W/2, H/2 - 60);
+      ctx.restore();
+    }
+
+    // Velocidad (barra)
+    const speedPct = (s.speed - INITIAL_SPEED) / (14 - INITIAL_SPEED);
+    ctx.fillStyle = "rgba(255,255,255,0.1)";
+    ctx.beginPath(); ctx.roundRect(12, 14, 80, 8, 4); ctx.fill();
+    ctx.fillStyle = `hsl(${90 - speedPct*90}, 100%, 50%)`;
+    ctx.beginPath(); ctx.roundRect(12, 14, 80 * speedPct, 8, 4); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.font = "9px system-ui"; ctx.textAlign = "left";
+    ctx.fillText("VELOCIDAD", 12, 32);
+
+    ctx.restore();
+  }
+
+  // Input
+  useEffect(() => {
+    const onKey = (e) => { if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); if (screen === "playing") jump(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [screen]);
 
-  const drop = useCallback(() => {
-    if (!movingRef.current || !gameActiveRef.current) return;
-    const m = movingRef.current;
-    const stack = blocksRef.current;
-    const top = stack[stack.length - 1];
-    const leftEdge = Math.max(m.x, top.x);
-    const rightEdge = Math.min(m.x + m.width, top.x + top.width);
-    const overlap = rightEdge - leftEdge;
-    if (overlap <= 0) {
-      gameActiveRef.current = false;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      const newHs = Math.max(scoreRef.current, getHighScore());
-      setHighScore(newHs);
-      setHighScoreState(newHs);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-      setTimeout(() => setScreen("dead"), 600);
-      return;
-    }
-    const isPerfect = Math.abs(overlap - top.width) < 6 && Math.abs(m.x - top.x) < 6;
-    const newWidth = isPerfect ? top.width : overlap;
-    const newX = isPerfect ? top.x : leftEdge;
-    const newParticles = Array.from({ length: isPerfect ? 12 : 4 }, (_, i) => ({
-      id: Date.now() + i, x: newX + newWidth / 2, y: stack.length,
-      emoji: isPerfect ? ["✨", "⭐", "🔥", "💥"][i % 4] : ["💨"][0],
-    }));
-    setParticles(p => [...p.slice(-20), ...newParticles]);
-    setTimeout(() => setParticles(p => p.filter(pt => !newParticles.find(np => np.id === pt.id))), 800);
-    if (isPerfect) {
-      setPerfectFlash(true);
-      setTimeout(() => setPerfectFlash(false), 400);
-      comboRef.current += 1;
-      setCombo(comboRef.current);
-    } else {
-      comboRef.current = 0;
-      setCombo(0);
-    }
-    const newBlock = { x: newX, width: newWidth, color: m.color, item: m.item, y: stack.length };
-    blocksRef.current = [...stack, newBlock];
-    setBlocks([...blocksRef.current]);
-    scoreRef.current += 1 + (isPerfect ? 2 : 0) + Math.floor(comboRef.current / 3);
-    setScore(scoreRef.current);
-    speedRef.current = INITIAL_SPEED + scoreRef.current * SPEED_INCREMENT;
-    const nextIdx = (blocksRef.current.length) % COLORS.length;
-    const nextItem = ITEMS[blocksRef.current.length % ITEMS.length];
-    dirRef.current = dirRef.current * -1;
-    spawnBlock(newWidth, COLORS[nextIdx], nextItem);
-  }, [spawnBlock]);
+  const handleTap = () => {
+    if (screen === "home") startGame();
+    else if (screen === "playing") jump();
+    else if (screen === "dead") startGame();
+  };
 
-  useEffect(() => {
-    if (screen !== "playing") return;
-    const handler = (e) => {
-      if (e.type === "keydown" && e.code !== "Space") return;
-      e.preventDefault();
-      drop();
-    };
-    window.addEventListener("keydown", handler);
-    window.addEventListener("touchstart", handler, { passive: false });
-    return () => {
-      window.removeEventListener("keydown", handler);
-      window.removeEventListener("touchstart", handler);
-    };
-  }, [screen, drop]);
-
-  const visibleBlocks = blocks.slice(-10);
-  const stackHeight = visibleBlocks.length;
+  const S = {
+    wrap: { position:"fixed", inset:0, background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", userSelect:"none", touchAction:"none" },
+    canvas: { borderRadius:16, border:"1px solid rgba(116,184,0,0.2)", maxWidth:"100%", cursor:"pointer" },
+    btn: { padding:"14px 32px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:16, border:"none", cursor:"pointer", marginTop:8 },
+    ghost: { padding:"10px 24px", borderRadius:14, background:"rgba(255,255,255,0.08)", color:"#fff", fontWeight:700, fontSize:13, border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer" },
+  };
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#050505", display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", fontFamily: "'Arial Black', sans-serif",
-      userSelect: "none", WebkitUserSelect: "none", overflow: "hidden", position: "relative",
-    }}>
-      <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 50% 0%, rgba(116,184,0,0.08) 0%, transparent 60%)", pointerEvents: "none" }} />
+    <div style={S.wrap} onPointerDown={handleTap}>
+      {/* Canvas siempre visible */}
+      <canvas ref={canvasRef} width={W} height={H} style={S.canvas} />
 
+      {/* PANTALLA HOME */}
       {screen === "home" && (
-        <div style={{ textAlign: "center", padding: "0 24px", animation: "fadeIn .5s ease" }}>
-          <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}} @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}`}</style>
-          <div style={{ fontSize: 80, marginBottom: 8, animation: "bounce 1.5s ease infinite" }}>🦍</div>
-          <div style={{ fontSize: 36, fontWeight: 900, color: "#74B800", letterSpacing: -1, marginBottom: 4 }}>GORILA</div>
-          <div style={{ fontSize: 36, fontWeight: 900, color: "#fff", letterSpacing: -1, marginBottom: 8 }}>STACK</div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 32, lineHeight: 1.5 }}>
-            Apila gorilas, pelotas y palas.<br />¡Sin fin, sin piedad!
-          </div>
-          {highScore > 0 && (
-            <div style={{ marginBottom: 24, padding: "10px 24px", borderRadius: 12, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.2)", display: "inline-block" }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 800 }}>RÉCORD PERSONAL</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: "#74B800" }}>{highScore}</div>
-            </div>
-          )}
-          <button onClick={startGame} style={{
-            padding: "16px 48px", borderRadius: 16, background: "linear-gradient(135deg,#74B800,#9BE800)",
-            border: "none", color: "#000", fontSize: 18, fontWeight: 900, cursor: "pointer",
-            boxShadow: "0 8px 32px rgba(116,184,0,0.4)",
-          }}>¡JUGAR! 🦍</button>
-          <div style={{ marginTop: 20, fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Tap o Espacio para apilar</div>
-        </div>
-      )}
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.85)",backdropFilter:"blur(2px)",borderRadius:16,gap:8,padding:20}}>
+          <div style={{fontSize:64,marginBottom:4}}>🦍</div>
+          <div style={{fontSize:28,fontWeight:900,color:"#74B800"}}>Gorila Runner</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,0.5)",marginBottom:8}}>Salta sobre redes, pelotas y rivales</div>
+          {hs > 0 && <div style={{fontSize:13,color:"rgba(116,184,0,0.8)",fontWeight:800}}>🏆 Tu récord: {hs}</div>}
+          <button style={S.btn} onPointerDown={e=>{e.stopPropagation();startGame();}}>▶ JUGAR</button>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:4}}>Tap / Space para saltar · Doble tap = doble salto</div>
 
-      {screen === "playing" && (
-        <div onClick={drop} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer" }}>
-          <style>{`
-            @keyframes perfect{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(2)}}
-            @keyframes particle{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-60px)}}
-            @keyframes shakeAnim{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-          `}</style>
-          <div style={{ position: "fixed", top: 60, left: 0, right: 0, display: "flex", justifyContent: "space-between", padding: "0 24px", zIndex: 100 }}>
-            <div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 800 }}>PUNTOS</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{score}</div>
-            </div>
-            {combo >= 2 && (
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#f59e0b", fontWeight: 800 }}>COMBO</div>
-                <div style={{ fontSize: 36, fontWeight: 900, color: "#f59e0b", lineHeight: 1 }}>x{combo}</div>
-              </div>
-            )}
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 800 }}>RÉCORD</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>{Math.max(score, highScore)}</div>
-            </div>
-          </div>
-          {perfectFlash && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(116,184,0,0.15)", zIndex: 200, animation: "perfect .4s ease forwards", pointerEvents: "none" }}>
-              <div style={{ position: "absolute", top: "40%", left: "50%", transform: "translate(-50%,-50%)", fontSize: 32, fontWeight: 900, color: "#74B800" }}>¡PERFECTO! ✨</div>
-            </div>
-          )}
-          <div style={{ position: "relative", width: GAME_WIDTH, marginTop: 120, animation: shake ? "shakeAnim .4s ease" : "none" }}>
-            <div style={{ position: "relative", height: stackHeight * BLOCK_HEIGHT + BLOCK_HEIGHT * 2 }}>
-              {visibleBlocks.map((b, i) => (
-                <div key={i} style={{
-                  position: "absolute", left: b.x, width: b.width, height: BLOCK_HEIGHT - 3,
-                  bottom: i * BLOCK_HEIGHT, background: b.color, borderRadius: 10,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22, boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-                }}>{b.width > 40 && b.item}</div>
+          {/* Ranking */}
+          {topScores.length > 0 && (
+            <div style={{marginTop:16,width:"100%",maxWidth:300,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"12px 16px"}}>
+              <div style={{fontSize:12,fontWeight:900,color:"#74B800",marginBottom:8,textAlign:"center"}}>🏆 TOP 10 GLOBAL</div>
+              {topScores.map((s,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:12}}>
+                  <span style={{color:i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.6)"}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`} {s.name}</span>
+                  <span style={{fontWeight:900,color:"#74B800"}}>{s.score}</span>
+                </div>
               ))}
-              {moving && (
-                <div style={{
-                  position: "absolute", left: moving.x, width: moving.width, height: BLOCK_HEIGHT - 3,
-                  bottom: stackHeight * BLOCK_HEIGHT, background: moving.color, borderRadius: 10,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22, boxShadow: "0 4px 20px rgba(116,184,0,0.3)",
-                }}>{moving.width > 40 && moving.item}</div>
-              )}
             </div>
-            {particles.map(p => (
-              <div key={p.id} style={{
-                position: "absolute", left: p.x, bottom: p.y * BLOCK_HEIGHT + BLOCK_HEIGHT,
-                fontSize: 18, pointerEvents: "none", animation: "particle .8s ease forwards",
-              }}>{p.emoji}</div>
-            ))}
-          </div>
-          <div style={{ position: "fixed", bottom: 40, fontSize: 13, color: "rgba(255,255,255,0.2)" }}>Tap para apilar</div>
+          )}
+          <button style={{...S.ghost,marginTop:8}} onPointerDown={e=>{e.stopPropagation();navigate(-1);}}>← Volver</button>
         </div>
       )}
 
+      {/* GAME OVER */}
       {screen === "dead" && (
-        <div style={{ textAlign: "center", padding: "0 24px", animation: "fadeIn .5s ease" }}>
-          <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}`}</style>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>😵</div>
-          <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", marginBottom: 4 }}>¡Se cayó todo!</div>
-          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>El gorila llora en un rincón</div>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginBottom: 32 }}>
-            <div style={{ padding: "16px 24px", borderRadius: 14, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.2)", minWidth: 100 }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 800, marginBottom: 4 }}>PUNTOS</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: "#74B800" }}>{score}</div>
-            </div>
-            <div style={{ padding: "16px 24px", borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", minWidth: 100 }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 800, marginBottom: 4 }}>RÉCORD</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: "#fff" }}>{highScore}</div>
-            </div>
-          </div>
-          {score >= highScore && score > 0 && (
-            <div style={{ marginBottom: 24, padding: "10px 24px", borderRadius: 12, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", fontSize: 14, fontWeight: 900, color: "#74B800" }}>
-              🏆 ¡Nuevo récord personal!
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.9)",backdropFilter:"blur(4px)",gap:6,padding:20}}>
+          <div style={{fontSize:48}}>💥</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#ff4444"}}>¡GAME OVER!</div>
+          <div style={{fontSize:36,fontWeight:900,color:"#fff",marginTop:4}}>{score}</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>puntos</div>
+          {score >= hs && score > 0 && <div style={{fontSize:14,color:"#74B800",fontWeight:900,marginTop:4}}>🏆 ¡Nuevo récord!</div>}
+          <button style={S.btn} onPointerDown={e=>{e.stopPropagation();startGame();}}>🔄 REINTENTAR</button>
+
+          {topScores.length > 0 && (
+            <div style={{marginTop:12,width:"100%",maxWidth:280,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"10px 14px"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"#74B800",marginBottom:6,textAlign:"center"}}>🏆 TOP 10</div>
+              {topScores.map((s,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:11}}>
+                  <span style={{color:"rgba(255,255,255,0.6)"}}>{i+1}. {s.name}</span>
+                  <span style={{fontWeight:900,color:"#74B800"}}>{s.score}</span>
+                </div>
+              ))}
             </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button onClick={startGame} style={{
-              padding: "16px 48px", borderRadius: 16, background: "linear-gradient(135deg,#74B800,#9BE800)",
-              border: "none", color: "#000", fontSize: 18, fontWeight: 900, cursor: "pointer",
-              boxShadow: "0 8px 32px rgba(116,184,0,0.4)",
-            }}>🔄 Otra vez</button>
-            <button onClick={() => setScreen("home")} style={{
-              padding: "12px 32px", borderRadius: 12, background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)",
-              fontSize: 14, fontWeight: 700, cursor: "pointer",
-            }}>Inicio</button>
-          </div>
+          <button style={{...S.ghost,marginTop:4}} onPointerDown={e=>{e.stopPropagation();navigate(-1);}}>← Volver</button>
         </div>
       )}
     </div>
