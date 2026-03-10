@@ -68,6 +68,9 @@ export default function ProfilePage({ session: sessionProp }) {
   const [stats, setStats] = useState({ matches_played: 0, red_cards: 0, avg_rating: 0, rating_count: 0, pulls_played: 0, trainings_played: 0, challenges_played: 0, current_streak: 0 });
   const [activityHistory, setActivityHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [myBookings, setMyBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [cancellingBooking, setCancellingBooking] = useState(null);
   const [ratings, setRatings] = useState([]);
 
   const [favLoading, setFavLoading] = useState(false);
@@ -221,6 +224,44 @@ export default function ProfilePage({ session: sessionProp }) {
     } finally { setFavLoading(false); }
   }
 
+  async function loadMyBookings(uid) {
+    if (!uid) return;
+    setBookingsLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data } = await supabase.from('court_bookings')
+        .select('id, club_id, date, start_time, end_time, price_cents, status, confirmed_at, cancelled_at')
+        .eq('user_id', uid)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .limit(20);
+      setMyBookings(data || []);
+    } catch(e) { console.error(e); }
+    finally { setBookingsLoading(false); }
+  }
+
+  async function cancelBooking(bookingId, date) {
+    const hoursUntil = (new Date(`${date}T00:00:00`) - new Date()) / (1000 * 60 * 60);
+    if (hoursUntil < 24) {
+      if (!confirm('Faltan menos de 24h. La cancelación puede no ser reembolsable. ¿Continuar?')) return;
+    } else {
+      if (!confirm('¿Cancelar esta reserva?')) return;
+    }
+    setCancellingBooking(bookingId);
+    try {
+      await supabase.from('court_bookings').update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancellation_reason: 'user_cancelled',
+      }).eq('id', bookingId);
+      // Liberar el slot
+      await supabase.from('court_slots').update({ status: 'available' }).eq('booked_by_match_id', bookingId);
+      setMyBookings(prev => prev.filter(b => b.id !== bookingId));
+      toast.success('Reserva cancelada');
+    } catch(e) { toast.error(e.message || 'Error'); }
+    finally { setCancellingBooking(null); }
+  }
+
   async function setFavPrefs(teacherId, nextMorning, nextAfternoon) {
     if (!session?.user?.id) return;
     try {
@@ -259,7 +300,7 @@ export default function ProfilePage({ session: sessionProp }) {
         const name = (prof?.name ?? "").trim() || handle;
         if (!alive) return;
         setForm({ name, handle, sex: prof?.sex ?? "X", level: prof?.level ?? "medio", handedness: prof?.handedness ?? "right", birthdate: prof?.birthdate ?? "", avatar_url: prof?.avatar_url ?? "", sos_enabled: prof?.sos_enabled ?? false, sos_radius_km: prof?.sos_radius_km ?? 50, notify_morning: prof?.notify_morning ?? false, notify_afternoon: prof?.notify_afternoon ?? false, followed_clubs: prof?.followed_clubs ?? [] });
-        await Promise.all([loadFavorites(session.user.id), loadStats(session.user.id)]);
+        await Promise.all([loadFavorites(session.user.id), loadStats(session.user.id), loadMyBookings(session.user.id)]);
         fetchClubsFromGoogleSheet().then(r => setClubsSheet(Array.isArray(r) ? r : [])).catch(() => {});
         supabase.from("club_admins").select("id").eq("user_id", session.user.id).eq("status", "approved").maybeSingle().then(({ data }) => { if (alive && data) setIsClubAdmin(true); });
         supabase.from("clubs").select("id").eq("owner_user_id", session.user.id).maybeSingle().then(({ data }) => { if (alive && data) { setIsClubAdmin(true); setMyClubId(data.id); } });
@@ -678,6 +719,46 @@ export default function ProfilePage({ session: sessionProp }) {
                         </div>
                       </div>
                       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>{dateStr}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* MIS RESERVAS */}
+          <div className="pfSection">
+            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>🏟️ Mis reservas de pista</div>
+            {bookingsLoading ? (
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Cargando…</div>
+            ) : myBookings.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🏟️</div>
+                No tienes reservas próximas
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {myBookings.map(b => {
+                  const hoursUntil = (new Date(`${b.date}T00:00:00`) - new Date()) / (1000*60*60);
+                  const canCancel = b.status !== 'cancelled' && b.status !== 'completed';
+                  const statusColor = b.status === 'confirmed' ? '#74B800' : b.status === 'cancelled' ? '#ef4444' : '#f59e0b';
+                  const statusLabel = b.status === 'confirmed' ? '✅ Confirmada' : b.status === 'cancelled' ? '❌ Cancelada' : '⏳ Pendiente';
+                  return (
+                    <div key={b.id} style={{ padding: "12px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${statusColor}25`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 900, color: "#fff", fontSize: 13 }}>🏟️ {b.club_id}</div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>
+                          📅 {b.date} · {b.start_time?.slice(0,5)}–{b.end_time?.slice(0,5)}
+                        </div>
+                        <div style={{ fontSize: 11, color: statusColor, fontWeight: 800, marginTop: 3 }}>{statusLabel}</div>
+                        {b.price_cents > 0 && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>💶 {(b.price_cents/100).toFixed(2)}€</div>}
+                      </div>
+                      {canCancel && (
+                        <button onClick={() => cancelBooking(b.id, b.date)} disabled={cancellingBooking === b.id}
+                          style={{ padding: "7px 12px", borderRadius: 8, background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.25)", color: "#ff6b6b", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>
+                          {cancellingBooking === b.id ? '…' : hoursUntil < 24 ? '🔒 Cancelar' : 'Cancelar'}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
