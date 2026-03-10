@@ -66,6 +66,9 @@ export default function ClubAdminPage() {
   const [bookings, setBookings] = useState([]);
   const [donations, setDonations] = useState([]);
   const [foundations, setFoundations] = useState([]);
+  const [selectedFoundation, setSelectedFoundation] = useState(null);
+  const [savingFoundation, setSavingFoundation] = useState(false);
+  const [totalDonated, setTotalDonated] = useState(0);
   const [stats, setStats] = useState({ totalMatches:0, totalPlayers:0, totalEarned:0, totalDonated:0, occupancyByHour:[], topPlayers:[] });
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedCourt, setSelectedCourt] = useState(null);
@@ -150,7 +153,8 @@ export default function ClubAdminPage() {
 
     // Cargar config external booking
     try {
-      const {data: clubDb} = await supabase.from('clubs').select('external_booking_url,external_booking_provider,booking_mode').eq('id', adminData.club_id).maybeSingle();
+      const {data: clubDb} = await supabase.from('clubs').select('external_booking_url,external_booking_provider,booking_mode,foundation_id').eq('id', adminData.club_id).maybeSingle();
+      if (clubDb?.foundation_id) setSelectedFoundation(clubDb.foundation_id);
       if (clubDb) {
         setExternalBookingUrl(clubDb.external_booking_url || '');
         setExternalProvider(clubDb.external_booking_provider || 'none');
@@ -356,6 +360,17 @@ export default function ClubAdminPage() {
     finally { setSaving(false); }
   }
 
+  async function saveFoundation(foundationId) {
+    try {
+      setSavingFoundation(true);
+      const {error} = await supabase.from('clubs').update({foundation_id: foundationId}).eq('id', clubAdmin.club_id);
+      if (error) throw error;
+      setSelectedFoundation(foundationId);
+      toast.success('✅ Asociación guardada');
+    } catch(e) { toast.error(e.message); }
+    finally { setSavingFoundation(false); }
+  }
+
   async function deletePrice(id) {
     if (!window.confirm('¿Eliminar esta franja de precio?')) return;
     try {
@@ -430,6 +445,7 @@ async function deleteSchedule(id) {
 
   async function loadDonations(clubId) {
     const {data} = await supabase.from('club_donations').select('*, foundations(name, logo_url)').eq('club_id', clubId).order('month', {ascending:false});
+    if (data) setTotalDonated(data.reduce((sum, d) => sum + (d.total_cents || 0), 0));
     setDonations(data||[]);
   }
 
@@ -1037,27 +1053,79 @@ async function deleteSchedule(id) {
       {tab === 'donaciones' && (
         <div style={{padding:'12px'}}>
           <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>💚 Donaciones</div>
-          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada jugador van a la fundación.</div>
-          {foundations[0] && (
-            <div style={{...S.card, border:'1px solid rgba(116,184,0,0.2)', marginBottom:16}}>
-              <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.3)', marginBottom:4}}>FUNDACIÓN BENEFICIARIA</div>
-              <div style={{fontSize:15, fontWeight:900, color:'#74B800'}}>{foundations[0].name}</div>
-              <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginTop:4}}>{foundations[0].description}</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. Gorila Pádel gestiona la transferencia mensual.</div>
+
+          {/* Saldo acumulado */}
+          <div style={{...S.card, background:'linear-gradient(135deg,rgba(74,222,128,0.1),rgba(116,184,0,0.08))', border:'1px solid rgba(74,222,128,0.25)', marginBottom:16}}>
+            <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.4)', marginBottom:4}}>SALDO ACUMULADO PARA DONAR</div>
+            <div style={{fontSize:36, fontWeight:900, color:'#4ade80', lineHeight:1}}>{(totalDonated/100).toFixed(2)}€</div>
+            <div style={{fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:4}}>
+              {donations.reduce((s,d)=>s+(d.match_count||0),0)} partidos · 0.10€ por jugador por partido
+            </div>
+          </div>
+
+          {/* Elegir asociación */}
+          <div style={{fontSize:13, fontWeight:900, color:'rgba(255,255,255,0.6)', marginBottom:10}}>ELIGE TU ASOCIACIÓN</div>
+          <div style={{display:'flex', flexDirection:'column', gap:10, marginBottom:20}}>
+            {foundations.map(f => {
+              const isSelected = selectedFoundation === f.id;
+              return (
+                <div key={f.id} onClick={()=>saveFoundation(f.id)}
+                  style={{...S.card, cursor:'pointer', border: isSelected ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.08)',
+                    background: isSelected ? 'rgba(116,184,0,0.08)' : 'rgba(255,255,255,0.03)',
+                    transition:'all .2s', position:'relative'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:12}}>
+                    <div style={{width:48, height:48, borderRadius:12, background: isSelected?'rgba(116,184,0,0.2)':'rgba(255,255,255,0.06)',
+                      display:'grid', placeItems:'center', fontSize:24, flexShrink:0, border: isSelected?'1px solid rgba(116,184,0,0.3)':'1px solid rgba(255,255,255,0.08)'}}>
+                      {f.logo_url?.startsWith('http') ? <img src={f.logo_url} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/> : (f.logo_url || '💚')}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14, fontWeight:900, color: isSelected?'#74B800':'#fff'}}>{f.name}</div>
+                      <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2, lineHeight:1.3}}>{f.description}</div>
+                      {f.website && <div style={{fontSize:10, color:'rgba(116,184,0,0.6)', marginTop:3}}>{f.website}</div>}
+                    </div>
+                    <div style={{width:22, height:22, borderRadius:'50%', border: isSelected?'none':'2px solid rgba(255,255,255,0.15)',
+                      background: isSelected?'#74B800':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
+                      {isSelected && <span style={{fontSize:12, color:'#000', fontWeight:900}}>✓</span>}
+                    </div>
+                  </div>
+                  {isSelected && savingFoundation && (
+                    <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)',borderRadius:12,display:'grid',placeItems:'center',fontSize:12,color:'#74B800'}}>Guardando…</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Historial mensual */}
+          <div style={{fontSize:13, fontWeight:900, color:'rgba(255,255,255,0.6)', marginBottom:10}}>HISTORIAL MENSUAL</div>
+          {donations.map(d=>{
+            const foundationName = d.foundations?.name || foundations.find(f=>f.id===selectedFoundation)?.name || '—';
+            const foundationLogo = d.foundations?.logo_url || foundations.find(f=>f.id===selectedFoundation)?.logo_url || '💚';
+            return (
+              <div key={d.id} style={{...S.card, display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <div style={{width:36, height:36, borderRadius:10, background:'rgba(74,222,128,0.1)', display:'grid', placeItems:'center', fontSize:18}}>
+                    {foundationLogo?.startsWith('http') ? <img src={foundationLogo} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:8}}/> : (foundationLogo || '💚')}
+                  </div>
+                  <div>
+                    <div style={{fontSize:13, fontWeight:800}}>{new Date(d.month+'T12:00:00').toLocaleDateString('es',{month:'long',year:'numeric'})}</div>
+                    <div style={{fontSize:10, color:'rgba(255,255,255,0.4)'}}>{foundationName} · {d.match_count||0} partidos</div>
+                  </div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:18, fontWeight:900, color: d.transferred?'#4ade80':'#f59e0b'}}>{(d.total_cents/100).toFixed(2)}€</div>
+                  <div style={{fontSize:10, color: d.transferred?'#4ade80':'rgba(255,255,255,0.3)', fontWeight:700}}>{d.transferred?'✅ Transferido':'⏳ Pendiente'}</div>
+                </div>
+              </div>
+            );
+          })}
+          {donations.length===0 && (
+            <div style={{textAlign:'center', padding:32, color:'rgba(255,255,255,0.3)', fontSize:13}}>
+              <div style={{fontSize:36, marginBottom:8}}>💚</div>
+              Aún no hay donaciones registradas.<br/>Los 10cts se acumulan con cada pago.
             </div>
           )}
-          {donations.map(d=>(
-            <div key={d.id} style={{...S.card, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div>
-                <div style={{fontSize:14, fontWeight:800}}>{new Date(d.month).toLocaleDateString('es',{month:'long',year:'numeric'})}</div>
-                <div style={{fontSize:11, color:'rgba(255,255,255,0.4)'}}>{d.matches_count} partidos</div>
-              </div>
-              <div style={{textAlign:'right'}}>
-                <div style={{fontSize:20, fontWeight:900, color:'#4ade80'}}>{(d.total_cents/100).toFixed(2)}€</div>
-                <div style={{fontSize:10, color:'rgba(255,255,255,0.3)'}}>donados</div>
-              </div>
-            </div>
-          ))}
-          {donations.length===0 && <div style={{textAlign:'center', padding:32, color:'rgba(255,255,255,0.3)', fontSize:14}}>Aún no hay donaciones</div>}
         </div>
       )}
 
