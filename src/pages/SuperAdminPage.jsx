@@ -125,7 +125,7 @@ export default function SuperAdminPage() {
 
   return (
     <div style={{ background: "#080808", minHeight: "100vh", color: "#fff" }}>
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "20px 16px 80px" }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
           {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones']].map(([t,label])=>(
