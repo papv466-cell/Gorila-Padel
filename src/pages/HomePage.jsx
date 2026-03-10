@@ -320,6 +320,26 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
+        {/* Gorila Stack banner */}
+        <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".12s" }}>
+          <div onClick={() => navigate("/stack")} style={{
+            borderRadius: 16, background: "linear-gradient(135deg,#0a1a00,#1a3500)",
+            border: "1px solid rgba(116,184,0,0.25)", padding: "16px 20px",
+            display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ fontSize: 36 }}>🦍</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>GORILA STACK</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Apila sin parar · ¿cuánto aguantas?</div>
+              </div>
+            </div>
+            <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", fontSize: 13, fontWeight: 900, color: "#74B800" }}>
+              ¡Jugar!
+            </div>
+          </div>
+        </div>
+
         {/* Gorilandia feed */}
         {gorilandiaFeed.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s", overflow: "hidden" }}>

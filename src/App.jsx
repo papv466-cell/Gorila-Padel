@@ -50,6 +50,7 @@ import InclusivePage from "./pages/InclusivePage";
 import TeachersPage from "./pages/TeachersPage";
 import TeacherProfilePage from "./pages/TeacherProfilePage";
 import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
+import GorilaStack from "./pages/GorilaStack";
 
 import Navbar from "./components/UI/Navbar";
 import { supabase } from "./services/supabaseClient";
@@ -285,6 +286,7 @@ export default function App() {
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
+          <Route path="/stack" element={<GorilaStack />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
