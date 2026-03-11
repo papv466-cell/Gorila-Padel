@@ -137,13 +137,14 @@ export default function HomePage({ session: sessionProp }) {
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
         getFeed(),
         supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("is_active", true).order("created_at", { ascending: false }).limit(4),
-        supabase.from("split_payment_requests").select("*, court_slots(date, start_time, price)").contains("player_ids", [user.id]).neq("initiator_id", user.id).eq("status", "pending"),
         // Partidos inclusivos esta semana
         supabase.from("inclusive_matches").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
         // Partidos inclusivos totales
         supabase.from("inclusive_matches").select("*", { count: "exact", head: true }),
         // Jugadores únicos en inclusivos
         supabase.from("match_players").select("player_uuid, matches!inner(id)").eq("matches.sos_active", true).limit(1000),
+        // Split pagos pendientes
+        supabase.from("split_payment_requests").select("*, court_slots(date, start_time, price)").contains("player_ids", [user.id]).neq("initiator_id", user.id).eq("status", "pending"),
       ]);
 
       if (profRes.status === "fulfilled") setProfile(profRes.value.data);
