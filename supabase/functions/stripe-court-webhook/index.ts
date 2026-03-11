@@ -35,6 +35,42 @@ serve(async (req) => {
         data: { slotId, date, startTime }
       });
 
+      // 2b. Si es split — actualizar split_payment_requests y notificar a otros jugadores
+      const isSplit = pi.metadata.split === "true";
+      if (isSplit) {
+        const { data: splitReq } = await supabase
+          .from("split_payment_requests")
+          .select("*")
+          .eq("slot_id", slotId)
+          .eq("status", "pending")
+          .maybeSingle();
+
+        if (splitReq) {
+          // Marcar este jugador como pagado
+          const paidPlayers = [...(splitReq.paid_players || []), userId];
+          const allPaid = paidPlayers.length >= splitReq.split_count;
+
+          await supabase.from("split_payment_requests").update({
+            paid_players: paidPlayers,
+            status: allPaid ? "completed" : "partial",
+          }).eq("id", splitReq.id);
+
+          // Notificar a todos los jugadores del split
+          const otherPlayers = (splitReq.player_ids || []).filter((id) => id !== userId);
+          for (const playerId of otherPlayers) {
+            await supabase.from("notifications").insert({
+              user_id: playerId,
+              type: allPaid ? "split_completed" : "split_partial",
+              title: allPaid ? "✅ Pago split completado" : "💸 Un jugador ha pagado su parte",
+              body: allPaid
+                ? "Todos han pagado. Pista del " + date + " a las " + startTime + " confirmada."
+                : "Queda " + (splitReq.split_count - paidPlayers.length) + " pago(s) pendiente(s) para la pista del " + date + ".",
+              data: { slotId, date, startTime }
+            });
+          }
+        }
+      }
+
       // 3. Registrar donación 10cts
       try {
         // Buscar fundación del club
