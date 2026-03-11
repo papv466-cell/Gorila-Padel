@@ -26,5 +26,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // ⭐ Forzar recarga del schema
 if (typeof window !== 'undefined') {
-  console.log('🔄 Supabase client initialized');
 }
