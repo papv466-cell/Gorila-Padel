@@ -285,7 +285,7 @@ export default function PublicProfilePage() {
                   <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.1 }}>{displayName}</h1>
                   {session?.user?.id && session.user.id !== userId && (
                     <button onClick={toggleFollow} disabled={followSaving}
-                      style={{ padding: '7px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: 12, flexShrink: 0,
+                      style={{ padding: '7px 14px', borderRadius: 20, cursor: 'pointer', fontWeight: 900, fontSize: 12, flexShrink: 0,
                         background: isFollowing ? 'rgba(116,184,0,0.15)' : 'linear-gradient(135deg,#74B800,#9BE800)',
                         color: isFollowing ? '#74B800' : '#000',
                         border: isFollowing ? '1px solid rgba(116,184,0,0.4)' : 'none' }}>

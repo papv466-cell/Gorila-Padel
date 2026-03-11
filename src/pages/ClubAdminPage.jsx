@@ -1799,7 +1799,7 @@ async function deleteSchedule(id) {
                     {v:'blocked',   l:'🚫 Bloquear',   c:'red'},
                   ].map(({v,l,c})=>(
                     <button key={v} onClick={()=>setSlotForm(p=>({...p,status:v}))}
-                      style={{flex:1,padding:'10px',borderRadius:10,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
+                      style={{flex:1,padding:'10px',borderRadius:10,cursor:'pointer',fontWeight:800,fontSize:12,
                         background:slotForm.status===v?(c==='green'?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(220,38,38,0.3)'):'rgba(255,255,255,0.08)',
                         color:slotForm.status===v?(c==='green'?'#000':'#ff6b6b'):'rgba(255,255,255,0.6)',
                         border:slotForm.status===v?(c==='red'?'1px solid rgba(220,38,38,0.5)':'none'):'1px solid transparent'}}>
@@ -1849,7 +1849,7 @@ async function deleteSchedule(id) {
                   <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
                     {['🔧 Mantenimiento','🏆 Torneo propio','📚 Clase','🔒 Uso interno','❌ Cerrado'].map(m=>(
                       <button key={m} onClick={()=>setSlotForm(p=>({...p,block_reason:m}))}
-                        style={{padding:'6px 12px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:700,fontSize:11,
+                        style={{padding:'6px 12px',borderRadius:20,cursor:'pointer',fontWeight:700,fontSize:11,
                           background:slotForm.block_reason===m?'rgba(220,38,38,0.25)':'rgba(255,255,255,0.06)',
                           color:slotForm.block_reason===m?'#ff6b6b':'rgba(255,255,255,0.5)',
                           border:slotForm.block_reason===m?'1px solid rgba(220,38,38,0.4)':'1px solid transparent'}}>
