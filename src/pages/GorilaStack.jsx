@@ -1,13 +1,11 @@
-// src/pages/GorilaStack.jsx — Gorila Pong 🦍🎾
+// src/pages/GorilaStack.jsx — Gorila Timing 🦍🎾
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-const W = 390, H = 580;
-const PADDLE_W = 14, PADDLE_H = 80;
-const BALL_R = 10;
-const PLAYER_X = 30;
-const WALL_X = W - 20;
+const W = 390, H = 620;
+const BAR_Y = H - 120;
+const ZONE_CENTER = W / 2;
 
 export default function GorilaStack() {
   const navigate = useNavigate();
@@ -16,9 +14,12 @@ export default function GorilaStack() {
   const rafRef = useRef(null);
   const [screen, setScreen] = useState("home");
   const [score, setScore] = useState(0);
-  const [hs, setHs] = useState(() => { try { return parseInt(localStorage.getItem("gorila_pong_hs")||"0"); } catch { return 0; } });
+  const [combo, setCombo] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [hs, setHs] = useState(() => { try { return parseInt(localStorage.getItem("gorila_timing_hs")||"0"); } catch { return 0; } });
   const [topScores, setTopScores] = useState([]);
   const [playerName, setPlayerName] = useState("Gorila");
+  const [lastHit, setLastHit] = useState(null); // "PERFECTO" | "BIEN" | "FALLO"
 
   useEffect(() => {
     loadRanking();
@@ -33,8 +34,8 @@ export default function GorilaStack() {
   async function loadRanking() {
     try {
       const { data } = await supabase.from("gorila_runner_scores")
-        .select("name,score").order("score", { ascending: false }).limit(10);
-      setTopScores(data || []);
+        .select("name,score").order("score",{ascending:false}).limit(10);
+      setTopScores(data||[]);
     } catch {}
   }
 
@@ -52,44 +53,44 @@ export default function GorilaStack() {
   }
 
   function saveHs(s) {
-    try { localStorage.setItem("gorila_pong_hs", String(s)); } catch {}
+    try { localStorage.setItem("gorila_timing_hs", String(s)); } catch {}
     setHs(s);
   }
 
   function initState() {
     return {
-      paddle: { y: H/2 - PADDLE_H/2, vy: 0, targetY: H/2 - PADDLE_H/2 },
-      ball: { x: PLAYER_X + PADDLE_W + 20, y: H/2, vx: 5, vy: (Math.random()-0.5)*4 },
+      // Barra oscilante
+      bar: { x: W/2, vx: 4, direction: 1 },
+      // Zona verde (zona perfecta)
+      zone: { x: W/2, width: 120 },
+      // Zona ok (zona bien)
+      okZone: { width: 200 },
       score: 0,
-      hits: 0,
+      combo: 0,
+      lives: 3,
+      frame: 0,
+      speed: 4,
+      level: 1,
       particles: [],
       shake: 0,
-      frame: 0,
-      speed: 1,
-      trail: [],
-      smashEffect: 0,
-      lastHitY: 0,
-      wallBounces: 0,
+      hitEffect: null, // { text, color, alpha, y }
+      ballY: 80,
+      ballVisible: true,
+      pulse: 0,
+      bg: 0, // color de fondo oscila
+      lastHitTime: 0,
+      waiting: false, // esperando tap
+      tapReady: true,
     };
   }
 
   const startGame = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    stateRef.current = initState();
-    setScore(0);
+    const s = initState();
+    stateRef.current = s;
+    setScore(0); setCombo(0); setLives(3); setLastHit(null);
     setScreen("playing");
   }, []);
-
-  // Touch/mouse control
-  const handlePointerMove = useCallback((e) => {
-    if (screen !== "playing" || !stateRef.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const y = (clientY - rect.top) * (H / rect.height);
-    stateRef.current.paddle.targetY = Math.max(0, Math.min(H - PADDLE_H, y - PADDLE_H/2));
-  }, [screen]);
 
   useEffect(() => {
     if (screen !== "playing") return;
@@ -101,95 +102,42 @@ export default function GorilaStack() {
       if (!s) return;
       const ctx = canvas.getContext("2d");
       s.frame++;
+      s.pulse = (s.pulse + 0.05) % (Math.PI * 2);
+      s.bg = (s.bg + 0.5) % 360;
 
-      // Paddle sigue el dedo suavemente
-      s.paddle.y += (s.paddle.targetY - s.paddle.y) * 0.25;
+      // Velocidad aumenta con score
+      s.speed = 4 + s.score * 0.15;
+      if (s.speed > 18) s.speed = 18;
 
-      // Velocidad aumenta con hits
-      s.speed = 1 + s.hits * 0.08;
-      if (s.speed > 3.5) s.speed = 3.5;
+      // Zona verde se hace más pequeña
+      const minZone = 40;
+      s.zone.width = Math.max(minZone, 120 - s.score * 1.5);
+      s.okZone.width = s.zone.width * 1.8;
 
-      // Mover pelota
-      s.ball.x += s.ball.vx * s.speed;
-      s.ball.y += s.ball.vy * s.speed;
+      // Mover barra
+      s.bar.x += s.bar.vx * s.speed / 4;
+      if (s.bar.x >= W - 20) { s.bar.x = W - 20; s.bar.vx = -Math.abs(s.bar.vx); }
+      if (s.bar.x <= 20) { s.bar.x = 20; s.bar.vx = Math.abs(s.bar.vx); }
 
-      // Trail
-      s.trail.push({ x: s.ball.x, y: s.ball.y, alpha: 1 });
-      if (s.trail.length > 12) s.trail.shift();
-      for (const t of s.trail) t.alpha -= 0.08;
+      // Pelota animación
+      s.ballY = 80 + Math.sin(s.pulse * 2) * 8;
 
-      // Rebote techo/suelo
-      if (s.ball.y - BALL_R < 0) { s.ball.y = BALL_R; s.ball.vy = Math.abs(s.ball.vy); addParticles(s, s.ball.x, 0, "#74B800", 4); }
-      if (s.ball.y + BALL_R > H) { s.ball.y = H - BALL_R; s.ball.vy = -Math.abs(s.ball.vy); addParticles(s, s.ball.x, H, "#74B800", 4); }
-
-      // Rebote pared derecha
-      if (s.ball.x + BALL_R >= WALL_X) {
-        s.ball.x = WALL_X - BALL_R;
-        s.ball.vx = -Math.abs(s.ball.vx);
-        s.wallBounces++;
-        s.shake = 6;
-        addParticles(s, WALL_X, s.ball.y, "#9BE800", 8);
-      }
-
-      // Colisión con pala
-      const px = PLAYER_X, py = s.paddle.y;
-      if (
-        s.ball.x - BALL_R < px + PADDLE_W &&
-        s.ball.x + BALL_R > px &&
-        s.ball.y + BALL_R > py &&
-        s.ball.y - BALL_R < py + PADDLE_H &&
-        s.ball.vx < 0
-      ) {
-        s.hits++;
-        s.score = s.hits;
-        setScore(s.hits);
-        if (s.hits > hs) { saveHs(s.hits); }
-
-        // Ángulo según dónde golpea en la pala
-        const hitPos = (s.ball.y - py) / PADDLE_H; // 0=top 1=bottom
-        const angle = (hitPos - 0.5) * 2.2; // -1.1 a 1.1 rad
-        const baseSpeed = 5 + s.hits * 0.3;
-        s.ball.vx = Math.abs(baseSpeed * Math.cos(angle * 0.6));
-        s.ball.vy = baseSpeed * Math.sin(angle * 0.6);
-        s.ball.x = px + PADDLE_W + BALL_R + 2;
-
-        // Smash si golpea en el centro
-        const isSmash = hitPos > 0.3 && hitPos < 0.7;
-        if (isSmash) {
-          s.smashEffect = 30;
-          addParticles(s, s.ball.x, s.ball.y, "#FFD700", 15);
-        } else {
-          addParticles(s, s.ball.x, s.ball.y, "#74B800", 8);
-        }
-        s.shake = isSmash ? 12 : 6;
-        s.lastHitY = s.ball.y;
-      }
-
-      // FALLO — pelota sale por la izquierda
-      if (s.ball.x + BALL_R < 0) {
-        addParticles(s, 0, s.ball.y, "#ff4444", 20);
-        s.shake = 25;
-        const finalScore = s.score;
-        stateRef.current = null;
-        setTimeout(() => {
-          saveScore(finalScore);
-          setScore(finalScore);
-          setScreen("dead");
-        }, 600);
-        drawFrame(ctx, s);
-        return;
+      // Hit effect fade
+      if (s.hitEffect) {
+        s.hitEffect.alpha -= 0.025;
+        s.hitEffect.y -= 1.5;
+        if (s.hitEffect.alpha <= 0) s.hitEffect = null;
       }
 
       // Partículas
       for (let i = s.particles.length-1; i >= 0; i--) {
         const p = s.particles[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.12;
+        p.x += p.vx; p.y += p.vy; p.vy += 0.15;
         p.life--; p.alpha = p.life / 40;
         if (p.life <= 0) s.particles.splice(i, 1);
       }
 
       if (s.shake > 0) s.shake--;
-      if (s.smashEffect > 0) s.smashEffect--;
 
       drawFrame(ctx, s);
       rafRef.current = requestAnimationFrame(loop);
@@ -199,90 +147,166 @@ export default function GorilaStack() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [screen]);
 
-  function addParticles(s, x, y, color, n=8) {
+  function addParticles(s, x, y, color, n=12) {
     for (let i=0; i<n; i++) {
-      s.particles.push({ x, y, vx:(Math.random()-0.5)*7, vy:(Math.random()-0.5)*7-1, alpha:1, color, r:Math.random()*4+2, life:30+Math.random()*20 });
+      s.particles.push({
+        x, y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10-3,
+        alpha:1, color, r:Math.random()*5+2, life:35+Math.random()*20
+      });
+    }
+  }
+
+  function handleTap() {
+    if (screen === "home") { startGame(); return; }
+    if (screen === "dead") { startGame(); return; }
+    if (screen !== "playing") return;
+
+    const s = stateRef.current;
+    if (!s || !s.tapReady) return;
+    s.tapReady = false;
+    setTimeout(() => { if (stateRef.current) stateRef.current.tapReady = true; }, 150);
+
+    const barX = s.bar.x;
+    const zoneLeft = ZONE_CENTER - s.zone.width/2;
+    const zoneRight = ZONE_CENTER + s.zone.width/2;
+    const okLeft = ZONE_CENTER - s.okZone.width/2;
+    const okRight = ZONE_CENTER + s.okZone.width/2;
+
+    const isPerfect = barX >= zoneLeft && barX <= zoneRight;
+    const isOk = barX >= okLeft && barX <= okRight;
+
+    if (isPerfect) {
+      // PERFECTO
+      s.score++;
+      s.combo++;
+      s.shake = 8;
+      s.hitEffect = { text: s.combo >= 5 ? `x${s.combo} 🔥 PERFECTO!` : "✨ PERFECTO!", color: "#FFD700", alpha: 1, y: BAR_Y - 60 };
+      addParticles(s, ZONE_CENTER, BAR_Y - 20, "#FFD700", 18);
+      addParticles(s, barX, BAR_Y - 20, "#74B800", 10);
+      setScore(s.score); setCombo(s.combo);
+      setLastHit("PERFECTO");
+      if (s.score > hs) saveHs(s.score);
+      // Invertir dirección para más dinamismo
+      if (s.combo % 3 === 0) s.bar.vx *= -1.1;
+    } else if (isOk) {
+      // BIEN
+      s.score++;
+      s.combo = Math.max(0, s.combo - 1);
+      s.hitEffect = { text: "👍 BIEN", color: "#74B800", alpha: 1, y: BAR_Y - 60 };
+      addParticles(s, barX, BAR_Y - 20, "#74B800", 6);
+      setScore(s.score); setCombo(s.combo);
+      setLastHit("BIEN");
+      if (s.score > hs) saveHs(s.score);
+    } else {
+      // FALLO
+      s.combo = 0;
+      s.lives--;
+      s.shake = 20;
+      s.hitEffect = { text: "💥 FALLO", color: "#ff4444", alpha: 1, y: BAR_Y - 60 };
+      addParticles(s, barX, BAR_Y - 20, "#ff4444", 15);
+      setCombo(0); setLives(s.lives);
+      setLastHit("FALLO");
+
+      if (s.lives <= 0) {
+        const finalScore = s.score;
+        stateRef.current = null;
+        setTimeout(() => {
+          saveScore(finalScore);
+          setScore(finalScore);
+          setScreen("dead");
+        }, 500);
+      }
     }
   }
 
   function drawFrame(ctx, s) {
-    const sx = s.shake > 0 ? (Math.random()-0.5)*s.shake*0.6 : 0;
+    const sx = s.shake > 0 ? (Math.random()-0.5)*s.shake*0.5 : 0;
     const sy = s.shake > 0 ? (Math.random()-0.5)*s.shake*0.3 : 0;
     ctx.save();
     ctx.translate(sx, sy);
 
-    // Fondo
-    ctx.fillStyle = "#050510";
+    // Fondo dinámico
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#050510");
+    bg.addColorStop(1, "#0a150a");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Grid de pista (perspectiva)
-    ctx.strokeStyle = "rgba(116,184,0,0.06)";
+    // Líneas de fondo animadas
+    ctx.strokeStyle = "rgba(116,184,0,0.04)";
     ctx.lineWidth = 1;
-    for (let x=0; x<W; x+=40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-    for (let y=0; y<H; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-
-    // Línea central
-    ctx.setLineDash([10,8]);
-    ctx.strokeStyle = "rgba(116,184,0,0.15)";
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Pared derecha
-    const wallGlow = s.wallBounces > 0 ? Math.min(s.wallBounces * 10, 80) : 20;
-    ctx.fillStyle = `rgba(116,184,0,0.${Math.floor(wallGlow/10)})`;
-    ctx.fillRect(WALL_X, 0, W - WALL_X, H);
-    ctx.fillStyle = "#74B800";
-    ctx.fillRect(WALL_X, 0, 4, H);
-
-    // Trail de la pelota
-    for (let i=0; i<s.trail.length; i++) {
-      const t = s.trail[i];
-      const r = BALL_R * (i/s.trail.length) * 0.8;
-      ctx.save();
-      ctx.globalAlpha = t.alpha * 0.5;
-      ctx.fillStyle = s.smashEffect > 0 ? "#FFD700" : "#74B800";
-      ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
+    for (let i=0; i<8; i++) {
+      const x = (i * W/7 + s.frame * 0.3) % W;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
     }
 
-    // Pelota
-    const ballColor = s.smashEffect > 0 ? "#FFD700" : "#fff";
+    // PELOTA animada arriba
+    const ballGlow = 0.5 + Math.sin(s.pulse) * 0.3;
     ctx.save();
-    if (s.smashEffect > 0) {
-      ctx.shadowColor = "#FFD700";
-      ctx.shadowBlur = 20;
-    }
-    ctx.fillStyle = ballColor;
-    ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, BALL_R, 0, Math.PI*2); ctx.fill();
+    ctx.shadowColor = "#74B800";
+    ctx.shadowBlur = 20 * ballGlow;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(W/2, s.ballY, 18, 0, Math.PI*2); ctx.fill();
     // Costuras
-    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(s.ball.x, s.ball.y, BALL_R*0.6, 0.3, Math.PI-0.3); ctx.stroke();
+    ctx.strokeStyle = "rgba(116,184,0,0.6)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(W/2, s.ballY, 12, 0.3, Math.PI-0.3); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W/2, s.ballY, 12, Math.PI+0.3, -0.3); ctx.stroke();
     ctx.restore();
 
-    // PALA — Gorila con raqueta
-    const px = PLAYER_X, py = s.paddle.y;
-    // Mango raqueta
-    ctx.fillStyle = "#8B4513";
-    ctx.beginPath(); ctx.roundRect(px-2, py + PADDLE_H*0.3, 6, PADDLE_H*0.5, 3); ctx.fill();
-    // Marco raqueta
-    ctx.strokeStyle = "#74B800";
-    ctx.lineWidth = 4;
-    ctx.fillStyle = "rgba(116,184,0,0.15)";
-    ctx.beginPath(); ctx.roundRect(px, py, PADDLE_W, PADDLE_H, 6); ctx.fill(); ctx.stroke();
-    // Cuerdas horizontales
-    ctx.strokeStyle = "rgba(116,184,0,0.5)";
-    ctx.lineWidth = 1;
-    for (let i=1; i<5; i++) {
-      const cy = py + (PADDLE_H/5)*i;
-      ctx.beginPath(); ctx.moveTo(px+2, cy); ctx.lineTo(px+PADDLE_W-2, cy); ctx.stroke();
-    }
-    // Cuerdas verticales
-    ctx.beginPath(); ctx.moveTo(px+PADDLE_W/2, py+2); ctx.lineTo(px+PADDLE_W/2, py+PADDLE_H-2); ctx.stroke();
+    // Flecha indicadora
+    ctx.fillStyle = `rgba(116,184,0,${0.3 + Math.sin(s.pulse*3)*0.2})`;
+    ctx.beginPath();
+    ctx.moveTo(W/2, s.ballY + 30);
+    ctx.lineTo(W/2 - 10, s.ballY + 45);
+    ctx.lineTo(W/2 + 10, s.ballY + 45);
+    ctx.closePath(); ctx.fill();
 
-    // Gorila pequeño encima de la pala
-    const gx = px + PADDLE_W/2, gy = py - 28;
+    // ZONA OK (azul/verde claro)
+    const okLeft = ZONE_CENTER - s.okZone.width/2;
+    ctx.fillStyle = "rgba(116,184,0,0.08)";
+    ctx.beginPath(); ctx.roundRect(okLeft, BAR_Y - 40, s.okZone.width, 80, 12); ctx.fill();
+    ctx.strokeStyle = "rgba(116,184,0,0.2)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(okLeft, BAR_Y - 40, s.okZone.width, 80, 12); ctx.stroke();
+
+    // ZONA PERFECTA (verde brillante)
+    const zoneLeft = ZONE_CENTER - s.zone.width/2;
+    const zoneGlow = 0.4 + Math.sin(s.pulse * 2) * 0.2;
+    ctx.save();
+    ctx.shadowColor = "#74B800";
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = `rgba(116,184,0,${zoneGlow})`;
+    ctx.beginPath(); ctx.roundRect(zoneLeft, BAR_Y - 40, s.zone.width, 80, 10); ctx.fill();
+    ctx.strokeStyle = "#74B800";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(zoneLeft, BAR_Y - 40, s.zone.width, 80, 10); ctx.stroke();
+    ctx.restore();
+
+    // Label PERFECTO en zona
+    ctx.fillStyle = "rgba(116,184,0,0.9)";
+    ctx.font = "bold 11px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText("PERFECTO", ZONE_CENTER, BAR_Y - 48);
+
+    // BARRA (raqueta)
+    const barGrad = ctx.createLinearGradient(s.bar.x - 8, 0, s.bar.x + 8, 0);
+    barGrad.addColorStop(0, "rgba(116,184,0,0)");
+    barGrad.addColorStop(0.5, "#9BE800");
+    barGrad.addColorStop(1, "rgba(116,184,0,0)");
+    ctx.save();
+    ctx.shadowColor = "#74B800";
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = barGrad;
+    ctx.beginPath(); ctx.roundRect(s.bar.x - 8, BAR_Y - 50, 16, 100, 8); ctx.fill();
+    // Borde brillante
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(s.bar.x - 8, BAR_Y - 50, 16, 100, 8); ctx.stroke();
+    ctx.restore();
+
+    // Gorila encima de la barra
+    const gx = s.bar.x, gy = BAR_Y - 75;
     ctx.fillStyle = "#2a1a0a";
     ctx.beginPath(); ctx.ellipse(gx, gy, 14, 16, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = "#8B6040";
@@ -301,39 +325,65 @@ export default function GorilaStack() {
       ctx.restore();
     }
 
-    // HUD
-    // Score grande
+    // HIT EFFECT
+    if (s.hitEffect && s.hitEffect.alpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = s.hitEffect.alpha;
+      ctx.fillStyle = s.hitEffect.color;
+      ctx.font = "bold 26px system-ui";
+      ctx.textAlign = "center";
+      ctx.shadowColor = s.hitEffect.color;
+      ctx.shadowBlur = 15;
+      ctx.fillText(s.hitEffect.text, W/2, s.hitEffect.y);
+      ctx.restore();
+    }
+
+    // HUD — Score
     ctx.save();
-    ctx.shadowColor = "#74B800"; ctx.shadowBlur = 20;
-    ctx.fillStyle = "#74B800";
-    ctx.font = "bold 48px system-ui";
+    ctx.shadowColor = "#74B800"; ctx.shadowBlur = 15;
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 52px system-ui";
     ctx.textAlign = "center";
-    ctx.fillText(s.score, W/2, 60);
+    ctx.fillText(s.score, W/2, 55);
     ctx.restore();
 
-    // Velocidad
-    const speedPct = (s.speed - 1) / 2.5;
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.beginPath(); ctx.roundRect(W-100, 10, 88, 20, 6); ctx.fill();
-    ctx.fillStyle = `hsl(${90-speedPct*90},100%,50%)`;
-    ctx.beginPath(); ctx.roundRect(W-100, 10, 88*speedPct, 20, 6); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.5)";
-    ctx.font = "bold 9px system-ui"; ctx.textAlign = "center";
-    ctx.fillText("VELOCIDAD", W-56, 24);
-
-    // Hits info
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
-    ctx.font = "11px system-ui"; ctx.textAlign = "left";
-    ctx.fillText(`${s.hits} golpes`, 10, 25);
-
-    // SMASH
-    if (s.smashEffect > 0) {
-      ctx.save();
-      ctx.globalAlpha = s.smashEffect / 30;
-      ctx.fillStyle = "#FFD700";
-      ctx.font = "bold 28px system-ui";
+    // Combo
+    if (s.combo >= 2) {
+      ctx.fillStyle = "#F97316";
+      ctx.font = `bold ${14 + Math.min(s.combo, 10)}px system-ui`;
       ctx.textAlign = "center";
-      ctx.fillText("⚡ SMASH!", W/2, H/2);
+      ctx.fillText(`🔥 x${s.combo} COMBO`, W/2, 80);
+    }
+
+    // Vidas
+    ctx.font = "20px system-ui";
+    ctx.textAlign = "left";
+    for (let i=0; i<3; i++) {
+      ctx.globalAlpha = i < s.lives ? 1 : 0.2;
+      ctx.fillText("❤️", 14 + i*28, 30);
+    }
+    ctx.globalAlpha = 1;
+
+    // Velocidad
+    const speedPct = (s.speed - 4) / 14;
+    if (speedPct > 0) {
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      ctx.beginPath(); ctx.roundRect(W-90, 14, 76, 8, 4); ctx.fill();
+      ctx.fillStyle = `hsl(${90-speedPct*90},100%,50%)`;
+      ctx.beginPath(); ctx.roundRect(W-90, 14, 76*speedPct, 8, 4); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.font = "9px system-ui"; ctx.textAlign = "right";
+      ctx.fillText("VELOCIDAD", W-14, 32);
+    }
+
+    // Instrucción al inicio
+    if (s.score === 0 && s.frame < 120) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (120-s.frame)/30);
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.font = "bold 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("¡TAP cuando la barra esté en verde!", W/2, H/2 + 20);
       ctx.restore();
     }
 
@@ -341,33 +391,30 @@ export default function GorilaStack() {
   }
 
   const S = {
-    wrap: { position:"fixed", inset:0, background:"#050510", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", userSelect:"none" },
-    canvas: { borderRadius:16, border:"1px solid rgba(116,184,0,0.2)", maxWidth:"100%", maxHeight:"100vh", touchAction:"none", cursor:"none" },
-    btn: { padding:"14px 32px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:16, border:"none", cursor:"pointer" },
+    wrap: { position:"fixed", inset:0, background:"#050510", display:"flex", alignItems:"center", justifyContent:"center", userSelect:"none", touchAction:"manipulation" },
+    canvas: { borderRadius:0, maxWidth:"100%", maxHeight:"100vh", cursor:"pointer", display:"block" },
+    btn: { padding:"14px 36px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:17, border:"none", cursor:"pointer" },
     ghost: { padding:"10px 24px", borderRadius:14, background:"rgba(255,255,255,0.08)", color:"#fff", fontWeight:700, fontSize:13, border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer" },
   };
 
   return (
-    <div style={S.wrap}>
-      <canvas
-        ref={canvasRef} width={W} height={H} style={S.canvas}
-        onMouseMove={handlePointerMove}
-        onTouchMove={e=>{e.preventDefault();handlePointerMove(e);}}
-        onTouchStart={e=>{e.preventDefault();handlePointerMove(e); if(screen==="home")startGame(); if(screen==="dead")startGame();}}
-        onClick={()=>{ if(screen==="home")startGame(); if(screen==="dead")startGame(); }}
-      />
+    <div style={S.wrap} onClick={handleTap} onTouchEnd={e=>{e.preventDefault();handleTap();}}>
+      <canvas ref={canvasRef} width={W} height={H} style={S.canvas} />
 
       {/* HOME */}
       {screen === "home" && (
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.88)",gap:10,padding:20}}>
-          <div style={{fontSize:56}}>🦍🎾</div>
-          <div style={{fontSize:28,fontWeight:900,color:"#74B800"}}>Gorila Pong</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:280}}>Mueve la raqueta con el dedo. Devuelve la pelota. 1 fallo = fin.</div>
-          {hs > 0 && <div style={{fontSize:14,color:"#74B800",fontWeight:900}}>🏆 Tu récord: {hs} golpes</div>}
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.9)",gap:12,padding:24}}>
+          <div style={{fontSize:60}}>🦍🎾</div>
+          <div style={{fontSize:30,fontWeight:900,color:"#74B800"}}>Gorila Timing</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:280,lineHeight:1.6}}>
+            Toca cuando la barra esté en la zona verde.<br/>
+            <span style={{color:"#FFD700"}}>Zona brillante = PERFECTO ✨</span><br/>
+            Tienes 3 vidas. ¡Llega lo más lejos posible!
+          </div>
+          {hs > 0 && <div style={{fontSize:15,color:"#74B800",fontWeight:900}}>🏆 Tu récord: {hs}</div>}
           <button style={S.btn} onClick={startGame}>▶ JUGAR</button>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>Golpea en el centro = ⚡ SMASH</div>
           {topScores.length > 0 && (
-            <div style={{marginTop:8,width:"100%",maxWidth:300,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"12px 16px"}}>
+            <div style={{width:"100%",maxWidth:300,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"12px 16px"}}>
               <div style={{fontSize:12,fontWeight:900,color:"#74B800",marginBottom:8,textAlign:"center"}}>🏆 TOP 10 GLOBAL</div>
               {topScores.map((s,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:12}}>
@@ -381,17 +428,17 @@ export default function GorilaStack() {
         </div>
       )}
 
-      {/* GAME OVER */}
+      {/* DEAD */}
       {screen === "dead" && (
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.92)",gap:8,padding:20}}>
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.93)",gap:10,padding:24}}>
           <div style={{fontSize:48}}>💥</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#ff4444"}}>¡FALLASTE!</div>
-          <div style={{fontSize:44,fontWeight:900,color:"#fff"}}>{score}</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>golpes</div>
-          {score > 0 && score >= hs && <div style={{fontSize:14,color:"#74B800",fontWeight:900}}>🏆 ¡Nuevo récord!</div>}
+          <div style={{fontSize:24,fontWeight:900,color:"#ff4444"}}>¡GAME OVER!</div>
+          <div style={{fontSize:48,fontWeight:900,color:"#fff"}}>{score}</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>golpes perfectos</div>
+          {score >= hs && score > 0 && <div style={{fontSize:15,color:"#74B800",fontWeight:900}}>🏆 ¡Nuevo récord!</div>}
           <button style={S.btn} onClick={startGame}>🔄 REINTENTAR</button>
           {topScores.length > 0 && (
-            <div style={{marginTop:8,width:"100%",maxWidth:280,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"10px 14px"}}>
+            <div style={{width:"100%",maxWidth:280,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"10px 14px"}}>
               <div style={{fontSize:11,fontWeight:900,color:"#74B800",marginBottom:6,textAlign:"center"}}>🏆 TOP 10</div>
               {topScores.map((s,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:11}}>
