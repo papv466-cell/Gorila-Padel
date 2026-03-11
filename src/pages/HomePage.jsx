@@ -106,6 +106,7 @@ export default function HomePage({ session: sessionProp }) {
   const [profile, setProfile] = useState(null);
   const [matches, setMatches] = useState([]);
   const [gorilandiaFeed, setGorilandiaFeed] = useState([]);
+  const [splitPending, setSplitPending] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [inclusiveStats, setInclusiveStats] = useState({ weekCount: 0, totalCount: 0, playersCount: 0 });
@@ -131,11 +132,12 @@ export default function HomePage({ session: sessionProp }) {
       setLoading(true);
       const weekStart = getWeekStart();
 
-      const [profRes, matchRes, feedRes, prodRes, incWeekRes, incTotalRes, incPlayersRes] = await Promise.allSettled([
+      const [profRes, matchRes, feedRes, prodRes, incWeekRes, incTotalRes, incPlayersRes, splitRes] = await Promise.allSettled([
         supabase.from("profiles").select("name, handle, avatar_url, level").eq("id", user.id).maybeSingle(),
         supabase.from("matches").select("*").gte("start_at", new Date().toISOString()).order("start_at").limit(5),
         getFeed(),
         supabase.from("store_products").select("id,title,price,images,slug,compare_at_price").eq("is_active", true).order("created_at", { ascending: false }).limit(4),
+        supabase.from("split_payment_requests").select("*, court_slots(date, start_time, price)").contains("player_ids", [user.id]).neq("initiator_id", user.id).eq("status", "pending"),
         // Partidos inclusivos esta semana
         supabase.from("inclusive_matches").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
         // Partidos inclusivos totales
@@ -148,6 +150,7 @@ export default function HomePage({ session: sessionProp }) {
       if (matchRes.status === "fulfilled") setMatches(matchRes.value.data || []);
       if (feedRes.status === "fulfilled") setGorilandiaFeed((Array.isArray(feedRes.value) ? feedRes.value : []).slice(0, 6));
       if (prodRes.status === "fulfilled") setProducts(prodRes.value.data || []);
+      if (splitRes?.status === "fulfilled") setSplitPending(splitRes.value.data || []);
 
       // Stats inclusivos
       const weekCount   = incWeekRes.status === "fulfilled"    ? incWeekRes.value.count || 0 : 0;
@@ -317,6 +320,29 @@ export default function HomePage({ session: sessionProp }) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* Split pagos pendientes */}
+        {splitPending.length > 0 && (
+          <div className="ghSection" style={{ marginBottom: 16, animationDelay: ".05s" }}>
+            {splitPending.map((sp, i) => (
+              <div key={i} onClick={() => navigate(`/reserva/pago?slotId=${sp.slot_id}&split=true`)}
+                style={{ borderRadius: 14, background: "linear-gradient(135deg,rgba(249,115,22,0.15),rgba(249,115,22,0.05))", border: "1px solid rgba(249,115,22,0.4)", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ fontSize: 28 }}>💸</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: "#F97316" }}>Pago pendiente</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+                      Pista · {sp.court_slots?.date} {sp.court_slots?.start_time?.slice(0,5)} · {sp.price_per_player?.toFixed(2)}€
+                    </div>
+                  </div>
+                </div>
+                <div style={{ padding: "8px 14px", borderRadius: 10, background: "rgba(249,115,22,0.2)", border: "1px solid rgba(249,115,22,0.4)", fontSize: 12, fontWeight: 900, color: "#F97316" }}>
+                  Pagar →
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
