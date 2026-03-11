@@ -184,7 +184,7 @@ export default function FindPlayersPage({ session }) {
         <div style={{ display: "flex", gap: 6, marginBottom: 10, overflowX: "auto", scrollbarWidth: "none" }}>
           {DISTANCES.map(d => (
             <button key={d.key} onClick={() => setDistFilter(d.key)} style={{
-              flexShrink: 0, padding: "6px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+              flexShrink: 0, padding: "6px 12px", borderRadius: 999, cursor: "pointer",
               fontSize: 12, fontWeight: 800,
               background: distFilter === d.key ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.05)",
               color: distFilter === d.key ? "#74B800" : "rgba(255,255,255,0.5)",
@@ -198,7 +198,7 @@ export default function FindPlayersPage({ session }) {
         {/* FILTRO GORILA SIN LÍMITES */}
         <div style={{ marginBottom: 16 }}>
           <button onClick={() => setGorila(!gorila)} style={{
-            padding: "7px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            padding: "7px 14px", borderRadius: 999, cursor: "pointer",
             fontSize: 12, fontWeight: 800,
             background: gorila ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.05)",
             color: gorila ? "#9BE800" : "rgba(255,255,255,0.5)",

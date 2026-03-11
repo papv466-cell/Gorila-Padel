@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-import { sendPushNotification } from "../services/notifications";
+import { createNotification } from "../services/notifications";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { useToast } from "../components/ToastProvider";
 
@@ -1086,10 +1086,11 @@ export default function ClubPage({ session: sessionProp }) {
                               const slot = bookingSlot;
                               for (const player of splitPlayers) {
                                 try {
-                                  await sendPushNotification(player.id, {
+                                  await createNotification({ userId: player.id,
+                                    type: "split_invite",
                                     title: "💸 Te invitan a dividir pista",
                                     body: `Tienes un pago pendiente para la reserva del ${slot.date} a las ${slot.start_time?.slice(0,5)}`,
-                                    url: `/reserva/pago?slotId=${slot.id}&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`,
+                                    data: { url: `/reserva/pago?slotId=${slot.id}&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}` },
                                   });
                                 } catch {}
                               }
