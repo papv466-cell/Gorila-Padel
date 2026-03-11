@@ -21,7 +21,7 @@ serve(async (req) => {
       .eq("id", slotId)
       .single();
     if (!slot) throw new Error("Slot no encontrado");
-    if (slot.status !== "available") throw new Error("Este slot ya no está disponible");
+    if (slot.status !== "available" && slot.status !== "pending") throw new Error("Este slot ya no está disponible");
 
     const { data: { user } } = await supabase.auth.admin.getUserById(userId);
 
