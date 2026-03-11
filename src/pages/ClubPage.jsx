@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import { sendPushNotification } from "../services/notifications";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { useToast } from "../components/ToastProvider";
 
@@ -1079,7 +1080,22 @@ export default function ClubPage({ session: sessionProp }) {
                             {bookingSaving?'Reservando…':'✅ Confirmar con bono'}
                           </button>
                         ) : (
-                          <button onClick={()=>navigate(`/reserva/pago?slotId=${bookingSlot.id}${splitEnabled?`&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`:''}`)}
+                          <button onClick={async ()=>{
+                            if (splitEnabled && splitPlayers.length > 0) {
+                              // Notificar a cada jugador del split
+                              const slot = bookingSlot;
+                              for (const player of splitPlayers) {
+                                try {
+                                  await sendPushNotification(player.id, {
+                                    title: "💸 Te invitan a dividir pista",
+                                    body: `Tienes un pago pendiente para la reserva del ${slot.date} a las ${slot.start_time?.slice(0,5)}`,
+                                    url: `/reserva/pago?slotId=${slot.id}&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`,
+                                  });
+                                } catch {}
+                              }
+                            }
+                            navigate(`/reserva/pago?slotId=${bookingSlot.id}${splitEnabled?`&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`:''}`);
+                          }}
                             style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
                             💳 Pagar {priceToPay}€{splitEnabled?' (tu parte)':''}
                           </button>
