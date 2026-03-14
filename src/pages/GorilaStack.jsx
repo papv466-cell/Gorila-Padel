@@ -2,23 +2,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
-const WORDS5 = [
-  "SMASH","VOLEA","GLOBO","BANDA","PISTA","VIBOR","BAJAD","REMAT","DEFNS","CLASM",
-  "SAQUE","FONDO","ATAQUE","REVÉS","MARCO","REJIL","FALTA","PUNTO","BANDE","GOLPE",
-  "RAQUETA".slice(0,5),"PARED","DRIBL","TWIST","LIFTD","RUEDA","DRIVE","SLICE",
-  "CHIQUITA".slice(0,5),"MARCO","VIDRI","CELOSÍA".slice(0,5),"SPEED","TOPSP",
-];
-
 const WORDS = [
-  // 5 letras — técnica
-  "SMASH","VOLEA","GLOBO","BANDA","PISTA","SAQUE","FONDO","PARED","DRIVE","SLICE",
-  "TWIST","PUNTO","FALTA","GOLPE","MARCO","VIDRO","SPEED","RUEDA","REBOT","JUGAD",
-  // jugadores famosos (5 letras)
-  "LEBRO","GALAN","TAPIA","COELL","NAVRO","PAQUITO".slice(0,5),
-  // términos pádel inclusivo
-  "SILLA","RUEDA","RAMPA","ADAPT","MIXTO",
-  // términos técnicos avanzados
-  "VIBOR","BAJAD","LIFTS","TOPSP","CERRJ","VOLEJ","BANDJ","DROPS","LOBBS","CLASM",
+  // Técnica de pádel
+  "SMASH","VOLEA","GLOBO","BANDA","PISTA","SAQUE","FONDO","PARED","DRIVE","PUNTO",
+  "FALTA","GOLPE","MARCO","RUEDA","SILLA","RAMPA","MIXTO","JUEGO","MATCH","RESTO",
+  "REVÉS","TUBOS","MALLA","FONDO","VIDRO","SALTO","GANCH","APOYO","BLOQUE","QUITE",
+  // Jugadores famosos 5 letras exactas
+  "GALAN","TAPIA","BELEN","MARTA","PABLO","NEGRO","MAURI","LEBRE","STUPA","CAPRA",
+  // Términos generales pádel
+  "PISTA","TURNO","JUEGO","TENIS","PELOT","MATCH","TIROS","BOLAS","REDES","PAREJ",
+  // Inclusivo
+  "SILLA","RAMPA","MIXTO","APOYO","RUEDA",
 ].filter((w,i,a) => w.length === 5 && a.indexOf(w) === i);
 
 // Palabra del día basada en la fecha
@@ -196,9 +190,9 @@ export default function GorilaStack() {
       transition:"background 0.3s",
     }),
     keyboard: { width:"100%", maxWidth:500, padding:"0 8px 16px" },
-    keyRow: { display:"flex", gap:5, justifyContent:"center", marginBottom:5 },
+    keyRow: { display:"flex", gap:4, justifyContent:"center", marginBottom:4, flexWrap:"nowrap", width:"100%" },
     key: (k) => ({
-      padding: k==="ENTER"?"0 8px":"0", width: k==="ENTER"||k==="⌫" ? 52 : 36, height:50,
+      padding: k==="ENTER"?"0 4px":"0", width: k==="ENTER"||k==="⌫" ? 48 : 32, height:46,
       borderRadius:6, border:"none", cursor:"pointer", fontWeight:900,
       fontSize: k==="ENTER" ? 11 : 16, color:"#fff",
       background: keyColor(k),
