@@ -357,8 +357,8 @@ export default function HomePage({ session: sessionProp }) {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ fontSize: 36 }}>🦍</div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>GORILA TIMING</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Toca en el momento exacto · ¿cuánto aguantas?</div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>GORILA WORD 🦍</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Adivina la palabra de pádel · Reto diario</div>
               </div>
             </div>
             <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", fontSize: 13, fontWeight: 900, color: "#74B800" }}>

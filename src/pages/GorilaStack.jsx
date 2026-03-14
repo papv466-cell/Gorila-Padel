@@ -1,575 +1,322 @@
-// src/pages/GorilaStack.jsx — Gorila Inclusivo: El Gran Slam 🦍♿🎾
-import { useEffect, useRef, useState, useCallback } from "react";
+// src/pages/GorilaStack.jsx — Gorila Word 🦍 Wordle de Pádel
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../services/supabaseClient";
 
-const W = 390, H = 620;
-const LANES = [80, 195, 310]; // 3 carriles X
-const GORILA_Y = H - 100;
-const BALL_SPEED_BASE = 3;
+const WORDS5 = [
+  "SMASH","VOLEA","GLOBO","BANDA","PISTA","VIBOR","BAJAD","REMAT","DEFNS","CLASM",
+  "SAQUE","FONDO","ATAQUE","REVÉS","MARCO","REJIL","FALTA","PUNTO","BANDE","GOLPE",
+  "RAQUETA".slice(0,5),"PARED","DRIBL","TWIST","LIFTD","RUEDA","DRIVE","SLICE",
+  "CHIQUITA".slice(0,5),"MARCO","VIDRI","CELOSÍA".slice(0,5),"SPEED","TOPSP",
+];
+
+const WORDS = [
+  // 5 letras — técnica
+  "SMASH","VOLEA","GLOBO","BANDA","PISTA","SAQUE","FONDO","PARED","DRIVE","SLICE",
+  "TWIST","PUNTO","FALTA","GOLPE","MARCO","VIDRO","SPEED","RUEDA","REBOT","JUGAD",
+  // jugadores famosos (5 letras)
+  "LEBRO","GALAN","TAPIA","COELL","NAVRO","PAQUITO".slice(0,5),
+  // términos pádel inclusivo
+  "SILLA","RUEDA","RAMPA","ADAPT","MIXTO",
+  // términos técnicos avanzados
+  "VIBOR","BAJAD","LIFTS","TOPSP","CERRJ","VOLEJ","BANDJ","DROPS","LOBBS","CLASM",
+].filter((w,i,a) => w.length === 5 && a.indexOf(w) === i);
+
+// Palabra del día basada en la fecha
+function getTodayWord() {
+  const now = new Date();
+  const seed = now.getFullYear() * 10000 + (now.getMonth()+1) * 100 + now.getDate();
+  return WORDS[seed % WORDS.length];
+}
+
+function getTodayKey() {
+  const now = new Date();
+  return `gorila_word_${now.getFullYear()}_${now.getMonth()+1}_${now.getDate()}`;
+}
+
+const KEYBOARD = [
+  ["Q","W","E","R","T","Y","U","I","O","P"],
+  ["A","S","D","F","G","H","J","K","L","Ñ"],
+  ["ENTER","Z","X","C","V","B","N","M","⌫"],
+];
+
+const MAX_ATTEMPTS = 5;
 
 export default function GorilaStack() {
   const navigate = useNavigate();
-  const canvasRef = useRef(null);
-  const stateRef = useRef(null);
-  const rafRef = useRef(null);
   const [screen, setScreen] = useState("home");
-  const [score, setScore] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [hs, setHs] = useState(() => { try { return parseInt(localStorage.getItem("gorila_slam_hs")||"0"); } catch { return 0; } });
-  const [topScores, setTopScores] = useState([]);
-  const [playerName, setPlayerName] = useState("Gorila");
-  const [levelUp, setLevelUp] = useState(false);
+  const [word] = useState(getTodayWord);
+  const [guesses, setGuesses] = useState([]); // [{letters:[{char,state}]}]
+  const [current, setCurrent] = useState("");
+  const [gameState, setGameState] = useState("playing"); // playing | won | lost
+  const [shake, setShake] = useState(false);
+  const [streak, setStreak] = useState(() => { try { return parseInt(localStorage.getItem("gorila_word_streak")||"0"); } catch { return 0; } });
+  const [shareText, setShareText] = useState("");
+  const [showShare, setShowShare] = useState(false);
+  const [usedLetters, setUsedLetters] = useState({}); // letra → state
 
+  // Cargar partida guardada del día
   useEffect(() => {
-    loadRanking();
-    supabase.auth.getSession().then(({ data }) => {
-      if (data?.session?.user?.id) {
-        supabase.from("profiles").select("name,handle").eq("id", data.session.user.id).single()
-          .then(({ data: p }) => { if (p) setPlayerName(p.name || p.handle || "Gorila"); });
+    try {
+      const saved = localStorage.getItem(getTodayKey());
+      if (saved) {
+        const data = JSON.parse(saved);
+        setGuesses(data.guesses || []);
+        setGameState(data.gameState || "playing");
+        setUsedLetters(data.usedLetters || {});
+        if (data.gameState !== "playing") setScreen("result");
+        else setScreen("game");
+      }
+    } catch {}
+  }, []);
+
+  function saveState(newGuesses, newGameState, newUsedLetters) {
+    try {
+      localStorage.setItem(getTodayKey(), JSON.stringify({
+        guesses: newGuesses, gameState: newGameState, usedLetters: newUsedLetters
+      }));
+    } catch {}
+  }
+
+  function evaluateGuess(guess) {
+    const result = [];
+    const wordArr = word.split("");
+    const guessArr = guess.split("");
+    const used = [...wordArr];
+
+    // Primero correctas
+    guessArr.forEach((c, i) => {
+      if (c === wordArr[i]) {
+        result[i] = { char: c, state: "correct" };
+        used[i] = null;
+      } else {
+        result[i] = { char: c, state: "absent" };
       }
     });
-  }, []);
 
-  async function loadRanking() {
-    try {
-      const { data } = await supabase.from("gorila_runner_scores")
-        .select("name,score").order("score",{ascending:false}).limit(10);
-      setTopScores(data||[]);
-    } catch {}
-  }
-
-  async function saveScore(s) {
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      if (sess?.session?.user?.id) {
-        await supabase.from("gorila_runner_scores").upsert(
-          { user_id: sess.session.user.id, name: playerName, score: s },
-          { onConflict: "user_id" }
-        );
-        loadRanking();
+    // Luego presentes
+    guessArr.forEach((c, i) => {
+      if (result[i].state === "correct") return;
+      const idx = used.indexOf(c);
+      if (idx !== -1) {
+        result[i] = { char: c, state: "present" };
+        used[idx] = null;
       }
-    } catch {}
+    });
+
+    return result;
   }
 
-  function saveHs(s) {
-    try { localStorage.setItem("gorila_slam_hs", String(s)); } catch {}
-    setHs(s);
-  }
+  function submitGuess() {
+    if (current.length !== 5) { setShake(true); setTimeout(() => setShake(false), 500); return; }
+    if (gameState !== "playing") return;
 
-  function initState() {
-    return {
-      lane: 1, // 0=izq, 1=centro, 2=der
-      targetLane: 1,
-      gorilaX: LANES[1],
-      score: 0,
-      level: 1,
-      frame: 0,
-      speed: BALL_SPEED_BASE,
-      balls: [],
-      obstacles: [],
-      particles: [],
-      shake: 0,
-      nextBall: 40,
-      nextObstacle: 120,
-      lives: 3,
-      combo: 0,
-      comboTimer: 0,
-      celebrating: 0,
-      armAngle: 0,
-      wheelAngle: 0,
-      hitEffect: null,
-      swipeStartX: null,
-      levelScore: 0, // puntos en el nivel actual
-    };
-  }
+    const result = evaluateGuess(current);
+    const newGuesses = [...guesses, { letters: result }];
 
-  const startGame = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    stateRef.current = initState();
-    setScore(0); setLevel(1); setLevelUp(false);
-    setScreen("playing");
-  }, []);
-
-  // Swipe / tap handling
-  const handlePointerDown = useCallback((e) => {
-    if (screen !== "playing") return;
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    if (stateRef.current) stateRef.current.swipeStartX = x;
-  }, [screen]);
-
-  const handlePointerUp = useCallback((e) => {
-    const s = stateRef.current;
-    if (!s) return;
-    const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-    const dx = s.swipeStartX !== null ? x - s.swipeStartX : 0;
-
-    if (Math.abs(dx) > 30) {
-      // Swipe — cambiar carril
-      if (dx > 0 && s.lane < 2) s.targetLane = s.lane + 1;
-      if (dx < 0 && s.lane > 0) s.targetLane = s.lane - 1;
-    } else {
-      // Tap — golpear pelota en el carril actual
-      tryHit(s);
-    }
-    s.swipeStartX = null;
-  }, [screen]);
-
-  function tryHit(s) {
-    // Buscar pelota en el carril actual que esté cerca del gorila
-    const hitZone = 80;
-    for (let i = s.balls.length-1; i >= 0; i--) {
-      const b = s.balls[i];
-      if (b.lane === s.lane && b.y > GORILA_Y - hitZone && b.y < GORILA_Y + 20 && !b.hit) {
-        b.hit = true;
-        const pts = b.type === "gold" ? 3 : b.type === "inclusive" ? 2 : 1;
-        s.score += pts * (s.combo >= 3 ? 2 : 1);
-        s.levelScore += pts;
-        s.combo++;
-        s.comboTimer = 90;
-        s.celebrating = 30;
-        s.shake = b.type === "gold" ? 10 : 5;
-        addParticles(s, LANES[s.lane], GORILA_Y - 20,
-          b.type === "gold" ? "#FFD700" : b.type === "inclusive" ? "#74B800" : "#fff", 12);
-        s.hitEffect = {
-          text: b.type === "gold" ? "⚡ +3!" : b.type === "inclusive" ? "♿ +2!" : `+${pts}${s.combo>=3?" 🔥":""}`,
-          color: b.type === "gold" ? "#FFD700" : "#74B800",
-          alpha: 1, y: GORILA_Y - 60, x: LANES[s.lane]
-        };
-        setScore(s.score);
-        if (s.score > hs) saveHs(s.score);
-
-        // Level up cada 15 puntos
-        if (s.levelScore >= 15) {
-          s.level++;
-          s.levelScore = 0;
-          s.speed = BALL_SPEED_BASE + (s.level-1) * 0.6;
-          s.celebrating = 90;
-          setLevel(s.level);
-          setLevelUp(true);
-          setTimeout(() => setLevelUp(false), 1500);
-          addParticles(s, W/2, H/2, "#74B800", 30);
-        }
-        return;
+    // Actualizar letras usadas
+    const newUsed = { ...usedLetters };
+    result.forEach(({ char, state }) => {
+      const prev = newUsed[char];
+      if (!prev || (prev === "absent" && state !== "absent") || (prev === "present" && state === "correct")) {
+        newUsed[char] = state;
       }
+    });
+
+    const won = result.every(r => r.state === "correct");
+    const lost = !won && newGuesses.length >= MAX_ATTEMPTS;
+    const newGameState = won ? "won" : lost ? "lost" : "playing";
+
+    setGuesses(newGuesses);
+    setCurrent("");
+    setUsedLetters(newUsed);
+    setGameState(newGameState);
+    saveState(newGuesses, newGameState, newUsed);
+
+    if (won) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      try { localStorage.setItem("gorila_word_streak", String(newStreak)); } catch {}
+      const emojis = newGuesses.map(g => g.letters.map(l => l.state==="correct"?"🟩":l.state==="present"?"🟨":"⬛").join("")).join("\n");
+      const txt = `🦍 Gorila Word — ${new Date().toLocaleDateString("es")}\n${emojis}\n\n¡Lo conseguí en ${newGuesses.length}/${MAX_ATTEMPTS} intentos!\nJuega en gorilapadel.com`;
+      setShareText(txt);
+      setTimeout(() => { setShowShare(true); setScreen("result"); }, 800);
+    } else if (lost) {
+      try { localStorage.setItem("gorila_word_streak", "0"); } catch {}
+      setStreak(0);
+      const emojis = newGuesses.map(g => g.letters.map(l => l.state==="correct"?"🟩":l.state==="present"?"🟨":"⬛").join("")).join("\n");
+      const txt = `🦍 Gorila Word — ${new Date().toLocaleDateString("es")}\n${emojis}\n\nLa palabra era: ${word}\nJuega en gorilapadel.com`;
+      setShareText(txt);
+      setTimeout(() => { setShowShare(true); setScreen("result"); }, 800);
     }
-    // Tap en vacío — pequeña penalización visual
-    s.hitEffect = { text: "miss", color: "rgba(255,100,100,0.7)", alpha: 1, y: GORILA_Y - 40, x: LANES[s.lane] };
   }
+
+  const handleKey = useCallback((key) => {
+    if (gameState !== "playing") return;
+    if (key === "ENTER") { submitGuess(); return; }
+    if (key === "⌫" || key === "BACKSPACE") { setCurrent(c => c.slice(0,-1)); return; }
+    if (/^[A-ZÑ]$/.test(key) && current.length < 5) setCurrent(c => c + key);
+  }, [current, gameState, guesses]);
 
   useEffect(() => {
-    if (screen !== "playing") return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const onKey = (e) => {
+      if (screen !== "game") return;
+      const k = e.key.toUpperCase();
+      if (k === "ENTER") handleKey("ENTER");
+      else if (k === "BACKSPACE") handleKey("⌫");
+      else if (/^[A-ZÑ]$/.test(k)) handleKey(k);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleKey, screen]);
 
-    function loop() {
-      const s = stateRef.current;
-      if (!s) return;
-      const ctx = canvas.getContext("2d");
-      s.frame++;
+  const stateColor = (state) => {
+    if (state === "correct") return "#538d4e";
+    if (state === "present") return "#b59f3b";
+    if (state === "absent") return "#3a3a3c";
+    return "rgba(255,255,255,0.08)";
+  };
 
-      // Mover gorila hacia carril target
-      const targetX = LANES[s.targetLane];
-      s.gorilaX += (targetX - s.gorilaX) * 0.2;
-      if (Math.abs(s.gorilaX - targetX) < 2) {
-        s.gorilaX = targetX;
-        s.lane = s.targetLane;
-      }
-
-      // Animar rueda
-      s.wheelAngle += 0.1;
-
-      // Combo timer
-      if (s.comboTimer > 0) s.comboTimer--;
-      else if (s.comboTimer === 0) s.combo = 0;
-
-      // Celebración
-      if (s.celebrating > 0) s.celebrating--;
-
-      // Spawn pelotas
-      s.nextBall--;
-      if (s.nextBall <= 0) {
-        const lane = Math.floor(Math.random() * 3);
-        const types = ["normal", "normal", "normal", "gold", "inclusive"];
-        const type = types[Math.floor(Math.random() * types.length)];
-        s.balls.push({ lane, x: LANES[lane], y: -20, type, speed: s.speed + Math.random()*0.5 });
-        s.nextBall = Math.max(25, 55 - s.level * 3);
-        // A veces 2 pelotas a la vez en niveles altos
-        if (s.level >= 3 && Math.random() < 0.3) {
-          const lane2 = (lane + 1 + Math.floor(Math.random()*2)) % 3;
-          s.balls.push({ lane: lane2, x: LANES[lane2], y: -20, type: "normal", speed: s.speed });
-          s.nextBall += 10;
-        }
-      }
-
-      // Spawn obstáculos
-      s.nextObstacle--;
-      if (s.nextObstacle <= 0 && s.level >= 2) {
-        const lane = Math.floor(Math.random() * 3);
-        const types = ["net", "puddle", "player"];
-        s.obstacles.push({ lane, x: LANES[lane], y: -30, type: types[Math.floor(Math.random()*types.length)], speed: s.speed * 0.7 });
-        s.nextObstacle = Math.max(60, 130 - s.level * 8);
-      }
-
-      // Mover pelotas
-      for (let i = s.balls.length-1; i >= 0; i--) {
-        const b = s.balls[i];
-        b.y += b.speed;
-        if (b.hit && b.y > H + 50) { s.balls.splice(i, 1); continue; }
-        if (b.y > H + 20) {
-          if (!b.hit) {
-            // Pelota perdida — perder vida si era en el carril del gorila
-            if (b.lane === s.lane) {
-              s.lives--;
-              s.combo = 0;
-              s.shake = 15;
-              addParticles(s, LANES[b.lane], GORILA_Y, "#ff4444", 8);
-              setScore(s.score);
-              if (s.lives <= 0) {
-                const finalScore = s.score;
-                stateRef.current = null;
-                setTimeout(() => { saveScore(finalScore); setScore(finalScore); setScreen("dead"); }, 400);
-                drawFrame(ctx, s);
-                return;
-              }
-            }
-          }
-          s.balls.splice(i, 1);
-        }
-      }
-
-      // Mover obstáculos
-      for (let i = s.obstacles.length-1; i >= 0; i--) {
-        const o = s.obstacles[i];
-        o.y += o.speed;
-        // Colisión con gorila
-        if (o.lane === s.lane && o.y > GORILA_Y - 40 && o.y < GORILA_Y + 40) {
-          s.lives--;
-          s.combo = 0;
-          s.shake = 20;
-          addParticles(s, s.gorilaX, GORILA_Y, "#ff4444", 15);
-          s.obstacles.splice(i, 1);
-          if (s.lives <= 0) {
-            const finalScore = s.score;
-            stateRef.current = null;
-            setTimeout(() => { saveScore(finalScore); setScore(finalScore); setScreen("dead"); }, 400);
-            drawFrame(ctx, s);
-            return;
-          }
-          continue;
-        }
-        if (o.y > H + 30) s.obstacles.splice(i, 1);
-      }
-
-      // Partículas
-      for (let i = s.particles.length-1; i >= 0; i--) {
-        const p = s.particles[i];
-        p.x += p.vx; p.y += p.vy; p.vy += 0.15;
-        p.life--; p.alpha = p.life/40;
-        if (p.life <= 0) s.particles.splice(i, 1);
-      }
-
-      // Hit effect
-      if (s.hitEffect) { s.hitEffect.alpha -= 0.03; s.hitEffect.y -= 1.5; if (s.hitEffect.alpha <= 0) s.hitEffect = null; }
-      if (s.shake > 0) s.shake--;
-
-      drawFrame(ctx, s);
-      rafRef.current = requestAnimationFrame(loop);
-    }
-
-    rafRef.current = requestAnimationFrame(loop);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [screen]);
-
-  function addParticles(s, x, y, color, n=8) {
-    for (let i=0; i<n; i++) {
-      s.particles.push({ x, y, vx:(Math.random()-0.5)*8, vy:(Math.random()-0.5)*8-2, alpha:1, color, r:Math.random()*5+2, life:30+Math.random()*20 });
-    }
-  }
-
-  function drawFrame(ctx, s) {
-    const sx = s.shake > 0 ? (Math.random()-0.5)*s.shake*0.5 : 0;
-    const sy = s.shake > 0 ? (Math.random()-0.5)*s.shake*0.3 : 0;
-    ctx.save();
-    ctx.translate(sx, sy);
-
-    // Fondo pista pádel
-    ctx.fillStyle = "#0a1505";
-    ctx.fillRect(0, 0, W, H);
-
-    // Pista verde
-    ctx.fillStyle = "#0d2008";
-    ctx.fillRect(40, 0, W-80, H);
-
-    // Líneas de carril
-    ctx.strokeStyle = "rgba(116,184,0,0.2)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([20,15]);
-    ctx.lineDashOffset = -(s.frame * 4) % 35;
-    ctx.beginPath(); ctx.moveTo(137, 0); ctx.lineTo(137, H); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(253, 0); ctx.lineTo(253, H); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Línea de red horizontal (decorativa)
-    ctx.strokeStyle = "rgba(116,184,0,0.15)";
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(40, H*0.35); ctx.lineTo(W-40, H*0.35); ctx.stroke();
-
-    // Paredes laterales pista
-    ctx.fillStyle = "rgba(116,184,0,0.1)";
-    ctx.fillRect(0, 0, 40, H);
-    ctx.fillRect(W-40, 0, 40, H);
-    ctx.strokeStyle = "rgba(116,184,0,0.3)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(40, 0, W-80, H);
-
-    // Obstáculos
-    for (const o of s.obstacles) {
-      ctx.save();
-      ctx.font = "30px serif";
-      ctx.textAlign = "center";
-      if (o.type === "net") ctx.fillText("🥅", o.x, o.y);
-      else if (o.type === "puddle") ctx.fillText("💧", o.x, o.y);
-      else ctx.fillText("🧑", o.x, o.y);
-      ctx.restore();
-    }
-
-    // Pelotas
-    for (const b of s.balls) {
-      if (b.hit) {
-        // Pelota golpeada — vuela hacia arriba
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        ctx.font = "20px serif";
-        ctx.textAlign = "center";
-        ctx.fillText("🎾", b.x, b.y - 10);
-        ctx.restore();
-        continue;
-      }
-      ctx.save();
-      if (b.type === "gold") {
-        ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 15;
-        ctx.font = "28px serif"; ctx.textAlign = "center";
-        ctx.fillText("⭐", b.x, b.y);
-      } else if (b.type === "inclusive") {
-        ctx.shadowColor = "#74B800"; ctx.shadowBlur = 12;
-        ctx.font = "26px serif"; ctx.textAlign = "center";
-        ctx.fillText("♿", b.x, b.y);
-      } else {
-        ctx.shadowColor = "rgba(255,255,255,0.3)"; ctx.shadowBlur = 8;
-        ctx.font = "24px serif"; ctx.textAlign = "center";
-        ctx.fillText("🎾", b.x, b.y);
-      }
-      ctx.restore();
-    }
-
-    // GORILA EN SILLA DE RUEDAS
-    const gx = s.gorilaX, gy = GORILA_Y;
-    const celebrating = s.celebrating > 0;
-
-    ctx.save();
-    ctx.translate(gx, gy);
-
-    // Silla de ruedas
-    ctx.strokeStyle = "#888";
-    ctx.lineWidth = 3;
-    // Rueda grande
-    ctx.beginPath(); ctx.arc(5, 15, 22, 0, Math.PI*2); ctx.stroke();
-    // Rueda pequeña delantera
-    ctx.beginPath(); ctx.arc(-20, 20, 8, 0, Math.PI*2); ctx.stroke();
-    // Asiento
-    ctx.fillStyle = "#444";
-    ctx.fillRect(-18, -5, 36, 8);
-    // Respaldo
-    ctx.fillRect(-18, -25, 6, 20);
-    // Radio rueda girando
-    ctx.strokeStyle = "#aaa"; ctx.lineWidth = 1.5;
-    for (let i=0; i<4; i++) {
-      const a = s.wheelAngle + (i * Math.PI/2);
-      ctx.beginPath();
-      ctx.moveTo(5 + Math.cos(a)*5, 15 + Math.sin(a)*5);
-      ctx.lineTo(5 + Math.cos(a)*20, 15 + Math.sin(a)*20);
-      ctx.stroke();
-    }
-
-    // Cuerpo gorila
-    ctx.fillStyle = "#2a1a0a";
-    ctx.beginPath(); ctx.ellipse(0, -20, 14, 16, 0, 0, Math.PI*2); ctx.fill();
-    // Pecho
-    ctx.fillStyle = "#4a3020";
-    ctx.beginPath(); ctx.ellipse(0, -18, 9, 10, 0, 0, Math.PI*2); ctx.fill();
-    // Cabeza
-    ctx.fillStyle = "#2a1a0a";
-    ctx.beginPath(); ctx.ellipse(0, -38, 12, 11, 0, 0, Math.PI*2); ctx.fill();
-    // Cara
-    ctx.fillStyle = "#8B6040";
-    ctx.beginPath(); ctx.ellipse(0, -36, 8, 7, 0, 0, Math.PI*2); ctx.fill();
-    // Ojos
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.ellipse(-4, -39, 2.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(4, -39, 2.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.ellipse(-4, -39, 1.2, 1.2, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(4, -39, 1.2, 1.2, 0, 0, Math.PI*2); ctx.fill();
-
-    // Brazos — celebrando o normal
-    ctx.strokeStyle = "#2a1a0a"; ctx.lineWidth = 5;
-    if (celebrating) {
-      // Brazos arriba celebrando
-      ctx.beginPath(); ctx.moveTo(-8, -22); ctx.lineTo(-22, -42); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(8, -22); ctx.lineTo(22, -42); ctx.stroke();
-      // Manos
-      ctx.fillStyle = "#8B6040";
-      ctx.beginPath(); ctx.arc(-22, -43, 5, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(22, -43, 5, 0, Math.PI*2); ctx.fill();
-    } else {
-      // Brazo con raqueta
-      ctx.beginPath(); ctx.moveTo(10, -22); ctx.lineTo(24, -32); ctx.stroke();
-      ctx.strokeStyle = "#74B800"; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(24, -32); ctx.lineTo(34, -40); ctx.stroke();
-      ctx.fillStyle = "rgba(116,184,0,0.3)";
-      ctx.beginPath(); ctx.ellipse(37, -43, 7, 5, -0.4, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = "#74B800"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(37, -43, 7, 5, -0.4, 0, Math.PI*2); ctx.stroke();
-      // Brazo izquierdo
-      ctx.strokeStyle = "#2a1a0a"; ctx.lineWidth = 5;
-      ctx.beginPath(); ctx.moveTo(-8, -22); ctx.lineTo(-18, -28); ctx.stroke();
-    }
-    ctx.restore();
-
-    // Partículas
-    for (const p of s.particles) {
-      ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-
-    // Hit effect
-    if (s.hitEffect && s.hitEffect.alpha > 0) {
-      ctx.save(); ctx.globalAlpha = s.hitEffect.alpha;
-      ctx.fillStyle = s.hitEffect.color;
-      ctx.font = "bold 24px system-ui"; ctx.textAlign = "center";
-      ctx.shadowColor = s.hitEffect.color; ctx.shadowBlur = 10;
-      ctx.fillText(s.hitEffect.text, s.hitEffect.x, s.hitEffect.y);
-      ctx.restore();
-    }
-
-    // HUD
-    // Score
-    ctx.save();
-    ctx.shadowColor = "#74B800"; ctx.shadowBlur = 10;
-    ctx.fillStyle = "#fff"; ctx.font = "bold 44px system-ui"; ctx.textAlign = "center";
-    ctx.fillText(s.score, W/2, 52);
-    ctx.restore();
-
-    // Nivel
-    ctx.fillStyle = "rgba(116,184,0,0.9)";
-    ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
-    ctx.fillText(`NIVEL ${s.level}`, W/2, 70);
-
-    // Vidas
-    ctx.font = "18px serif"; ctx.textAlign = "left";
-    for (let i=0; i<3; i++) {
-      ctx.globalAlpha = i < s.lives ? 1 : 0.2;
-      ctx.fillText("❤️", 12 + i*26, 30);
-    }
-    ctx.globalAlpha = 1;
-
-    // Combo
-    if (s.combo >= 3) {
-      ctx.fillStyle = "#F97316";
-      ctx.font = `bold ${14+Math.min(s.combo,8)}px system-ui`;
-      ctx.textAlign = "right";
-      ctx.fillText(`🔥 x${s.combo}`, W-14, 30);
-    }
-
-    // Leyenda abajo
-    ctx.fillStyle = "rgba(255,255,255,0.2)";
-    ctx.font = "10px system-ui"; ctx.textAlign = "center";
-    ctx.fillText("← desliza → para moverse · tap para golpear", W/2, H-8);
-
-    ctx.restore();
-  }
+  const keyColor = (k) => {
+    const s = usedLetters[k];
+    if (s === "correct") return "#538d4e";
+    if (s === "present") return "#b59f3b";
+    if (s === "absent") return "#3a3a3c";
+    return "rgba(255,255,255,0.15)";
+  };
 
   const S = {
-    wrap: { position:"fixed", inset:0, background:"#0a1505", display:"flex", alignItems:"center", justifyContent:"center", userSelect:"none", touchAction:"none" },
-    canvas: { maxWidth:"100%", maxHeight:"100vh", display:"block" },
-    btn: { padding:"14px 36px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:17, border:"none", cursor:"pointer" },
+    wrap: { position:"fixed", inset:0, background:"#121213", display:"flex", flexDirection:"column", alignItems:"center", overflow:"hidden" },
+    header: { width:"100%", maxWidth:500, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 16px", borderBottom:"1px solid rgba(255,255,255,0.1)" },
+    grid: { display:"flex", flexDirection:"column", gap:6, padding:"20px 0 10px", flex:1, justifyContent:"center" },
+    row: (isShaking) => ({ display:"flex", gap:6, animation: isShaking ? "shake 0.5s ease" : "none" }),
+    cell: (state, filled) => ({
+      width:58, height:58, borderRadius:4, display:"flex", alignItems:"center", justifyContent:"center",
+      fontSize:22, fontWeight:900, color:"#fff", border: state ? "none" : filled ? "2px solid rgba(255,255,255,0.5)" : "2px solid rgba(255,255,255,0.15)",
+      background: stateColor(state),
+      transition:"background 0.3s",
+    }),
+    keyboard: { width:"100%", maxWidth:500, padding:"0 8px 16px" },
+    keyRow: { display:"flex", gap:5, justifyContent:"center", marginBottom:5 },
+    key: (k) => ({
+      padding: k==="ENTER"?"0 8px":"0", width: k==="ENTER"||k==="⌫" ? 52 : 36, height:50,
+      borderRadius:6, border:"none", cursor:"pointer", fontWeight:900,
+      fontSize: k==="ENTER" ? 11 : 16, color:"#fff",
+      background: keyColor(k),
+      display:"flex", alignItems:"center", justifyContent:"center",
+    }),
+    btn: { padding:"13px 32px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:16, border:"none", cursor:"pointer" },
     ghost: { padding:"10px 24px", borderRadius:14, background:"rgba(255,255,255,0.08)", color:"#fff", fontWeight:700, fontSize:13, border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer" },
   };
 
   return (
-    <div style={S.wrap}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onTouchStart={handlePointerDown}
-      onTouchEnd={handlePointerUp}
-    >
-      <canvas ref={canvasRef} width={W} height={H} style={S.canvas} />
-
-      {/* LEVEL UP */}
-      {levelUp && (
-        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-          <div style={{fontSize:32,fontWeight:900,color:"#74B800",textShadow:"0 0 30px #74B800",animation:"levelup 1.5s ease-out forwards"}}>
-            🎉 ¡NIVEL {level}!
-          </div>
-        </div>
-      )}
-
+    <div style={S.wrap}>
       {/* HOME */}
       {screen === "home" && (
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.92)",gap:12,padding:24}}>
-          <div style={{fontSize:56}}>🦍♿🎾</div>
-          <div style={{fontSize:28,fontWeight:900,color:"#74B800",textAlign:"center"}}>El Gran Slam</div>
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#121213",gap:14,padding:24}}>
+          <div style={{fontSize:56}}>🦍</div>
+          <div style={{fontSize:30,fontWeight:900,color:"#74B800"}}>Gorila Word</div>
           <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:280,lineHeight:1.7}}>
-            Desliza para cambiar de carril<br/>
-            Toca para golpear la pelota<br/>
-            <span style={{color:"#FFD700"}}>⭐ Pelotas doradas = 3 puntos</span><br/>
-            <span style={{color:"#74B800"}}>♿ Inclusivo = 2 puntos + combo</span>
+            Adivina la palabra de pádel en <strong style={{color:"#fff"}}>{MAX_ATTEMPTS} intentos</strong>.<br/>
+            🟩 Letra correcta · 🟨 Está pero mal sitio · ⬛ No está<br/>
+            <span style={{color:"rgba(255,255,255,0.3)",fontSize:11}}>Una palabra nueva cada día para todos</span>
           </div>
-          {hs > 0 && <div style={{fontSize:15,color:"#74B800",fontWeight:900}}>🏆 Tu récord: {hs}</div>}
-          <button style={S.btn} onClick={e=>{e.stopPropagation();startGame();}}>▶ JUGAR</button>
-          {topScores.length > 0 && (
-            <div style={{width:"100%",maxWidth:300,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"12px 16px"}}>
-              <div style={{fontSize:12,fontWeight:900,color:"#74B800",marginBottom:8,textAlign:"center"}}>🏆 TOP 10 GLOBAL</div>
-              {topScores.map((s,i)=>(
-                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",fontSize:12}}>
-                  <span style={{color:i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.6)"}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":`${i+1}.`} {s.name}</span>
-                  <span style={{fontWeight:900,color:"#74B800"}}>{s.score}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          <button style={S.ghost} onClick={e=>{e.stopPropagation();navigate(-1);}}>← Volver</button>
+          {streak > 0 && <div style={{fontSize:14,color:"#74B800",fontWeight:900}}>🔥 Racha: {streak} días</div>}
+          <button style={S.btn} onClick={() => setScreen("game")}>▶ JUGAR HOY</button>
+          <button style={S.ghost} onClick={() => navigate(-1)}>← Volver</button>
         </div>
       )}
 
-      {/* DEAD */}
-      {screen === "dead" && (
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.93)",gap:10,padding:24}}>
-          <div style={{fontSize:48}}>💥</div>
-          <div style={{fontSize:24,fontWeight:900,color:"#ff4444"}}>¡GAME OVER!</div>
-          <div style={{fontSize:48,fontWeight:900,color:"#fff"}}>{score}</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)"}}>puntos · nivel {level}</div>
-          {score >= hs && score > 0 && <div style={{fontSize:15,color:"#74B800",fontWeight:900}}>🏆 ¡Nuevo récord!</div>}
-          <button style={S.btn} onClick={e=>{e.stopPropagation();startGame();}}>🔄 REINTENTAR</button>
-          {topScores.length > 0 && (
-            <div style={{width:"100%",maxWidth:280,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)",borderRadius:12,padding:"10px 14px"}}>
-              <div style={{fontSize:11,fontWeight:900,color:"#74B800",marginBottom:6,textAlign:"center"}}>🏆 TOP 10</div>
-              {topScores.map((s,i)=>(
-                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"3px 0",fontSize:11}}>
-                  <span style={{color:"rgba(255,255,255,0.6)"}}>{i+1}. {s.name}</span>
-                  <span style={{fontWeight:900,color:"#74B800"}}>{s.score}</span>
+      {/* GAME */}
+      {screen === "game" && (
+        <>
+          {/* Header */}
+          <div style={S.header}>
+            <button onClick={() => navigate(-1)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:20}}>←</button>
+            <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>🦍 Gorila Word</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{guesses.length}/{MAX_ATTEMPTS}</div>
+          </div>
+
+          {/* Grid */}
+          <div style={S.grid}>
+            {Array.from({length: MAX_ATTEMPTS}).map((_, ri) => {
+              const guess = guesses[ri];
+              const isCurrentRow = ri === guesses.length && gameState === "playing";
+              const isShaking = isCurrentRow && shake;
+              return (
+                <div key={ri} style={S.row(isShaking)}>
+                  {Array.from({length:5}).map((_, ci) => {
+                    const letter = guess ? guess.letters[ci] : null;
+                    const char = letter ? letter.char : (isCurrentRow ? current[ci] : "");
+                    const state = letter ? letter.state : null;
+                    return (
+                      <div key={ci} style={S.cell(state, !!char)}>
+                        {char}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+
+          {/* Teclado */}
+          <div style={S.keyboard}>
+            {KEYBOARD.map((row, ri) => (
+              <div key={ri} style={S.keyRow}>
+                {row.map(k => (
+                  <button key={k} style={S.key(k)} onClick={() => handleKey(k)}>{k}</button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* RESULT */}
+      {screen === "result" && (
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#121213",gap:12,padding:24}}>
+          <div style={{fontSize:48}}>{gameState==="won"?"🏆":"💥"}</div>
+          <div style={{fontSize:24,fontWeight:900,color:gameState==="won"?"#74B800":"#ff4444"}}>
+            {gameState==="won" ? `¡Lo conseguiste en ${guesses.length}!` : "¡Mañana será!"}
+          </div>
+          {gameState==="lost" && (
+            <div style={{fontSize:16,color:"rgba(255,255,255,0.6)"}}>La palabra era: <strong style={{color:"#fff"}}>{word}</strong></div>
           )}
-          <button style={S.ghost} onClick={e=>{e.stopPropagation();navigate(-1);}}>← Volver</button>
+          {gameState==="won" && streak > 0 && (
+            <div style={{fontSize:14,color:"#F97316",fontWeight:900}}>🔥 Racha de {streak} días</div>
+          )}
+
+          {/* Grid resultado */}
+          <div style={{display:"flex",flexDirection:"column",gap:4,margin:"8px 0"}}>
+            {guesses.map((g,i) => (
+              <div key={i} style={{display:"flex",gap:4}}>
+                {g.letters.map((l,j) => (
+                  <div key={j} style={{width:44,height:44,borderRadius:4,background:stateColor(l.state),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:900,color:"#fff"}}>
+                    {l.char}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {showShare && (
+            <button style={S.btn} onClick={() => {
+              if (navigator.share) navigator.share({ text: shareText });
+              else { navigator.clipboard?.writeText(shareText); alert("¡Copiado al portapapeles!"); }
+            }}>
+              📤 Compartir resultado
+            </button>
+          )}
+
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.3)",textAlign:"center"}}>
+            Nueva palabra mañana a las 00:00
+          </div>
+          <button style={S.ghost} onClick={() => navigate(-1)}>← Volver</button>
         </div>
       )}
 
       <style>{`
-        @keyframes levelup { 0%{opacity:0;transform:scale(0.5)} 20%{opacity:1;transform:scale(1.2)} 80%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1)} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
       `}</style>
     </div>
   );
