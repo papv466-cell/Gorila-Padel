@@ -303,7 +303,7 @@ export default function App() {
       {showOnboarding && onboardingSession && (
         <OnboardingModal
           session={onboardingSession}
-          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); }}
+          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); navigate("/", { replace: true }); }}
         />
       )}
     </div>

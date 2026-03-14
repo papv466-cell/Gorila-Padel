@@ -3,32 +3,67 @@ import { useEffect, useRef, useState } from "react";
 export default function SplashPage() {
   const videoRef = useRef(null);
   const [logoIn, setLogoIn] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => setLogoIn(true), 300);
+    setTimeout(() => setLogoIn(true), 200);
+
     const vid = videoRef.current;
     if (!vid) return;
     vid.muted = true;
     vid.volume = 0;
-    // Intentar play — funciona en Android/desktop
-    // En iOS sin gesto simplemente no se reproduce pero el fondo negro queda bien
-    vid.play().catch(() => {});
+
+    // Intentar autoplay inmediato (Android/desktop)
+    vid.play().then(() => {
+      setVideoPlaying(true);
+    }).catch(() => {
+      // iOS — esperar cualquier interacción del usuario
+    });
+
+    // Listener global para iOS — cualquier toque arranca el video
+    const tryPlay = () => {
+      if (videoPlaying) return;
+      vid.muted = true;
+      vid.play().then(() => setVideoPlaying(true)).catch(() => {});
+    };
+
+    document.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    document.addEventListener("click", tryPlay, { once: true });
+
+    return () => {
+      document.removeEventListener("touchstart", tryPlay);
+      document.removeEventListener("click", tryPlay);
+    };
   }, []);
 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:999999, background:"#000", overflow:"hidden" }}>
-      {/* VIDEO */}
+      {/* VIDEO — siempre presente, opacidad según si está reproduciendo */}
       <video
         ref={videoRef}
         src="/splash.mp4"
         muted loop playsInline preload="auto"
-        style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+        style={{
+          position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover",
+          opacity: videoPlaying ? 1 : 0,
+          transition:"opacity 1s ease",
+        }}
       />
+
+      {/* FONDO cuando no hay video */}
+      <div style={{
+        position:"absolute", inset:0,
+        background:"linear-gradient(135deg, #050510 0%, #0a1a0a 100%)",
+        opacity: videoPlaying ? 0 : 1,
+        transition:"opacity 1s ease",
+        pointerEvents:"none",
+      }}/>
 
       {/* OVERLAY */}
       <div style={{
         position:"absolute", inset:0,
-        background:"linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.88) 100%)",
+        background:"linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.85) 100%)",
+        pointerEvents:"none",
       }}/>
 
       {/* CONTENIDO */}
@@ -40,6 +75,7 @@ export default function SplashPage() {
         opacity: logoIn ? 1 : 0,
         transform: logoIn ? "translateY(0)" : "translateY(24px)",
         transition:"all 0.9s cubic-bezier(0.16,1,0.3,1)",
+        pointerEvents:"none",
       }}>
         <div style={{ position:"relative" }}>
           <div style={{
