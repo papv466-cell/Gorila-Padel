@@ -43,10 +43,12 @@ export default function SplashPage() {
         ref={videoRef}
         src="/splash.mp4"
         muted loop playsInline preload="auto"
+        autoPlay
+        x-webkit-airplay="deny"
+        disablePictureInPicture
         style={{
           position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover",
-          opacity: videoPlaying ? 1 : 0,
-          transition:"opacity 1s ease",
+          opacity: 1,
         }}
       />
 
