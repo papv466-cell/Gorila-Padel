@@ -40,6 +40,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import FindPlayersPage from "./pages/FindPlayersPage";
 import CourtCheckoutPage from "./pages/CourtCheckoutPage";
 import OnboardingModal from "./components/OnboardingModal";
+import AppTour from "./components/AppTour";
 import ClubPage from "./pages/ClubPage";
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -84,6 +85,7 @@ async function sonarGorila() {
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [onboardingSession, setOnboardingSession] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ export default function App() {
     supabase.from("profiles")
       .select("onboarding_done").eq("id", session.user.id).maybeSingle()
       .then(({ data: profile }) => {
+        if (profile && !profile.tour_done && profile.onboarding_done) { setShowTour(true); }
         if (profile && !profile.onboarding_done) {
           setOnboardingSession(session);
           setShowOnboarding(true);
@@ -300,10 +303,13 @@ export default function App() {
           error: { iconTheme: { primary: '#FF4444', secondary: '#fff' } },
         }}
       />
+      {showTour && session && (
+        <AppTour session={session} onClose={() => setShowTour(false)} />
+      )}
       {showOnboarding && onboardingSession && (
         <OnboardingModal
           session={onboardingSession}
-          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); navigate("/", { replace: true }); }}
+          onClose={() => { setShowOnboarding(false); setOnboardingSession(null); navigate("/", { replace: true }); setTimeout(() => setShowTour(true), 800); }}
         />
       )}
     </div>
