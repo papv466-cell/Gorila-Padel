@@ -317,7 +317,7 @@ export default function MapPage({ session: sessionProp }) {
       `}</style>
 
       <div className="pageWrap">
-        <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 60px)", position:"relative" }}>
+        <div style={{ display:"flex", flexDirection:"column", height:"calc(100dvh - 60px)", position:"relative" }}>
 
           {/* ── BARRA BÚSQUEDA ── */}
           <div style={{ padding:"10px 12px 0", position:"relative", zIndex:200 }}>

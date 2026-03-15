@@ -113,20 +113,19 @@ export default function RegisterPage() {
         bottom: 0,
         background: "#0b0f0c",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
         padding: "16px",
-        overflow: 'hidden'
+        overflowY: "auto",
       }}
     >
       <div 
         style={{ 
           width: "100%", 
           maxWidth: 420,
-          maxHeight: 'calc(100vh - 32px)',
+          paddingBottom: 24,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
         }}
       >
         {/* LOGO FIJO */}

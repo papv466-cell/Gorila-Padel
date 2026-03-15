@@ -51,17 +51,17 @@ export default function LoginPage() {
         bottom: 0,
         background: "linear-gradient(135deg, #000000 0%, #1a1a1a 100%)",
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
         padding: "16px",
-        overflow: 'hidden'
+        overflowY: "auto",
       }}
     >
       <div 
         style={{ 
           width: "100%", 
           maxWidth: 380,
-          maxHeight: 'calc(100vh - 32px)',
+          paddingBottom: 24,
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -76,7 +76,6 @@ export default function LoginPage() {
             boxShadow: "0 18px 60px rgba(0,0,0,0.45)",
             display: 'flex',
             flexDirection: 'column',
-            overflow: 'hidden',
             padding: '32px 24px'
           }}
         >
