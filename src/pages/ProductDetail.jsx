@@ -180,7 +180,7 @@ export default function ProductDetail() {
                     {addedFeedback ? '✅ ¡Añadido!' : addingToCart ? '⏳...' : '🛒 Añadir al carrito'}
                   </button>
                   <button onClick={() => {
-                    const url = `https://www.gorilapadel.com/tienda/${product.slug}`;
+                    const url = `https://www.gorilapadel.com/tienda/producto/${product.slug}`;
                     const text = `🦍 Mira este producto en Gorila Pádel:\n*${product.title}* — €${product.price}\n${url}`;
                     if (navigator.share) navigator.share({ title: product.title, text, url });
                     else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
