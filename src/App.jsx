@@ -119,7 +119,10 @@ export default function App() {
       p.startsWith("/register") ||
       p.startsWith("/registro") ||
       p.startsWith("/forgot-password") ||
-      p.startsWith("/reset-password")
+      p.startsWith("/reset-password") ||
+      p.startsWith("/tienda/producto/") ||
+      p.startsWith("/tienda/carrito") ||
+      p.startsWith("/tienda")
     );
   }, [location.pathname]);
 
