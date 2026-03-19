@@ -743,6 +743,7 @@ export const PRODUCT_CATEGORIES = [
   { value: 'bolsas', label: 'Bolsas y Mochilas' },
   { value: 'grips', label: 'Grips y Overgrips' },
   { value: 'protecciones', label: 'Protecciones' },
+  { value: 'tazas', label: '☕ Tazas' },
   { value: 'otros', label: 'Otros' }
 ];
 

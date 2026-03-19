@@ -1,11 +1,13 @@
 // src/pages/ProductDetail.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useSession } from '../context/SessionContext';
 import { supabase } from '../services/supabaseClient';
 import { useCart } from '../contexts/CartContext';
 
 export default function ProductDetail() {
   const { slug } = useParams();
+  const { session } = useSession();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const [product, setProduct] = useState(null);
@@ -33,6 +35,10 @@ export default function ProductDetail() {
   }
 
   async function handleAddToCart() {
+    if (!session) {
+      navigate('/login', { state: { returnTo: `/tienda/producto/${slug}` } });
+      return;
+    }
     try {
       setAddingToCart(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -172,6 +178,14 @@ export default function ProductDetail() {
                   <button onClick={handleAddToCart} disabled={addingToCart || addedFeedback}
                     style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: addedFeedback ? 'rgba(116,184,0,0.3)' : 'linear-gradient(135deg,#74B800,#9BE800)', color: addedFeedback ? '#74B800' : '#000', fontWeight: 900, fontSize: 15, cursor: addingToCart ? 'not-allowed' : 'pointer', transition: 'all .2s', animation: addedFeedback ? 'gsAddedPulse 0.3s ease' : 'none' }}>
                     {addedFeedback ? '✅ ¡Añadido!' : addingToCart ? '⏳...' : '🛒 Añadir al carrito'}
+                  </button>
+                  <button onClick={() => {
+                    const url = `https://www.gorilapadel.com/tienda/${product.slug}`;
+                    const text = `🦍 Mira este producto en Gorila Pádel:\n*${product.title}* — €${product.price}\n${url}`;
+                    if (navigator.share) navigator.share({ title: product.title, text, url });
+                    else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                  }} style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(116,184,0,0.3)', background: 'rgba(116,184,0,0.08)', color: '#74B800', fontSize: 22, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    📤
                   </button>
                 </div>
               )}
