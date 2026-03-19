@@ -94,13 +94,10 @@ export default function App() {
 
   const [minSplashDone, setMinSplashDone] = useState(false);
   useEffect(() => {
-    // Guardar URL de destino si es ruta pública (para redirigir tras splash)
+    // Si la URL inicial es de tienda, no mostrar splash
     const path = window.location.pathname;
-    const publicDirect = ['/tienda'];
-    if (publicDirect.some(p => path.startsWith(p))) {
-      try { sessionStorage.setItem('gorila_redirect', path + window.location.search); } catch {}
-    }
-    const t = setTimeout(() => setMinSplashDone(true), 2500);
+    const isPublicRoute = ['/tienda', '/ranking'].some(p => path.startsWith(p));
+    const t = setTimeout(() => setMinSplashDone(true), isPublicRoute ? 0 : 2500);
     return () => clearTimeout(t);
   }, []);
 
