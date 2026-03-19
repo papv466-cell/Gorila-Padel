@@ -218,19 +218,21 @@ export default function App() {
   // ✅ FIX: SIGNED_OUT — solo redirigir si sessionReady=true Y session lleva
   // al menos un render siendo null (evita redirect en carga inicial)
   const sessionWasReadyRef = useRef(false);
+  const initialPath = useRef(window.location.pathname);
+  const publicPaths = ['/tienda', '/ranking', '/stack'];
+
   useEffect(() => {
     if (!sessionReady) return;
     if (session !== null) {
-      // Hay sesión — marcar que existió y resetear el flag
       sessionWasReadyRef.current = true;
       try { localStorage.setItem('sb-session-existed', '1'); } catch {}
       return;
     }
     // session === null Y sessionReady === true
+    // Nunca redirigir si la URL inicial era pública
+    if (publicPaths.some(p => initialPath.current.startsWith(p))) return;
     if (!sessionWasReadyRef.current) return;
     if (isAuthShell) return;
-    // Rutas públicas — no redirigir a login nunca
-    const publicPaths = ['/tienda', '/ranking', '/stack'];
     if (publicPaths.some(p => location.pathname.startsWith(p))) return;
     try { localStorage.removeItem('sb-session-existed'); } catch {}
     navigate('/login', { replace: true });
