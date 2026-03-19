@@ -119,10 +119,7 @@ export default function App() {
       p.startsWith("/register") ||
       p.startsWith("/registro") ||
       p.startsWith("/forgot-password") ||
-      p.startsWith("/reset-password") ||
-      p.startsWith("/tienda/producto/") ||
-      p.startsWith("/tienda/carrito") ||
-      p.startsWith("/tienda")
+      p.startsWith("/reset-password")
     );
   }, [location.pathname]);
 
@@ -227,6 +224,9 @@ export default function App() {
     // Solo redirigir si ya habíamos tenido sesión antes en esta carga de página
     if (!sessionWasReadyRef.current) return;
     if (isAuthShell) return;
+    // Rutas públicas — no redirigir a login
+    const publicPaths = ['/tienda', '/ranking'];
+    if (publicPaths.some(p => location.pathname.startsWith(p))) return;
     try { localStorage.removeItem('sb-session-existed'); } catch {}
     navigate('/login', { replace: true });
   }, [session, sessionReady, isAuthShell, navigate]);
