@@ -1,7 +1,7 @@
 // src/pages/ProductDetail.jsx
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useSession } from '../context/SessionContext';
+import { useSession } from '../contexts/SessionContext';
 import { supabase } from '../services/supabaseClient';
 import { useCart } from '../contexts/CartContext';
 
