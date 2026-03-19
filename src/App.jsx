@@ -94,6 +94,12 @@ export default function App() {
 
   const [minSplashDone, setMinSplashDone] = useState(false);
   useEffect(() => {
+    // Guardar URL de destino si es ruta pública (para redirigir tras splash)
+    const path = window.location.pathname;
+    const publicDirect = ['/tienda'];
+    if (publicDirect.some(p => path.startsWith(p))) {
+      try { sessionStorage.setItem('gorila_redirect', path + window.location.search); } catch {}
+    }
     const t = setTimeout(() => setMinSplashDone(true), 2500);
     return () => clearTimeout(t);
   }, []);
@@ -221,15 +227,28 @@ export default function App() {
       return;
     }
     // session === null Y sessionReady === true
-    // Solo redirigir si ya habíamos tenido sesión antes en esta carga de página
     if (!sessionWasReadyRef.current) return;
     if (isAuthShell) return;
-    // Rutas públicas — no redirigir a login
-    const publicPaths = ['/tienda', '/ranking'];
+    // Rutas públicas — no redirigir a login nunca
+    const publicPaths = ['/tienda', '/ranking', '/stack'];
     if (publicPaths.some(p => location.pathname.startsWith(p))) return;
     try { localStorage.removeItem('sb-session-existed'); } catch {}
     navigate('/login', { replace: true });
   }, [session, sessionReady, isAuthShell, navigate]);
+
+  // Redirigir a URL guardada tras splash
+  useEffect(() => {
+    if (!sessionReady || !minSplashDone) return;
+    try {
+      const redirect = sessionStorage.getItem('gorila_redirect');
+      if (redirect) {
+        sessionStorage.removeItem('gorila_redirect');
+        if (location.pathname === '/' || location.pathname === '') {
+          navigate(redirect, { replace: true });
+        }
+      }
+    } catch {}
+  }, [sessionReady, minSplashDone]);
 
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
