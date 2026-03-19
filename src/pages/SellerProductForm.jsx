@@ -651,13 +651,17 @@ export default function SellerProductForm() {
 
             {/* Botón añadir imagen */}
             <label style={{
-              paddingTop: '100%',
-              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 100,
               borderRadius: 12,
               border: '2px dashed rgba(255,255,255,0.25)',
               cursor: uploading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              ':hover': { borderColor: '#74B800' }
+              fontSize: 32,
+              opacity: uploading ? 0.3 : 0.8,
+              background: 'rgba(255,255,255,0.04)',
             }}>
               <input
                 type="file"
@@ -667,19 +671,7 @@ export default function SellerProductForm() {
                 disabled={uploading}
                 style={{ display: 'none' }}
               />
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'grid',
-                placeItems: 'center',
-                fontSize: 32,
-                opacity: uploading ? 0.3 : 0.6
-              }}>
-                {uploading ? '⏳' : '➕'}
-              </div>
+              {uploading ? '⏳' : '➕'}
             </label>
           </div>
 
