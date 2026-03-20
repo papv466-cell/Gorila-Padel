@@ -19,6 +19,17 @@ export default function ProductDetail() {
 
   useEffect(() => { loadProduct(); }, [slug]);
 
+  useEffect(() => {
+    // Sonar gorila si viene de link externo (referrer vacío o diferente dominio)
+    const isExternal = !document.referrer || !document.referrer.includes('gorilapadel.com');
+    if (isExternal) {
+      const sounds = ['/sounds/gorila.mp3','/sounds/gorila1.mp3','/sounds/gorila2.mp3','/sounds/gorila3.mp3'];
+      const audio = new Audio(sounds[Math.floor(Math.random()*sounds.length)]);
+      audio.volume = 0.6;
+      audio.play().catch(() => {});
+    }
+  }, []);
+
   async function loadProduct() {
     try {
       setLoading(true);
