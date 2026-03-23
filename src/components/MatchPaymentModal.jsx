@@ -56,7 +56,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraP
         background: loading ? "rgba(116,184,0,0.4)" : "linear-gradient(135deg,#74B800,#9BE800)",
         color: "#000", fontWeight: 900, fontSize: 16, cursor: loading ? "not-allowed" : "pointer",
       }}>
-        {loading ? "⏳ Procesando..." : `💳 Pagar €${(parseFloat(total) + extraProjectDonation).toFixed(2)} y unirme`}
+        {loading ? "⏳ Procesando..." : `💳 Pagar €${(parseFloat(total) + 0.10 + extraProjectDonation + 0.10).toFixed(2)} y unirme`}
       </button>
 
       <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
