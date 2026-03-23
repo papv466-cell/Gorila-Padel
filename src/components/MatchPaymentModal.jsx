@@ -39,22 +39,6 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraP
 
   return (
     <div>
-
-        {/* Nota pista privada */}
-        {isPrivate && (
-          <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 11, color: "rgba(255,255,255,0.4)", display: "flex", gap: 6, alignItems: "center" }}>
-            <span>🔒</span>
-            <span>Pista privada — tarifa sin parte de proyecto</span>
-          </div>
-        )}
-
-        <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "10px 0" }} />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 15, fontWeight: 900, color: "#fff" }}>Total</span>
-          <span style={{ fontSize: 18, fontWeight: 900, color: "#74B800" }}>€{total}</span>
-        </div>
-      </div>
-
       {/* Stripe Elements — soporta Google Pay, Apple Pay, Bizum automáticamente */}
       <PaymentElement options={{
         layout: { type: "tabs", defaultCollapsed: false },
