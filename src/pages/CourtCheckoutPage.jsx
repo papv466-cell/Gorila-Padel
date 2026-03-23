@@ -99,6 +99,36 @@ export default function CourtCheckoutPage() {
               {splitEnabled ? `${(slotData.price/4).toFixed(2)}€` : `${slotData.price}€`}
               {splitEnabled && <span style={{fontSize:12,color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:6}}>tu parte (1/4)</span>}
             </div>
+
+            {/* Desglose transparente inclusivo */}
+            <div style={{marginTop:14,padding:"12px 14px",borderRadius:10,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.40)",marginBottom:10,letterSpacing:"0.05em"}}>TU RESERVA AYUDA A:</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
+                  <span>🦍</span> MonkeyGorila
+                </span>
+                <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>0,10 €</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
+                  <span>🏗️</span> Proyecto inclusivo activo
+                </span>
+                <span style={{fontSize:13,fontWeight:700,color:"#E67E22"}}>0,10 €</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:7,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
+                  <span>💚</span> Asociación del club
+                </span>
+                <span style={{fontSize:13,fontWeight:700,color:"#2ECC71"}}>0,10 €</span>
+              </div>
+              <div style={{marginTop:10,paddingTop:7,borderTop:"1px solid rgba(255,255,255,0.08)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.35)"}}>Impacto por reserva</span>
+                <span style={{fontSize:13,fontWeight:900,color:"#2ECC71"}}>0,30 € 💛</span>
+              </div>
+            </div>
+            <div style={{marginTop:8,textAlign:"right"}}>
+              <a href="/proyectos" style={{fontSize:11,color:"#E67E22",textDecoration:"none",fontWeight:700}}>Ver proyectos activos →</a>
+            </div>
           </div>
         )}
 
