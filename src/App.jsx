@@ -288,13 +288,12 @@ export default function App() {
           <Route path="/entrenamientos" element={<RequireAuth session={session} sessionReady={sessionReady}><TrainingsPage session={session} /></RequireAuth>} />
           <Route path="/retos" element={<RequireAuth session={session} sessionReady={sessionReady}><ChallengesPage session={session} /></RequireAuth>} />
           <Route path="/pulls" element={<RequireAuth session={session} sessionReady={sessionReady}><PullsPage session={session} /></RequireAuth>} />
-          <Route path="/registro" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/mapa" element={<RequireAuth session={session} sessionReady={sessionReady}><MapPage session={session} /></RequireAuth>} />
-          <Route path="/partidos" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
-          <Route path="/clases" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
-          <Route path="/inclusivos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
+          <Route path="/juega" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
+          <Route path="/aprende" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
+          <Route path="/juntos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage session={session} /></RequireAuth>} />
           <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
           <Route path="/registrar-club" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubRegisterPage /></RequireAuth>} />
@@ -309,13 +308,15 @@ export default function App() {
           <Route path="/store" element={<Navigate to="/tienda" replace />} />
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
-          <Route path="/dona-preview" element={<DonationPreviewPage />} />
-          <Route path="/mood-preview" element={<MoodPreviewPage />} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
           <Route path="/club/:clubId" element={<ClubPage session={session} />} />
           <Route path="/stack" element={<GorilaStack />} />
+          <Route path="/partidos" element={<Navigate to="/juega" replace />} />
+          <Route path="/clases" element={<Navigate to="/aprende" replace />} />
+          <Route path="/inclusivos" element={<Navigate to="/juntos" replace />} />
+          <Route path="/registro" element={<Navigate to="/register" replace />} />
           <Route path="/reserva/pago" element={<RequireAuth session={session} sessionReady={sessionReady}><CourtCheckoutPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
