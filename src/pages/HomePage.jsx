@@ -110,6 +110,8 @@ export default function HomePage({ session: sessionProp }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [inclusiveStats, setInclusiveStats] = useState({ weekCount: 0, totalCount: 0, playersCount: 0 });
+  const [featuredProject, setFeaturedProject] = useState(null);
+  const [totalImpact, setTotalImpact] = useState(0);
 
   const now = new Date();
   const hour = now.getHours();
@@ -180,20 +182,24 @@ export default function HomePage({ session: sessionProp }) {
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 20px 60px", textAlign: "center" }}>
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
           <img src="/imglogog.png" alt="MonkeyGorila" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(116,184,0,0.1)", padding: 12, border: "1px solid rgba(116,184,0,0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
-          <h1 style={{ fontSize: 38, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.1 }}>
-            GORILA<br /><span style={{ color: "#74B800" }}>PÁDEL</span>
+          <h1 style={{ fontSize: 34, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.15 }}>
+            MONKEY<br /><span style={{ color: "#2ECC71" }}>GORILA</span>
           </h1>
-          <p style={{ fontSize: 16, color: "rgba(255,255,255,0.55)", margin: "0 0 8px" }}>Rápido. Fácil. Salvaje.</p>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Partidos · Clubs · Clases · Tienda</p>
+          <p style={{ fontSize: 17, color: "rgba(255,255,255,0.80)", margin: "0 0 6px", fontWeight: 700 }}>Jugando se ayuda — y se ve</p>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Cada partido que juegas ayuda a personas con discapacidad a practicar deporte</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32, animation: "ghHeroIn .6s ease .2s both" }}>
-          <button className="ghCtaBtn" onClick={() => navigate("/login")}
-            style={{ padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
-            🦍 Únete gratis
+          <button className="ghCtaBtn" onClick={() => navigate("/register")}
+            style={{ padding: "16px", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, fontSize: 16, cursor: "pointer", boxShadow: "0 8px 24px rgba(46,204,113,0.3)" }}>
+            🦍 Únete y empieza a ayudar
           </button>
-          <button className="ghCtaBtn" onClick={() => navigate("/partidos")}
-            style={{ padding: "14px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
-            Ver partidos disponibles →
+          <button className="ghCtaBtn" onClick={() => navigate("/proyectos")}
+            style={{ padding: "14px", borderRadius: 14, border: "1px solid rgba(230,126,34,0.30)", background: "rgba(230,126,34,0.08)", color: "#E67E22", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
+            🏗️ Ver proyectos activos →
+          </button>
+          <button className="ghCtaBtn" onClick={() => navigate("/login")}
+            style={{ padding: "12px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.10)", background: "transparent", color: "rgba(255,255,255,0.50)", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            Ya tengo cuenta — Entrar
           </button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, animation: "ghHeroIn .6s ease .4s both" }}>
@@ -260,9 +266,34 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         </div>
 
+        {/* Bloque impacto en tiempo real */}
+        {featuredProject && (
+          <div className="ghSection" style={{ marginBottom: 20, animationDelay: ".04s" }}>
+            <div onClick={() => navigate("/proyectos")} style={{ borderRadius: 16, background: "rgba(230,126,34,0.08)", border: "1px solid rgba(230,126,34,0.25)", padding: 16, cursor: "pointer" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: "#E67E22", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>🏗️ Proyecto activo</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{featuredProject.title}</div>
+                </div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.30)" }}>→</div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8 }}>
+                <span style={{ color: "#2ECC71", fontWeight: 700 }}>{(featuredProject.current_amount||0).toFixed(0)} € recaudados</span>
+                <span style={{ color: "rgba(255,255,255,0.40)" }}>meta: {featuredProject.goal_amount} €</span>
+              </div>
+              <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.10)" }}>
+                <div style={{ height: "100%", width: , borderRadius: 999, background: "linear-gradient(90deg,#2ECC71,#27AE60)", transition: "width 0.6s ease" }} />
+              </div>
+              <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                Cada reserva que haces aporta 0,10€ a este proyecto. <span style={{ color: "#E67E22", fontWeight: 700 }}>Jugando se ayuda.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CTA principal */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".05s" }}>
-          <button onClick={() => navigate("/partidos")}
+          <button onClick={() => navigate("/juega")}
             style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 28 }}>🦍</span>
