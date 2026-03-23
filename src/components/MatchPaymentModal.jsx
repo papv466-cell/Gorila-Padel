@@ -121,7 +121,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
 
 // ── Modal principal ──────────────────────────────────────────────────────────
 export default function MatchPaymentModal({ match, session, onClose, onJoined, isCreatorAuth = false }) {
-  const [step, setStep] = useState(isCreatorAuth ? "paying" : "mood");
+  const [step, setStep] = useState("paying");
   const [mood, setMood] = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [paymentData, setPaymentData] = useState(null);
@@ -131,7 +131,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   // Lanzar autorización automáticamente al abrir
   useEffect(() => {
     if (isCreatorAuth) handleCreatorAuth();
-    else { setLoading(false); setStep("mood"); }
+    else { setLoading(false); setStep("paying"); }
   }, []);
 
   const isPrivateCourt = String(match.club_id || "").startsWith("private:");
@@ -259,22 +259,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[
-                { key: "win",  emoji: "🔥", label: "Vengo a ganar",       desc: "Sin piedad" },
-                { key: "fun",  emoji: "😎", label: "A pasarlo bien",      desc: "El resultado da igual" },
-                { key: "beer", emoji: "🍺", label: "Lo importante es la cerveza post-partido", desc: "Prioridades claras" },
-              ].map(m => (
-                <button key={m.key} onClick={() => handleMoodSelect(m.key)}
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: "left" }}
-                  onMouseOver={e => e.currentTarget.style.background = "rgba(116,184,0,0.12)"}
-                  onMouseOut={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}>
-                  <span style={{ fontSize: 30, flexShrink: 0 }}>{m.emoji}</span>
-                  <div>
-                    <div style={{ color: "#fff", fontWeight: 900, fontSize: 15 }}>{m.label}</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 2 }}>{m.desc}</div>
-                  </div>
-                </button>
-              ))}
+
               <div style={{ marginTop: 8, padding: "14px 16px", borderRadius: 14, background: "rgba(230,126,34,0.08)", border: "1px solid rgba(230,126,34,0.25)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <span style={{ fontSize: 22 }}>🏗️</span>
