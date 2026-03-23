@@ -25,6 +25,7 @@ export default function Navbar({ showBack = false, onBack }) {
     { to: "/clases",      label: "Aprende",      icon: "📚",  key: "clases" },
     { to: "/inclusivos",  label: "Juntos",  icon: "♿",  key: "inclusivos" },
     { to: "/perfil",      label: "Perfil",      icon: "👤",  key: "perfil" },
+    { to: "/proyectos",  label: "Proyectos",   icon: "🏗️",  key: "proyectos" },
     { to: "/tienda",      label: "Tienda",      icon: "🛍️",  key: "tienda" },
   ], []);
 
