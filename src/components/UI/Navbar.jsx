@@ -48,7 +48,7 @@ export default function Navbar({ showBack = false, onBack }) {
         <div className="headerInner">
           <NavLink to="/" className="headerLogo">
             <img className="headerLogoImg" src="/imglogog.png" alt="Gorila" />
-            <div className="headerLogoText">Gorila <span>Padel</span></div>
+            <div className="headerLogoText">Monkey<span>Gorila</span></div>
           </NavLink>
 
           {showBack && (
