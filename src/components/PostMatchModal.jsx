@@ -265,6 +265,12 @@ export default function PostMatchModal({ match, players, session, onClose }) {
   const [ratings, setRatings] = useState({});
   const [mood, setMood] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [donationStep, setDonationStep] = useState(false);
+  const [donationAmount, setDonationAmount] = useState("2");
+  const [donationProject, setDonationProject] = useState(null);
+  const [activeProjects, setActiveProjects] = useState([]);
+  const [donationSent, setDonationSent] = useState(false);
+  const [sendingDonation, setSendingDonation] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   // ✅ FIX: ref para evitar doble ejecución de saveAll()
@@ -441,7 +447,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
           </>
         )}
 
-        {step === 4 && (
+        {step === 4 && !donationStep && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <div style={{ fontSize: 60, marginBottom: 12 }}>🦍</div>
             <div style={{ fontSize: 22, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¡Buen partido!</div>
@@ -461,7 +467,95 @@ export default function PostMatchModal({ match, players, session, onClose }) {
             {match?.club_id && !clubRatingSent ? (
               <button onClick={()=>setStep(5)} style={{...S.btn("green"), marginBottom:8}}>⭐ Valorar el club</button>
             ) : null}
+            {!donationSent && (
+              <button
+                onClick={async () => {
+                  const { data } = await supabase.from("projects").select("id,title").eq("active", true).limit(3);
+                  setActiveProjects(data || []);
+                  if (data?.length > 0) setDonationProject(data[0].id);
+                  setDonationStep(true);
+                }}
+                style={{ ...S.btn("green"), marginBottom: 8, background: "#E67E22", color: "#fff" }}>
+                🍺 Dona una cerveza — 2€
+              </button>
+            )}
             <button onClick={onClose} style={S.btn("ghost")}>Cerrar</button>
+          </div>
+        )}
+
+        {step === 4 && donationStep && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: 48, marginBottom: 8 }}>🍺</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6 }}>Dona una cerveza</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 24, lineHeight: 1.6 }}>
+              Con el precio de una cerveza ayudas a que más personas con discapacidad puedan jugar.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
+              {["1", "2", "5", "10"].map(v => (
+                <button key={v} onClick={() => setDonationAmount(v)}
+                  style={{ minHeight: 52, borderRadius: 12,
+                    border: donationAmount === v ? "2px solid #E67E22" : "1px solid rgba(255,255,255,0.15)",
+                    background: donationAmount === v ? "rgba(230,126,34,0.15)" : "rgba(255,255,255,0.05)",
+                    color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
+                  {v} €
+                </button>
+              ))}
+            </div>
+            {activeProjects.length > 0 && (
+              <div style={{ marginBottom: 20, textAlign: "left" }}>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>Tu donación va a:</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {activeProjects.map(p => (
+                    <button key={p.id} onClick={() => setDonationProject(p.id)}
+                      style={{ padding: "12px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer",
+                        border: donationProject === p.id ? "2px solid #E67E22" : "1px solid rgba(255,255,255,0.10)",
+                        background: donationProject === p.id ? "rgba(230,126,34,0.10)" : "rgba(255,255,255,0.04)",
+                        color: "#fff", fontWeight: 600, fontSize: 14 }}>
+                      🏗️ {p.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "left", fontSize: 14 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10, color: "rgba(255,255,255,0.80)" }}>Tu donación se reparte:</div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 MonkeyGorila</span>
+                <span style={{ fontWeight: 700 }}>0,10 €</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "rgba(255,255,255,0.55)" }}>🏗️ Proyecto elegido</span>
+                <span style={{ fontWeight: 700, color: "#E67E22" }}>
+                  {(Math.max(0, parseFloat(donationAmount || 0) - 0.10)).toFixed(2)} €
+                </span>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={async () => {
+                  if (!donationProject) return;
+                  setSendingDonation(true);
+                  try {
+                    const amount = parseFloat(donationAmount || 2);
+                    const { data: proj } = await supabase.from("projects").select("current_amount").eq("id", donationProject).single();
+                    await supabase.from("projects").update({
+                      current_amount: (proj?.current_amount || 0) + amount,
+                      updated_at: new Date().toISOString()
+                    }).eq("id", donationProject);
+                    setDonationSent(true);
+                    setDonationStep(false);
+                  } catch(e) { console.error(e); }
+                  finally { setSendingDonation(false); }
+                }}
+                disabled={sendingDonation || !donationProject}
+                style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer", opacity: sendingDonation ? 0.6 : 1 }}>
+                {sendingDonation ? "Enviando…" : `🍺 Donar ${parseFloat(donationAmount || 0).toFixed(2)} €`}
+              </button>
+              <button onClick={() => setDonationStep(false)}
+                style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+                Ahora no
+              </button>
+            </div>
           </div>
         )}
 
