@@ -71,9 +71,8 @@ serve(async (req) => {
         }
       }
 
-      // 3. Registrar donación 10cts
+      // 3. Registrar donación 10cts + proyecto activo
       try {
-        // Buscar fundación del club
         const { data: club } = await supabase.from("clubs")
           .select("foundation_id, custom_foundation_name, custom_foundation_iban")
           .eq("id", slot.club_id).single();
@@ -81,7 +80,7 @@ serve(async (req) => {
         const foundationId = club?.foundation_id || null;
         const currentMonth = new Date().toISOString().slice(0, 7) + "-01";
 
-        // Upsert en club_donations — suma 10cts al mes actual
+        // Upsert en club_donations
         const { data: existing } = await supabase.from("club_donations")
           .select("id, total_cents, match_count")
           .eq("club_id", slot.club_id)
@@ -103,6 +102,36 @@ serve(async (req) => {
             total_cents: 10,
             match_count: 1,
             transferred: false,
+          });
+        }
+
+        // Buscar proyecto activo destacado
+        const { data: featuredProject } = await supabase.from("projects")
+          .select("id, current_amount")
+          .eq("active", true)
+          .eq("featured", true)
+          .limit(1)
+          .maybeSingle();
+
+        const projectToUse = featuredProject || (await supabase.from("projects")
+          .select("id, current_amount")
+          .eq("active", true)
+          .limit(1)
+          .maybeSingle()).data;
+
+        if (projectToUse) {
+          // Sumar 0.10€ al proyecto
+          await supabase.from("projects").update({
+            current_amount: (projectToUse.current_amount || 0) + 0.10,
+            updated_at: new Date().toISOString(),
+          }).eq("id", projectToUse.id);
+
+          // Registrar en tabla donations
+          await supabase.from("donations").insert({
+            user_id: userId,
+            project_id: projectToUse.id,
+            amount: 0.10,
+            source: "reserva",
           });
         }
       } catch (donationError) {
