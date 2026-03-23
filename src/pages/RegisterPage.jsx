@@ -137,7 +137,7 @@ export default function RegisterPage() {
         }}>
           <img
             src="/imglogog.png"
-            alt="Gorila Pádel"
+            alt="MonkeyGorila"
             style={{ height: 48, width: "auto", display: "block" }}
           />
         </div>

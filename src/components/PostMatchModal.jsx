@@ -296,7 +296,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
         setPreviewUrl(url);
         const file = new File([blob], "gorila-resultado.png", { type: "image/png" });
         if (navigator.share && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: "Mi partido en Gorila Pádel 🦍", text: `¡Resultado! 🦍 #GorilaoPadel` }); } catch {}
+          try { await navigator.share({ files: [file], title: "Mi partido en MonkeyGorila 🦍", text: `¡Resultado! 🦍 #GorilaoPadel` }); } catch {}
         } else {
           const a = document.createElement("a");
           a.href = url; a.download = "gorila-resultado.png"; a.click();

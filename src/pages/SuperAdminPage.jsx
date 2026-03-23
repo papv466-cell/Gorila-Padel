@@ -112,7 +112,7 @@ export default function SuperAdminPage() {
           user_id: club.owner_user_id,
           type: "club_approved",
           title: "🎉 ¡Tu club ha sido aprobado!",
-          body: `${club.name} ya está activo en Gorila Pádel. Entra al panel de administración para configurar tus pistas.`,
+          body: `${club.name} ya está activo en MonkeyGorila. Entra al panel de administración para configurar tus pistas.`,
           data: { club_id: club.id },
         });
       }

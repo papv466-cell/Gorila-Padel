@@ -187,7 +187,7 @@ export default function App() {
         return;
       }
       if (type === "PUSH_RECEIVED") {
-        const title = data.title || "Gorila Pádel 🦍";
+        const title = data.title || "MonkeyGorila 🦍";
         const body = data.body || "";
         const url = data.url || "/partidos";
         toast(

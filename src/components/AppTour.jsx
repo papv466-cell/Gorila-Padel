@@ -5,7 +5,7 @@ import { supabase } from "../services/supabaseClient";
 const STEPS = [
   {
     id: "welcome",
-    title: "¡Bienvenido a Gorila Pádel! 🦍",
+    title: "¡Bienvenido a MonkeyGorila! 🦍",
     body: "Te enseñamos todo en 30 segundos. Puedes saltar el tour cuando quieras.",
     target: null, // centrado
     position: "center",

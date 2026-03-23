@@ -19,7 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   // ⭐ FUERZA REFRESH DEL SCHEMA CACHE
   global: {
     headers: {
-      'X-Client-Info': 'gorila-padel-v2'
+      'X-Client-Info': 'monkeygorila-v2'
     }
   }
 })

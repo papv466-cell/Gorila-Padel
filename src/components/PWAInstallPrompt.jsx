@@ -87,11 +87,11 @@ export default function PWAInstallPrompt() {
         margin: "0 auto",
       }}
       role="dialog"
-      aria-label="Instalar Gorila Pádel"
+      aria-label="Instalar MonkeyGorila"
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "start" }}>
         <div style={{ display: "grid", gap: 2 }}>
-          <div style={{ fontWeight: 800, fontSize: 14 }}>Instala Gorila Pádel</div>
+          <div style={{ fontWeight: 800, fontSize: 14 }}>Instala MonkeyGorila</div>
           {showAndroidInstall ? (
             <div style={{ fontSize: 12, opacity: 0.85 }}>
               Se abre más rápido y podrás recibir notificaciones.

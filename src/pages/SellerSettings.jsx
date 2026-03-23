@@ -189,7 +189,7 @@ export default function SellerSettings() {
               <div style={{ fontSize: isMobile ? 12 : 13, opacity: 0.8 }}>
                 {seller?.is_verified
                   ? 'Tu cuenta está verificada y puedes vender en Gorila Store'
-                  : 'Tu cuenta está siendo revisada por el equipo de Gorila Pádel'}
+                  : 'Tu cuenta está siendo revisada por el equipo de MonkeyGorila'}
               </div>
             </div>
           </div>

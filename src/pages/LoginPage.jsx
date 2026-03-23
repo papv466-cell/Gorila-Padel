@@ -88,7 +88,7 @@ export default function LoginPage() {
           }}>
             <img
               src="/imglogog.png"
-              alt="Gorila Pádel"
+              alt="MonkeyGorila"
               style={{ 
                 height: 80, 
                 width: 'auto', 

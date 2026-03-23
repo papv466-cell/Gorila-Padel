@@ -85,7 +85,7 @@ export default function SplashPage() {
             background:"radial-gradient(circle, rgba(116,184,0,0.25) 0%, transparent 70%)",
             animation:"glow 2.5s ease-in-out infinite",
           }}/>
-          <img src="/imglogog.png" alt="Gorila Pádel" style={{
+          <img src="/imglogog.png" alt="MonkeyGorila" style={{
             width:100, height:100, objectFit:"contain", borderRadius:22,
             border:"2px solid rgba(116,184,0,0.5)",
             boxShadow:"0 0 40px rgba(116,184,0,0.35), 0 20px 60px rgba(0,0,0,0.7)",
@@ -94,7 +94,7 @@ export default function SplashPage() {
         </div>
 
         <div style={{ fontSize:30, fontWeight:900, color:"#fff", letterSpacing:"-0.5px", textShadow:"0 2px 20px rgba(0,0,0,0.9)" }}>
-          Gorila Pádel
+          MonkeyGorila
         </div>
         <div style={{ fontSize:13, color:"rgba(255,255,255,0.65)", textAlign:"center", lineHeight:1.6, maxWidth:260, textShadow:"0 1px 10px rgba(0,0,0,0.9)" }}>
           Únete · Crea partidos · Encuentra clubs

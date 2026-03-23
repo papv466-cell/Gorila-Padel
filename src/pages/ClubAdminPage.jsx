@@ -1079,7 +1079,7 @@ async function deleteSchedule(id) {
       {tab === 'donaciones' && (
         <div style={{padding:'12px'}}>
           <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>💚 Donaciones</div>
-          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. Gorila Pádel gestiona la transferencia mensual.</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. MonkeyGorila gestiona la transferencia mensual.</div>
 
           {/* Saldo acumulado */}
           <div style={{...S.card, background:'linear-gradient(135deg,rgba(74,222,128,0.1),rgba(116,184,0,0.08))', border:'1px solid rgba(74,222,128,0.25)', marginBottom:16}}>
@@ -1314,9 +1314,9 @@ async function deleteSchedule(id) {
                 Pega este código en tu web y tus clientes podrán reservar sin salir de ella.
               </div>
               <div style={{background:'#0a0a0a', borderRadius:8, padding:12, fontFamily:'monospace', fontSize:11, color:'#74B800', lineHeight:1.8, overflowX:'auto', marginBottom:8}}>
-                {`<iframe src="https://gorila-padel.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`}
+                {`<iframe src="https://monkeygorila.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`}
               </div>
-              <button onClick={()=>{navigator.clipboard.writeText(`<iframe src="https://gorila-padel.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`); alert('✅ Copiado al portapapeles');}}
+              <button onClick={()=>{navigator.clipboard.writeText(`<iframe src="https://monkeygorila.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`); alert('✅ Copiado al portapapeles');}}
                 style={{...S.btn('green'), width:'100%', fontSize:12}}>
                 📋 Copiar código
               </button>

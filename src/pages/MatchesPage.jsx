@@ -353,7 +353,7 @@ export default function MatchesPage({ session: sessionProp }) {
     ensurePushSubscription().catch(()=>{});
   }, [session?.user?.id]);
   useEffect(() => {
-    const onPush = e => { const p=e?.detail||{}; const t=String(p.title||"Gorila Pádel"); const b=String(p.body||""); toast.success(b?`${t}: ${b}`:t); };
+    const onPush = e => { const p=e?.detail||{}; const t=String(p.title||"MonkeyGorila"); const b=String(p.body||""); toast.success(b?`${t}: ${b}`:t); };
     if (typeof window!=="undefined") { window.addEventListener("gp:push",onPush); return ()=>window.removeEventListener("gp:push",onPush); }
   }, []); // eslint-disable-line
 

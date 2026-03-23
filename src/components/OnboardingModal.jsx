@@ -74,7 +74,7 @@ export default function OnboardingModal({ session, onClose }) {
           <>
             <div style={{textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:64,marginBottom:12}}>🦍</div>
-              <div style={{...S.title, textAlign:"center"}}>¡Bienvenido a <span style={{color:"#74B800"}}>Gorila Padel</span>!</div>
+              <div style={{...S.title, textAlign:"center"}}>¡Bienvenido a <span style={{color:"#74B800"}}>MonkeyGorila</span>!</div>
               <div style={{...S.sub, textAlign:"center"}}>La app para organizar partidos, reservar pistas y conectar con jugadores cerca de ti.</div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
