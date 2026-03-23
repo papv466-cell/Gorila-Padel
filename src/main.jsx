@@ -5,13 +5,16 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { CartProvider } from './contexts/CartContext.jsx'
+import { FeaturesProvider } from './contexts/FeaturesContext.jsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <SessionProvider>
       <CartProvider>
-        <App />
+        <FeaturesProvider>
+          <App />
+        </FeaturesProvider>
       </CartProvider>
     </SessionProvider>
   </BrowserRouter>,

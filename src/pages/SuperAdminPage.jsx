@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import { useFeatures } from "../contexts/FeaturesContext";
 
 
 
@@ -16,6 +17,9 @@ export default function SuperAdminPage() {
   const [foundationForm, setFoundationForm] = useState({name:'',description:'',logo_url:'',website:'',iban:'',contact_email:''});
   const [editingFoundation, setEditingFoundation] = useState(null);
   const [savingFoundation, setSavingFoundation] = useState(false);
+  const [appFeatures, setAppFeatures] = useState([]);
+  const [savingFeature, setSavingFeature] = useState(null);
+  const { loadFeatures } = useFeatures();
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -32,6 +36,7 @@ export default function SuperAdminPage() {
       setSession(data.session);
       loadPendingClubs();
       loadFoundations();
+      loadAppFeatures();
     });
   }, []);
 
@@ -44,6 +49,19 @@ export default function SuperAdminPage() {
       .order("submitted_at", { ascending: false });
     setPendingClubs(data || []);
     setLoading(false);
+  }
+
+  async function loadAppFeatures() {
+    const { data } = await supabase.from("app_features").select("*").order("key");
+    setAppFeatures(data || []);
+  }
+
+  async function toggleFeature(key, enabled) {
+    setSavingFeature(key);
+    await supabase.from("app_features").update({ enabled, updated_at: new Date().toISOString() }).eq("key", key);
+    setAppFeatures(prev => prev.map(f => f.key === key ? { ...f, enabled } : f));
+    await loadFeatures();
+    setSavingFeature(null);
   }
 
   async function loadFoundations() {
@@ -134,7 +152,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.08)',
@@ -285,6 +303,51 @@ export default function SuperAdminPage() {
                 No hay asociaciones. ¡Crea la primera!
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab App Features */}
+        {tab === 'app' && (
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: '#fff', marginBottom: 6 }}>📱 Secciones de la app</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginBottom: 20 }}>
+              Activa o desactiva secciones. Los cambios se aplican al instante para todos los usuarios.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {appFeatures.map(f => (
+                <div key={f.key} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: '#111', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 14, padding: '14px 16px',
+                  opacity: savingFeature === f.key ? 0.6 : 1,
+                  transition: 'opacity 0.2s'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 24 }}>{f.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: '#fff' }}>{f.label}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>/{f.key}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toggleFeature(f.key, !f.enabled)}
+                    disabled={savingFeature === f.key}
+                    style={{
+                      width: 52, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
+                      background: f.enabled ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.12)',
+                      position: 'relative', transition: 'background 0.25s', flexShrink: 0
+                    }}
+                  >
+                    <span style={{
+                      position: 'absolute', top: 3, left: f.enabled ? 27 : 3,
+                      width: 22, height: 22, borderRadius: 999,
+                      background: f.enabled ? '#000' : 'rgba(255,255,255,0.5)',
+                      transition: 'left 0.25s', display: 'block'
+                    }} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
