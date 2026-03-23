@@ -39,49 +39,77 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
 
   return (
     <div>
-      {/* Desglose precio */}
-      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 14px", marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
-          Resumen
+      {/* Desglose precio transparente */}
+      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px", marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+          💛 Jugando ayudas a:
         </div>
 
-        {/* Línea coste pista — solo si no es gratuito */}
+        {/* Coste pista */}
         {!isFree && (
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Coste pista</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)" }}>🎾 Coste pista</span>
             <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{price}</span>
           </div>
         )}
 
-        {/* Línea comisión */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
-            Comisión servicio
-            <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>
-              {matchData.feeLabel || (isPrivate
-                ? `Gorila (0,40€) · ${matchData.foundationName || "Asociación"} (0,10€)`
-                : isFree
-                  ? `Gorila (0,30€) · Club (0,10€) · ${matchData.foundationName || "Asociación"} (0,10€)`
-                  : `Gorila (0,10€) · Club (0,10€) · ${matchData.foundationName || "Asociación"} (0,10€)`
-              )}
-            </span>
+        {/* MonkeyGorila — fijo */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)", display: "flex", alignItems: "center", gap: 6 }}>
+            🦍 MonkeyGorila <span style={{ fontSize: 11, color: "rgba(255,255,255,0.30)" }}>(fijo)</span>
           </span>
-          <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{fee}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>0,10 €</span>
         </div>
 
-        {/* Badge fundación */}
-        {matchData.foundationName && (
-          <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.2)", fontSize: 11, color: "#9BE800", display: "flex", gap: 6, alignItems: "center" }}>
-            <span>🤝</span>
-            <span>0,10€ van a <strong>{matchData.foundationName}</strong></span>
+        {/* Proyecto inclusivo — ampliable */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)", display: "flex", alignItems: "center", gap: 6 }}>
+              🏗️ Proyecto inclusivo
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#E67E22" }}>
+              {(extraProjectDonation || 0.10).toFixed(2)} €
+            </span>
           </div>
-        )}
+          <div style={{ display: "flex", gap: 6 }}>
+            {[0.10, 0.50, 1, 2, 5].map(v => (
+              <button key={v} onClick={() => setExtraProjectDonation(v)}
+                style={{ flex: 1, padding: "6px 2px", borderRadius: 8,
+                  border: (extraProjectDonation||0.10) === v ? "2px solid #E67E22" : "1px solid rgba(255,255,255,0.12)",
+                  background: (extraProjectDonation||0.10) === v ? "rgba(230,126,34,0.15)" : "rgba(255,255,255,0.04)",
+                  color: (extraProjectDonation||0.10) === v ? "#E67E22" : "rgba(255,255,255,0.55)",
+                  fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                {v}€
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Asociación — fijo */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", marginBottom: 8 }}>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)", display: "flex", alignItems: "center", gap: 6 }}>
+            💚 {matchData.foundationName || "Asociación del club"} <span style={{ fontSize: 11, color: "rgba(255,255,255,0.30)" }}>(fijo)</span>
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#2ECC71" }}>0,10 €</span>
+        </div>
+
+        {/* Total */}
+        <div style={{ paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.40)" }}>Total a pagar</span>
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#74B800" }}>
+            €{(parseFloat(isFree ? 0 : price || 0) + 0.10 + (extraProjectDonation || 0.10) + 0.10).toFixed(2)}
+          </span>
+        </div>
+
+        <div style={{ marginTop: 8, textAlign: "right" }}>
+          <a href="/proyectos" style={{ fontSize: 11, color: "#E67E22", textDecoration: "none", fontWeight: 700 }}>Ver proyectos activos →</a>
+        </div>
 
         {/* Nota pista privada */}
         {isPrivate && (
           <div style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", fontSize: 11, color: "rgba(255,255,255,0.4)", display: "flex", gap: 6, alignItems: "center" }}>
             <span>🔒</span>
-            <span>Pista privada — comisión sin parte de club</span>
+            <span>Pista privada — tarifa sin parte de proyecto</span>
           </div>
         )}
 
