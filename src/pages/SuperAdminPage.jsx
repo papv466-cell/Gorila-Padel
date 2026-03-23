@@ -31,6 +31,11 @@ export default function SuperAdminPage() {
   const [savingFoundation, setSavingFoundation] = useState(false);
   const [appFeatures, setAppFeatures] = useState([]);
   const [audits, setAudits] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [proposals, setProposals] = useState([]);
+  const [projectForm, setProjectForm] = useState({ title: '', description: '', goal_amount: '', category: 'inclusivo', featured: false });
+  const [editingProject, setEditingProject] = useState(null);
+  const [savingProject, setSavingProject] = useState(false);
   const [clubs, setClubs] = useState([]);
   const [auditForm, setAuditForm] = useState({ club_id: "", level: "bronce", notes: "" });
   const [savingAudit, setSavingAudit] = useState(false);
@@ -55,6 +60,8 @@ export default function SuperAdminPage() {
       loadFoundations();
       loadAppFeatures();
       loadAudits();
+      loadProjects();
+      loadProposals();
       loadClubs();
     });
   }, []);
@@ -68,6 +75,42 @@ export default function SuperAdminPage() {
       .order("submitted_at", { ascending: false });
     setPendingClubs(data || []);
     setLoading(false);
+  }
+
+  async function loadProjects() {
+    const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+    setProjects(data || []);
+  }
+
+  async function loadProposals() {
+    const { data } = await supabase.from('project_proposals').select('*, profiles(name)').order('created_at', { ascending: false });
+    setProposals(data || []);
+  }
+
+  async function saveProject() {
+    if (!projectForm.title.trim()) return;
+    setSavingProject(true);
+    try {
+      if (editingProject && editingProject !== 'new') {
+        await supabase.from('projects').update({ ...projectForm, goal_amount: parseFloat(projectForm.goal_amount) || 1000, updated_at: new Date().toISOString() }).eq('id', editingProject);
+      } else {
+        await supabase.from('projects').insert({ ...projectForm, goal_amount: parseFloat(projectForm.goal_amount) || 1000, current_amount: 0, active: true });
+      }
+      await loadProjects();
+      setEditingProject(null);
+      setProjectForm({ title: '', description: '', goal_amount: '', category: 'inclusivo', featured: false });
+    } catch(e) { alert(e.message); }
+    finally { setSavingProject(false); }
+  }
+
+  async function toggleProject(id, active) {
+    await supabase.from('projects').update({ active }).eq('id', id);
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, active } : p));
+  }
+
+  async function updateProposalStatus(id, status) {
+    await supabase.from('project_proposals').update({ status }).eq('id', id);
+    setProposals(prev => prev.map(p => p.id === id ? { ...p, status } : p));
   }
 
   async function loadAudits() {
@@ -206,7 +249,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.08)',
@@ -496,6 +539,118 @@ export default function SuperAdminPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Tab Proyectos */}
+        {tab === 'proyectos' && (
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <div>
+                <div style={{ fontSize:15, fontWeight:900, color:'#fff' }}>🏗️ Proyectos activos</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:4 }}>Crowdfunding inclusivo</div>
+              </div>
+              <button onClick={() => { setEditingProject('new'); setProjectForm({ title:'', description:'', goal_amount:'', category:'inclusivo', featured:false }); }}
+                style={{ padding:'8px 14px', borderRadius:10, background:'linear-gradient(135deg,#74B800,#9BE800)', border:'none', color:'#000', fontWeight:900, fontSize:12, cursor:'pointer' }}>
+                + Nuevo
+              </button>
+            </div>
+
+            {/* Formulario */}
+            {editingProject && (
+              <div style={{ background:'#111', border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding:16, marginBottom:16 }}>
+                <div style={{ fontSize:14, fontWeight:900, color:'#74B800', marginBottom:14 }}>
+                  {editingProject === 'new' ? '+ Nuevo proyecto' : '✏️ Editar proyecto'}
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  {[['title','Título *'],['description','Descripción'],['category','Categoría']].map(([f,ph]) => (
+                    <input key={f} placeholder={ph} value={projectForm[f]}
+                      onChange={e => setProjectForm(p => ({ ...p, [f]: e.target.value }))}
+                      style={{ padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', color:'#fff', fontSize:13 }} />
+                  ))}
+                  <input type="number" placeholder="Meta (€)" value={projectForm.goal_amount}
+                    onChange={e => setProjectForm(p => ({ ...p, goal_amount: e.target.value }))}
+                    style={{ padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', color:'#fff', fontSize:13 }} />
+                  <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgba(255,255,255,0.70)', cursor:'pointer' }}>
+                    <input type="checkbox" checked={projectForm.featured}
+                      onChange={e => setProjectForm(p => ({ ...p, featured: e.target.checked }))} />
+                    Proyecto destacado
+                  </label>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={saveProject} disabled={savingProject || !projectForm.title.trim()}
+                      style={{ flex:1, padding:'12px', borderRadius:12, background:'linear-gradient(135deg,#74B800,#9BE800)', border:'none', color:'#000', fontWeight:900, fontSize:14, cursor:'pointer', opacity: savingProject || !projectForm.title.trim() ? 0.5 : 1 }}>
+                      {savingProject ? 'Guardando…' : '✅ Guardar'}
+                    </button>
+                    <button onClick={() => setEditingProject(null)}
+                      style={{ padding:'12px 16px', borderRadius:12, background:'rgba(255,255,255,0.06)', border:'none', color:'#fff', fontWeight:900, cursor:'pointer' }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lista proyectos */}
+            {projects.map(p => {
+              const pct = Math.min(100, Math.round((p.current_amount / p.goal_amount) * 100));
+              return (
+                <div key={p.id} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${p.featured ? 'rgba(116,184,0,0.35)' : 'rgba(255,255,255,0.08)'}`, borderRadius:14, padding:14, marginBottom:10 }}>
+                  {p.featured && <div style={{ fontSize:11, fontWeight:900, color:'#74B800', marginBottom:6 }}>⭐ Destacado</div>}
+                  <div style={{ fontSize:14, fontWeight:900, color:'#fff', marginBottom:4 }}>{p.title}</div>
+                  <div style={{ fontSize:12, color:'rgba(255,255,255,0.50)', marginBottom:10 }}>{p.description}</div>
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
+                      <span style={{ color:'#74B800', fontWeight:700 }}>{(p.current_amount||0).toFixed(0)} €</span>
+                      <span style={{ color:'rgba(255,255,255,0.40)' }}>de {p.goal_amount} € · {pct}%</span>
+                    </div>
+                    <div style={{ height:6, borderRadius:999, background:'rgba(255,255,255,0.10)' }}>
+                      <div style={{ height:'100%', width:`${pct}%`, borderRadius:999, background:'linear-gradient(90deg,#74B800,#9BE800)' }} />
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={() => { setEditingProject(p.id); setProjectForm({ title:p.title, description:p.description||'', goal_amount:p.goal_amount, category:p.category||'inclusivo', featured:p.featured||false }); }}
+                      style={{ flex:1, padding:'8px', borderRadius:8, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)', color:'#fff', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                      ✏️ Editar
+                    </button>
+                    <button onClick={() => toggleProject(p.id, !p.active)}
+                      style={{ padding:'8px 12px', borderRadius:8, background: p.active ? 'rgba(239,68,68,0.10)' : 'rgba(116,184,0,0.10)', border:'none', color: p.active ? '#ff6b6b' : '#74B800', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                      {p.active ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Propuestas */}
+            {proposals.length > 0 && (
+              <div style={{ marginTop:24 }}>
+                <div style={{ fontSize:14, fontWeight:900, color:'#fff', marginBottom:12 }}>💡 Propuestas recibidas</div>
+                {proposals.map(p => (
+                  <div key={p.id} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:12, padding:12, marginBottom:8 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+                      <div style={{ fontSize:13, fontWeight:900, color:'#fff' }}>{p.title}</div>
+                      <span style={{ fontSize:11, padding:'2px 8px', borderRadius:6, background: p.status==='pending' ? 'rgba(245,158,11,0.15)' : p.status==='approved' ? 'rgba(116,184,0,0.15)' : 'rgba(239,68,68,0.15)', color: p.status==='pending' ? '#f59e0b' : p.status==='approved' ? '#74B800' : '#ff6b6b', fontWeight:800 }}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize:12, color:'rgba(255,255,255,0.50)', marginBottom:8 }}>{p.description}</div>
+                    {p.profiles?.name && <div style={{ fontSize:11, color:'rgba(255,255,255,0.30)', marginBottom:8 }}>Por: {p.profiles.name}</div>}
+                    {p.status === 'pending' && (
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button onClick={() => updateProposalStatus(p.id, 'approved')}
+                          style={{ flex:1, padding:'7px', borderRadius:8, background:'rgba(116,184,0,0.12)', border:'1px solid rgba(116,184,0,0.25)', color:'#74B800', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                          ✅ Aprobar
+                        </button>
+                        <button onClick={() => updateProposalStatus(p.id, 'rejected')}
+                          style={{ padding:'7px 12px', borderRadius:8, background:'rgba(239,68,68,0.10)', border:'1px solid rgba(239,68,68,0.25)', color:'#ff6b6b', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                          ❌ Rechazar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
