@@ -56,7 +56,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraP
         background: loading ? "rgba(116,184,0,0.4)" : "linear-gradient(135deg,#74B800,#9BE800)",
         color: "#000", fontWeight: 900, fontSize: 16, cursor: loading ? "not-allowed" : "pointer",
       }}>
-        {loading ? "⏳ Procesando..." : `💳 Pagar €${total} y unirme`}
+        {loading ? "⏳ Procesando..." : `💳 Pagar €${(parseFloat(total) + extraProjectDonation).toFixed(2)} y unirme`}
       </button>
 
       <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
@@ -259,10 +259,10 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   <div style={{ fontSize: 11, fontWeight: 900, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
                     💛 Jugando ayudas a:
                   </div>
-                  {(paymentData?.pricePerPlayerCents||0) > 0 && (
+                  {(pricePerPlayer > 0) && (
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                       <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)" }}>🎾 Coste pista</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{((paymentData?.pricePerPlayerCents||0)/100).toFixed(2)}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>€{((paymentData?.pricePerPlayerCents||0)/100 || pricePerPlayer).toFixed(2)}</span>
                     </div>
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -294,7 +294,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   <div style={{ paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 12, color: "rgba(255,255,255,0.40)" }}>Total a pagar</span>
                     <span style={{ fontSize: 16, fontWeight: 900, color: "#74B800" }}>
-                      €{((paymentData?.pricePerPlayerCents||0)/100 + 0.10 + extraProjectDonation + 0.10).toFixed(2)}
+                      €{(((paymentData?.pricePerPlayerCents||0)/100 || pricePerPlayer) + 0.10 + extraProjectDonation + 0.10).toFixed(2)}
                     </span>
                   </div>
                   <div style={{ marginTop: 8, textAlign: "right" }}>
