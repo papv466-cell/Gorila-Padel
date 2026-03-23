@@ -5737,3 +5737,231 @@ html, body {
   place-items: center;
   border: 2px solid #000;
 }
+
+/* ==========================================================
+   MONKEYGORILA — SISTEMA DE COLOR INCLUSIVO
+   Basado en WCAG AAA · Paleta accesible para daltonismo
+   ========================================================== */
+
+:root {
+  /* Verde principal — pasa ratio 7:1 en blanco/negro */
+  --mg-green:        #2ECC71;
+  --mg-green-dark:   #27AE60;
+  --mg-green-light:  #D5F5E3;
+  --mg-green-text:   #0d4a25;   /* texto sobre --mg-green */
+
+  /* Azul base — confianza, nunca azul claro puro */
+  --mg-blue:         #1A2744;
+  --mg-blue-mid:     #2C3E6B;
+  --mg-blue-light:   #EAF0FF;
+
+  /* Naranja — SOLO donaciones */
+  --mg-orange:       #E67E22;
+  --mg-orange-dark:  #D35400;
+  --mg-orange-light: #FEF0D9;
+  --mg-orange-text:  #7d4100;
+
+  /* Fondos */
+  --mg-bg:           #050505;
+  --mg-surface:      #111827;
+  --mg-card:         rgba(255,255,255,0.06);
+  --mg-border:       rgba(255,255,255,0.12);
+
+  /* Texto */
+  --mg-text:         rgba(255,255,255,0.92);
+  --mg-muted:        rgba(255,255,255,0.60);
+
+  /* Tipografía accesible — mínimo 16px */
+  --mg-font-base:    16px;
+  --mg-font-sm:      14px;     /* mínimo absoluto */
+  --mg-font-lg:      20px;
+  --mg-font-xl:      28px;
+
+  /* Botones — mínimo 52px de alto (accesible temblores) */
+  --mg-btn-h:        52px;
+  --mg-btn-radius:   14px;
+  --mg-btn-gap:      16px;     /* separación mínima entre botones */
+}
+
+/* ===== BASE MONKEYGORILA ===== */
+html, body {
+  background: var(--mg-bg) !important;
+  color: var(--mg-text) !important;
+  font-size: var(--mg-font-base) !important;
+  line-height: 1.7 !important;
+}
+
+/* ===== NAVBAR ===== */
+.siteHeader {
+  background: var(--mg-blue) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+}
+
+.headerNavLink, .mobileMenuLink {
+  color: var(--mg-text) !important;
+  font-size: var(--mg-font-sm) !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.headerNavLink.isActive, .mobileMenuLink.isActive {
+  background: var(--mg-green) !important;
+  color: var(--mg-green-text) !important;
+}
+
+.mobileMenu {
+  background: var(--mg-blue) !important;
+  border-right: 1px solid var(--mg-border) !important;
+}
+
+/* ===== BOTÓN PRINCIPAL — 52px accesible ===== */
+.btn, .gpBtn, .authBtn, .headerButton {
+  min-height: var(--mg-btn-h) !important;
+  padding: 14px 24px !important;
+  border-radius: var(--mg-btn-radius) !important;
+  background: var(--mg-green) !important;
+  color: var(--mg-green-text) !important;
+  font-size: var(--mg-font-base) !important;
+  font-weight: 700 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: filter 0.15s ease, transform 0.12s ease !important;
+}
+
+.btn:hover, .gpBtn:hover, .authBtn:hover, .headerButton:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn:active, .gpBtn:active {
+  transform: translateY(0) !important;
+}
+
+.btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Ghost */
+.btn.ghost {
+  background: transparent !important;
+  color: var(--mg-text) !important;
+  border: 1px solid var(--mg-border) !important;
+}
+
+/* Danger */
+.btn.danger {
+  background: #E74C3C !important;
+  color: #fff !important;
+}
+
+/* ===== BOTÓN DONACIÓN — naranja exclusivo ===== */
+.mgDonateBtn {
+  min-height: var(--mg-btn-h) !important;
+  padding: 14px 24px !important;
+  border-radius: var(--mg-btn-radius) !important;
+  background: var(--mg-orange) !important;
+  color: #fff !important;
+  font-size: var(--mg-font-base) !important;
+  font-weight: 700 !important;
+  border: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: filter 0.15s ease, transform 0.12s ease !important;
+}
+
+.mgDonateBtn:hover {
+  filter: brightness(1.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===== CARDS ===== */
+.card, .gpModalCard {
+  background: var(--mg-card) !important;
+  border: 1px solid var(--mg-border) !important;
+  border-radius: 18px !important;
+  color: var(--mg-text) !important;
+}
+
+/* ===== INPUTS ===== */
+input, select, textarea,
+.authInput, .gpInput, .gpTextarea {
+  font-size: var(--mg-font-base) !important;
+  min-height: 52px !important;
+  padding: 14px 16px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid var(--mg-border) !important;
+  color: var(--mg-text) !important;
+  line-height: 1.5 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--mg-muted) !important;
+}
+
+/* ===== AUTH ===== */
+.authCard {
+  background: var(--mg-surface) !important;
+  border: 1px solid var(--mg-border) !important;
+}
+
+.authTitle {
+  color: #fff !important;
+  font-size: var(--mg-font-xl) !important;
+}
+
+/* ===== SPLASH ===== */
+.splash {
+  background: var(--mg-blue) !important;
+}
+
+.splashTitle {
+  color: var(--mg-green) !important;
+  font-size: var(--mg-font-xl) !important;
+}
+
+/* ===== SEGMENTED / TABS ===== */
+.gpSegmented {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid var(--mg-border) !important;
+}
+
+.gpSegmented button {
+  color: var(--mg-text) !important;
+  min-height: 44px !important;
+  font-size: var(--mg-font-sm) !important;
+}
+
+.gpSegmented button.isActive {
+  background: var(--mg-green) !important;
+  color: var(--mg-green-text) !important;
+}
+
+/* ===== CHIPS MAPA ===== */
+.gpChipBtn {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid var(--mg-border) !important;
+  color: var(--mg-text) !important;
+  min-height: 44px !important;
+}
+
+.gpChipBtn.isOn {
+  background: var(--mg-green) !important;
+  color: var(--mg-green-text) !important;
+  border-color: var(--mg-green-dark) !important;
+}
+
+/* ===== SPLASH subtítulo (eslogan) ===== */
+.splashSub {
+  color: rgba(255,255,255,0.75) !important;
+  font-size: var(--mg-font-base) !important;
+}
+
+/* ===== QUITAR OUTLINE MAGENTA de debug ===== */
+body { outline: none !important; }
+
