@@ -41,32 +41,43 @@ function makeCountIcon(count) {
     popupAnchor: [0, -(size/2)],
   });
 }
-function makeClubIcon({ isFav, isSelected }) {
+const ACCESSIBILITY_MEDAL = {
+  oro:    { emoji: "🥇", color: "#FFD700", glow: "rgba(255,215,0,0.5)"   },
+  plata:  { emoji: "🥈", color: "#C0C0C0", glow: "rgba(192,192,192,0.5)" },
+  bronce: { emoji: "🥉", color: "#CD7F32", glow: "rgba(205,127,50,0.5)"  },
+};
+
+function makeClubIcon({ isFav, isSelected, accessibilityLevel }) {
   const size = isSelected ? 64 : 54;
-  const border = isSelected ? "4px solid #74B800" : "3px solid #111";
-  const shadow = isSelected ? "0 0 0 3px rgba(116,184,0,0.4), 0 12px 30px rgba(0,0,0,0.5)" : "0 8px 20px rgba(0,0,0,0.4)";
+  const medal = accessibilityLevel ? ACCESSIBILITY_MEDAL[accessibilityLevel] : null;
+  const mainColor = isSelected ? "#9BE800" : (medal ? medal.color : "#74B800");
+  const borderColor = medal ? medal.color : (isSelected ? "#9BE800" : "#111");
+  const glowStyle = medal
+    ? `box-shadow:0 0 0 3px ${medal.glow},0 12px 30px rgba(0,0,0,0.5);`
+    : isSelected ? "box-shadow:0 0 0 3px rgba(116,184,0,0.4),0 12px 30px rgba(0,0,0,0.5);" : "box-shadow:0 8px 20px rgba(0,0,0,0.4);";
+
   return L.divIcon({
     className: "gpClubIcon",
     html: `<div style="width:${size}px;height:${size}px;position:relative;">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
-    <circle cx="32" cy="32" r="30" fill="${isSelected ? '#9BE800' : '#74B800'}" stroke="#111" stroke-width="3"/>
-    <rect x="29" y="42" width="6" height="14" rx="3" fill="#111"/>
-    <ellipse cx="32" cy="28" rx="13" ry="16" fill="#fff" stroke="#111" stroke-width="2"/>
-    <circle cx="28" cy="24" r="2" fill="#74B800"/>
-    <circle cx="36" cy="24" r="2" fill="#74B800"/>
-    <circle cx="32" cy="30" r="2" fill="#74B800"/>
-    <circle cx="28" cy="36" r="2" fill="#74B800"/>
-    <circle cx="36" cy="36" r="2" fill="#74B800"/>
-    <circle cx="46" cy="46" r="7" fill="#9BE800" stroke="#111" stroke-width="1.5"/>
-    <path d="M41 44 Q46 41 51 44" stroke="#fff" stroke-width="1" fill="none"/>
-    <path d="M41 48 Q46 51 51 48" stroke="#fff" stroke-width="1" fill="none"/>
-  </svg>
+  <div style="width:${size}px;height:${size}px;border-radius:999px;border:3px solid ${borderColor};${glowStyle}overflow:hidden;background:#111;display:grid;place-items:center;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
+      <circle cx="32" cy="32" r="30" fill="${mainColor}" stroke="${borderColor}" stroke-width="3"/>
+      <rect x="29" y="42" width="6" height="14" rx="3" fill="#111"/>
+      <ellipse cx="32" cy="28" rx="13" ry="16" fill="#fff" stroke="#111" stroke-width="2"/>
+      <circle cx="28" cy="24" r="2" fill="#74B800"/>
+      <circle cx="36" cy="24" r="2" fill="#74B800"/>
+      <circle cx="32" cy="30" r="2" fill="#74B800"/>
+      <circle cx="28" cy="36" r="2" fill="#74B800"/>
+      <circle cx="36" cy="36" r="2" fill="#74B800"/>
+    </svg>
+  </div>
+  ${medal ? `<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:999px;background:#111;border:2px solid ${medal.color};font-size:14px;display:grid;place-items:center;line-height:1;">${medal.emoji}</div>` : ""}
   ${isFav ? `<div style="position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:999px;background:#FFD700;border:2px solid #111;font-size:11px;display:grid;place-items:center;">⭐</div>` : ""}
-  ${isSelected ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #9BE800;"></div>` : ""}
+  ${isSelected ? `<div style="position:absolute;bottom:${medal ? "-18px" : "-8px"};left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid ${mainColor};"></div>` : ""}
 </div>`,
-    iconSize: [size, size],
-    iconAnchor: [size/2, size+6],
-    popupAnchor: [0, -(size+6)],
+    iconSize: [size, size + (medal ? 10 : 0)],
+    iconAnchor: [size/2, size + (medal ? 16 : 6)],
+    popupAnchor: [0, -(size + (medal ? 16 : 6))],
   });
 }
 
@@ -412,7 +423,7 @@ export default function MapPage({ session: sessionProp }) {
                   const isSelected = selectedClub && String(selectedClub.id) === String(c.id);
                   return (
                     <Marker key={it.key} position={[c.lat, c.lng]}
-                      icon={makeClubIcon({ isFav: favIds.has(String(c.id||"")), isSelected })}
+                      icon={makeClubIcon({ isFav: favIds.has(String(c.id||"")), isSelected, accessibilityLevel: c.accessibility_level })}
                       eventHandlers={{ click: () => openClubSheet(c) }}
                     />
                   );

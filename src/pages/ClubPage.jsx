@@ -1121,7 +1121,12 @@ export default function ClubPage({ session: sessionProp }) {
                           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                             <span style={{ fontSize:20 }}>🏟️</span>
                             <div>
-                              <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>{club.name}</div>
+                              <div style={{ fontSize:13, fontWeight:800, color:"#fff", display:"flex", alignItems:"center", gap:6 }}>
+                                {club.name}
+                                {club.accessibility_level === "oro"    && <span title="Club Oro — máxima accesibilidad"    style={{ fontSize:16 }}>🥇</span>}
+                                {club.accessibility_level === "plata"  && <span title="Club Plata — alta accesibilidad"    style={{ fontSize:16 }}>🥈</span>}
+                                {club.accessibility_level === "bronce" && <span title="Club Bronce — accesibilidad básica" style={{ fontSize:16 }}>🥉</span>}
+                              </div>
                               {club.city && <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)" }}>{club.city}</div>}
                             </div>
                           </div>
