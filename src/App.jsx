@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import ClubAdminPage from "./pages/ClubAdminPage";
+import ProjectsPage from "./pages/ProjectsPage";
+import DonationPreviewPage from "./pages/DonationPreviewPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
 import SuperAdminPage from "./pages/SuperAdminPage";
 import ChallengesPage from "./pages/ChallengesPage";
