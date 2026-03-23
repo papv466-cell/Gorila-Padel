@@ -573,6 +573,14 @@ export default function ProfilePage({ session: sessionProp }) {
             )}
             {session?.user?.id === "1e0db2e1-e959-41f0-bcaf-2bb46fd425da" && (
               <div style={{ marginTop: 8 }}>
+                <button onClick={() => navigate("/impacto")}
+                  style={{ width:"100%", padding:"14px 16px", borderRadius:14, background:"rgba(230,126,34,0.10)", border:"1px solid rgba(230,126,34,0.25)", color:"#E67E22", fontWeight:700, fontSize:15, cursor:"pointer", display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                  <span style={{ fontSize:20 }}>💛</span>
+                  <div style={{ textAlign:"left" }}>
+                    <div style={{ fontWeight:900 }}>Mi impacto</div>
+                    <div style={{ fontSize:12, opacity:0.7 }}>Lo que llevas donado y dónde ha ido</div>
+                  </div>
+                </button>
                 <button onClick={() => navigate("/super-admin")}
                   style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(255,0,0,0.08)", border: "1px solid rgba(255,0,0,0.25)", color: "rgba(255,100,100,0.9)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🔐 Super Admin

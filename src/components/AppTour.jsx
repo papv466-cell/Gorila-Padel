@@ -5,71 +5,69 @@ import { supabase } from "../services/supabaseClient";
 const STEPS = [
   {
     id: "welcome",
-    title: "¡Bienvenido a MonkeyGorila! 🦍",
-    body: "Te enseñamos todo en 30 segundos. Puedes saltar el tour cuando quieras.",
-    target: null, // centrado
+    title: "Bienvenido a MonkeyGorila 🦍",
+    body: "La app donde jugar al pádel ayuda a personas con discapacidad a practicar deporte. Jugando se ayuda — y se ve.",
+    target: null,
     position: "center",
   },
   {
-    id: "home",
-    title: "🏠 Inicio",
-    body: "Aquí ves tus próximos partidos, novedades de la comunidad y accesos rápidos a todo.",
-    target: "nav-home",
-    position: "top",
+    id: "proyecto1",
+    title: "🏗️ Pistas adaptadas en Madrid",
+    body: "Estamos construyendo 2 pistas de pádel completamente accesibles para sillas de ruedas. Cada reserva que hagas aporta directamente a este proyecto.",
+    target: null,
+    position: "center",
+    project: true,
+    progress: 0,
+    goal: 5000,
+    emoji: "♿",
   },
   {
-    id: "matches",
-    title: "🎾 Partidos",
-    body: "Crea o únete a partidos cerca de ti. Filtra por nivel, fecha y tipo de juego.",
-    target: "nav-matches",
-    position: "top",
+    id: "proyecto2",
+    title: "🎓 Becas para jugadores con discapacidad",
+    body: "Cubrimos cuotas de club y clases para jugadores con discapacidad durante un año entero. Con tus donaciones post-partido hacemos esto posible.",
+    target: null,
+    position: "center",
+    project: true,
+    progress: 0,
+    goal: 3000,
+    emoji: "🎾",
   },
   {
-    id: "clubs",
-    title: "🏟️ Clubs",
-    body: "Encuentra clubs, reserva pistas y paga directamente desde la app. Puedes dividir el pago entre 4 jugadores.",
-    target: "nav-clubs",
-    position: "top",
+    id: "proyecto3",
+    title: "🏆 Torneo inclusivo nacional",
+    body: "El primer torneo nacional de pádel inclusivo con categorías para todos los niveles y discapacidades. ¿Nos ayudas a organizarlo?",
+    target: null,
+    position: "center",
+    project: true,
+    progress: 0,
+    goal: 8000,
+    emoji: "🏅",
   },
   {
-    id: "inclusive",
-    title: "♿ Pádel Inclusivo",
-    body: "Partidos adaptados para todos. Cada reserva dona 10cts a asociaciones inclusivas.",
-    target: "nav-inclusive",
-    position: "top",
+    id: "how",
+    title: "💛 ¿Cómo ayudas jugando?",
+    body: "Cada reserva incluye 0,10€ para MonkeyGorila + 0,10€ al proyecto activo + 0,10€ a la asociación del club. Puedes ampliar tu donación cuando quieras.",
+    target: null,
+    position: "center",
   },
   {
-    id: "profile",
-    title: "👤 Tu Perfil",
-    body: "Gestiona tu perfil, ve tu historial de XP, logros y estadísticas de juego.",
-    target: "nav-profile",
+    id: "juntos",
+    title: "♿ Partidos Juntos",
+    body: "Partidos adaptados para todos. Aquí encontrarás partidos inclusivos donde juegan juntos personas con y sin discapacidad.",
+    target: "nav-juntos",
     position: "top",
-  },
-  {
-    id: "create",
-    title: "➕ Crear partido",
-    body: "Pulsa aquí para crear un partido nuevo. Elige fecha, hora, nivel y número de jugadores.",
-    target: "btn-create",
-    position: "bottom",
   },
   {
     id: "notifications",
     title: "🔔 Notificaciones",
-    body: "Aquí recibirás avisos de partidos, invitaciones y valoraciones.",
+    body: "Te avisamos cuando alguien se une a tu partido, te valora o hay novedades en los proyectos que apoyas.",
     target: "btn-notif",
     position: "bottom",
   },
   {
-    id: "game",
-    title: "🦍 Gorila Word",
-    body: "¡Un juego diario exclusivo! Adivina la palabra de pádel. Compite con todos los usuarios.",
-    target: "banner-game",
-    position: "bottom",
-  },
-  {
     id: "done",
-    title: "¡Ya lo sabes todo! 🎉",
-    body: "Si tienes dudas en algún botón, mantenlo pulsado para ver su descripción. ¡A jugar!",
+    title: "¡Ya eres parte de MonkeyGorila! 🎉",
+    body: "Cada partido que juegues ayuda a alguien a practicar deporte. Ve a Proyectos para ver el impacto en tiempo real.",
     target: null,
     position: "center",
   },
@@ -184,9 +182,23 @@ export default function AppTour({ session, onClose }) {
         <div style={{ fontSize:18, fontWeight:900, color:"#fff", marginBottom:8 }}>
           {current.title}
         </div>
-        <div style={{ fontSize:13, color:"rgba(255,255,255,0.65)", lineHeight:1.6, marginBottom:18 }}>
+        <div style={{ fontSize:13, color:"rgba(255,255,255,0.65)", lineHeight:1.6, marginBottom: current.project ? 12 : 18 }}>
           {current.body}
         </div>
+        {current.project && (
+          <div style={{ marginBottom:18 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:6 }}>
+              <span style={{ color:"rgba(255,255,255,0.40)" }}>Recaudado</span>
+              <span style={{ color:"#2ECC71", fontWeight:700 }}>{current.progress} € / {current.goal} €</span>
+            </div>
+            <div style={{ height:6, borderRadius:999, background:"rgba(255,255,255,0.10)" }}>
+              <div style={{ height:"100%", width:`${Math.round((current.progress/current.goal)*100)}%`, borderRadius:999, background:"linear-gradient(90deg,#2ECC71,#27AE60)" }} />
+            </div>
+            <div style={{ marginTop:8, textAlign:"right" }}>
+              <a href="/proyectos" style={{ fontSize:11, color:"#E67E22", textDecoration:"none", fontWeight:700 }}>Ver todos los proyectos →</a>
+            </div>
+          </div>
+        )}
 
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {isLast ? (
