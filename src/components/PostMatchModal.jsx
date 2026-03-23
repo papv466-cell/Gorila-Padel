@@ -542,6 +542,13 @@ export default function PostMatchModal({ match, players, session, onClose }) {
                       current_amount: (proj?.current_amount || 0) + amount,
                       updated_at: new Date().toISOString()
                     }).eq("id", donationProject);
+                    // Registrar en tabla donations
+                    await supabase.from("donations").insert({
+                      user_id: session?.user?.id,
+                      project_id: donationProject,
+                      amount: amount,
+                      source: "post_partido",
+                    });
                     setDonationSent(true);
                     setDonationStep(false);
                   } catch(e) { console.error(e); }
