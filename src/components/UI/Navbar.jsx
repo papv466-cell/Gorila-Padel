@@ -18,13 +18,12 @@ export default function Navbar({ showBack = false, onBack }) {
 
   const allLinks = useMemo(() => [
     { to: "/mapa",        label: "Mapa",       icon: "🗺️",  key: "mapa" },
-    { to: "/partidos",    label: "Partidos",    icon: "🎾",  key: "partidos" },
+    { to: "/partidos",    label: "Juega",    icon: "🎾",  key: "partidos" },
     { to: "/leaderboard", label: "Ranking",     icon: "🏆",  key: "leaderboard" },
     { to: "/juega-plus",  label: "Juega+",      icon: "🥇",  key: "juega-plus" },
-    { to: "/gorilandia",  label: "Gorilandia",  icon: "🦍",  key: "gorilandia" },
-    { to: "/clases",      label: "Clases",      icon: "📚",  key: "clases" },
-    { to: "/inclusivos",  label: "Inclusivos",  icon: "♿",  key: "inclusivos" },
-    { to: "/retos",       label: "Retos",       icon: "⚔️",  key: "retos" },
+    { to: "/gorilandia",  label: "Comunidad",  icon: "🦍",  key: "gorilandia" },
+    { to: "/clases",      label: "Aprende",      icon: "📚",  key: "clases" },
+    { to: "/inclusivos",  label: "Juntos",  icon: "♿",  key: "inclusivos" },
     { to: "/perfil",      label: "Perfil",      icon: "👤",  key: "perfil" },
     { to: "/tienda",      label: "Tienda",      icon: "🛍️",  key: "tienda" },
   ], []);
