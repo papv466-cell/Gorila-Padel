@@ -155,6 +155,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   const [paymentData, setPaymentData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [extraProjectDonation, setExtraProjectDonation] = useState(0.10);
 
   // Lanzar autorización automáticamente al abrir
   useEffect(() => {
