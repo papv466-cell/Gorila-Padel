@@ -306,6 +306,7 @@ export default function App() {
           <Route path="/store" element={<Navigate to="/tienda" replace />} />
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
+          <Route path="/dona-preview" element={<DonationPreviewPage />} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
           <Route path="/jugadores" element={<RequireAuth session={session} sessionReady={sessionReady}><FindPlayersPage session={session} /></RequireAuth>} />
