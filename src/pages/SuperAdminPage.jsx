@@ -6,6 +6,18 @@ import { useFeatures } from "../contexts/FeaturesContext";
 
 
 
+const AUDIT_CHECKLIST = {
+  bronce: ["Rampa de entrada", "Aseo adaptado", "Aparcamiento accesible"],
+  plata: ["Rampa de entrada", "Aseo adaptado", "Aparcamiento accesible", "Vestuarios adaptados", "Pistas accesibles", "Señalética clara"],
+  oro: ["Rampa de entrada", "Aseo adaptado", "Aparcamiento accesible", "Vestuarios adaptados", "Pistas accesibles", "Señalética clara", "Silla de ruedas disponible", "Personal formado", "Programa inclusivo activo"],
+};
+
+const LEVEL_CONFIG = {
+  bronce: { emoji: "🥉", label: "Bronce", color: "#CD7F32", bg: "rgba(205,127,50,0.12)", border: "rgba(205,127,50,0.35)" },
+  plata:  { emoji: "🥈", label: "Plata",  color: "#C0C0C0", bg: "rgba(192,192,192,0.12)", border: "rgba(192,192,192,0.35)" },
+  oro:    { emoji: "🥇", label: "Oro",    color: "#FFD700", bg: "rgba(255,215,0,0.12)",   border: "rgba(255,215,0,0.35)" },
+};
+
 export default function SuperAdminPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
@@ -18,6 +30,11 @@ export default function SuperAdminPage() {
   const [editingFoundation, setEditingFoundation] = useState(null);
   const [savingFoundation, setSavingFoundation] = useState(false);
   const [appFeatures, setAppFeatures] = useState([]);
+  const [audits, setAudits] = useState([]);
+  const [clubs, setClubs] = useState([]);
+  const [auditForm, setAuditForm] = useState({ club_id: "", level: "bronce", notes: "" });
+  const [savingAudit, setSavingAudit] = useState(false);
+  const [showAuditForm, setShowAuditForm] = useState(false);
   const [savingFeature, setSavingFeature] = useState(null);
   const { loadFeatures } = useFeatures();
 
@@ -37,6 +54,8 @@ export default function SuperAdminPage() {
       loadPendingClubs();
       loadFoundations();
       loadAppFeatures();
+      loadAudits();
+      loadClubs();
     });
   }, []);
 
@@ -49,6 +68,41 @@ export default function SuperAdminPage() {
       .order("submitted_at", { ascending: false });
     setPendingClubs(data || []);
     setLoading(false);
+  }
+
+  async function loadAudits() {
+    const { data } = await supabase.from("club_audits").select("*, clubs(name)").eq("active", true).order("audited_at", { ascending: false });
+    setAudits(data || []);
+  }
+
+  async function loadClubs() {
+    const { data } = await supabase.from("clubs").select("id, name").eq("status", "approved").order("name");
+    setClubs(data || []);
+  }
+
+  async function saveAudit() {
+    if (!auditForm.club_id || !auditForm.level) return;
+    setSavingAudit(true);
+    try {
+      await supabase.from("club_audits").insert({
+        club_id: auditForm.club_id,
+        level: auditForm.level,
+        notes: auditForm.notes || null,
+        audited_by: session?.user?.id,
+        checklist: AUDIT_CHECKLIST[auditForm.level],
+      });
+      await supabase.from("clubs").update({ accessibility_level: auditForm.level }).eq("id", auditForm.club_id);
+      await loadAudits();
+      setShowAuditForm(false);
+      setAuditForm({ club_id: "", level: "bronce", notes: "" });
+    } catch(e) { alert(e.message); }
+    finally { setSavingAudit(false); }
+  }
+
+  async function revokeAudit(id, clubId) {
+    await supabase.from("club_audits").update({ active: false }).eq("id", id);
+    await supabase.from("clubs").update({ accessibility_level: null }).eq("id", clubId);
+    setAudits(prev => prev.filter(a => a.id !== id));
   }
 
   async function loadAppFeatures() {
@@ -152,7 +206,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.08)',
@@ -348,6 +402,100 @@ export default function SuperAdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Tab Auditorías */}
+        {tab === 'auditorias' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>🏅 Auditorías de accesibilidad</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>Oro · Plata · Bronce — renovación anual</div>
+              </div>
+              <button onClick={() => setShowAuditForm(true)}
+                style={{ padding: '8px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', border: 'none', color: '#000', fontWeight: 900, fontSize: 12, cursor: 'pointer' }}>
+                + Nueva
+              </button>
+            </div>
+
+            {/* Formulario nueva auditoría */}
+            {showAuditForm && (
+              <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                <div style={{ fontSize: 14, fontWeight: 900, color: '#74B800', marginBottom: 14 }}>Nueva auditoría</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <select value={auditForm.club_id} onChange={e => setAuditForm(p => ({ ...p, club_id: e.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }}>
+                    <option value="">Selecciona un club…</option>
+                    {clubs.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {['bronce','plata','oro'].map(lvl => {
+                      const cfg = LEVEL_CONFIG[lvl];
+                      return (
+                        <button key={lvl} onClick={() => setAuditForm(p => ({ ...p, level: lvl }))}
+                          style={{ flex: 1, padding: '12px 8px', borderRadius: 12, border: auditForm.level === lvl ? `2px solid ${cfg.color}` : '1px solid rgba(255,255,255,0.10)', background: auditForm.level === lvl ? cfg.bg : 'rgba(255,255,255,0.04)', color: cfg.color, fontWeight: 900, fontSize: 14, cursor: 'pointer' }}>
+                          {cfg.emoji} {cfg.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.40)', marginBottom: 8 }}>REQUISITOS {auditForm.level.toUpperCase()}</div>
+                    {AUDIT_CHECKLIST[auditForm.level].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 13, color: 'rgba(255,255,255,0.70)' }}>
+                        <span style={{ color: '#74B800' }}>✓</span> {item}
+                      </div>
+                    ))}
+                  </div>
+                  <textarea placeholder="Notas internas (opcional)" value={auditForm.notes}
+                    onChange={e => setAuditForm(p => ({ ...p, notes: e.target.value }))}
+                    rows={2} style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13, resize: 'none', fontFamily: 'inherit' }} />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={saveAudit} disabled={savingAudit || !auditForm.club_id}
+                      style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'linear-gradient(135deg,#74B800,#9BE800)', border: 'none', color: '#000', fontWeight: 900, fontSize: 14, cursor: 'pointer', opacity: savingAudit || !auditForm.club_id ? 0.5 : 1 }}>
+                      {savingAudit ? 'Guardando…' : '✅ Guardar auditoría'}
+                    </button>
+                    <button onClick={() => setShowAuditForm(false)}
+                      style={{ padding: '12px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: 'none', color: '#fff', fontWeight: 900, cursor: 'pointer' }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Lista auditorías */}
+            {audits.length === 0 && !showAuditForm && (
+              <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.30)' }}>
+                <div style={{ fontSize: 40, marginBottom: 8 }}>🏅</div>
+                No hay auditorías todavía
+              </div>
+            )}
+            {audits.map(a => {
+              const cfg = LEVEL_CONFIG[a.level];
+              const exp = a.expires_at ? new Date(a.expires_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
+              return (
+                <div key={a.id} style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 14, padding: 14, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: '#fff' }}>{a.clubs?.name || a.club_id}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.50)', marginTop: 2 }}>
+                        Auditado: {new Date(a.audited_at).toLocaleDateString('es-ES')} {exp ? `· Expira: ${exp}` : ''}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 900, padding: '4px 10px', borderRadius: 8, background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}>
+                      {cfg.emoji} {cfg.label}
+                    </span>
+                  </div>
+                  {a.notes && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.50)', marginBottom: 8 }}>{a.notes}</div>}
+                  <button onClick={() => revokeAudit(a.id, a.club_id)}
+                    style={{ padding: '6px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)', color: '#ff6b6b', fontWeight: 800, fontSize: 12, cursor: 'pointer' }}>
+                    Revocar
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
 
