@@ -10,7 +10,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
 // ── Formulario Stripe interno ────────────────────────────────────────────────
-function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess }) {
+function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraProjectDonation = 0.10, setExtraProjectDonation }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -355,6 +355,8 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   pricePerPlayerCents={paymentData?.pricePerPlayerCents || 0}
                   matchData={paymentData?.matchData || { isFree: false, isPrivateCourt: false, feeLabel: '', foundationName: null }}
                   onSuccess={handlePaySuccess}
+                  extraProjectDonation={extraProjectDonation}
+                  setExtraProjectDonation={setExtraProjectDonation}
                 />
               </Elements>
             )}
