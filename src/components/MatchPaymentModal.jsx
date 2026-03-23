@@ -260,9 +260,9 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                { key: "win",  emoji: "🔥", label: "Vengo a ganar",                    desc: "Sin piedad" },
-                { key: "fun",  emoji: "😎", label: "A pasarlo bien",                   desc: "El resultado da igual" },
-                { key: "beer", emoji: "🍺", label: "Lo importante es el Penúltimo Sed", desc: "Prioridades claras" },
+                { key: "win",  emoji: "🔥", label: "Vengo a ganar",       desc: "Sin piedad" },
+                { key: "fun",  emoji: "😎", label: "A pasarlo bien",      desc: "El resultado da igual" },
+                { key: "beer", emoji: "🍺", label: "Lo importante es la cerveza post-partido", desc: "Prioridades claras" },
               ].map(m => (
                 <button key={m.key} onClick={() => handleMoodSelect(m.key)}
                   style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: "left" }}
@@ -275,6 +275,18 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   </div>
                 </button>
               ))}
+              <div style={{ marginTop: 8, padding: "14px 16px", borderRadius: 14, background: "rgba(230,126,34,0.08)", border: "1px solid rgba(230,126,34,0.25)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 22 }}>🏗️</span>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: "#E67E22" }}>Mientras juegas, ayudas</div>
+                </div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, marginBottom: 10 }}>
+                  0,10€ de tu reserva va a MonkeyGorila · 0,10€ al proyecto inclusivo activo · 0,10€ a la asociación del club
+                </div>
+                <a href="/proyectos" style={{ fontSize: 12, fontWeight: 700, color: "#E67E22", textDecoration: "none" }}>
+                  Ver proyectos activos →
+                </a>
+              </div>
             </div>
             <button onClick={onClose} style={{ width: "100%", marginTop: 14, padding: "11px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
               Cancelar
