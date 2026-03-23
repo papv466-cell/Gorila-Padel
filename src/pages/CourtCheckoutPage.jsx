@@ -8,7 +8,7 @@ import { supabase } from "../services/supabaseClient";
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-function PayForm({ slotData, onSuccess }) {
+function PayForm({ slotData, onSuccess, extraDonation = 0.10, splitEnabled = false }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,11 @@ function PayForm({ slotData, onSuccess }) {
       {error && <div style={{marginTop:10,padding:10,borderRadius:8,background:"rgba(239,68,68,0.15)",color:"#ff6b6b",fontSize:12}}>{error}</div>}
       <button type="submit" disabled={!stripe||loading}
         style={{marginTop:16,width:"100%",padding:14,borderRadius:12,background:loading?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:loading?"not-allowed":"pointer",fontSize:14}}>
-        {loading?"Procesando…":`Pagar ${splitEnabled?(slotData?.price/4).toFixed(2):slotData?.price||0}€`}
+        {loading ? "Procesando…" : (() => {
+          const base = splitEnabled ? (slotData?.price||0)/4 : (slotData?.price||0);
+          const total = (base + 0.10 + extraDonation + 0.10).toFixed(2);
+          return `💳 Pagar ${total}€ y unirme`;
+        })()}
       </button>
       <div style={{textAlign:"center",marginTop:10,fontSize:11,color:"rgba(255,255,255,0.3)"}}>🔒 Pago seguro con Stripe</div>
     </form>
@@ -53,6 +57,13 @@ export default function CourtCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [extraDonation, setExtraDonation] = useState(0.10);
+  const [activeProject, setActiveProject] = useState(null);
+
+  useEffect(() => {
+    supabase.from("projects").select("id,title").eq("active", true).eq("featured", true).limit(1).single()
+      .then(({ data }) => { if (data) setActiveProject(data); });
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({data})=>setSession(data?.session??null));
@@ -101,33 +112,47 @@ export default function CourtCheckoutPage() {
             </div>
 
             {/* Desglose transparente inclusivo */}
-            <div style={{marginTop:14,padding:"12px 14px",borderRadius:10,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)"}}>
-              <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.40)",marginBottom:10,letterSpacing:"0.05em"}}>TU RESERVA AYUDA A:</div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
-                  <span>🦍</span> MonkeyGorila
-                </span>
+            <div style={{marginTop:14,padding:"14px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.40)",marginBottom:12,letterSpacing:"0.05em"}}>💛 JUGANDO AYUDAS A:</div>
+
+              {/* Fila MonkeyGorila — fija */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>🦍 MonkeyGorila <span style={{fontSize:11,color:"rgba(255,255,255,0.30)"}}>(fijo)</span></span>
                 <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>0,10 €</span>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
-                  <span>🏗️</span> Proyecto inclusivo activo
-                </span>
-                <span style={{fontSize:13,fontWeight:700,color:"#E67E22"}}>0,10 €</span>
+
+              {/* Fila Proyecto — ampliable */}
+              <div style={{marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
+                    🏗️ {activeProject ? activeProject.title : "Proyecto inclusivo"}
+                  </span>
+                  <span style={{fontSize:13,fontWeight:700,color:"#E67E22"}}>{extraDonation.toFixed(2)} €</span>
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  {[0.10, 0.50, 1, 2, 5].map(v => (
+                    <button key={v} onClick={() => setExtraDonation(v)}
+                      style={{flex:1,padding:"6px 2px",borderRadius:8,border:extraDonation===v?"2px solid #E67E22":"1px solid rgba(255,255,255,0.12)",background:extraDonation===v?"rgba(230,126,34,0.15)":"rgba(255,255,255,0.04)",color:extraDonation===v?"#E67E22":"rgba(255,255,255,0.60)",fontWeight:700,fontSize:11,cursor:"pointer"}}>
+                      {v}€
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:7,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>
-                  <span>💚</span> Asociación del club
-                </span>
+
+              {/* Fila Asociación — fija */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>💚 Asociación del club <span style={{fontSize:11,color:"rgba(255,255,255,0.30)"}}>(fijo)</span></span>
                 <span style={{fontSize:13,fontWeight:700,color:"#2ECC71"}}>0,10 €</span>
               </div>
-              <div style={{marginTop:10,paddingTop:7,borderTop:"1px solid rgba(255,255,255,0.08)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontSize:12,color:"rgba(255,255,255,0.35)"}}>Impacto por reserva</span>
-                <span style={{fontSize:13,fontWeight:900,color:"#2ECC71"}}>0,30 € 💛</span>
+
+              {/* Total impacto */}
+              <div style={{marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.08)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.40)"}}>Total impacto</span>
+                <span style={{fontSize:14,fontWeight:900,color:"#2ECC71"}}>{(0.10 + extraDonation + 0.10).toFixed(2)} € 💛</span>
               </div>
             </div>
-            <div style={{marginTop:8,textAlign:"right"}}>
-              <a href="/proyectos" style={{fontSize:11,color:"#E67E22",textDecoration:"none",fontWeight:700}}>Ver proyectos activos →</a>
+            <div style={{marginTop:6,textAlign:"right"}}>
+              <a href="/proyectos" style={{fontSize:11,color:"#E67E22",textDecoration:"none",fontWeight:700}}>Ver proyectos →</a>
             </div>
           </div>
         )}
@@ -144,7 +169,7 @@ export default function CourtCheckoutPage() {
           <div style={{padding:14,borderRadius:10,background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.3)",color:"#ff6b6b",fontSize:13}}>{error}</div>
         ) : clientSecret ? (
           <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-            <PayForm slotData={slotData} onSuccess={handleSuccess} />
+            <PayForm slotData={slotData} onSuccess={handleSuccess} extraDonation={extraDonation} splitEnabled={splitEnabled} />
           </Elements>
         ) : null}
       </div>
