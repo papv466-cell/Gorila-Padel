@@ -266,7 +266,7 @@ export default function SuperAdminPage() {
           </button>
           <div>
             <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>🔐 Super Admin</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Panel de aprobación de clubs</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Panel de administración MonkeyGorila</div>
           </div>
         </div>
 
