@@ -342,7 +342,7 @@ export default function HomePage({ session: sessionProp }) {
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🏓 Partidos próximos</div>
-              <Link to="/partidos" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todos →</Link>
+              <Link to="/juega" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todos →</Link>
             </div>
             <div className="ghScrollRow">
               {matches.map(m => {

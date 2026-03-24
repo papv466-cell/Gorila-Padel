@@ -399,11 +399,11 @@ export default function ProfilePage({ session: sessionProp }) {
             </div>
             <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
               {[
-                { emoji: "🎾", label: "Partidos", path: "/partidos" },
+                { emoji: "🎾", label: "Partidos", path: "/juega" },
                 { emoji: "🤝", label: "Pulls", path: "/pulls" },
                 { emoji: "🏋️", label: "Entrenos", path: "/entrenamientos" },
                 { emoji: "⚔️", label: "Retos", path: "/retos" },
-                { emoji: "🏆", label: "Ranking", path: "/leaderboard" },
+                { emoji: "🏆", label: "Ranking", path: "/ranking" },
               ].map(b => (
                 <button key={b.path} onClick={() => navigate(b.path)}
                   style={{ flexShrink: 0, padding: "8px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 800, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 58 }}>

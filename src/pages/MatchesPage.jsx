@@ -1552,7 +1552,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       const ocupados = 1 + aprobados;
                       const libres = 4 - ocupados;
                       return (
-                        <div key={m.id} onClick={()=>{setJugarAhora(false); navigate(`/partidos?openChat=${m.id}`);}}
+                        <div key={m.id} onClick={()=>{setJugarAhora(false); navigate(`/juega?openChat=${m.id}`);}}
                           style={{background:'#111',borderRadius:12,border:'1px solid rgba(116,184,0,0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                           <div>
                             <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{m.club_name||'Partido'}</div>

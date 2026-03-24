@@ -583,7 +583,7 @@ export default function ClubPage({ session: sessionProp }) {
 
                         return (
                           <div key={m.id} className="gpMatchItem"
-                            onClick={() => navigate(`/partidos?openChat=${m.id}`)}
+                            onClick={() => navigate(`/juega?openChat=${m.id}`)}
                             style={{ background:"#111", borderRadius:12, border:`1px solid rgba(255,255,255,0.08)`, overflow:"hidden", animation:`gpFadeUp 0.3s ease ${idx*0.04}s both` }}>
 
                             {/* Franja de nivel */}
@@ -650,7 +650,7 @@ export default function ClubPage({ session: sessionProp }) {
                     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
                       {classes.map((c, idx) => (
                         <div key={c.id}
-                          onClick={() => navigate(`/clases`)}
+                          onClick={() => navigate(`/aprende`)}
                           className="gpMatchItem"
                           style={{ background:"#111", borderRadius:12, border:"1px solid rgba(255,255,255,0.08)", padding:"12px 14px", animation:`gpFadeUp 0.3s ease ${idx*0.04}s both` }}>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>

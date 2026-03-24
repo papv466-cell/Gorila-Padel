@@ -302,8 +302,6 @@ export default function App() {
           <Route path="/super-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><SuperAdminPage /></RequireAuth>} />
           <Route path="/profesores" element={<RequireAuth session={session} sessionReady={sessionReady}><TeachersPage /></RequireAuth>} />
           <Route path="/profesores/:id" element={<RequireAuth session={session} sessionReady={sessionReady}><TeacherProfilePage /></RequireAuth>} />
-          <Route path="/juega" element={<RequireAuth session={session} sessionReady={sessionReady}><PlayHubPage /></RequireAuth>} />
-          <Route path="/aprende" element={<RequireAuth session={session} sessionReady={sessionReady}><LearnHubPage /></RequireAuth>} />
           <Route path="/play" element={<Navigate to="/juega" replace />} />
           <Route path="/profile" element={<Navigate to="/perfil" replace />} />
           <Route path="/inclusivo" element={<Navigate to="/inclusivos" replace />} />
