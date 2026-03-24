@@ -318,8 +318,23 @@ export default function HomePage({ session: sessionProp }) {
         <div className="ghSection" style={{ animationDelay: ".08s", overflow: "hidden" }}>
           <GorilaMovimientoBanner
             stats={inclusiveStats}
-            onPress={() => navigate("/inclusivos")}
+            onPress={() => navigate("/juntos")}
           />
+        </div>
+
+        {/* Impacto global */}
+        <div className="ghSection" style={{ marginBottom: 20, animationDelay: ".09s" }}>
+          <div onClick={() => navigate("/impacto-global")}
+            style={{ borderRadius: 16, background: "rgba(26,39,68,0.60)", border: "1px solid rgba(255,255,255,0.10)", padding: "14px 16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 28 }}>🌍</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>Impacto global</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>Lo que hemos conseguido juntos jugando</div>
+              </div>
+            </div>
+            <span style={{ fontSize: 18, color: "rgba(255,255,255,0.30)" }}>→</span>
+          </div>
         </div>
 
         {/* Partidos próximos */}
