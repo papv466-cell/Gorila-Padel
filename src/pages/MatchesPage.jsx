@@ -865,6 +865,11 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       <span style={{cursor:"pointer", textDecoration:"underline"}}
                       onClick={e=>{e.stopPropagation(); navigate(`/club/${m.club_id}?name=${encodeURIComponent(m.club_name)}`)}}>
                       📍 {m.club_name}
+                      {(() => {
+                        const club = clubsSheet.find(c => String(c.id||"") === String(m.club_id||"") || String(c.name||"").toLowerCase() === String(m.club_name||"").toLowerCase());
+                        const medal = { oro: "🥇", plata: "🥈", bronce: "🥉" }[club?.accessibility_level];
+                        return medal ? <span title={`Club ${club.accessibility_level} — accesibilidad verificada`} style={{marginLeft:4}}>{medal}</span> : null;
+                      })()}
                     </span>
                     </div>
                     <div style={{fontSize:10,fontWeight:800,flexShrink:0,marginLeft:8}}>
