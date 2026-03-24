@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import ClubAdminPage from "./pages/ClubAdminPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ImpactPage from "./pages/ImpactPage";
+import ImpactGlobalPage from "./pages/ImpactGlobalPage";
 import DonationPreviewPage from "./pages/DonationPreviewPage";
 import MoodPreviewPage from "./pages/MoodPreviewPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
@@ -310,6 +311,7 @@ export default function App() {
           <Route path="/store/:any" element={<Navigate to="/tienda" replace />} />
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/proyectos" element={<ProjectsPage />} />
+          <Route path="/impacto-global" element={<ImpactGlobalPage />} />
           <Route path="/impacto" element={<RequireAuth session={session} sessionReady={sessionReady}><ImpactPage /></RequireAuth>} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
