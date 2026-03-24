@@ -378,8 +378,7 @@ export default function HomePage({ session: sessionProp }) {
           </div>
         )}
 
-        {/* Gorila Stack banner — OCULTO TEMPORALMENTE
-        <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".12s" }}>
+        {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".12s" }}>
           <div onClick={() => navigate("/stack")} style={{
             borderRadius: 16, background: "linear-gradient(135deg,#0a1a00,#1a3500)",
             border: "1px solid rgba(116,184,0,0.25)", padding: "16px 20px",
@@ -397,9 +396,6 @@ export default function HomePage({ session: sessionProp }) {
             </div>
           </div>
         </div>
-        OCULTO TEMPORALMENTE */}
-
-        {/* Gorilandia feed — OCULTO TEMPORALMENTE
         {false && gorilandiaFeed.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -439,10 +435,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
             </div>
           </div>
         )}
-        OCULTO TEMPORALMENTE */}
-
-        {/* Accesos rápidos — OCULTO TEMPORALMENTE
-        <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".2s" }}>
+        {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".2s" }}>
           <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 12 }}>⚡ Accesos rápidos</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
             {[
@@ -460,10 +453,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
             ))}
           </div>
         </div>
-        OCULTO TEMPORALMENTE */}
-
-        {/* Widget ranking — OCULTO TEMPORALMENTE
-        <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
+        {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
           <div style={{ padding: "14px 16px", borderRadius: 14, background: "#111", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}
             onClick={() => navigate("/leaderboard")}>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>🏆</div>
@@ -474,9 +464,6 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
             <div style={{ fontSize: 18, color: "rgba(255,255,255,0.3)" }}>→</div>
           </div>
         </div>
-        OCULTO TEMPORALMENTE */}
-
-        {/* Tienda — OCULTO TEMPORALMENTE
         {false && products.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".3s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
