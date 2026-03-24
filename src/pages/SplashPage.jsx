@@ -97,7 +97,7 @@ export default function SplashPage() {
           MonkeyGorila
         </div>
         <div style={{ fontSize:13, color:"rgba(255,255,255,0.65)", textAlign:"center", lineHeight:1.6, maxWidth:260, textShadow:"0 1px 10px rgba(0,0,0,0.9)" }}>
-          Únete · Crea partidos · Encuentra clubs
+          La app que ayuda jugando
         </div>
 
         <div style={{ width:160, height:3, borderRadius:999, background:"rgba(255,255,255,0.1)", overflow:"hidden", marginTop:8 }}>
