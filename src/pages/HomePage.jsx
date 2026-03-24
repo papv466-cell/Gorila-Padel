@@ -395,7 +395,7 @@ export default function HomePage({ session: sessionProp }) {
               ¡Jugar!
             </div>
           </div>
-        </div>
+        </div>}
         {false && gorilandiaFeed.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
