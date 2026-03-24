@@ -282,7 +282,7 @@ export default function HomePage({ session: sessionProp }) {
                 <span style={{ color: "rgba(255,255,255,0.40)" }}>meta: {featuredProject.goal_amount} €</span>
               </div>
               <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.10)" }}>
-                <div style={{ height: "100%", width: , borderRadius: 999, background: "linear-gradient(90deg,#2ECC71,#27AE60)", transition: "width 0.6s ease" }} />
+                <div style={{ height: "100%", width: `${Math.min(100, Math.round(((featuredProject?.current_amount||0)/featuredProject?.goal_amount)*100))}%`, borderRadius: 999, background: "linear-gradient(90deg,#2ECC71,#27AE60)", transition: "width 0.6s ease" }} />
               </div>
               <div style={{ marginTop: 10, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
                 Cada reserva que haces aporta 0,10€ a este proyecto. <span style={{ color: "#E67E22", fontWeight: 700 }}>Jugando se ayuda.</span>
