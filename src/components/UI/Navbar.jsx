@@ -17,16 +17,11 @@ export default function Navbar({ showBack = false, onBack }) {
   const { isEnabled } = useFeatures();
 
   const allLinks = useMemo(() => [
-    { to: "/mapa",        label: "Mapa",       icon: "🗺️",  key: "mapa" },
-    { to: "/partidos",    label: "Juega",    icon: "🎾",  key: "partidos" },
-    { to: "/leaderboard", label: "Ranking",     icon: "🏆",  key: "leaderboard" },
-    { to: "/juega-plus",  label: "Juega+",      icon: "🥇",  key: "juega-plus" },
-    { to: "/gorilandia",  label: "Comunidad",  icon: "🦍",  key: "gorilandia" },
-    { to: "/clases",      label: "Aprende",      icon: "📚",  key: "clases" },
-    { to: "/inclusivos",  label: "Juntos",  icon: "♿",  key: "inclusivos" },
-    { to: "/perfil",      label: "Perfil",      icon: "👤",  key: "perfil" },
-    { to: "/proyectos",  label: "Proyectos",   icon: "🏗️",  key: "proyectos" },
-    { to: "/tienda",      label: "Tienda",      icon: "🛍️",  key: "tienda" },
+    { to: "/mapa",       label: "Mapa",       icon: "🗺️", key: "mapa" },
+    { to: "/juega",      label: "Juega",      icon: "🎾", key: "partidos" },
+    { to: "/juntos",     label: "Juntos",     icon: "♿", key: "inclusivos" },
+    { to: "/proyectos",  label: "Proyectos",  icon: "🏗️", key: "proyectos" },
+    { to: "/perfil",     label: "Perfil",     icon: "👤", key: "perfil" },
   ], []);
 
   const links = useMemo(() => allLinks.filter(l => isEnabled(l.key)), [allLinks, isEnabled]);
