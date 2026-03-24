@@ -452,7 +452,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
               </button>
             ))}
           </div>
-        </div>
+        </div>}
         {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
           <div style={{ padding: "14px 16px", borderRadius: 14, background: "#111", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}
             onClick={() => navigate("/leaderboard")}>
@@ -463,7 +463,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
             </div>
             <div style={{ fontSize: 18, color: "rgba(255,255,255,0.3)" }}>→</div>
           </div>
-        </div>
+        </div>}
         {false && products.length > 0 && (
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".3s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
