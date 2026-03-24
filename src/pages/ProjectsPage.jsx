@@ -4,25 +4,40 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useSession } from "../contexts/SessionContext";
 
+const CATEGORY_CONFIG = {
+  infraestructura: { icon: "🏗️", color: "#E67E22" },
+  becas:           { icon: "🎓", color: "#3498DB" },
+  eventos:         { icon: "🏆", color: "#9B59B6" },
+  inclusivo:       { icon: "♿", color: "#2ECC71" },
+};
+
 export default function ProjectsPage() {
   const { session } = useSession();
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
+  const [totalDonated, setTotalDonated] = useState(0);
+  const [totalDonors, setTotalDonors] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showProposal, setShowProposal] = useState(false);
   const [proposal, setProposal] = useState({ title: "", description: "", impact: "", budget_estimate: "", contact_email: "" });
   const [savingProposal, setSavingProposal] = useState(false);
   const [proposalSent, setProposalSent] = useState(false);
   const [donatingProject, setDonatingProject] = useState(null);
-  const [donationAmount, setDonationAmount] = useState("1");
+  const [donationAmount, setDonationAmount] = useState("2");
   const [savingDonation, setSavingDonation] = useState(false);
+  const [donationSent, setDonationSent] = useState(false);
 
-  useEffect(() => { loadProjects(); }, []);
+  useEffect(() => { loadData(); }, []);
 
-  async function loadProjects() {
+  async function loadData() {
     setLoading(true);
-    const { data } = await supabase.from("projects").select("*").eq("active", true).order("featured", { ascending: false }).order("created_at");
-    setProjects(data || []);
+    const [{ data: proj }, { count: donors }] = await Promise.all([
+      supabase.from("projects").select("*").eq("active", true).order("featured", { ascending: false }).order("created_at"),
+      supabase.from("donations").select("*", { count: "exact", head: true }),
+    ]);
+    setProjects(proj || []);
+    setTotalDonated((proj || []).reduce((s, p) => s + (p.current_amount || 0), 0));
+    setTotalDonors(donors || 0);
     setLoading(false);
   }
 
@@ -47,99 +62,146 @@ export default function ProjectsPage() {
     if (!amount || amount < 0.5) return;
     setSavingDonation(true);
     try {
+      const { data: proj } = await supabase.from("projects").select("current_amount").eq("id", donatingProject.id).single();
       await supabase.from("projects").update({
-        current_amount: (donatingProject.current_amount || 0) + amount,
+        current_amount: (proj?.current_amount || 0) + amount,
         updated_at: new Date().toISOString()
       }).eq("id", donatingProject.id);
+      if (session?.user?.id) {
+        await supabase.from("donations").insert({
+          user_id: session.user.id,
+          project_id: donatingProject.id,
+          amount,
+          source: "manual",
+        });
+      }
       setProjects(prev => prev.map(p => p.id === donatingProject.id
         ? { ...p, current_amount: (p.current_amount || 0) + amount }
         : p
       ));
-      setDonatingProject(null);
-      setDonationAmount("1");
+      setTotalDonated(prev => prev + amount);
+      setDonationSent(true);
+      setTimeout(() => {
+        setDonatingProject(null);
+        setDonationAmount("2");
+        setDonationSent(false);
+      }, 2000);
     } catch (e) { alert(e.message); }
     finally { setSavingDonation(false); }
   }
 
   function pct(current, goal) {
-    return Math.min(100, Math.round((current / goal) * 100));
+    return Math.min(100, Math.round(((current || 0) / goal) * 100));
   }
 
   const s = { background: "#050505", minHeight: "100vh", color: "rgba(255,255,255,0.92)" };
 
   if (loading) return (
-    <div style={{ ...s, display: "grid", placeItems: "center", fontSize: 18, color: "#2ECC71" }}>
-      Cargando proyectos…
+    <div style={{ ...s, display: "grid", placeItems: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🏗️</div>
+        <div style={{ fontSize: 16, color: "#2ECC71", fontWeight: 700 }}>Cargando proyectos…</div>
+      </div>
     </div>
   );
 
   return (
     <div style={s}>
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "100px 16px 80px" }}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "90px 16px 80px" }}>
 
-        {/* Header */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 14px", borderRadius: 999, background: "rgba(46,204,113,0.12)", border: "1px solid rgba(46,204,113,0.25)", fontSize: 13, fontWeight: 700, color: "#2ECC71", marginBottom: 14 }}>
-            🏗️ Proyectos activos
+        {/* Hero */}
+        <div style={{ textAlign: "center", marginBottom: 40, padding: "0 8px" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🦍</div>
+          <div style={{ fontSize: 32, fontWeight: 900, lineHeight: 1.15, marginBottom: 12 }}>
+            Jugando se ayuda<br/><span style={{ color: "#2ECC71" }}>— y se ve</span>
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.2, marginBottom: 10 }}>
-            Jugando se ayuda —<br />y se ve
+          <div style={{ fontSize: 16, color: "rgba(255,255,255,0.60)", lineHeight: 1.7 }}>
+            Cada partido, cada reserva, cada cerveza que donas va directamente a hacer realidad estos proyectos.
           </div>
-          <div style={{ fontSize: 16, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
-            Cada reserva, cada partido, cada cerveza que donas va directamente a hacer realidad estos proyectos. Ves el progreso en tiempo real.
-          </div>
+        </div>
+
+        {/* Stats globales */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 36 }}>
+          {[
+            { value: totalDonated.toFixed(0) + " €", label: "recaudados", color: "#2ECC71" },
+            { value: totalDonors, label: "donaciones", color: "#E67E22" },
+            { value: projects.length, label: "proyectos", color: "#3498DB" },
+          ].map((s, i) => (
+            <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 12px", textAlign: "center" }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: s.color, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", fontWeight: 700 }}>{s.label}</div>
+            </div>
+          ))}
         </div>
 
         {/* Propuesta enviada */}
         {proposalSent && (
-          <div style={{ padding: "16px 20px", borderRadius: 14, background: "rgba(46,204,113,0.10)", border: "1px solid rgba(46,204,113,0.25)", color: "#2ECC71", fontSize: 15, fontWeight: 700, marginBottom: 24 }}>
+          <div style={{ padding: "16px 20px", borderRadius: 14, background: "rgba(46,204,113,0.10)", border: "1px solid rgba(46,204,113,0.25)", color: "#2ECC71", fontSize: 15, fontWeight: 700, marginBottom: 24, textAlign: "center" }}>
             ✅ ¡Propuesta enviada! La revisaremos pronto.
           </div>
         )}
 
         {/* Proyectos */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 36 }}>
           {projects.map(p => {
             const progress = pct(p.current_amount, p.goal_amount);
+            const cat = CATEGORY_CONFIG[p.category] || CATEGORY_CONFIG.inclusivo;
             return (
-              <div key={p.id} style={{ background: "rgba(255,255,255,0.05)", border: p.featured ? "1px solid rgba(46,204,113,0.35)" : "1px solid rgba(255,255,255,0.10)", borderRadius: 20, overflow: "hidden" }}>
+              <div key={p.id} style={{ borderRadius: 22, overflow: "hidden", border: p.featured ? `1px solid ${cat.color}55` : "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)" }}>
+                
+                {/* Banner destacado */}
                 {p.featured && (
-                  <div style={{ background: "linear-gradient(135deg,#2ECC71,#27AE60)", padding: "6px 16px", fontSize: 12, fontWeight: 700, color: "#0d4a25" }}>
-                    ⭐ Proyecto destacado
+                  <div style={{ background: `linear-gradient(135deg,${cat.color},${cat.color}99)`, padding: "8px 20px", fontSize: 12, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
+                    ⭐ Proyecto destacado — recibe donaciones de cada reserva
                   </div>
                 )}
-                <div style={{ padding: 20 }}>
-                  {/* Categoría */}
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#2ECC71", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    {p.category}
+
+                <div style={{ padding: 22 }}>
+                  {/* Categoría + icono */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `${cat.color}18`, border: `1px solid ${cat.color}40`, display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>
+                      {cat.icon}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 900, color: cat.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      {p.category}
+                    </div>
                   </div>
 
                   {/* Título */}
-                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, lineHeight: 1.3 }}>{p.title}</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, marginBottom: 10, lineHeight: 1.2 }}>{p.title}</div>
 
                   {/* Descripción */}
-                  <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, marginBottom: 20 }}>{p.description}</div>
+                  <div style={{ fontSize: 15, color: "rgba(255,255,255,0.60)", lineHeight: 1.7, marginBottom: 22 }}>{p.description}</div>
 
-                  {/* Progreso */}
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: "#2ECC71" }}>
-                        {(p.current_amount || 0).toFixed(0)} €
+                  {/* Progreso visual */}
+                  <div style={{ marginBottom: 22 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 28, fontWeight: 900, color: "#2ECC71", lineHeight: 1 }}>
+                          {(p.current_amount || 0).toFixed(0)} €
+                        </div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.40)", marginTop: 2 }}>recaudados</div>
                       </div>
-                      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.50)" }}>
-                        de {p.goal_amount.toFixed(0)} € · {progress}%
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.70)" }}>{progress}%</div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.40)" }}>de {p.goal_amount.toFixed(0)} €</div>
                       </div>
                     </div>
-                    <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${progress}%`, borderRadius: 999, background: progress >= 100 ? "#27AE60" : "linear-gradient(90deg,#2ECC71,#27AE60)", transition: "width 0.6s ease" }} />
+                    <div style={{ height: 10, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${progress}%`, borderRadius: 999, background: progress >= 100 ? "#27AE60" : `linear-gradient(90deg,#2ECC71,${cat.color})`, transition: "width 0.8s ease" }} />
                     </div>
+                    {progress >= 100 && (
+                      <div style={{ marginTop: 8, textAlign: "center", fontSize: 13, fontWeight: 700, color: "#2ECC71" }}>
+                        🎉 ¡Meta alcanzada! Gracias a todos los que jugaron.
+                      </div>
+                    )}
                   </div>
 
                   {/* Botón donar */}
                   <button
-                    onClick={() => { setDonatingProject(p); setDonationAmount("1"); }}
-                    style={{ width: "100%", minHeight: 52, padding: "14px 24px", borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                    💛 Donar a este proyecto
+                    onClick={() => { setDonatingProject(p); setDonationAmount("2"); }}
+                    style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, transition: "filter 0.15s" }}>
+                    🍺 Donar a este proyecto
                   </button>
                 </div>
               </div>
@@ -147,82 +209,105 @@ export default function ProjectsPage() {
           })}
         </div>
 
+        {/* Cómo funciona */}
+        <div style={{ background: "rgba(46,204,113,0.05)", border: "1px solid rgba(46,204,113,0.15)", borderRadius: 20, padding: 24, marginBottom: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16, color: "#2ECC71" }}>💛 ¿Cómo ayudas jugando?</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { icon: "🎾", text: "Cada reserva de pista incluye 0,30€ de impacto automático" },
+              { icon: "🍺", text: "Al terminar un partido puedes donar una cerveza — 2€ directos al proyecto" },
+              { icon: "💳", text: "Puedes donar cualquier cantidad directamente desde aquí" },
+              { icon: "📊", text: "Ves el progreso en tiempo real — cada euro cuenta" },
+            ].map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ fontSize: 14, color: "rgba(255,255,255,0.70)", lineHeight: 1.6 }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Proponer proyecto */}
-        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 20, padding: 24, marginBottom: 24 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>💡 ¿Tienes una idea?</div>
-          <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.7, marginBottom: 20 }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 24 }}>
+          <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 8 }}>💡 ¿Tienes una idea?</div>
+          <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, marginBottom: 20 }}>
             Si conoces un proyecto que ayudaría a personas con discapacidad a practicar deporte, cuéntanoslo. Lo revisamos y si encaja, lo lanzamos juntos.
           </div>
-          <button
-            onClick={() => setShowProposal(true)}
-            style={{ minHeight: 52, padding: "14px 24px", borderRadius: 14, background: "#1A2744", color: "#fff", fontWeight: 700, fontSize: 16, border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer" }}>
+          <button onClick={() => setShowProposal(true)}
+            style={{ minHeight: 52, padding: "14px 24px", borderRadius: 14, background: "#1A2744", color: "#fff", fontWeight: 700, fontSize: 15, border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", width: "100%" }}>
             ✏️ Proponer un proyecto
           </button>
         </div>
 
         {/* Modal donación */}
         {donatingProject && (
-          <div onClick={() => setDonatingProject(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#111827", borderRadius: "20px 20px 0 0", padding: 24, paddingBottom: "max(24px,env(safe-area-inset-bottom))" }}>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>💛 Donar al proyecto</div>
-              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.60)", marginBottom: 20 }}>{donatingProject.title}</div>
-
-              {/* Cantidades rápidas */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 16 }}>
-                {["0.50", "1", "2", "5"].map(v => (
-                  <button key={v} onClick={() => setDonationAmount(v)}
-                    style={{ minHeight: 52, borderRadius: 12, border: donationAmount === v ? "2px solid #E67E22" : "1px solid rgba(255,255,255,0.15)", background: donationAmount === v ? "rgba(230,126,34,0.15)" : "rgba(255,255,255,0.05)", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-                    {v} €
-                  </button>
-                ))}
-              </div>
-
-              {/* Importe libre */}
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>O elige otro importe:</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <input
-                    type="number" min="0.50" step="0.50" value={donationAmount}
-                    onChange={e => setDonationAmount(e.target.value)}
-                    style={{ flex: 1, minHeight: 52, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: 16 }} />
-                  <span style={{ color: "rgba(255,255,255,0.60)", fontSize: 16 }}>€</span>
+          <div onClick={() => !savingDonation && setDonatingProject(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f1117", border: "1px solid rgba(255,255,255,0.10)", borderRadius: "24px 24px 0 0", padding: 24, paddingBottom: "max(24px,env(safe-area-inset-bottom))" }}>
+              
+              {donationSent ? (
+                <div style={{ textAlign: "center", padding: "20px 0" }}>
+                  <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: "#2ECC71", marginBottom: 8 }}>¡Gracias!</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)" }}>Tu donación está ayudando a alguien a jugar.</div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+                  <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>💛 Donar al proyecto</div>
+                  <div style={{ fontSize: 14, color: "rgba(255,255,255,0.50)", marginBottom: 24 }}>{donatingProject.title}</div>
 
-              {/* Desglose transparente */}
-              <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, fontSize: 14 }}>
-                <div style={{ fontWeight: 700, marginBottom: 10, color: "rgba(255,255,255,0.80)" }}>Tu donación va a:</div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ color: "rgba(255,255,255,0.60)" }}>🦍 MonkeyGorila (plataforma)</span>
-                  <span style={{ fontWeight: 700 }}>0,10 €</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "rgba(255,255,255,0.60)" }}>🏗️ {donatingProject.title}</span>
-                  <span style={{ fontWeight: 700, color: "#E67E22" }}>{Math.max(0, parseFloat(donationAmount || 0) - 0.10).toFixed(2)} €</span>
-                </div>
-              </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 20 }}>
+                    {["1", "2", "5", "10"].map(v => (
+                      <button key={v} onClick={() => setDonationAmount(v)}
+                        style={{ minHeight: 56, borderRadius: 14, border: donationAmount === v ? "2px solid #E67E22" : "1px solid rgba(255,255,255,0.12)", background: donationAmount === v ? "rgba(230,126,34,0.15)" : "rgba(255,255,255,0.04)", color: donationAmount === v ? "#E67E22" : "#fff", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
+                        {v} €
+                      </button>
+                    ))}
+                  </div>
 
-              <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={submitDonation} disabled={savingDonation || parseFloat(donationAmount || 0) < 0.5}
-                  style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer", opacity: savingDonation || parseFloat(donationAmount || 0) < 0.5 ? 0.5 : 1 }}>
-                  {savingDonation ? "Procesando…" : `Donar ${parseFloat(donationAmount || 0).toFixed(2)} €`}
-                </button>
-                <button onClick={() => setDonatingProject(null)}
-                  style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
-                  Cancelar
-                </button>
-              </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 8 }}>O introduce otro importe:</div>
+                    <input type="number" min="0.50" step="0.50" value={donationAmount}
+                      onChange={e => setDonationAmount(e.target.value)}
+                      style={{ width: "100%", minHeight: 52, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 16 }} />
+                  </div>
+
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Tu donación se reparte:</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14 }}>
+                      <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 MonkeyGorila</span>
+                      <span style={{ fontWeight: 700 }}>0,10 €</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 14 }}>
+                      <span style={{ color: "rgba(255,255,255,0.55)" }}>🏗️ {donatingProject.title}</span>
+                      <span style={{ fontWeight: 700, color: "#E67E22" }}>{Math.max(0, parseFloat(donationAmount || 0) - 0.10).toFixed(2)} €</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={submitDonation} disabled={savingDonation || parseFloat(donationAmount || 0) < 0.5}
+                      style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", opacity: savingDonation || parseFloat(donationAmount || 0) < 0.5 ? 0.5 : 1 }}>
+                      {savingDonation ? "Procesando…" : `🍺 Donar ${parseFloat(donationAmount || 0).toFixed(2)} €`}
+                    </button>
+                    <button onClick={() => setDonatingProject(null)}
+                      style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+                      Ahora no
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {/* Modal propuesta */}
         {showProposal && (
-          <div onClick={() => setShowProposal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#111827", borderRadius: "20px 20px 0 0", padding: 24, paddingBottom: "max(24px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" }}>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>💡 Proponer un proyecto</div>
-              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 20, lineHeight: 1.6 }}>
-                Cuéntanos tu idea para ayudar a personas con discapacidad a practicar deporte. Todos los proyectos son revisados por el equipo de MonkeyGorila.
+          <div onClick={() => setShowProposal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f1117", border: "1px solid rgba(255,255,255,0.10)", borderRadius: "24px 24px 0 0", padding: 24, paddingBottom: "max(24px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" }}>
+              <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+              <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 6 }}>💡 Proponer un proyecto</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 24, lineHeight: 1.6 }}>
+                Cuéntanos tu idea para ayudar a personas con discapacidad a practicar deporte. Revisamos todas las propuestas.
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
@@ -243,11 +328,11 @@ export default function ProjectsPage() {
                 ))}
                 <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                   <button onClick={submitProposal} disabled={savingProposal || !proposal.title.trim() || !proposal.description.trim()}
-                    style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#2ECC71", color: "#0d4a25", fontWeight: 700, fontSize: 16, border: "none", cursor: "pointer", opacity: savingProposal || !proposal.title.trim() ? 0.5 : 1 }}>
+                    style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#2ECC71", color: "#0d4a25", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", opacity: savingProposal || !proposal.title.trim() ? 0.5 : 1 }}>
                     {savingProposal ? "Enviando…" : "✅ Enviar propuesta"}
                   </button>
                   <button onClick={() => setShowProposal(false)}
-                    style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
+                    style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
                     Cancelar
                   </button>
                 </div>
