@@ -29,7 +29,10 @@ serve(async (req) => {
     const totalPlayers = split && splitWith?.length ? 1 + splitWith.length : 1;
     const splitCount = split ? Math.max(totalPlayers, 2) : 1;
     const pricePerPlayer = split ? (slot.price || 0) / splitCount : (slot.price || 0);
-    const amount = Math.round(pricePerPlayer * 100);
+    // Comisión inclusiva mínima: 0.10 MonkeyGorila + 0.10 proyecto + 0.10 asociación = 0.30€
+    const inclusiveFee = 0.30;
+    const totalAmount = pricePerPlayer + inclusiveFee;
+    const amount = Math.max(50, Math.round(totalAmount * 100)); // mínimo 0.50€ por Stripe
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -70,7 +73,14 @@ serve(async (req) => {
         clientSecret: paymentIntent.client_secret,
         amount,
         pricePerPlayer,
+        pricePerPlayerCents: Math.round(pricePerPlayer * 100),
+        totalCents: amount,
+        inclusiveFee,
         splitCount,
+        matchData: {
+          isFree: pricePerPlayer === 0,
+          foundationName: null,
+        },
         slotData: {
           courtName: slot.club_courts?.name,
           date: slot.date,
