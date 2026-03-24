@@ -155,6 +155,14 @@ export default function HomePage({ session: sessionProp }) {
       if (prodRes.status === "fulfilled") setProducts(prodRes.value.data || []);
       if (splitRes?.status === "fulfilled") setSplitPending(splitRes.value.data || []);
 
+      // Proyecto destacado
+      const { data: proj } = await supabase.from("projects").select("*").eq("active", true).eq("featured", true).limit(1).maybeSingle();
+      if (proj) setFeaturedProject(proj);
+      else {
+        const { data: anyProj } = await supabase.from("projects").select("*").eq("active", true).limit(1).maybeSingle();
+        if (anyProj) setFeaturedProject(anyProj);
+      }
+
       // Stats inclusivos
       const weekCount   = incWeekRes.status === "fulfilled"    ? incWeekRes.value.count || 0 : 0;
       const totalCount  = incTotalRes.status === "fulfilled"   ? incTotalRes.value.count || 0 : 0;
