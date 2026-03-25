@@ -625,17 +625,130 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         .gpMatchesPage .gpDayPill.isActive.hasMatches .gpDayNum::after{color:#000;}
         .gpMatchesPage .gpDayLbl{font-size:9px;font-weight:700;text-transform:uppercase;opacity:.8;}
         .gpMatchesPage .gpDayNum{font-size:14px;font-weight:900;margin-top:1px;}
-        .gpMatchesPage .gpInfoChip{font-size:9px!important;padding:1px 5px!important;line-height:1.3!important;display:inline-flex;align-items:center;background:rgba(255,255,255,0.08);border-radius:999px;color:rgba(255,255,255,0.75);}
-        .gpMatchesPage .mCard{background:#111;border:1px solid rgba(116,184,0,0.2);border-radius:12px;overflow:hidden;}
-        .gpMatchesPage .mCard .mHead{padding:6px 10px;background:#000;border-bottom:1px solid rgba(116,184,0,0.15);display:flex;justify-content:space-between;align-items:center;}
-        .gpMatchesPage .mCard .mInfo{padding:4px 8px;background:rgba(0,0,0,0.35);display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
-        .gpMatchesPage .mCard .mActions{padding:6px 8px;background:#111;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:5px;flex-wrap:wrap;}
-        .gpMatchesPage .mBtn{border:none;cursor:pointer;border-radius:8px;font-weight:900;font-size:12px;transition:opacity .15s;}
-        .gpMatchesPage .mBtn:hover{opacity:.85;}
-        .gpMatchesPage .mBtn.primary{flex:1;padding:7px 0;background:linear-gradient(135deg,#74B800,#9BE800);color:#000;}
-        .gpMatchesPage .mBtn.danger{width:34px;height:30px;background:rgba(220,38,38,0.15);color:#ff6b6b;font-size:15px;}
-        .gpMatchesPage .mBtn.icon{width:34px;height:30px;background:rgba(255,255,255,0.08);color:#fff;font-size:15px;}
-        .gpMatchesPage .mBtn.leave{flex:1;padding:7px 0;background:rgba(220,38,38,0.15);color:#ff6b6b;border:1px solid rgba(220,38,38,0.3);}
+        /* ── CARDS ACCESIBLES MonkeyGorila ──
+           Fuentes ≥14px · Botones ≥52px · Contraste WCAG AA
+           Espaciado generoso para usuarios con movilidad reducida */
+
+        .gpMatchesPage .gpInfoChip{
+          font-size:13px!important;
+          padding:6px 12px!important;
+          line-height:1.4!important;
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+          background:rgba(255,255,255,0.08);
+          border-radius:999px;
+          color:rgba(255,255,255,0.85);
+          font-weight:600;
+        }
+
+        /* Card principal — bordes redondeados, fondo oscuro */
+        .gpMatchesPage .mCard{
+          background:#111827;
+          border:1px solid rgba(255,255,255,0.10);
+          border-radius:18px;
+          overflow:hidden;
+          margin-bottom:12px;
+          transition: border-color 0.2s ease;
+        }
+        .gpMatchesPage .mCard:hover{
+          border-color:rgba(46,204,113,0.35);
+        }
+
+        /* Cabecera — nombre del club grande y legible */
+        .gpMatchesPage .mCard .mHead{
+          padding:14px 16px;
+          background:rgba(0,0,0,0.40);
+          border-bottom:1px solid rgba(255,255,255,0.06);
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          min-height:52px;
+        }
+
+        /* Info chips — fila de datos del partido */
+        .gpMatchesPage .mCard .mInfo{
+          padding:12px 16px;
+          background:rgba(0,0,0,0.20);
+          display:flex;
+          gap:8px;
+          flex-wrap:wrap;
+          align-items:center;
+        }
+
+        /* Acciones — botones grandes y accesibles */
+        .gpMatchesPage .mCard .mActions{
+          padding:12px 16px;
+          background:#111827;
+          border-top:1px solid rgba(255,255,255,0.06);
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        }
+
+        /* Botones — mínimo 52px de alto (accesibilidad) */
+        .gpMatchesPage .mBtn{
+          border:none;
+          cursor:pointer;
+          border-radius:12px;
+          font-weight:900;
+          font-size:15px;
+          min-height:52px;
+          transition:filter 0.15s ease, transform 0.12s ease;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+        .gpMatchesPage .mBtn:hover{
+          filter:brightness(1.08);
+          transform:translateY(-1px);
+        }
+        .gpMatchesPage .mBtn:active{
+          transform:translateY(0);
+        }
+        .gpMatchesPage .mBtn:disabled{
+          opacity:0.45;
+          cursor:not-allowed;
+          transform:none;
+        }
+
+        /* Participar — verde principal */
+        .gpMatchesPage .mBtn.primary{
+          flex:1;
+          padding:14px 20px;
+          background:linear-gradient(135deg,#2ECC71,#27AE60);
+          color:#0d4a25;
+          font-size:16px;
+          letter-spacing:0.3px;
+        }
+
+        /* Salir — rojo suave */
+        .gpMatchesPage .mBtn.leave{
+          flex:1;
+          padding:14px 20px;
+          background:rgba(220,38,38,0.12);
+          color:#ff6b6b;
+          border:1px solid rgba(220,38,38,0.30);
+        }
+
+        /* Peligro — icono */
+        .gpMatchesPage .mBtn.danger{
+          width:52px;
+          height:52px;
+          background:rgba(220,38,38,0.12);
+          color:#ff6b6b;
+          font-size:18px;
+        }
+
+        /* Icono — acción secundaria */
+        .gpMatchesPage .mBtn.icon{
+          width:52px;
+          height:52px;
+          background:rgba(255,255,255,0.06);
+          color:#fff;
+          font-size:18px;
+          border:1px solid rgba(255,255,255,0.10);
+        }
       `}</style>
 
       <div className="pageWrap">
