@@ -1,6 +1,7 @@
 // src/pages/InclusiveMatchesPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useSession } from "../contexts/SessionContext";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
 import "./InclusiveMatchesPage.css";
