@@ -440,7 +440,9 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
                   {/* BOTÓN — accesible 52px mínimo */}
                   <div style={{ padding: "12px 14px", background: "#111827", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    {!session ? (
+                    {!session && !authReady ? (
+                      <div style={{ minHeight: 52 }} />
+                    ) : !session ? (
                       <button onClick={goLogin}
                         style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         ♿ Participar
