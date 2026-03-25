@@ -355,7 +355,8 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
               const isExp = (m.needs || []).some(n => EXP_KEYS.has(n));
               const realNeeds = (m.needs || []).filter(n => !EXP_KEYS.has(n));
               const expNeeds = (m.needs || []).filter(n => EXP_KEYS.has(n));
-              const isCreator = !!(session?.user?.id && String(m.created_by_user || m.user_id) === String(session.user.id));
+              const activeUserId = sessionCtx?.user?.id || session?.user?.id || "";
+              const isCreator = !!(activeUserId && (String(m.created_by_user || "") === activeUserId || String(m.user_id || "") === activeUserId));
 
               return (
                 <li key={m.id} className="gslCard">
