@@ -444,6 +444,24 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                               status: "pending",
                             });
                             if (error) throw error;
+
+                            // Notificar al creador del partido
+                            try {
+                              const { data: profile } = await supabase
+                                .from("profiles")
+                                .select("name, handle")
+                                .eq("id", session.user.id)
+                                .single();
+                              const userName = profile?.name || profile?.handle || "Alguien";
+                              await supabase.from("notifications").insert({
+                                user_id: m.created_by_user,
+                                type: "inclusive_request",
+                                title: "♿ Nueva solicitud de participación",
+                                body: `${userName} quiere unirse a tu partido inclusivo en ${m.club_name || "tu partido"}.`,
+                                data: { match_id: m.id },
+                              });
+                            } catch {}
+
                             toast.success("¡Solicitud enviada! Te avisaremos cuando sea aceptada 🦍");
                             setMyReqStatus(prev => ({ ...prev, [m.id]: "pending" }));
                           } catch (e) {
