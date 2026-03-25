@@ -70,6 +70,22 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
   /* ─── Data ─── */
   const [loading, setLoading] = useState(true);
   const [myReqStatus, setMyReqStatus] = useState({});
+
+  useEffect(() => {
+    if (session?.user?.id) loadMyRequests();
+  }, [session?.user?.id]);
+
+  async function loadMyRequests() {
+    const { data } = await supabase
+      .from("inclusive_match_requests")
+      .select("match_id, status")
+      .eq("user_id", session.user.id);
+    if (data) {
+      const map = {};
+      data.forEach(r => { map[r.match_id] = r.status; });
+      setMyReqStatus(map);
+    }
+  }
   const [err, setErr] = useState(null);
   const [matches, setMatches] = useState([]);
   const [clubsSheet, setClubsSheet] = useState([]);
