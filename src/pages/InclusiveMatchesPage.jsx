@@ -420,15 +420,19 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                     </div>
                   ) : null}
 
-                  {/* BOTÓN */}
-                  <div style={{ padding: "6px 8px", background: "#111", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  {/* BOTÓN — accesible 52px mínimo */}
+                  <div style={{ padding: "12px 14px", background: "#111827", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                     {!session ? (
                       <button onClick={goLogin}
-                        style={{ width: "100%", padding: "8px", borderRadius: 8, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 12 }}>
-                        PARTICIPAR
+                        style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        ♿ Participar
                       </button>
                     ) : isCreator ? (
-                      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "4px 0" }}>Tu partido</div>
+                      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>👑 Tu partido</div>
+                    ) : myReqStatus?.[m.id] === "pending" ? (
+                      <div style={{ fontSize: 14, color: "#F59E0B", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>⏳ Solicitud pendiente</div>
+                    ) : myReqStatus?.[m.id] === "approved" ? (
+                      <div style={{ fontSize: 14, color: "#2ECC71", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>✅ Ya estás dentro</div>
                     ) : (
                       <button
                         onClick={async () => {
@@ -439,13 +443,14 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                               status: "pending",
                             });
                             if (error) throw error;
-                            toast.success("Solicitud enviada 🦍");
+                            toast.success("¡Solicitud enviada! Te avisaremos cuando sea aceptada 🦍");
+                            setMyReqStatus(prev => ({ ...prev, [m.id]: "pending" }));
                           } catch (e) {
                             toast.error(e?.message || "Error al solicitar");
                           }
                         }}
-                        style={{ width: "100%", padding: "8px", borderRadius: 8, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 12 }}>
-                        PARTICIPAR
+                        style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        ♿ Quiero participar
                       </button>
                     )}
                   </div>
