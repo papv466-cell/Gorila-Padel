@@ -69,6 +69,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
   /* ─── Data ─── */
   const [loading, setLoading] = useState(true);
+  const [myReqStatus, setMyReqStatus] = useState({});
   const [err, setErr] = useState(null);
   const [matches, setMatches] = useState([]);
   const [clubsSheet, setClubsSheet] = useState([]);
