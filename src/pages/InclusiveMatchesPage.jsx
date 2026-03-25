@@ -438,22 +438,52 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                     </div>
                   ) : null}
 
-                  {/* BOTÓN — accesible 52px mínimo */}
-                  <div style={{ padding: "12px 14px", background: "#111827", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                    {!session && !authReady ? (
-                      <div style={{ minHeight: 52 }} />
-                    ) : !session ? (
+                  {/* ACCIONES */}
+                  <div style={{ padding: "12px 14px", background: "#111827", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {/* Sin sesión */}
+                    {!session && (
                       <button onClick={goLogin}
-                        style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
                         ♿ Participar
                       </button>
-                    ) : isCreator ? (
-                      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>👑 Tu partido</div>
-                    ) : myReqStatus?.[m.id] === "pending" ? (
-                      <div style={{ fontSize: 14, color: "#F59E0B", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>⏳ Solicitud pendiente</div>
-                    ) : myReqStatus?.[m.id] === "approved" ? (
-                      <div style={{ fontSize: 14, color: "#2ECC71", textAlign: "center", padding: "14px 0", fontWeight: 700 }}>✅ Ya estás dentro</div>
-                    ) : (
+                    )}
+
+                    {/* Botones del CREADOR */}
+                    {session && isCreator && (
+                      <>
+                        <button onClick={() => toast.success("Función de solicitudes próximamente")}
+                          style={{ width: 52, height: 52, borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontSize: 18, cursor: "pointer" }}
+                          title="Ver solicitudes">📥</button>
+                        <button onClick={() => toast.success("Chat próximamente")}
+                          style={{ width: 52, height: 52, borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontSize: 18, cursor: "pointer" }}
+                          title="Chat">💬</button>
+                        <button onClick={async () => {
+                          if (!window.confirm("¿Eliminar este partido?")) return;
+                          await supabase.from("inclusive_matches").delete().eq("id", m.id);
+                          toast.success("Partido eliminado");
+                          setMatches(prev => prev.filter(x => x.id !== m.id));
+                        }}
+                          style={{ width: 52, height: 52, borderRadius: 12, background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.30)", color: "#ff6b6b", fontSize: 18, cursor: "pointer" }}
+                          title="Eliminar partido">🗑️</button>
+                      </>
+                    )}
+
+                    {/* Ya está dentro */}
+                    {session && !isCreator && myReqStatus?.[m.id] === "approved" && (
+                      <div style={{ flex: 1, minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#2ECC71" }}>
+                        ✅ Ya estás dentro
+                      </div>
+                    )}
+
+                    {/* Solicitud pendiente */}
+                    {session && !isCreator && myReqStatus?.[m.id] === "pending" && (
+                      <div style={{ flex: 1, minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#F59E0B" }}>
+                        ⏳ Solicitud pendiente
+                      </div>
+                    )}
+
+                    {/* Botón participar para no creador */}
+                    {session && !isCreator && !myReqStatus?.[m.id] && (
                       <button
                         onClick={async () => {
                           try {
@@ -487,7 +517,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                             toast.error(e?.message || "Error al solicitar");
                           }
                         }}
-                        style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         ♿ Quiero participar
                       </button>
                     )}
