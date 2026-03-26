@@ -1,7 +1,7 @@
 // src/services/inclusiveMatches.js
 import { supabase } from "./supabaseClient";
 
-const baseSelect = "id, created_at, club_name, city, start_at, duration_min, level, needs, mix_allowed, notes";
+const baseSelect = "id, created_at, club_name, city, start_at, duration_min, level, needs, mix_allowed, notes, accessibility_notes, price_per_player, max_players, created_by_user, user_id";
 
 export async function fetchInclusiveMatches({ limit = 200 } = {}) {
   try {
