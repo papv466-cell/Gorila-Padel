@@ -58,6 +58,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
   useEffect(() => { aliveRef.current = true; }, []);
 
   /* ─── Auth ─── */
+  const { session: sessionCtx } = useSession();
   const [session, setSession] = useState(sessionProp ?? null);
   const authReady = !!sessionProp;
   useEffect(() => { if (sessionProp) setSession(sessionProp); }, [sessionProp?.user?.id]);
