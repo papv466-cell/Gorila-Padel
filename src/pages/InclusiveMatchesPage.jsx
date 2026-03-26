@@ -356,8 +356,11 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
               const isExp = (m.needs || []).some(n => EXP_KEYS.has(n));
               const realNeeds = (m.needs || []).filter(n => !EXP_KEYS.has(n));
               const expNeeds = (m.needs || []).filter(n => EXP_KEYS.has(n));
-              const _uid = sessionCtx?.user?.id || session?.user?.id || "";
-              const isCreator = !!(_uid && (String(m.created_by_user || "") === _uid || String(m.user_id || "") === _uid));
+              const _uid = sessionCtx?.user?.id || session?.user?.id || sessionProp?.user?.id || "";
+              const isCreator = !!(_uid && (
+                String(m.created_by_user || "").toLowerCase().trim() === _uid.toLowerCase().trim() ||
+                String(m.user_id || "").toLowerCase().trim() === _uid.toLowerCase().trim()
+              ));
 
               return (
                 <li key={m.id} className="gslCard">
@@ -443,7 +446,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                   {/* ACCIONES */}
                   <div style={{ padding: "12px 14px", background: "#111827", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexWrap: "wrap" }}>
                     {/* Sin sesión */}
-                    {!(session || sessionCtx) && (
+                    {!(session || sessionCtx || sessionProp) && (
                       <button onClick={goLogin}
                         style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,#2ECC71,#27AE60)", color: "#0d4a25", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
                         ♿ Participar
@@ -451,7 +454,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                     )}
 
                     {/* Botones del CREADOR */}
-                    {(session || sessionCtx) && isCreator && (
+                    {(session || sessionCtx || sessionProp) && isCreator && (
                       <>
                         <button onClick={() => toast.success("Función de solicitudes próximamente")}
                           style={{ width: 52, height: 52, borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontSize: 18, cursor: "pointer" }}
@@ -471,21 +474,21 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                     )}
 
                     {/* Ya está dentro */}
-                    {(session || sessionCtx) && !isCreator && myReqStatus?.[m.id] === "approved" && (
+                    {(session || sessionCtx || sessionProp) && !isCreator && myReqStatus?.[m.id] === "approved" && (
                       <div style={{ flex: 1, minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#2ECC71" }}>
                         ✅ Ya estás dentro
                       </div>
                     )}
 
                     {/* Solicitud pendiente */}
-                    {(session || sessionCtx) && !isCreator && myReqStatus?.[m.id] === "pending" && (
+                    {(session || sessionCtx || sessionProp) && !isCreator && myReqStatus?.[m.id] === "pending" && (
                       <div style={{ flex: 1, minHeight: 52, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "#F59E0B" }}>
                         ⏳ Solicitud pendiente
                       </div>
                     )}
 
                     {/* Botón participar para no creador */}
-                    {(session || sessionCtx) && !isCreator && !myReqStatus?.[m.id] && (
+                    {(session || sessionCtx || sessionProp) && !isCreator && !myReqStatus?.[m.id] && (
                       <button
                         onClick={async () => {
                           try {
