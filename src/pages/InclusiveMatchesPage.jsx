@@ -210,7 +210,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
       if (!clubName.trim()) throw new Error("Elige un club.");
       if (!startAt) throw new Error("Selecciona fecha y hora.");
       if (!createNeeds.size) throw new Error("Elige al menos un tipo.");
-      await createInclusiveMatch({
+      const newMatch = await createInclusiveMatch({
         club_id: clubId || null,
         club_name: clubName.trim(),
         city: city.trim(),
@@ -537,7 +537,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
           MODAL: CREAR PARTIDO
       ══════════════════════════════ */}
       {openCreate && (
-        <div onClick={() => setOpenCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20, backdropFilter: "blur(4px)" }}>
+        <div onClick={(e) => { if (e.target === e.currentTarget) setOpenCreate(false); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20, backdropFilter: "blur(4px)" }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 20, padding: 24, maxWidth: 500, width: "100%", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(116,184,0,0.25)" }}>
             <h2 style={{ color: "#74B800", marginBottom: 20, fontSize: 20, fontWeight: 900 }}>🦍 Crear partido Sin Límites</h2>
 
