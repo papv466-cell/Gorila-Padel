@@ -357,10 +357,9 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
               const realNeeds = (m.needs || []).filter(n => !EXP_KEYS.has(n));
               const expNeeds = (m.needs || []).filter(n => EXP_KEYS.has(n));
               const _uid = sessionCtx?.user?.id || session?.user?.id || sessionProp?.user?.id || "";
-              const isCreator = !!(_uid && (
-                String(m.created_by_user || "").toLowerCase().trim() === _uid.toLowerCase().trim() ||
-                String(m.user_id || "").toLowerCase().trim() === _uid.toLowerCase().trim()
-              ));
+              const _createdBy = String(m.created_by_user || m.user_id || "").toLowerCase().trim();
+              const isCreator = !!(_uid && _createdBy && _createdBy === _uid.toLowerCase().trim());
+              if (process.env.NODE_ENV === "development") console.log("isCreator check:", { _uid, _createdBy, isCreator, matchId: m.id });
 
               return (
                 <li key={m.id} className="gslCard">
