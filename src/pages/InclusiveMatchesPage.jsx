@@ -210,7 +210,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
       if (!clubName.trim()) throw new Error("Elige un club.");
       if (!startAt) throw new Error("Selecciona fecha y hora.");
       if (!createNeeds.size) throw new Error("Elige al menos un tipo.");
-      const newMatch = await createInclusiveMatch({
+      await createInclusiveMatch({
         club_id: clubId || null,
         club_name: clubName.trim(),
         city: city.trim(),
@@ -224,6 +224,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
         notes: notes.trim(),
         accessibility_notes: accessibilityNotes.trim(),
         user_id: session?.user?.id,
+        created_by_user: session?.user?.id,
       });
       setOpenCreate(false);
       setClubName(""); setClubId(""); setCity(""); setStartAt("");
@@ -363,10 +364,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
               return (
                 <li key={m.id} className="gslCard">
-                  {/* DEBUG TEMPORAL */}
-                  <div style={{fontSize:9,color:"yellow",padding:"2px 6px",background:"#000"}}>
-                    uid:{sessionCtx?.user?.id?.slice(0,8)||"NULL"} | creator:{_createdBy.slice(0,8)} | isCreator:{String(isCreator)}
-                  </div>
+
                   {/* HEADER */}
                   <div style={{ padding: "7px 10px", background: "#000", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
