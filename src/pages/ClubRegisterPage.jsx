@@ -298,7 +298,7 @@ export default function ClubRegisterPage() {
             </div>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>Pistas de pádel</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>Pistas deportivas</label>
                 <button onClick={addCourt} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: "rgba(116,184,0,0.15)", color: "#74B800" }}>+ Añadir pista</button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

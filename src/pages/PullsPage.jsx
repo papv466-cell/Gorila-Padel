@@ -358,7 +358,7 @@ export default function PullsPage({ session }) {
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#fff" }}>
                 <span style={{ color: "#74B800" }}>🎯 Pulls</span>
               </h1>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Quedadas abiertas de pádel</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Quedadas abiertas de pádel, tenis y pickleball</div>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {uid && (

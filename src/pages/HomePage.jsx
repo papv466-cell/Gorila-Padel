@@ -58,7 +58,7 @@ function GorilaMovimientoBanner({ stats, onPress }) {
             <div style={{ fontSize: 28 }}>♿</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 900, color: "#9BE800", letterSpacing: 0.3 }}>GORILA SIN LÍMITES</div>
-              <div style={{ fontSize: 10, color: "rgba(116,184,0,0.6)", fontWeight: 700 }}>El pádel es para todos</div>
+              <div style={{ fontSize: 10, color: "rgba(116,184,0,0.6)", fontWeight: 700 }}>Pádel, tenis y pickleball para todos</div>
             </div>
           </div>
           <div style={{ fontSize: 18, color: "rgba(116,184,0,0.5)" }}>→</div>
@@ -411,7 +411,7 @@ export default function HomePage({ session: sessionProp }) {
               <div style={{ fontSize: 36 }}>🦍</div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>GORILA WORD 🦍</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Adivina la palabra de pádel · Reto diario</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Adivina la palabra deportiva · Reto diario</div>
               </div>
             </div>
             <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", fontSize: 13, fontWeight: 900, color: "#74B800" }}>

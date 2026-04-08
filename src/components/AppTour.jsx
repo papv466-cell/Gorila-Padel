@@ -6,14 +6,14 @@ const STEPS = [
   {
     id: "welcome",
     title: "Bienvenido a GorilaGo! 🦍",
-    body: "La app donde jugar al pádel ayuda a personas con discapacidad a practicar deporte. Jugando se ayuda — y se ve.",
+    body: "La app donde jugar ayuda a personas con discapacidad a practicar deporte. Jugando se ayuda — y se ve.",
     target: null,
     position: "center",
   },
   {
     id: "proyecto1",
     title: "🏗️ Pistas adaptadas en Madrid",
-    body: "Estamos construyendo 2 pistas de pádel completamente accesibles para sillas de ruedas. Cada reserva que hagas aporta directamente a este proyecto.",
+    body: "Estamos construyendo 2 pistas completamente accesibles para sillas de ruedas. Cada reserva que hagas aporta directamente a este proyecto.",
     target: null,
     position: "center",
     project: true,
@@ -35,7 +35,7 @@ const STEPS = [
   {
     id: "proyecto3",
     title: "🏆 Torneo inclusivo nacional",
-    body: "El primer torneo nacional de pádel inclusivo con categorías para todos los niveles y discapacidades. ¿Nos ayudas a organizarlo?",
+    body: "El primer torneo nacional inclusivo de pádel, tenis y pickleball con categorías para todos los niveles y discapacidades. ¿Nos ayudas a organizarlo?",
     target: null,
     position: "center",
     project: true,

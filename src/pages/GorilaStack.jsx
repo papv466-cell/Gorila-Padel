@@ -1,4 +1,4 @@
-// src/pages/GorilaStack.jsx — Gorila Word 🦍 Wordle de Pádel
+// src/pages/GorilaStack.jsx — Gorila Word 🦍 Wordle deportivo
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -210,7 +210,7 @@ export default function GorilaStack() {
           <div style={{fontSize:56}}>🦍</div>
           <div style={{fontSize:30,fontWeight:900,color:"#74B800"}}>Gorila Word</div>
           <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:280,lineHeight:1.7}}>
-            Adivina la palabra de pádel en <strong style={{color:"#fff"}}>{MAX_ATTEMPTS} intentos</strong>.<br/>
+            Adivina la palabra deportiva en <strong style={{color:"#fff"}}>{MAX_ATTEMPTS} intentos</strong>.<br/>
             🟩 Letra correcta · 🟨 Está pero mal sitio · ⬛ No está<br/>
             <span style={{color:"rgba(255,255,255,0.3)",fontSize:11}}>Una palabra nueva cada día para todos</span>
           </div>

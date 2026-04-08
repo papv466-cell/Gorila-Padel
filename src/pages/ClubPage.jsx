@@ -655,7 +655,7 @@ export default function ClubPage({ session: sessionProp }) {
                           style={{ background:"#111", borderRadius:12, border:"1px solid rgba(255,255,255,0.08)", padding:"12px 14px", animation:`gpFadeUp 0.3s ease ${idx*0.04}s both` }}>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
                             <div>
-                              <div style={{ fontSize:13, fontWeight:900, color:"#fff" }}>{c.title || "Clase de pádel"}</div>
+                              <div style={{ fontSize:13, fontWeight:900, color:"#fff" }}>{c.title || "Clase deportiva"}</div>
                               <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", marginTop:3 }}>
                                 🗓️ {formatWhen(c.start_at)} · ⏱️ {c.duration_min || 60}min
                               </div>

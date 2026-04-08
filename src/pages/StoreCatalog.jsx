@@ -82,7 +82,7 @@ export default function StoreCatalog() {
                   <span style={{ color: '#74B800' }}>un Gorila</span>
                 </h1>
                 <div style={{ fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-                  Palas, ropa y accesorios de pádel
+                  Palas, raquetas y accesorios deportivos
                 </div>
               </div>
               <Link to="/vendedor/registro" style={{ padding: isMobile ? '8px 12px' : '10px 18px', borderRadius: 12, background: 'rgba(116,184,0,0.15)', border: '1px solid rgba(116,184,0,0.3)', color: '#74B800', fontWeight: 900, fontSize: isMobile ? 11 : 13, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>

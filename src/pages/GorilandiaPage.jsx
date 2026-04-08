@@ -172,7 +172,7 @@ export default function GorilandiaPage({ session: sessionProp }) {
               <div style={{ textAlign: 'center', padding: 60 }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🦍</div>
                 <div style={{ fontWeight: 900, color: '#fff', fontSize: 18, marginBottom: 6 }}>Nadie ha publicado aún</div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>¡Sé el primero en compartir tu momento de pádel!</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>¡Sé el primero en compartir tu momento deportivo!</div>
                 <button onClick={() => { if (!session) { navigate('/login'); return; } setShowUpload(true); }}
                   style={{ padding: '10px 22px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: 13 }}>
                   ➕ Crear publicación

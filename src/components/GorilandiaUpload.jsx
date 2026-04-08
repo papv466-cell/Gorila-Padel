@@ -147,7 +147,7 @@ export default function GorilandiaUpload({ onClose, onSubmit, uploading, matchDa
 
           {/* Caption */}
           <textarea value={caption} onChange={e => setCaption(e.target.value)}
-            placeholder="Escribe algo sobre tu momento de pádel…"
+            placeholder="Escribe algo sobre tu momento deportivo…"
             rows={3}
             style={{ width: '100%', padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 14, resize: 'none', boxSizing: 'border-box', marginBottom: 14 }}
           />
