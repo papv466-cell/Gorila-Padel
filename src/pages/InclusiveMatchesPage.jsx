@@ -133,7 +133,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
   async function load() {
     try {
       setLoading(true); setErr(null);
-      const list = await fetchInclusiveMatches({ limit: 300 });
+      const list = await fetchInclusiveMatches({ limit: 300, sport });
       if (aliveRef.current) setMatches(Array.isArray(list) ? list : []);
     } catch (e) {
       if (aliveRef.current) { setErr(e?.message || "Error cargando partidos"); setMatches([]); }

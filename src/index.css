@@ -5965,3 +5965,49 @@ input::placeholder, textarea::placeholder {
 /* ===== QUITAR OUTLINE MAGENTA de debug ===== */
 body { outline: none !important; }
 
+
+/* ── SPORT THEMES ─────────────────────────────────────── */
+:root {
+  --sport-color: #2ECC71;
+  --sport-color-dark: #1a6b3a;
+  --accent: #2ECC71;
+}
+
+/* Pádel — verde (default) */
+body.sport-padel {
+  --sport-color: #2ECC71;
+  --sport-color-dark: #1a6b3a;
+  --accent: #2ECC71;
+}
+
+/* Tenis — naranja */
+body.sport-tenis {
+  --sport-color: #F39C12;
+  --sport-color-dark: #7a4e06;
+  --accent: #F39C12;
+}
+
+/* Pickleball — azul */
+body.sport-pickleball {
+  --sport-color: #3498DB;
+  --sport-color-dark: #1a4a6b;
+  --accent: #3498DB;
+}
+
+/* Aplicar a elementos clave */
+body.sport-tenis .headerNavLink.isActive,
+body.sport-tenis .mBtn.primary,
+body.sport-tenis .ghCtaBtn {
+  background: linear-gradient(135deg, #F39C12, #E67E22) !important;
+  color: #000 !important;
+}
+
+body.sport-pickleball .headerNavLink.isActive,
+body.sport-pickleball .mBtn.primary,
+body.sport-pickleball .ghCtaBtn {
+  background: linear-gradient(135deg, #3498DB, #2980B9) !important;
+  color: #fff !important;
+}
+
+body.sport-tenis .headerNavLink.isActive { color: #F39C12 !important; background: none !important; border-bottom: 2px solid #F39C12 !important; }
+body.sport-pickleball .headerNavLink.isActive { color: #3498DB !important; background: none !important; border-bottom: 2px solid #3498DB !important; }

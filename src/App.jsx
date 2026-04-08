@@ -89,6 +89,17 @@ async function sonarGorila() {
 }
 
 export default function App() {
+  const { sportInfo } = useSport();
+
+  useEffect(() => {
+    const color = sportInfo?.color || "#2ECC71";
+    const dark = sportInfo?.colorDark || "#1a6b3a";
+    const root = document.documentElement;
+    root.style.setProperty("--sport-color", color);
+    root.style.setProperty("--sport-color-dark", dark);
+    document.body.classList.remove("sport-padel", "sport-tenis", "sport-pickleball");
+    document.body.classList.add("sport-" + (sportInfo?.key || "padel"));
+  }, [sportInfo?.key]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [onboardingSession, setOnboardingSession] = useState(null);
