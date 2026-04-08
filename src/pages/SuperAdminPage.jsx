@@ -239,7 +239,7 @@ export default function SuperAdminPage() {
   }
 
   if (loading) return (
-    <div style={{ background: "#080808", minHeight: "100vh", display: "grid", placeItems: "center", color: "#74B800", fontSize: 18, fontWeight: 900 }}>
+    <div style={{ background: "#080808", minHeight: "100vh", display: "grid", placeItems: "center", color: "var(--sport-color)", fontSize: 18, fontWeight: 900 }}>
       Cargando…
     </div>
   );
@@ -252,7 +252,7 @@ export default function SuperAdminPage() {
           {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
-                background: tab===t ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.08)',
+                background: tab===t ? 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))' : 'rgba(255,255,255,0.08)',
                 color: tab===t ? '#000' : '#fff'}}>
               {label}
             </button>
@@ -265,7 +265,7 @@ export default function SuperAdminPage() {
             ← Volver
           </button>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>🔐 Super Admin</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>🔐 Super Admin</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Panel de administración GorilaGo!</div>
           </div>
         </div>
@@ -313,7 +313,7 @@ export default function SuperAdminPage() {
                 {club.opening_time && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>⏰ {club.opening_time}–{club.closing_time}</span>}
                 {club.phone && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>📞 {club.phone}</span>}
                 {club.email && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>✉️ {club.email}</span>}
-                {club.website && <a href={club.website} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#74B800" }}>🌐 Web</a>}
+                {club.website && <a href={club.website} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "var(--sport-color)" }}>🌐 Web</a>}
                 {club.social_instagram && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>📸 {club.social_instagram}</span>}
               </div>
 
@@ -322,7 +322,7 @@ export default function SuperAdminPage() {
                   <div style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>PISTAS</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {club.courts_info.map((c, i) => (
-                      <span key={i} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: "rgba(116,184,0,0.1)", color: "#74B800" }}>
+                      <span key={i} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 6, background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", color: "var(--sport-color)" }}>
                         {c.name} · {c.type}
                       </span>
                     ))}
@@ -339,7 +339,7 @@ export default function SuperAdminPage() {
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => approveClub(club)} disabled={saving === club.id}
                   style={{ flex: 1, padding: "11px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 900, fontSize: 13,
-                    background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", opacity: saving === club.id ? 0.6 : 1 }}>
+                    background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", opacity: saving === club.id ? 0.6 : 1 }}>
                   {saving === club.id ? "⏳ Guardando…" : "✅ Aprobar"}
                 </button>
                 <button onClick={() => rejectClub(club)} disabled={saving === club.id}
@@ -358,7 +358,7 @@ export default function SuperAdminPage() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
               <div style={{fontSize:15, fontWeight:900, color:'#fff'}}>💚 Asociaciones benéficas</div>
               <button onClick={()=>{setEditingFoundation('new');setFoundationForm({name:'',description:'',logo_url:'',website:'',iban:'',contact_email:'',active:true});}}
-                style={{padding:'8px 14px', borderRadius:10, background:'linear-gradient(135deg,#74B800,#9BE800)', border:'none', color:'#000', fontWeight:900, fontSize:12, cursor:'pointer'}}>
+                style={{padding:'8px 14px', borderRadius:10, background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', border:'none', color:'#000', fontWeight:900, fontSize:12, cursor:'pointer'}}>
                 + Nueva
               </button>
             </div>
@@ -366,17 +366,17 @@ export default function SuperAdminPage() {
             {foundations.map(f=>(
               <div key={f.id} style={{background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:14, marginBottom:10}}>
                 <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:10}}>
-                  <div style={{width:48, height:48, borderRadius:12, background:'rgba(116,184,0,0.1)', display:'grid', placeItems:'center', fontSize:24, flexShrink:0, overflow:'hidden', border:'1px solid rgba(116,184,0,0.2)'}}>
+                  <div style={{width:48, height:48, borderRadius:12, background:'rgba(var(--sport-color-rgb, 46,204,113),0.1)', display:'grid', placeItems:'center', fontSize:24, flexShrink:0, overflow:'hidden', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)'}}>
                     {f.logo_url?.startsWith('http') ? <img src={f.logo_url} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : (f.logo_url || '💚')}
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:14, fontWeight:900, color:'#fff'}}>{f.name}</div>
                     <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2}}>{f.description}</div>
-                    {f.iban && <div style={{fontSize:10, color:'rgba(116,184,0,0.6)', marginTop:2, fontFamily:'monospace'}}>IBAN: {f.iban}</div>}
+                    {f.iban && <div style={{fontSize:10, color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)', marginTop:2, fontFamily:'monospace'}}>IBAN: {f.iban}</div>}
                     {f.contact_email && <div style={{fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:1}}>✉️ {f.contact_email}</div>}
                   </div>
                   <div style={{display:'flex', flexDirection:'column', gap:6, alignItems:'flex-end'}}>
-                    <span style={{fontSize:10, fontWeight:900, padding:'3px 8px', borderRadius:6, background: f.active?'rgba(116,184,0,0.15)':'rgba(255,255,255,0.05)', color: f.active?'#74B800':'rgba(255,255,255,0.3)'}}>
+                    <span style={{fontSize:10, fontWeight:900, padding:'3px 8px', borderRadius:6, background: f.active?'rgba(var(--sport-color-rgb, 46,204,113),0.15)':'rgba(255,255,255,0.05)', color: f.active?'var(--sport-color)':'rgba(255,255,255,0.3)'}}>
                       {f.active ? '● Activa' : '○ Inactiva'}
                     </span>
                   </div>
@@ -387,7 +387,7 @@ export default function SuperAdminPage() {
                     ✏️ Editar
                   </button>
                   <button onClick={()=>toggleFoundation(f.id, !f.active)}
-                    style={{padding:'8px 12px', borderRadius:8, background: f.active?'rgba(239,68,68,0.1)':'rgba(116,184,0,0.1)', border:'none', color: f.active?'#ff6b6b':'#74B800', fontWeight:800, fontSize:12, cursor:'pointer'}}>
+                    style={{padding:'8px 12px', borderRadius:8, background: f.active?'rgba(239,68,68,0.1)':'rgba(var(--sport-color-rgb, 46,204,113),0.1)', border:'none', color: f.active?'#ff6b6b':'var(--sport-color)', fontWeight:800, fontSize:12, cursor:'pointer'}}>
                     {f.active ? 'Desactivar' : 'Activar'}
                   </button>
                 </div>
@@ -431,7 +431,7 @@ export default function SuperAdminPage() {
                     disabled={savingFeature === f.key}
                     style={{
                       width: 52, height: 28, borderRadius: 999, border: 'none', cursor: 'pointer',
-                      background: f.enabled ? 'linear-gradient(135deg,#74B800,#9BE800)' : 'rgba(255,255,255,0.12)',
+                      background: f.enabled ? 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))' : 'rgba(255,255,255,0.12)',
                       position: 'relative', transition: 'background 0.25s', flexShrink: 0
                     }}
                   >
@@ -457,7 +457,7 @@ export default function SuperAdminPage() {
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>Oro · Plata · Bronce — renovación anual</div>
               </div>
               <button onClick={() => setShowAuditForm(true)}
-                style={{ padding: '8px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', border: 'none', color: '#000', fontWeight: 900, fontSize: 12, cursor: 'pointer' }}>
+                style={{ padding: '8px 14px', borderRadius: 10, background: 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', border: 'none', color: '#000', fontWeight: 900, fontSize: 12, cursor: 'pointer' }}>
                 + Nueva
               </button>
             </div>
@@ -465,7 +465,7 @@ export default function SuperAdminPage() {
             {/* Formulario nueva auditoría */}
             {showAuditForm && (
               <div style={{ background: '#111', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
-                <div style={{ fontSize: 14, fontWeight: 900, color: '#74B800', marginBottom: 14 }}>Nueva auditoría</div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--sport-color)', marginBottom: 14 }}>Nueva auditoría</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <select value={auditForm.club_id} onChange={e => setAuditForm(p => ({ ...p, club_id: e.target.value }))}
                     style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13 }}>
@@ -487,7 +487,7 @@ export default function SuperAdminPage() {
                     <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.40)', marginBottom: 8 }}>REQUISITOS {auditForm.level.toUpperCase()}</div>
                     {AUDIT_CHECKLIST[auditForm.level].map((item, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 13, color: 'rgba(255,255,255,0.70)' }}>
-                        <span style={{ color: '#74B800' }}>✓</span> {item}
+                        <span style={{ color: 'var(--sport-color)' }}>✓</span> {item}
                       </div>
                     ))}
                   </div>
@@ -496,7 +496,7 @@ export default function SuperAdminPage() {
                     rows={2} style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', fontSize: 13, resize: 'none', fontFamily: 'inherit' }} />
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={saveAudit} disabled={savingAudit || !auditForm.club_id}
-                      style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'linear-gradient(135deg,#74B800,#9BE800)', border: 'none', color: '#000', fontWeight: 900, fontSize: 14, cursor: 'pointer', opacity: savingAudit || !auditForm.club_id ? 0.5 : 1 }}>
+                      style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', border: 'none', color: '#000', fontWeight: 900, fontSize: 14, cursor: 'pointer', opacity: savingAudit || !auditForm.club_id ? 0.5 : 1 }}>
                       {savingAudit ? 'Guardando…' : '✅ Guardar auditoría'}
                     </button>
                     <button onClick={() => setShowAuditForm(false)}
@@ -551,7 +551,7 @@ export default function SuperAdminPage() {
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:4 }}>Crowdfunding inclusivo</div>
               </div>
               <button onClick={() => { setEditingProject('new'); setProjectForm({ title:'', description:'', goal_amount:'', category:'inclusivo', featured:false }); }}
-                style={{ padding:'8px 14px', borderRadius:10, background:'linear-gradient(135deg,#74B800,#9BE800)', border:'none', color:'#000', fontWeight:900, fontSize:12, cursor:'pointer' }}>
+                style={{ padding:'8px 14px', borderRadius:10, background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', border:'none', color:'#000', fontWeight:900, fontSize:12, cursor:'pointer' }}>
                 + Nuevo
               </button>
             </div>
@@ -559,7 +559,7 @@ export default function SuperAdminPage() {
             {/* Formulario */}
             {editingProject && (
               <div style={{ background:'#111', border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding:16, marginBottom:16 }}>
-                <div style={{ fontSize:14, fontWeight:900, color:'#74B800', marginBottom:14 }}>
+                <div style={{ fontSize:14, fontWeight:900, color:'var(--sport-color)', marginBottom:14 }}>
                   {editingProject === 'new' ? '+ Nuevo proyecto' : '✏️ Editar proyecto'}
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -578,7 +578,7 @@ export default function SuperAdminPage() {
                   </label>
                   <div style={{ display:'flex', gap:8 }}>
                     <button onClick={saveProject} disabled={savingProject || !projectForm.title.trim()}
-                      style={{ flex:1, padding:'12px', borderRadius:12, background:'linear-gradient(135deg,#74B800,#9BE800)', border:'none', color:'#000', fontWeight:900, fontSize:14, cursor:'pointer', opacity: savingProject || !projectForm.title.trim() ? 0.5 : 1 }}>
+                      style={{ flex:1, padding:'12px', borderRadius:12, background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', border:'none', color:'#000', fontWeight:900, fontSize:14, cursor:'pointer', opacity: savingProject || !projectForm.title.trim() ? 0.5 : 1 }}>
                       {savingProject ? 'Guardando…' : '✅ Guardar'}
                     </button>
                     <button onClick={() => setEditingProject(null)}
@@ -594,17 +594,17 @@ export default function SuperAdminPage() {
             {projects.map(p => {
               const pct = Math.min(100, Math.round((p.current_amount / p.goal_amount) * 100));
               return (
-                <div key={p.id} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${p.featured ? 'rgba(116,184,0,0.35)' : 'rgba(255,255,255,0.08)'}`, borderRadius:14, padding:14, marginBottom:10 }}>
-                  {p.featured && <div style={{ fontSize:11, fontWeight:900, color:'#74B800', marginBottom:6 }}>⭐ Destacado</div>}
+                <div key={p.id} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${p.featured ? 'rgba(var(--sport-color-rgb, 46,204,113),0.35)' : 'rgba(255,255,255,0.08)'}`, borderRadius:14, padding:14, marginBottom:10 }}>
+                  {p.featured && <div style={{ fontSize:11, fontWeight:900, color:'var(--sport-color)', marginBottom:6 }}>⭐ Destacado</div>}
                   <div style={{ fontSize:14, fontWeight:900, color:'#fff', marginBottom:4 }}>{p.title}</div>
                   <div style={{ fontSize:12, color:'rgba(255,255,255,0.50)', marginBottom:10 }}>{p.description}</div>
                   <div style={{ marginBottom:8 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4 }}>
-                      <span style={{ color:'#74B800', fontWeight:700 }}>{(p.current_amount||0).toFixed(0)} €</span>
+                      <span style={{ color:'var(--sport-color)', fontWeight:700 }}>{(p.current_amount||0).toFixed(0)} €</span>
                       <span style={{ color:'rgba(255,255,255,0.40)' }}>de {p.goal_amount} € · {pct}%</span>
                     </div>
                     <div style={{ height:6, borderRadius:999, background:'rgba(255,255,255,0.10)' }}>
-                      <div style={{ height:'100%', width:`${pct}%`, borderRadius:999, background:'linear-gradient(90deg,#74B800,#9BE800)' }} />
+                      <div style={{ height:'100%', width:`${pct}%`, borderRadius:999, background:'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))' }} />
                     </div>
                   </div>
                   <div style={{ display:'flex', gap:8 }}>
@@ -613,7 +613,7 @@ export default function SuperAdminPage() {
                       ✏️ Editar
                     </button>
                     <button onClick={() => toggleProject(p.id, !p.active)}
-                      style={{ padding:'8px 12px', borderRadius:8, background: p.active ? 'rgba(239,68,68,0.10)' : 'rgba(116,184,0,0.10)', border:'none', color: p.active ? '#ff6b6b' : '#74B800', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                      style={{ padding:'8px 12px', borderRadius:8, background: p.active ? 'rgba(239,68,68,0.10)' : 'rgba(var(--sport-color-rgb, 46,204,113),0.10)', border:'none', color: p.active ? '#ff6b6b' : 'var(--sport-color)', fontWeight:800, fontSize:12, cursor:'pointer' }}>
                       {p.active ? 'Desactivar' : 'Activar'}
                     </button>
                   </div>
@@ -629,7 +629,7 @@ export default function SuperAdminPage() {
                   <div key={p.id} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:12, padding:12, marginBottom:8 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
                       <div style={{ fontSize:13, fontWeight:900, color:'#fff' }}>{p.title}</div>
-                      <span style={{ fontSize:11, padding:'2px 8px', borderRadius:6, background: p.status==='pending' ? 'rgba(245,158,11,0.15)' : p.status==='approved' ? 'rgba(116,184,0,0.15)' : 'rgba(239,68,68,0.15)', color: p.status==='pending' ? '#f59e0b' : p.status==='approved' ? '#74B800' : '#ff6b6b', fontWeight:800 }}>
+                      <span style={{ fontSize:11, padding:'2px 8px', borderRadius:6, background: p.status==='pending' ? 'rgba(245,158,11,0.15)' : p.status==='approved' ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'rgba(239,68,68,0.15)', color: p.status==='pending' ? '#f59e0b' : p.status==='approved' ? 'var(--sport-color)' : '#ff6b6b', fontWeight:800 }}>
                         {p.status}
                       </span>
                     </div>
@@ -638,7 +638,7 @@ export default function SuperAdminPage() {
                     {p.status === 'pending' && (
                       <div style={{ display:'flex', gap:8 }}>
                         <button onClick={() => updateProposalStatus(p.id, 'approved')}
-                          style={{ flex:1, padding:'7px', borderRadius:8, background:'rgba(116,184,0,0.12)', border:'1px solid rgba(116,184,0,0.25)', color:'#74B800', fontWeight:800, fontSize:12, cursor:'pointer' }}>
+                          style={{ flex:1, padding:'7px', borderRadius:8, background:'rgba(var(--sport-color-rgb, 46,204,113),0.12)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)', color:'var(--sport-color)', fontWeight:800, fontSize:12, cursor:'pointer' }}>
                           ✅ Aprobar
                         </button>
                         <button onClick={() => updateProposalStatus(p.id, 'rejected')}
@@ -658,7 +658,7 @@ export default function SuperAdminPage() {
         {editingFoundation && (
           <div onClick={()=>setEditingFoundation(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
             <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-              <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>
+              <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:16}}>
                 {editingFoundation==='new' ? '+ Nueva asociación' : '✏️ Editar asociación'}
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -676,7 +676,7 @@ export default function SuperAdminPage() {
                 ))}
                 <div style={{display:'flex',gap:8,marginTop:4}}>
                   <button onClick={saveFoundation} disabled={savingFoundation||!foundationForm.name.trim()}
-                    style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer',opacity:savingFoundation||!foundationForm.name.trim()?0.5:1}}>
+                    style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer',opacity:savingFoundation||!foundationForm.name.trim()?0.5:1}}>
                     {savingFoundation?'Guardando…':'✅ Guardar'}
                   </button>
                   <button onClick={()=>setEditingFoundation(null)}

@@ -14,7 +14,7 @@
 /* ==================== CARD ==================== */
 .gpMatchCard {
   background: #111;
-  border: 1px solid rgba(116,184,0,0.35);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.35);
   border-radius: 12px;
   overflow: hidden;
   list-style: none;
@@ -26,7 +26,7 @@
 .gpMatchHeader {
   padding: 6px 10px;
   background: #000;
-  border-bottom: 1px solid rgba(116,184,0,0.2);
+  border-bottom: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2);
 }
 .gpClubName {
   font-size: 13px;
@@ -105,8 +105,8 @@
 }
 .gpBadges:empty { display: none; }
 .gpBadge {
-  background: rgba(116,184,0,0.15) !important;
-  border: 1px solid rgba(116,184,0,0.4) !important;
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.15) !important;
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4) !important;
   padding: 1px 6px !important;
   border-radius: 999px;
   font-size: 10px !important;
@@ -148,7 +148,7 @@
   gap: 5px;
   flex-wrap: nowrap;
   background: #1a1a1a;
-  border-top: 1px solid rgba(116,184,0,0.15);
+  border-top: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15);
   overflow-x: auto;
 }
 .gpActionBtn {
@@ -162,7 +162,7 @@
   flex-shrink: 0;
 }
 .gpActionBtn.primary {
-  background: linear-gradient(135deg, #74B800, #9BE800);
+  background: linear-gradient(135deg, var(--sport-color), var(--sport-color));
   color: #000 !important;
   -webkit-text-fill-color: #000 !important;
   font-size: 11px;
@@ -170,9 +170,9 @@
   flex: 1;
 }
 .gpActionBtn.secondary {
-  background: rgba(116,184,0,0.15);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.15);
   color: #fff !important;
-  border: 1px solid rgba(116,184,0,0.35);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.35);
   font-size: 15px;
   padding: 4px 8px;
 }
@@ -197,12 +197,12 @@
   flex-shrink: 0;
 }
 .gpDayPill.isActive {
-  background: linear-gradient(135deg, #74B800, #9BE800);
-  border: 2px solid #74B800;
+  background: linear-gradient(135deg, var(--sport-color), var(--sport-color));
+  border: 2px solid var(--sport-color);
 }
 .gpDayPill.isActive .gpDayLabel,
 .gpDayPill.isActive .gpDayNumber { color: #000; }
-.gpDayPill.hasMatches:not(.isActive) .gpDayNumber { color: #74B800; }
+.gpDayPill.hasMatches:not(.isActive) .gpDayNumber { color: var(--sport-color); }
 .gpDayLabel { font-size: 9px; font-weight: 700; color: #fff; text-transform: capitalize; }
 .gpDayNumber { font-size: 14px; font-weight: 950; color: #fff; }
 

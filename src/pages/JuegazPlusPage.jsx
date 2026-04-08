@@ -24,7 +24,7 @@ export default function JuegazPlusPage({ session }) {
       icon: "🎯",
       title: "Pulls",
       desc: "Quedadas abiertas — apúntate y llena las plazas",
-      color: "#74B800",
+      color: "var(--sport-color)",
     },
     {
       to: "/entrenamientos",
@@ -42,7 +42,7 @@ export default function JuegazPlusPage({ session }) {
         <div className="container">
           <div style={{ padding: "16px 0 20px" }}>
             <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: "#fff" }}>
-              🥇 <span style={{ color: "#74B800" }}>Juega+</span>
+              🥇 <span style={{ color: "var(--sport-color)" }}>Juega+</span>
             </h1>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
               Ligas, retos, pulls y entrenamientos

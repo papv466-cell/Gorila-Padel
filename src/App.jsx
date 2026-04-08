@@ -214,7 +214,7 @@ export default function App() {
               {body && <div style={{ opacity: 0.8, fontSize: 13 }}>{body}</div>}
             </div>
           ),
-          { duration: 6000, icon: "🦍", style: { background: '#1a1a1a', color: '#fff', border: '1px solid #74B800', borderRadius: '12px', padding: '14px 16px', fontSize: '14px', fontFamily: 'Outfit, sans-serif', cursor: 'pointer' } }
+          { duration: 6000, icon: "🦍", style: { background: '#1a1a1a', color: '#fff', border: '1px solid var(--sport-color)', borderRadius: '12px', padding: '14px 16px', fontSize: '14px', fontFamily: 'Outfit, sans-serif', cursor: 'pointer' } }
         );
         return;
       }
@@ -341,7 +341,7 @@ export default function App() {
         position="top-center"
         toastOptions={{
           style: { background: '#1a1a1a', color: '#fff', border: '1px solid #252525', borderRadius: '12px', padding: '16px', fontSize: '14px', fontFamily: 'Outfit, sans-serif' },
-          success: { iconTheme: { primary: '#74B800', secondary: '#000' } },
+          success: { iconTheme: { primary: 'var(--sport-color)', secondary: '#000' } },
           error: { iconTheme: { primary: '#FF4444', secondary: '#fff' } },
         }}
       />

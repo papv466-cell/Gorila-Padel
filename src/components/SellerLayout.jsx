@@ -54,9 +54,9 @@ export default function SellerLayout({ children }) {
     <Link to={to} onClick={() => setShowMenu(false)} style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '12px 14px', borderRadius: 12, fontWeight: 900, fontSize: 14, textDecoration: 'none',
-      background: isActive(to) ? 'rgba(116,184,0,0.15)' : 'transparent',
-      color: isActive(to) ? '#74B800' : 'rgba(255,255,255,0.85)',
-      border: isActive(to) ? '1px solid rgba(116,184,0,0.25)' : '1px solid transparent',
+      background: isActive(to) ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'transparent',
+      color: isActive(to) ? 'var(--sport-color)' : 'rgba(255,255,255,0.85)',
+      border: isActive(to) ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)' : '1px solid transparent',
       marginBottom: 6
     }}>
       <span style={{ fontSize: 18 }}>{icon}</span>
@@ -75,7 +75,7 @@ export default function SellerLayout({ children }) {
               
               {/* Logo vendedor */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 999, background: 'linear-gradient(135deg, #9BEF00, #74B800)', display: 'grid', placeItems: 'center', fontSize: 18, border: '2px solid #111' }}>🏪</div>
+                <div style={{ width: 36, height: 36, borderRadius: 999, background: 'linear-gradient(135deg, #9BEF00, var(--sport-color))', display: 'grid', placeItems: 'center', fontSize: 18, border: '2px solid #111' }}>🏪</div>
                 <div>
                   <div style={{ fontWeight: 950, fontSize: isMobile ? 14 : 16 }}>{seller?.business_name}</div>
                   <div style={{ fontSize: 11, opacity: 0.7 }}>Panel de Vendedor</div>
@@ -86,8 +86,8 @@ export default function SellerLayout({ children }) {
               {isMobile ? (
                 <button onClick={() => setShowMenu(!showMenu)} style={{
                   padding: '8px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)',
-                  background: showMenu ? 'rgba(116,184,0,0.15)' : 'rgba(255,255,255,0.04)',
-                  color: showMenu ? '#74B800' : '#fff', fontWeight: 900, fontSize: 22, cursor: 'pointer'
+                  background: showMenu ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'rgba(255,255,255,0.04)',
+                  color: showMenu ? 'var(--sport-color)' : '#fff', fontWeight: 900, fontSize: 22, cursor: 'pointer'
                 }}>☰</button>
               ) : (
                 <button className="btn ghost" onClick={() => navigate('/tienda')} style={{ whiteSpace: 'nowrap' }}>← Volver a la tienda</button>

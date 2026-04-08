@@ -77,9 +77,9 @@ export default function GorilandiaPost({ post, session, onReload }) {
       <style>{`
         .glPost { }
         .glPostHeader { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
-        .glAvatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; background: rgba(116,184,0,0.2); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #74B800; font-size: 15px; flex-shrink: 0; overflow: hidden; }
+        .glAvatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; background: rgba(var(--sport-color-rgb, 46,204,113),0.2); display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--sport-color); font-size: 15px; flex-shrink: 0; overflow: hidden; }
         .glUserName { font-weight: 900; color: #fff; font-size: 14px; cursor: pointer; }
-        .glUserName:hover { color: #74B800; }
+        .glUserName:hover { color: var(--sport-color); }
         .glPostTime { font-size: 11px; color: rgba(255,255,255,0.4); }
         .glMediaWrap { position: relative; background: #000; aspect-ratio: 1; overflow: hidden; }
         .glImg { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -89,26 +89,26 @@ export default function GorilandiaPost({ post, session, onReload }) {
         .glNavBtn.next { right: 6px; }
         .glDots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
         .glDot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); }
-        .glDot.on { background: #74B800; }
+        .glDot.on { background: var(--sport-color); }
         .glCaption { padding: 6px 14px 4px; font-size: 13px; color: rgba(255,255,255,0.85); line-height: 1.5; }
         .glCaption strong { color: #fff; cursor: pointer; }
         .glActions { display: flex; align-items: center; gap: 2px; padding: 6px 10px 4px; }
         .glReactBtn { display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 15px; font-weight: 800; transition: background .15s; background: transparent; color: rgba(255,255,255,0.7); }
-        .glReactBtn.on { background: rgba(116,184,0,0.15); color: #74B800; }
+        .glReactBtn.on { background: rgba(var(--sport-color-rgb, 46,204,113),0.15); color: var(--sport-color); }
         .glReactBtn:hover { background: rgba(255,255,255,0.07); }
         .glCommentToggle { margin-left: auto; padding: 6px 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; background: transparent; color: rgba(255,255,255,0.5); }
         .glCommentToggle:hover { color: #fff; background: rgba(255,255,255,0.07); }
         .glReactCount { font-size: 11px; color: rgba(255,255,255,0.4); padding: 0 14px 6px; }
         .glComments { padding: 0 14px 10px; }
         .glComment { display: flex; gap: 8px; margin-bottom: 8px; }
-        .glCommentAvatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(116,184,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #74B800; flex-shrink: 0; overflow: hidden; }
+        .glCommentAvatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(var(--sport-color-rgb, 46,204,113),0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: var(--sport-color); flex-shrink: 0; overflow: hidden; }
         .glCommentBody { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 6px 10px; flex: 1; }
         .glCommentUser { font-size: 11px; font-weight: 900; color: #fff; }
         .glCommentText { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 1px; }
         .glCommentForm { display: flex; gap: 6px; margin-top: 8px; }
         .glCommentInput { flex: 1; padding: 8px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 13px; }
-        .glCommentInput:focus { outline: none; border-color: #74B800; }
-        .glCommentSend { padding: 8px 14px; border-radius: 20px; background: #74B800; color: #000; font-weight: 900; border: none; cursor: pointer; font-size: 12px; }
+        .glCommentInput:focus { outline: none; border-color: var(--sport-color); }
+        .glCommentSend { padding: 8px 14px; border-radius: 20px; background: var(--sport-color); color: #000; font-weight: 900; border: none; cursor: pointer; font-size: 12px; }
         .glCommentSend:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>
 

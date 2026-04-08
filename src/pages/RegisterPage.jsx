@@ -332,7 +332,7 @@ export default function RegisterPage() {
 
             <div style={{ marginTop: 8, textAlign: "center", fontSize: 13 }}>
               <span style={{ color: 'rgba(255,255,255,0.6)' }}>¿Ya tienes cuenta?</span>{" "}
-              <Link style={{ color: '#74B800', fontWeight: 700, textDecoration: 'none' }} to="/login">
+              <Link style={{ color: 'var(--sport-color)', fontWeight: 700, textDecoration: 'none' }} to="/login">
                 Entrar
               </Link>
             </div>

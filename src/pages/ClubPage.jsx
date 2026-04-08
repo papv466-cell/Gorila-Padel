@@ -449,7 +449,7 @@ export default function ClubPage({ session: sessionProp }) {
   }
 
   /* ─── Render ─── */
-  const clubColor = "#74B800";
+  const clubColor = "var(--sport-color)";
 
   return (
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
@@ -457,9 +457,9 @@ export default function ClubPage({ session: sessionProp }) {
         @keyframes gpFadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .gpClubCard { animation: gpFadeUp 0.3s ease both; }
         .gpClubTab { transition: all .15s; }
-        .gpClubTab:hover { background: rgba(116,184,0,0.1) !important; }
+        .gpClubTab:hover { background: rgba(var(--sport-color-rgb, 46,204,113),0.1) !important; }
         .gpMatchItem { transition: background .15s; cursor: pointer; }
-        .gpMatchItem:hover { background: rgba(116,184,0,0.05) !important; }
+        .gpMatchItem:hover { background: rgba(var(--sport-color-rgb, 46,204,113),0.05) !important; }
       `}</style>
 
       <div className="pageWrap">
@@ -473,10 +473,10 @@ export default function ClubPage({ session: sessionProp }) {
           ) : (
             <>
               {/* ── HERO DEL CLUB ── */}
-              <div className="gpClubCard" style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", border: "1px solid rgba(116,184,0,0.2)", background: "#111" }}>
+              <div className="gpClubCard" style={{ marginBottom: 16, borderRadius: 16, overflow: "hidden", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", background: "#111" }}>
                 {/* Banner / imagen */}
                 <div style={{ height: 120, background: "linear-gradient(135deg, #1a2a00, #0d1a00)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 30% 50%, rgba(116,184,0,0.18), transparent 70%)" }} />
+                  <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 30% 50%, rgba(var(--sport-color-rgb, 46,204,113),0.18), transparent 70%)" }} />
                   {club?.urlimagen
                     ? <img src={club.urlimagen} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                     : <div style={{ fontSize:56, zIndex:1 }}>🏟️</div>
@@ -484,7 +484,7 @@ export default function ClubPage({ session: sessionProp }) {
                   {/* Botón crear flotante */}
                   <button
                     onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); if(courts.length) cargarSlotsParaCrear(form.date); }}
-                    style={{ position:"absolute", top:10, right:10, zIndex:2, padding:"7px 12px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, boxShadow:"0 4px 12px rgba(0,0,0,0.4)" }}>
+                    style={{ position:"absolute", top:10, right:10, zIndex:2, padding:"7px 12px", borderRadius:10, background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, boxShadow:"0 4px 12px rgba(0,0,0,0.4)" }}>
                     ➕ Crear
                   </button>
                   {/* Botón seguir */}
@@ -507,7 +507,7 @@ export default function ClubPage({ session: sessionProp }) {
 
                   {/* Stats rápidas */}
                   <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                    <div style={{ padding:"5px 10px", borderRadius:8, background:"rgba(116,184,0,0.1)", border:"1px solid rgba(116,184,0,0.2)", fontSize:11, fontWeight:800, color:"#74B800" }}>
+                    <div style={{ padding:"5px 10px", borderRadius:8, background:"rgba(var(--sport-color-rgb, 46,204,113),0.1)", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", fontSize:11, fontWeight:800, color:"var(--sport-color)" }}>
                       🏓 {matches.length} partido{matches.length !== 1 ? "s" : ""} próximos
                     </div>
                     <div style={{ padding:"5px 10px", borderRadius:8, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)" }}>
@@ -536,7 +536,7 @@ export default function ClubPage({ session: sessionProp }) {
                 ].map(t => (
                   <button key={t.key} className="gpClubTab"
                     onClick={() => { setTab(t.key); if(t.key==='reservar' && selectedCourt) loadSlots(selectedCourt, selectedDate); }}
-                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border: tab===t.key ? "1px solid #74B800" : "1px solid transparent", cursor:"pointer", fontSize:11, fontWeight:900, background: tab===t.key ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", color: tab===t.key ? "#74B800" : "rgba(255,255,255,0.6)", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
+                    style={{ flex:1, padding:"8px 4px", borderRadius:10, border: tab===t.key ? "1px solid var(--sport-color)" : "1px solid transparent", cursor:"pointer", fontSize:11, fontWeight:900, background: tab===t.key ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.06)", color: tab===t.key ? "var(--sport-color)" : "rgba(255,255,255,0.6)", display:"flex", flexDirection:"column", alignItems:"center", gap:2 }}>
                     <span style={{ fontSize:16 }}>{t.emoji}</span>
                     <span>{t.label}{t.count !== null ? ` (${t.count})` : ""}</span>
                   </button>
@@ -550,12 +550,12 @@ export default function ClubPage({ session: sessionProp }) {
                   {uniqueDays.length > 1 && (
                     <div style={{ display:"flex", gap:5, overflowX:"auto", marginBottom:12, paddingBottom:4 }}>
                       <button onClick={() => setSelectedDay("all")}
-                        style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontSize:11, fontWeight:800, whiteSpace:"nowrap", background: selectedDay==="all" ? "#74B800" : "rgba(255,255,255,0.08)", color: selectedDay==="all" ? "#000" : "rgba(255,255,255,0.6)" }}>
+                        style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontSize:11, fontWeight:800, whiteSpace:"nowrap", background: selectedDay==="all" ? "var(--sport-color)" : "rgba(255,255,255,0.08)", color: selectedDay==="all" ? "#000" : "rgba(255,255,255,0.6)" }}>
                         Todos
                       </button>
                       {uniqueDays.map(d => (
                         <button key={d} onClick={() => setSelectedDay(d)}
-                          style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontSize:11, fontWeight:800, whiteSpace:"nowrap", background: selectedDay===d ? "#74B800" : "rgba(255,255,255,0.08)", color: selectedDay===d ? "#000" : "rgba(255,255,255,0.6)" }}>
+                          style={{ padding:"5px 12px", borderRadius:20, border:"none", cursor:"pointer", fontSize:11, fontWeight:800, whiteSpace:"nowrap", background: selectedDay===d ? "var(--sport-color)" : "rgba(255,255,255,0.08)", color: selectedDay===d ? "#000" : "rgba(255,255,255,0.6)" }}>
                           {fmtDay(d)}
                         </button>
                       ))}
@@ -568,7 +568,7 @@ export default function ClubPage({ session: sessionProp }) {
                       <div style={{ color:"#fff", fontWeight:900, marginTop:8 }}>No hay partidos próximos</div>
                       <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:4 }}>¡Sé el primero en crear uno!</div>
                       <button onClick={() => { if(!session){navigate("/login");return;} setOpenCreate(true); }}
-                        style={{ marginTop:14, padding:"9px 20px", borderRadius:10, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12 }}>
+                        style={{ marginTop:14, padding:"9px 20px", borderRadius:10, background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12 }}>
                         ➕ Crear partido
                       </button>
                     </div>
@@ -579,7 +579,7 @@ export default function ClubPage({ session: sessionProp }) {
                         const left = Math.max(0, 4 - occupied);
                         const myStatus = myReqStatus?.[m.id];
                         const isCreator = session?.user?.id && String(m.created_by_user) === String(session.user.id);
-                        const levelColor = LEVEL_COLOR[m.level] || "#74B800";
+                        const levelColor = LEVEL_COLOR[m.level] || "var(--sport-color)";
 
                         return (
                           <div key={m.id} className="gpMatchItem"
@@ -612,15 +612,15 @@ export default function ClubPage({ session: sessionProp }) {
                                   <span style={{ fontSize:10, color:"rgba(255,255,255,0.4)" }}>⏱️ {m.duration_min}min</span>
                                   {m.price_per_player && <span style={{ fontSize:10, color:"rgba(255,255,255,0.4)" }}>💶 {m.price_per_player}€</span>}
                                   {isCreator && <span style={{ fontSize:10, color:"#FFD700" }}>👑</span>}
-                                  {myStatus === "approved" && <span style={{ fontSize:10, color:"#74B800" }}>✅</span>}
+                                  {myStatus === "approved" && <span style={{ fontSize:10, color:"var(--sport-color)" }}>✅</span>}
                                   {myStatus === "pending" && <span style={{ fontSize:10, color:"#FFA500" }}>⏳</span>}
                                 </div>
                                 {/* Plazas */}
                                 <div style={{ display:"flex", gap:4, marginTop:6 }}>
                                   {[0,1,2,3].map(i => (
-                                    <div key={i} style={{ width:18, height:18, borderRadius:4, background: i < occupied ? "#74B800" : "rgba(255,255,255,0.08)", border: i < occupied ? "none" : "1px solid rgba(255,255,255,0.12)" }} />
+                                    <div key={i} style={{ width:18, height:18, borderRadius:4, background: i < occupied ? "var(--sport-color)" : "rgba(255,255,255,0.08)", border: i < occupied ? "none" : "1px solid rgba(255,255,255,0.12)" }} />
                                   ))}
-                                  <span style={{ fontSize:10, color: left > 0 ? "rgba(116,184,0,0.8)" : "rgba(255,100,0,0.8)", marginLeft:4, fontWeight:800 }}>
+                                  <span style={{ fontSize:10, color: left > 0 ? "rgba(var(--sport-color-rgb, 46,204,113),0.8)" : "rgba(255,100,0,0.8)", marginLeft:4, fontWeight:800 }}>
                                     {left > 0 ? `${left} libre${left > 1 ? "s" : ""}` : "Completo"}
                                   </span>
                                 </div>
@@ -662,7 +662,7 @@ export default function ClubPage({ session: sessionProp }) {
                               {c.teacher_name && <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", marginTop:2 }}>👨‍🏫 {c.teacher_name}</div>}
                             </div>
                             <div style={{ textAlign:"right", flexShrink:0 }}>
-                              {c.price && <div style={{ fontSize:14, fontWeight:900, color:"#74B800" }}>{c.price}€</div>}
+                              {c.price && <div style={{ fontSize:14, fontWeight:900, color:"var(--sport-color)" }}>{c.price}€</div>}
                               <div style={{ fontSize:10, color:"rgba(255,255,255,0.3)", marginTop:2 }}>
                                 {c.spots_left > 0 ? `${c.spots_left} plazas` : "Completo"}
                               </div>
@@ -722,9 +722,9 @@ export default function ClubPage({ session: sessionProp }) {
                           style={{flex:1,padding:'10px 12px',borderRadius:10,background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none'}} />
                         <div style={{display:'flex',background:'rgba(255,255,255,0.06)',borderRadius:8,overflow:'hidden',flexShrink:0}}>
                           <button onClick={()=>{setBookingView('grid');loadAllSlotsGrid(selectedDate);}}
-                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='grid'?'#74B800':'transparent',color:bookingView==='grid'?'#000':'rgba(255,255,255,0.5)'}}>⊞</button>
+                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='grid'?'var(--sport-color)':'transparent',color:bookingView==='grid'?'#000':'rgba(255,255,255,0.5)'}}>⊞</button>
                           <button onClick={()=>{setBookingView('list');loadSlots(selectedCourt,selectedDate);}}
-                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='list'?'#74B800':'transparent',color:bookingView==='list'?'#000':'rgba(255,255,255,0.5)'}}>☰</button>
+                            style={{padding:'8px 10px',border:'none',cursor:'pointer',fontSize:13,background:bookingView==='list'?'var(--sport-color)':'transparent',color:bookingView==='list'?'#000':'rgba(255,255,255,0.5)'}}>☰</button>
                         </div>
                       </div>
 
@@ -762,12 +762,12 @@ export default function ClubPage({ session: sessionProp }) {
                                         <td key={c.id} style={{padding:4}}>
                                           <div onClick={()=>isAvailable?setBookingSlot(s):null}
                                             style={{height:48,borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1,cursor:isAvailable?'pointer':'default',transition:'all .15s',
-                                              background:isAvailable?'rgba(116,184,0,0.12)':inWL?'rgba(245,158,11,0.1)':'rgba(255,255,255,0.04)',
-                                              border:isAvailable?'1px solid rgba(116,184,0,0.3)':inWL?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)'}}>
+                                              background:isAvailable?'rgba(var(--sport-color-rgb, 46,204,113),0.12)':inWL?'rgba(245,158,11,0.1)':'rgba(255,255,255,0.04)',
+                                              border:isAvailable?'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)':inWL?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)'}}>
                                             {isAvailable ? (
                                               <>
-                                                <div style={{fontSize:11,fontWeight:900,color:'#74B800'}}>{s.price}€</div>
-                                                <div style={{fontSize:9,color:'rgba(116,184,0,0.6)'}}>Libre</div>
+                                                <div style={{fontSize:11,fontWeight:900,color:'var(--sport-color)'}}>{s.price}€</div>
+                                                <div style={{fontSize:9,color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)'}}>Libre</div>
                                               </>
                                             ) : inWL ? (
                                               <div style={{fontSize:9,fontWeight:900,color:'#f59e0b'}}>⏳ Espera</div>
@@ -789,7 +789,7 @@ export default function ClubPage({ session: sessionProp }) {
                               </tbody>
                             </table>
                             <div style={{display:'flex',gap:10,marginTop:10,fontSize:10,color:'rgba(255,255,255,0.3)'}}>
-                              <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(116,184,0,0.3)',display:'inline-block'}}/>Libre</span>
+                              <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(var(--sport-color-rgb, 46,204,113),0.3)',display:'inline-block'}}/>Libre</span>
                               <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(255,255,255,0.08)',display:'inline-block'}}/>Ocupada</span>
                               <span style={{display:'flex',alignItems:'center',gap:4}}><span style={{width:10,height:10,borderRadius:2,background:'rgba(245,158,11,0.2)',display:'inline-block'}}/>En espera</span>
                             </div>
@@ -808,8 +808,8 @@ export default function ClubPage({ session: sessionProp }) {
                               return (
                                 <button key={c.id} onClick={()=>{setSelectedCourt(c.id);loadSlots(c.id,selectedDate);}}
                                   style={{padding:'8px 12px',borderRadius:10,cursor:'pointer',border:'none',fontWeight:900,fontSize:12,
-                                    background:isSelected?'linear-gradient(135deg,#74B800,#9BE800)':n>0?'rgba(116,184,0,0.08)':'rgba(255,255,255,0.04)',
-                                    color:isSelected?'#000':n>0?'#74B800':'rgba(255,255,255,0.3)'}}>
+                                    background:isSelected?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':n>0?'rgba(var(--sport-color-rgb, 46,204,113),0.08)':'rgba(255,255,255,0.04)',
+                                    color:isSelected?'#000':n>0?'var(--sport-color)':'rgba(255,255,255,0.3)'}}>
                                   {c.court_type==='indoor'?'🏠':'☀️'} {c.name} {n>0?`· ${n}h`:''}
                                 </button>
                               );
@@ -830,10 +830,10 @@ export default function ClubPage({ session: sessionProp }) {
                                   return (
                                     <div key={s.id} onClick={()=>isAvailable?setBookingSlot(s):null}
                                       style={{padding:'12px 6px',borderRadius:12,textAlign:'center',transition:'all .15s',
-                                        background:isAvailable?'rgba(116,184,0,0.08)':inWaitlist?'rgba(245,158,11,0.08)':'rgba(255,255,255,0.03)',
-                                        border:isAvailable?'1px solid rgba(116,184,0,0.25)':inWaitlist?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)',
+                                        background:isAvailable?'rgba(var(--sport-color-rgb, 46,204,113),0.08)':inWaitlist?'rgba(245,158,11,0.08)':'rgba(255,255,255,0.03)',
+                                        border:isAvailable?'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)':inWaitlist?'1px solid rgba(245,158,11,0.3)':'1px solid rgba(255,255,255,0.08)',
                                         cursor:isAvailable?'pointer':'default',opacity:isAvailable?1:0.8}}>
-                                      <div style={{fontSize:15,fontWeight:900,color:isAvailable?'#74B800':inWaitlist?'#f59e0b':'rgba(255,255,255,0.4)'}}>{s.start_time?.slice(0,5)}</div>
+                                      <div style={{fontSize:15,fontWeight:900,color:isAvailable?'var(--sport-color)':inWaitlist?'#f59e0b':'rgba(255,255,255,0.4)'}}>{s.start_time?.slice(0,5)}</div>
                                       <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>{s.end_time?.slice(0,5)}</div>
                                       <div style={{fontSize:12,fontWeight:800,color:isAvailable?'#fff':'rgba(255,255,255,0.3)',marginTop:4}}>{isAvailable?`${s.price}€`:'Ocupada'}</div>
                                       {!isAvailable && (
@@ -864,9 +864,9 @@ export default function ClubPage({ session: sessionProp }) {
                     <div style={{marginBottom:16}}>
                       <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:8}}>Mis bonos activos</div>
                       {myBonos.map(b=>(
-                        <div key={b.id} style={{background:'rgba(116,184,0,0.08)',borderRadius:12,border:'1px solid rgba(116,184,0,0.25)',padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <div key={b.id} style={{background:'rgba(var(--sport-color-rgb, 46,204,113),0.08)',borderRadius:12,border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)',padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                           <div>
-                            <div style={{fontSize:13,fontWeight:900,color:'#74B800'}}>{b.club_bonos?.nombre}</div>
+                            <div style={{fontSize:13,fontWeight:900,color:'var(--sport-color)'}}>{b.club_bonos?.nombre}</div>
                             <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2}}>
                               {b.club_bonos?.tipo==='ilimitado' ? '♾️ Ilimitado' : `🕐 ${b.horas_restantes} hora${b.horas_restantes!==1?'s':''} restantes`}
                             </div>
@@ -903,15 +903,15 @@ export default function ClubPage({ session: sessionProp }) {
                                   📅 Válido {b.duracion_dias} días desde la compra
                                 </div>
                               </div>
-                              <div style={{fontSize:22,fontWeight:900,color:'#74B800'}}>{(b.precio_cents/100).toFixed(2)}€</div>
+                              <div style={{fontSize:22,fontWeight:900,color:'var(--sport-color)'}}>{(b.precio_cents/100).toFixed(2)}€</div>
                             </div>
                             {yaTiene ? (
-                              <div style={{padding:'10px',borderRadius:10,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.2)',textAlign:'center',fontSize:12,color:'#74B800',fontWeight:800}}>
+                              <div style={{padding:'10px',borderRadius:10,background:'rgba(var(--sport-color-rgb, 46,204,113),0.08)',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',textAlign:'center',fontSize:12,color:'var(--sport-color)',fontWeight:800}}>
                                 ✅ Ya tienes este bono activo
                               </div>
                             ) : (
                               <button onClick={()=>buyBono(b)} disabled={buyingBono===b.id}
-                                style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer',opacity:buyingBono===b.id?0.6:1}}>
+                                style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer',opacity:buyingBono===b.id?0.6:1}}>
                                 {buyingBono===b.id?'Activando…':'🎟️ Comprar bono'}
                               </button>
                             )}
@@ -927,15 +927,15 @@ export default function ClubPage({ session: sessionProp }) {
                 <div style={{padding:'12px'}}>
                   {/* Nota media */}
                   {clubRatings.length > 0 && (
-                    <div style={{background:'#111',borderRadius:14,border:'1px solid rgba(116,184,0,0.15)',padding:16,marginBottom:16,textAlign:'center'}}>
-                      <div style={{fontSize:36,fontWeight:900,color:'#74B800'}}>{(clubRatings.reduce((s,r)=>s+r.rating,0)/clubRatings.length).toFixed(1)}</div>
+                    <div style={{background:'#111',borderRadius:14,border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)',padding:16,marginBottom:16,textAlign:'center'}}>
+                      <div style={{fontSize:36,fontWeight:900,color:'var(--sport-color)'}}>{(clubRatings.reduce((s,r)=>s+r.rating,0)/clubRatings.length).toFixed(1)}</div>
                       <div style={{fontSize:20,marginBottom:4}}>{'⭐'.repeat(Math.round(clubRatings.reduce((s,r)=>s+r.rating,0)/clubRatings.length))}</div>
                       <div style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>{clubRatings.length} valoracion{clubRatings.length!==1?'es':''}</div>
                     </div>
                   )}
                   {/* Formulario valorar */}
                   <div style={{background:'#111',borderRadius:14,border:'1px solid rgba(255,255,255,0.07)',padding:14,marginBottom:16}}>
-                    <div style={{fontSize:13,fontWeight:900,color:'#74B800',marginBottom:12}}>{myRating?'✏️ Editar tu valoración':'⭐ Valora este club'}</div>
+                    <div style={{fontSize:13,fontWeight:900,color:'var(--sport-color)',marginBottom:12}}>{myRating?'✏️ Editar tu valoración':'⭐ Valora este club'}</div>
                     <div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:12}}>
                       {[1,2,3,4,5].map(star=>(
                         <div key={star} onClick={()=>setRatingValue(star)}
@@ -946,7 +946,7 @@ export default function ClubPage({ session: sessionProp }) {
                       onChange={e=>setRatingComment(e.target.value)} rows={3}
                       style={{padding:'10px 12px',borderRadius:10,background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.12)',color:'#fff',fontSize:13,outline:'none',width:'100%',boxSizing:'border-box',resize:'none',marginBottom:10}} />
                     <button onClick={saveRating} disabled={ratingSaving}
-                      style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
+                      style={{width:'100%',padding:'11px',borderRadius:10,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
                       {ratingSaving?'Guardando…':myRating?'✅ Actualizar valoración':'✅ Enviar valoración'}
                     </button>
                   </div>
@@ -958,7 +958,7 @@ export default function ClubPage({ session: sessionProp }) {
                           {r.profiles?.avatar_url?(
                             <img src={r.profiles.avatar_url} style={{width:30,height:30,borderRadius:999,objectFit:'cover'}} alt=""/>
                           ):(
-                            <div style={{width:30,height:30,borderRadius:999,background:'rgba(116,184,0,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🦍</div>
+                            <div style={{width:30,height:30,borderRadius:999,background:'rgba(var(--sport-color-rgb, 46,204,113),0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🦍</div>
                           )}
                           <div style={{fontSize:13,fontWeight:800}}>{r.profiles?.name||'Jugador'}</div>
                         </div>
@@ -973,26 +973,26 @@ export default function ClubPage({ session: sessionProp }) {
               {/* Modal confirmar reserva */}
               {bookingSlot && (
                 <div onClick={()=>setBookingSlot(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-                  <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-                    <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:4}}>📅 Confirmar reserva</div>
+                  <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+                    <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:4}}>📅 Confirmar reserva</div>
                     <div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginBottom:16}}>
                       {courts.find(c=>c.id===bookingSlot.court_id)?.name} · {bookingSlot.date} · {bookingSlot.start_time?.slice(0,5)} – {bookingSlot.end_time?.slice(0,5)}
                     </div>
                     {(()=>{
                       const bonoActivo = myBonos.find(b => b.activo && (b.club_bonos?.tipo === 'ilimitado' || (b.horas_restantes && b.horas_restantes > 0)));
                       return (
-                        <div style={{background:'rgba(116,184,0,0.08)',borderRadius:10,padding:14,marginBottom:16,textAlign:'center'}}>
+                        <div style={{background:'rgba(var(--sport-color-rgb, 46,204,113),0.08)',borderRadius:10,padding:14,marginBottom:16,textAlign:'center'}}>
                           {bonoActivo ? (
                             <>
                               <div style={{fontSize:14,color:'rgba(255,255,255,0.4)',textDecoration:'line-through',marginBottom:2}}>{bookingSlot.price}€</div>
-                              <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>0€ 🎟️</div>
-                              <div style={{fontSize:11,color:'#74B800',marginTop:2,fontWeight:800}}>
+                              <div style={{fontSize:28,fontWeight:900,color:'var(--sport-color)'}}>0€ 🎟️</div>
+                              <div style={{fontSize:11,color:'var(--sport-color)',marginTop:2,fontWeight:800}}>
                                 {bonoActivo.club_bonos?.tipo==='ilimitado' ? 'Bono ilimitado activo' : `Bono activo · ${bonoActivo.horas_restantes} hora${bonoActivo.horas_restantes!==1?'s':''} restantes`}
                               </div>
                             </>
                           ) : (
                             <>
-                              <div style={{fontSize:28,fontWeight:900,color:'#74B800'}}>{bookingSlot.price}€</div>
+                              <div style={{fontSize:28,fontWeight:900,color:'var(--sport-color)'}}>{bookingSlot.price}€</div>
                               <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>Precio por hora</div>
                             </>
                           )}
@@ -1008,12 +1008,12 @@ export default function ClubPage({ session: sessionProp }) {
                       return (
                         <div style={{marginBottom:16}}>
                           <div onClick={()=>{setSplitEnabled(!splitEnabled);setSplitPlayers([]);setSplitSearch('');setSplitSearchResults([]);}}
-                            style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderRadius:10,background:splitEnabled?'rgba(116,184,0,0.1)':'rgba(255,255,255,0.04)',border:splitEnabled?'1px solid rgba(116,184,0,0.3)':'1px solid rgba(255,255,255,0.08)',cursor:'pointer',marginBottom:splitEnabled?10:0}}>
+                            style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderRadius:10,background:splitEnabled?'rgba(var(--sport-color-rgb, 46,204,113),0.1)':'rgba(255,255,255,0.04)',border:splitEnabled?'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)':'1px solid rgba(255,255,255,0.08)',cursor:'pointer',marginBottom:splitEnabled?10:0}}>
                             <div>
-                              <div style={{fontSize:13,fontWeight:900,color:splitEnabled?'#74B800':'#fff'}}>💸 Dividir entre 4</div>
+                              <div style={{fontSize:13,fontWeight:900,color:splitEnabled?'var(--sport-color)':'#fff'}}>💸 Dividir entre 4</div>
                               <div style={{fontSize:10,color:'rgba(255,255,255,0.4)',marginTop:1}}>Cada jugador paga {pricePer}€</div>
                             </div>
-                            <div style={{width:36,height:20,borderRadius:10,background:splitEnabled?'#74B800':'rgba(255,255,255,0.15)',position:'relative',transition:'all .2s'}}>
+                            <div style={{width:36,height:20,borderRadius:10,background:splitEnabled?'var(--sport-color)':'rgba(255,255,255,0.15)',position:'relative',transition:'all .2s'}}>
                               <div style={{position:'absolute',top:2,left:splitEnabled?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'all .2s'}}/>
                             </div>
                           </div>
@@ -1021,9 +1021,9 @@ export default function ClubPage({ session: sessionProp }) {
                             <div>
                               <div style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.4)',marginBottom:6}}>INVITA A TUS COMPAÑEROS ({splitPlayers.length}/3)</div>
                               {splitPlayers.map(p=>(
-                                <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(116,184,0,0.08)',border:'1px solid rgba(116,184,0,0.2)',marginBottom:6}}>
+                                <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px',borderRadius:8,background:'rgba(var(--sport-color-rgb, 46,204,113),0.08)',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',marginBottom:6}}>
                                   <div style={{display:'flex',alignItems:'center',gap:8}}>
-                                    {p.avatar_url ? <img src={p.avatar_url} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:24,height:24,borderRadius:'50%',background:'rgba(116,184,0,0.2)',display:'grid',placeItems:'center',fontSize:10}}>🦍</div>}
+                                    {p.avatar_url ? <img src={p.avatar_url} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:24,height:24,borderRadius:'50%',background:'rgba(var(--sport-color-rgb, 46,204,113),0.2)',display:'grid',placeItems:'center',fontSize:10}}>🦍</div>}
                                     <div style={{fontSize:12,fontWeight:800,color:'#fff'}}>@{p.handle||p.name}</div>
                                   </div>
                                   <button onClick={()=>setSplitPlayers(prev=>prev.filter(x=>x.id!==p.id))}
@@ -1041,7 +1041,7 @@ export default function ClubPage({ session: sessionProp }) {
                                       {splitSearchResults.filter(r=>!splitPlayers.find(p=>p.id===r.id)).map(r=>(
                                         <div key={r.id} onClick={()=>{setSplitPlayers(prev=>[...prev,r]);setSplitSearch('');setSplitSearchResults([]);}}
                                           style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-                                          {r.avatar_url ? <img src={r.avatar_url} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:28,height:28,borderRadius:'50%',background:'rgba(116,184,0,0.2)',display:'grid',placeItems:'center',fontSize:12}}>🦍</div>}
+                                          {r.avatar_url ? <img src={r.avatar_url} style={{width:28,height:28,borderRadius:'50%',objectFit:'cover'}}/> : <div style={{width:28,height:28,borderRadius:'50%',background:'rgba(var(--sport-color-rgb, 46,204,113),0.2)',display:'grid',placeItems:'center',fontSize:12}}>🦍</div>}
                                           <div>
                                             <div style={{fontSize:12,fontWeight:800,color:'#fff'}}>{r.name}</div>
                                             <div style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>@{r.handle}</div>
@@ -1056,7 +1056,7 @@ export default function ClubPage({ session: sessionProp }) {
                                 <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:4}}>
                                   <span>Total pista</span><span>{bookingSlot.price}€</span>
                                 </div>
-                                <div style={{display:'flex',justifyContent:'space-between',fontSize:14,fontWeight:900,color:'#74B800'}}>
+                                <div style={{display:'flex',justifyContent:'space-between',fontSize:14,fontWeight:900,color:'var(--sport-color)'}}>
                                   <span>Tú pagas</span><span>{(bookingSlot.price/4).toFixed(2)}€</span>
                                 </div>
                                 {splitPlayers.length > 0 && <div style={{fontSize:10,color:'rgba(255,255,255,0.3)',marginTop:4}}>Los demás recibirán un link de pago</div>}
@@ -1076,7 +1076,7 @@ export default function ClubPage({ session: sessionProp }) {
                         const priceToPay = splitEnabled ? (bookingSlot.price/4).toFixed(2) : bookingSlot.price;
                         return bonoActivo ? (
                           <button onClick={()=>bookSlot(bookingSlot)} disabled={bookingSaving}
-                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
+                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
                             {bookingSaving?'Reservando…':'✅ Confirmar con bono'}
                           </button>
                         ) : (
@@ -1097,7 +1097,7 @@ export default function ClubPage({ session: sessionProp }) {
                             }
                             navigate(`/reserva/pago?slotId=${bookingSlot.id}${splitEnabled?`&split=true&splitWith=${splitPlayers.map(p=>p.id).join(',')}`:''}`);
                           }}
-                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
+                            style={{flex:1,padding:'12px',borderRadius:12,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:14,cursor:'pointer'}}>
                             💳 Pagar {priceToPay}€{splitEnabled?' (tu parte)':''}
                           </button>
                         );
@@ -1139,13 +1139,13 @@ export default function ClubPage({ session: sessionProp }) {
                           {club.phone && (
                             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                               <span style={{ fontSize:18 }}>📞</span>
-                              <a href={`tel:${club.phone}`} style={{ fontSize:12, color:"#74B800" }}>{club.phone}</a>
+                              <a href={`tel:${club.phone}`} style={{ fontSize:12, color:"var(--sport-color)" }}>{club.phone}</a>
                             </div>
                           )}
                           {club.website && (
                             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                               <span style={{ fontSize:18 }}>🌐</span>
-                              <a href={club.website} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:"#74B800" }}>{club.website}</a>
+                              <a href={club.website} target="_blank" rel="noopener noreferrer" style={{ fontSize:12, color:"var(--sport-color)" }}>{club.website}</a>
                             </div>
                           )}
                         </div>
@@ -1154,8 +1154,8 @@ export default function ClubPage({ session: sessionProp }) {
                       {/* Mapa */}
                       {club.lat && club.lng && (
                         <a href={`https://maps.google.com/?q=${club.lat},${club.lng}`} target="_blank" rel="noopener noreferrer"
-                          style={{ display:"block", borderRadius:14, overflow:"hidden", border:"1px solid rgba(116,184,0,0.2)", textDecoration:"none" }}>
-                          <div style={{ background:"rgba(116,184,0,0.08)", padding:"16px", display:"flex", alignItems:"center", gap:12 }}>
+                          style={{ display:"block", borderRadius:14, overflow:"hidden", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", textDecoration:"none" }}>
+                          <div style={{ background:"rgba(var(--sport-color-rgb, 46,204,113),0.08)", padding:"16px", display:"flex", alignItems:"center", gap:12 }}>
                             <span style={{ fontSize:32 }}>🗺️</span>
                             <div>
                               <div style={{ fontSize:13, fontWeight:800, color:"#fff" }}>Ver en Google Maps</div>
@@ -1163,7 +1163,7 @@ export default function ClubPage({ session: sessionProp }) {
                                 {club.lat.toFixed(4)}, {club.lng.toFixed(4)}
                               </div>
                             </div>
-                            <div style={{ marginLeft:"auto", color:"#74B800", fontSize:18 }}>›</div>
+                            <div style={{ marginLeft:"auto", color:"var(--sport-color)", fontSize:18 }}>›</div>
                           </div>
                         </a>
                       )}
@@ -1186,8 +1186,8 @@ export default function ClubPage({ session: sessionProp }) {
       ══════════════════════════════ */}
       {openCreate && (
         <div onClick={() => setOpenCreate(false)} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:10000, padding:20, backdropFilter:"blur(4px)" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a1a", borderRadius:20, padding:24, maxWidth:440, width:"100%", border:"1px solid rgba(116,184,0,0.25)" }}>
-            <h2 style={{ color:"#74B800", marginBottom:4, fontSize:18, fontWeight:900 }}>➕ Crear Partido</h2>
+          <div onClick={e => e.stopPropagation()} style={{ background:"#1a1a1a", borderRadius:20, padding:24, maxWidth:440, width:"100%", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)" }}>
+            <h2 style={{ color:"var(--sport-color)", marginBottom:4, fontSize:18, fontWeight:900 }}>➕ Crear Partido</h2>
             <div style={{ fontSize:12, color:"rgba(255,255,255,0.4)", marginBottom:18 }}>📍 {club?.name || "Este club"}</div>
             {saveError && <div style={{ background:"rgba(220,38,38,0.2)", padding:10, borderRadius:8, color:"#ff6b6b", marginBottom:12, fontSize:12 }}>{saveError}</div>}
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
@@ -1222,8 +1222,8 @@ export default function ClubPage({ session: sessionProp }) {
                             return (
                               <button key={c.id} onClick={()=>{setCreateSelectedCourt(c.id);setCreateSelectedSlot(null);}}
                                 style={{padding:"6px 12px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:800,fontSize:11,
-                                  background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":courtSlots.length?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.05)",
-                                  color:isSelected?"#000":courtSlots.length?"#74B800":"rgba(255,255,255,0.3)"}}>
+                                  background:isSelected?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":courtSlots.length?"rgba(var(--sport-color-rgb, 46,204,113),0.1)":"rgba(255,255,255,0.05)",
+                                  color:isSelected?"#000":courtSlots.length?"var(--sport-color)":"rgba(255,255,255,0.3)"}}>
                                 {c.name} {c.court_type==="indoor"?"🏠":"☀️"}
                                 {courtSlots.length>0&&<span style={{marginLeft:4,fontSize:9}}>({courtSlots.length})</span>}
                               </button>
@@ -1250,11 +1250,11 @@ export default function ClubPage({ session: sessionProp }) {
                               return (
                                 <div key={s.id} onClick={()=>setCreateSelectedSlot(sel?null:s)}
                                   style={{padding:"10px 6px",borderRadius:10,textAlign:"center",cursor:"pointer",
-                                    background:sel?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.05)",
-                                    border:sel?"1px solid #74B800":"1px solid rgba(255,255,255,0.1)"}}>
-                                  <div style={{fontSize:14,fontWeight:900,color:sel?"#74B800":"#fff"}}>{s.start_time?.slice(0,5)}</div>
+                                    background:sel?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.05)",
+                                    border:sel?"1px solid var(--sport-color)":"1px solid rgba(255,255,255,0.1)"}}>
+                                  <div style={{fontSize:14,fontWeight:900,color:sel?"var(--sport-color)":"#fff"}}>{s.start_time?.slice(0,5)}</div>
                                   <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{s.display_end}</div>
-                                  <div style={{fontSize:12,fontWeight:800,color:sel?"#74B800":"rgba(255,255,255,0.6)",marginTop:2}}>{s.price}€</div>
+                                  <div style={{fontSize:12,fontWeight:800,color:sel?"var(--sport-color)":"rgba(255,255,255,0.6)",marginTop:2}}>{s.price}€</div>
                                 </div>
                               );
                             })}
@@ -1262,7 +1262,7 @@ export default function ClubPage({ session: sessionProp }) {
                         );
                       })()}
                       {createSelectedSlot && (
-                        <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",fontSize:11,color:"#74B800",fontWeight:800}}>
+                        <div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(var(--sport-color-rgb, 46,204,113),0.1)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",fontSize:11,color:"var(--sport-color)",fontWeight:800}}>
                           ✅ {courts.find(c=>c.id===createSelectedCourt)?.name} · {createSelectedSlot.start_time?.slice(0,5)}–{createSelectedSlot.display_end} · {createSelectedSlot.price}€
                         </div>
                       )}
@@ -1285,7 +1285,7 @@ export default function ClubPage({ session: sessionProp }) {
               </div>
               <div style={{ display:"flex", gap:10, marginTop:4 }}>
                 <button onClick={handleCreate} disabled={saving}
-                  style={{ flex:1, padding:13, borderRadius:12, background:saving?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:saving?"not-allowed":"pointer", fontSize:13 }}>
+                  style={{ flex:1, padding:13, borderRadius:12, background:saving?"rgba(var(--sport-color-rgb, 46,204,113),0.4)":"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color:"#000", fontWeight:900, border:"none", cursor:saving?"not-allowed":"pointer", fontSize:13 }}>
                   {saving ? "⏳ Creando..." : createSelectedSlot ? "✅ Crear partido y reservar pista" : "✅ Crear Partido"}
                 </button>
                 <button onClick={() => { setOpenCreate(false); setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null); }}

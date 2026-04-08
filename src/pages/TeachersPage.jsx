@@ -174,10 +174,10 @@ export default function TeachersPage() {
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
       <style>{`
         .tCard { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:14px; margin-bottom:8px; transition:border-color .2s; }
-        .tCard:hover { border-color:rgba(116,184,0,0.3); }
+        .tCard:hover { border-color:rgba(var(--sport-color-rgb, 46,204,113),0.3); }
         .tChip { display:inline-flex; align-items:center; gap:3px; font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); }
         .tBtn { padding:8px 14px; border-radius:9px; font-weight:900; font-size:12px; cursor:pointer; border:none; }
-        .tPrimary { background:linear-gradient(135deg,#74B800,#9BE800); color:#000; }
+        .tPrimary { background:linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color:#000; }
         .tGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
         .tFav { background:rgba(255,215,0,0.15); color:#FFD700; border:1px solid rgba(255,215,0,0.3) !important; }
         .tFiltPill { display:inline-flex; align-items:center; gap:4px; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12px; font-weight:800; border:none; transition:all .15s; }
@@ -199,7 +199,7 @@ export default function TeachersPage() {
               style={{ position: "relative" }}>
               🔍 Filtros
               {totalFilters > 0 && (
-                <span style={{ position: "absolute", top: -6, right: -6, background: "#74B800", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>
+                <span style={{ position: "absolute", top: -6, right: -6, background: "var(--sport-color)", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>
                   {totalFilters}
                 </span>
               )}
@@ -266,7 +266,7 @@ export default function TeachersPage() {
                         </span>
                         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                           {catActive.length > 0 && (
-                            <span style={{ fontSize: 10, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "1px 7px", borderRadius: 999, fontWeight: 900 }}>{catActive.length}</span>
+                            <span style={{ fontSize: 10, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "1px 7px", borderRadius: 999, fontWeight: 900 }}>{catActive.length}</span>
                           )}
                           <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 10 }}>{isOpen ? "▲" : "▼"}</span>
                         </div>
@@ -277,13 +277,13 @@ export default function TeachersPage() {
                             {cat.items.map(item => {
                               const active = activeFilters.includes(item.key);
                               const isInc = cat.id === "inclusion";
-                              const color = item.color || "#74B800";
+                              const color = item.color || "var(--sport-color)";
                               return (
                                 <button key={item.key} className="tFiltPill" onClick={() => toggleFilter(item.key)}
                                   style={{
-                                    background: active ? (isInc ? `${color}22` : "rgba(116,184,0,0.18)") : "rgba(255,255,255,0.04)",
-                                    color: active ? (isInc ? color : "#74B800") : "rgba(255,255,255,0.55)",
-                                    outline: active ? `1.5px solid ${isInc ? color + "60" : "rgba(116,184,0,0.4)"}` : "1px solid rgba(255,255,255,0.07)",
+                                    background: active ? (isInc ? `${color}22` : "rgba(var(--sport-color-rgb, 46,204,113),0.18)") : "rgba(255,255,255,0.04)",
+                                    color: active ? (isInc ? color : "var(--sport-color)") : "rgba(255,255,255,0.55)",
+                                    outline: active ? `1.5px solid ${isInc ? color + "60" : "rgba(var(--sport-color-rgb, 46,204,113),0.4)"}` : "1px solid rgba(255,255,255,0.07)",
                                   }}>
                                   <span style={{ fontSize: 13 }}>{item.emoji}</span>
                                   {item.label}
@@ -306,7 +306,7 @@ export default function TeachersPage() {
                     const info = getSpecialtyInfo(k);
                     return (
                       <button key={k} onClick={() => toggleFilter(k)}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 999, background: "rgba(116,184,0,0.15)", color: "#74B800", border: "1px solid rgba(116,184,0,0.3)", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 999, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", color: "var(--sport-color)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>
                         {info.emoji} {info.label} ✕
                       </button>
                     );
@@ -344,8 +344,8 @@ export default function TeachersPage() {
                       {/* AVATAR */}
                       <div onClick={() => navigate(`/profesores/${r.teacher_id}`)} style={{ cursor: "pointer", flexShrink: 0 }}>
                         {r.avatar_url
-                          ? <img src={r.avatar_url} alt={r.name} style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(116,184,0,0.3)" }} />
-                          : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(116,184,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#74B800", fontSize: 16 }}>{initials(r.name)}</div>
+                          ? <img src={r.avatar_url} alt={r.name} style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" }} />
+                          : <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "var(--sport-color)", fontSize: 16 }}>{initials(r.name)}</div>
                         }
                       </div>
 
@@ -391,7 +391,7 @@ export default function TeachersPage() {
                               <span key={s.key} className="tChip">{s.emoji} {s.label}</span>
                             ))}
                             {remaining > 0 && (
-                              <span className="tChip" style={{ color: "rgba(116,184,0,0.8)" }}>+{remaining} más</span>
+                              <span className="tChip" style={{ color: "rgba(var(--sport-color-rgb, 46,204,113),0.8)" }}>+{remaining} más</span>
                             )}
                           </div>
                         )}

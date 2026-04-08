@@ -667,8 +667,8 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
     <div className="page pageWithHeader gpMatchesPage">
       <style>{`
         .gpMatchesPage .gpDayPill{min-width:38px;padding:6px 4px;border-radius:10px;border:none;cursor:pointer;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);text-align:center;flex-shrink:0;transition:all .15s;}
-        .gpMatchesPage .gpDayPill.isActive{background:#74B800;color:#000;font-weight:900;}
-        .gpMatchesPage .gpDayPill.hasMatches .gpDayNum::after{content:"·";color:#74B800;font-size:16px;line-height:0;vertical-align:middle;margin-left:1px;}
+        .gpMatchesPage .gpDayPill.isActive{background:var(--sport-color);color:#000;font-weight:900;}
+        .gpMatchesPage .gpDayPill.hasMatches .gpDayNum::after{content:"·";color:var(--sport-color);font-size:16px;line-height:0;vertical-align:middle;margin-left:1px;}
         .gpMatchesPage .gpDayPill.isActive.hasMatches .gpDayNum::after{color:#000;}
         .gpMatchesPage .gpDayLbl{font-size:9px;font-weight:700;text-transform:uppercase;opacity:.8;}
         .gpMatchesPage .gpDayNum{font-size:14px;font-weight:900;margin-top:1px;}
@@ -805,7 +805,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
           <div style={{padding:"10px 0 6px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
             <div>
               <h1 style={{margin:0,fontSize:22,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",gap:8}}>
-                <span style={{color:"#74B800"}}>
+                <span style={{color:"var(--sport-color)"}}>
                   {sport === "pickleball" ? "🏓" : "🎾"} {sportInfo?.label || "Juega"}
                 </span>
               </h1>
@@ -822,19 +822,19 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
             <button
               onClick={e=>{e.preventDefault();e.stopPropagation();setOpenCreate(true);setForm(prev=>({...prev,date:selectedDay||todayISO}));}}
               onTouchEnd={e=>{e.preventDefault();setOpenCreate(true);setForm(prev=>({...prev,date:selectedDay||todayISO}));}}
-              style={{padding:"10px 16px",borderRadius:12,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",fontSize:13,cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation",zIndex:999}}
+              style={{padding:"10px 16px",borderRadius:12,background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000",fontWeight:900,border:"none",fontSize:13,cursor:"pointer",whiteSpace:"nowrap",touchAction:"manipulation",zIndex:999}}
             >➕ Crear</button>
           </div>
 
           {/* ── JUGAR AHORA ── */}
           <div onClick={()=>{setJugarAhora(true);buscarJugarAhora();}}
-            style={{margin:'6px 0 10px',padding:'12px 16px',borderRadius:14,background:'linear-gradient(135deg,rgba(116,184,0,0.15),rgba(155,232,0,0.08))',border:'1px solid rgba(116,184,0,0.3)',cursor:'pointer',display:'flex',alignItems:'center',gap:12,touchAction:'manipulation'}}>
+            style={{margin:'6px 0 10px',padding:'12px 16px',borderRadius:14,background:'linear-gradient(135deg,rgba(var(--sport-color-rgb, 46,204,113),0.15),rgba(155,232,0,0.08))',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)',cursor:'pointer',display:'flex',alignItems:'center',gap:12,touchAction:'manipulation'}}>
             <div style={{fontSize:28}}>⚡</div>
             <div style={{flex:1}}>
-              <div style={{fontSize:15,fontWeight:900,color:'#9BE800'}}>Jugar ahora</div>
+              <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)'}}>Jugar ahora</div>
               <div style={{fontSize:11,color:'rgba(255,255,255,0.5)',marginTop:2}}>Pistas libres y partidos con hueco en las próximas 2h</div>
             </div>
-            <div style={{color:'#74B800',fontSize:20}}>›</div>
+            <div style={{color:'var(--sport-color)',fontSize:20}}>›</div>
           </div>
 
           {/* ── CALENDARIO ── */}
@@ -851,14 +851,14 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
           <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginBottom:6}}>
             {!isClubFilter && (
               <div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden",flexShrink:0}}>
-                <button onClick={()=>setViewMode("mine")} style={{padding:"7px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:900,background:viewMode==="mine"?"#74B800":"transparent",color:viewMode==="mine"?"#000":"rgba(255,255,255,0.7)"}}>Los míos</button>
-                <button onClick={()=>setViewMode("all")} style={{padding:"7px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:900,background:viewMode==="all"?"#74B800":"transparent",color:viewMode==="all"?"#000":"rgba(255,255,255,0.7)"}}>Todos</button>
+                <button onClick={()=>setViewMode("mine")} style={{padding:"7px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:900,background:viewMode==="mine"?"var(--sport-color)":"transparent",color:viewMode==="mine"?"#000":"rgba(255,255,255,0.7)"}}>Los míos</button>
+                <button onClick={()=>setViewMode("all")} style={{padding:"7px 12px",border:"none",cursor:"pointer",fontSize:11,fontWeight:900,background:viewMode==="all"?"var(--sport-color)":"transparent",color:viewMode==="all"?"#000":"rgba(255,255,255,0.7)"}}>Todos</button>
               </div>
             )}
             <input type="date" value={selectedDay} onChange={e=>setSelectedDay(e.target.value)}
               style={{padding:"6px 8px",borderRadius:8,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",color:"#fff",fontSize:11,flex:1,minWidth:80}} />
             <button onClick={()=>setFiltersOpen(f=>!f)}
-              style={{padding:"7px 12px",borderRadius:10,border:hasFilters?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:900,whiteSpace:"nowrap",background:hasFilters?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",color:hasFilters?"#74B800":"rgba(255,255,255,0.7)"}}>
+              style={{padding:"7px 12px",borderRadius:10,border:hasFilters?"1px solid var(--sport-color)":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:900,whiteSpace:"nowrap",background:hasFilters?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.08)",color:hasFilters?"var(--sport-color)":"rgba(255,255,255,0.7)"}}>
               🔍 {hasFilters?"Filtros ✓":"Filtros"}
             </button>
           </div>
@@ -868,10 +868,10 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:10,marginBottom:8,display:"flex",flexDirection:"column",gap:8}}>
               <div style={{position:"relative"}}>
                 {filterClubObj ? (
-                  <div style={{display:"flex",alignItems:"center",gap:6,padding:"7px 10px",borderRadius:9,background:"rgba(116,184,0,0.12)",border:"1px solid rgba(116,184,0,0.35)"}}>
-                    <span style={{fontSize:12,fontWeight:800,color:"#74B800",flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,padding:"7px 10px",borderRadius:9,background:"rgba(var(--sport-color-rgb, 46,204,113),0.12)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.35)"}}>
+                    <span style={{fontSize:12,fontWeight:800,color:"var(--sport-color)",flex:1}}>
                       🏟️ {filterClubObj.name}
-                      {filterClubObj.city ? <span style={{fontWeight:400,color:"rgba(116,184,0,0.7)",marginLeft:4}}>· {filterClubObj.city}</span> : null}
+                      {filterClubObj.city ? <span style={{fontWeight:400,color:"rgba(var(--sport-color-rgb, 46,204,113),0.7)",marginLeft:4}}>· {filterClubObj.city}</span> : null}
                     </span>
                     <button onClick={()=>{setFilterClubObj(null);setFilterClubSearch("");setClubFilterQuery("");}}
                       style={{background:"none",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:14,lineHeight:1,padding:"0 2px"}}>✕</button>
@@ -898,20 +898,20 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       }).slice(0,8);
                       if (!sugs.length) return null;
                       return (
-                        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99,background:"#1a1a1a",border:"1px solid rgba(116,184,0,0.25)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                        <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99,background:"#1a1a1a",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
                           {sugs.map((c,i)=>(
                             <div key={c.id||i}
                               onMouseDown={()=>{setFilterClubObj(c);setFilterClubSearch(String(c.name||""));setClubFilterQuery(String(c.name||""));setShowClubFilterSuggest(false);}}
                               style={{padding:"9px 12px",cursor:"pointer",borderBottom:i<sugs.length-1?"1px solid rgba(255,255,255,0.05)":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}
-                              onMouseEnter={e=>e.currentTarget.style.background="rgba(116,184,0,0.08)"}
+                              onMouseEnter={e=>e.currentTarget.style.background="rgba(var(--sport-color-rgb, 46,204,113),0.08)"}
                               onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                               <div>
                                 <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>
-                                  {(()=>{const name=String(c.name||""),idx=name.toLowerCase().indexOf(q);if(idx===-1)return name;return<>{name.slice(0,idx)}<mark style={{background:"rgba(116,184,0,0.3)",color:"#74B800",borderRadius:2,padding:"0 1px"}}>{name.slice(idx,idx+q.length)}</mark>{name.slice(idx+q.length)}</>;})()}
+                                  {(()=>{const name=String(c.name||""),idx=name.toLowerCase().indexOf(q);if(idx===-1)return name;return<>{name.slice(0,idx)}<mark style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.3)",color:"var(--sport-color)",borderRadius:2,padding:"0 1px"}}>{name.slice(idx,idx+q.length)}</mark>{name.slice(idx+q.length)}</>;})()}
                                 </div>
                                 {c.city && <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:1}}>📍 {c.city}</div>}
                               </div>
-                              <span style={{fontSize:10,color:"rgba(116,184,0,0.6)",fontWeight:800}}>🏟️</span>
+                              <span style={{fontSize:10,color:"rgba(var(--sport-color-rgb, 46,204,113),0.6)",fontWeight:800}}>🏟️</span>
                             </div>
                           ))}
                         </div>
@@ -924,22 +924,22 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                 {["","iniciacion","medio","alto"].map(lvl=>(
                   <button key={lvl} onClick={()=>setFilterLevel(lvl)}
                     style={{padding:"4px 10px",borderRadius:999,border:"none",cursor:"pointer",fontSize:11,fontWeight:800,
-                      background:filterLevel===lvl?"#74B800":"rgba(255,255,255,0.08)",
+                      background:filterLevel===lvl?"var(--sport-color)":"rgba(255,255,255,0.08)",
                       color:filterLevel===lvl?"#000":"#fff"}}>
                     {lvl===""?"Todos":lvl.charAt(0).toUpperCase()+lvl.slice(1)}
                   </button>
                 ))}
               </div>
               <button onClick={()=>setFilterUltimaHora(f=>!f)}
-                style={{padding:"6px 10px",borderRadius:8,border:filterUltimaHora?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
-                  background:filterUltimaHora?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",
-                  color:filterUltimaHora?"#74B800":"#fff"}}>
+                style={{padding:"6px 10px",borderRadius:8,border:filterUltimaHora?"1px solid var(--sport-color)":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
+                  background:filterUltimaHora?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.08)",
+                  color:filterUltimaHora?"var(--sport-color)":"#fff"}}>
                 ⚡ Última Hora — partidos en menos de 2h
               </button>
               <button onClick={()=>setFilterSoloLibres(f=>!f)}
-                style={{padding:"6px 10px",borderRadius:8,border:filterSoloLibres?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
-                  background:filterSoloLibres?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",
-                  color:filterSoloLibres?"#74B800":"#fff"}}>
+                style={{padding:"6px 10px",borderRadius:8,border:filterSoloLibres?"1px solid var(--sport-color)":"1px solid transparent",cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
+                  background:filterSoloLibres?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.08)",
+                  color:filterSoloLibres?"var(--sport-color)":"#fff"}}>
                 🟢 Solo con plazas libres
               </button>
               <div>
@@ -963,20 +963,20 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   } finally { setGeoLoading(false); }
                 }}
                 style={{width:"100%",padding:"6px 10px",borderRadius:8,cursor:"pointer",fontSize:11,fontWeight:800,textAlign:"left",
-                  background:filterNearMe?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.08)",
-                  color:filterNearMe?"#74B800":"#fff",
-                  border:filterNearMe?"1px solid #74B800":"1px solid transparent"}}>
+                  background:filterNearMe?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.08)",
+                  color:filterNearMe?"var(--sport-color)":"#fff",
+                  border:filterNearMe?"1px solid var(--sport-color)":"1px solid transparent"}}>
                   {geoLoading ? "📍 Obteniendo ubicación…" : filterNearMe ? "📍 Cerca de mí ✓" : "📍 Cerca de mí"}
                 </button>
                 {filterNearMe && (
                   <div style={{marginTop:8,padding:"0 4px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                       <span style={{fontSize:11,color:"rgba(255,255,255,0.6)"}}>Distancia máxima</span>
-                      <span style={{fontSize:11,fontWeight:900,color:"#74B800"}}>🦍 {filterDistKm} km</span>
+                      <span style={{fontSize:11,fontWeight:900,color:"var(--sport-color)"}}>🦍 {filterDistKm} km</span>
                     </div>
                     <input type="range" min="1" max="50" step="1" value={filterDistKm}
                       onChange={e=>setFilterDistKm(Number(e.target.value))}
-                      style={{width:"100%",accentColor:"#74B800",cursor:"pointer"}} />
+                      style={{width:"100%",accentColor:"var(--sport-color)",cursor:"pointer"}} />
                     <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:"rgba(255,255,255,0.4)",marginTop:2}}>
                       <span>1 km</span><span>50 km</span>
                     </div>
@@ -1006,7 +1006,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   {viewMode==="mine" ? "Crea uno o únete a un partido" : "Sin partidos para este día y filtros"}
                 </div>
                 <button onClick={()=>{setOpenCreate(true);setForm(prev=>({...prev,date:selectedDay||todayISO}));}}
-                  style={{marginTop:14,padding:"9px 20px",borderRadius:10,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>
+                  style={{marginTop:14,padding:"9px 20px",borderRadius:10,background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>
                   ➕ Crear partido
                 </button>
               </div>
@@ -1041,7 +1041,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     </div>
                     <div style={{fontSize:10,fontWeight:800,flexShrink:0,marginLeft:8}}>
                       {isCreator && <span style={{color:"#FFD700"}}>👑 Creador</span>}
-                      {!isCreator&&myStatus2==="approved" && <span style={{color:"#74B800"}}>✅ Dentro</span>}
+                      {!isCreator&&myStatus2==="approved" && <span style={{color:"var(--sport-color)"}}>✅ Dentro</span>}
                       {!isCreator&&myStatus2==="pending" && <span style={{color:"#FFA500"}}>⏳ Pendiente</span>}
                     </div>
                   </div>
@@ -1054,8 +1054,8 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                         const gsl = pid ? rosterProfilesById?.[pid]?.gorila_sin_limites : false;
                         return (
                           <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
-                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid #74B800":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
-                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"#74B800",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid var(--sport-color)":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"var(--sport-color)",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
                           </div>
                         );
                       })}
@@ -1069,8 +1069,8 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                         const gsl = pid ? rosterProfilesById?.[pid]?.gorila_sin_limites : false;
                         return (
                           <div key={idx} style={{width:36,height:52,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
-                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid #74B800":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
-                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"#74B800",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
+                            {avatar ? <img src={avatar} alt="" onClick={e=>{e.stopPropagation();if(pid)navigate(`/usuario/${pid}`);}} style={{width:36,height:52,objectFit:"cover",borderRadius:6,cursor:pid?"pointer":"default",outline:gsl?"2px solid var(--sport-color)":"none",outlineOffset:1}} /> : <span style={{fontSize:28}}>🦍</span>}
+                            {gsl && <span style={{position:"absolute",bottom:-4,right:-4,fontSize:10,background:"var(--sport-color)",borderRadius:999,width:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>🦍</span>}
                           </div>
                         );
                       })}
@@ -1085,9 +1085,9 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       const club = clubsSheet.find(c => String(c.name||"").toLowerCase() === String(m.club_name||"").toLowerCase());
                       if (!club?.lat || !club?.lng) return null;
                       const km = haversineKm(userLat, userLng, club.lat, club.lng);
-                      return <span className="gpInfoChip" style={{color:"#74B800"}}>📍 {km.toFixed(1)} km</span>;
+                      return <span className="gpInfoChip" style={{color:"var(--sport-color)"}}>📍 {km.toFixed(1)} km</span>;
                     })()}
-                    <span className="gpInfoChip" style={{marginLeft:"auto",color:left>0?"rgba(116,184,0,0.9)":"rgba(255,100,0,0.9)"}}>
+                    <span className="gpInfoChip" style={{marginLeft:"auto",color:left>0?"rgba(var(--sport-color-rgb, 46,204,113),0.9)":"rgba(255,100,0,0.9)"}}>
                       {left>0 ? `${left} plaza${left>1?"s":""} libre${left>1?"s":""}` : "Completo"}
                     </span>
                     <button onClick={e=>{e.stopPropagation();if(navigator.share){navigator.share({title:`Partido en ${m.club_name}`,text:`¡Únete a mi partido en ${m.club_name}!`,url:window.location.href});}else{navigator.clipboard.writeText(window.location.href);toast.success("Enlace copiado");}}} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,padding:"2px 4px",color:"rgba(255,255,255,0.5)"}} title="Compartir">📤</button>
@@ -1184,7 +1184,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       if (!hasEnded) return null;
                       return (
                         <button className="mBtn icon" onClick={()=>openPostPartido(m.id)} title="Post partido"
-                          style={{background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800"}}>📊</button>
+                          style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",color:"var(--sport-color)"}}>📊</button>
                       );
                     })()}
                     {session && isCreator && (
@@ -1212,8 +1212,8 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
       ══════════════════════════════ */}
       {openCreate && (
         <div onClick={()=>setOpenCreate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:10000,padding:20,backdropFilter:"blur(4px)"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#1a1a1a",borderRadius:20,padding:24,maxWidth:500,width:"100%",maxHeight:"85vh",overflowY:"auto",border:"1px solid rgba(116,184,0,0.25)"}}>
-            <h2 style={{color:"#74B800",marginBottom:20,fontSize:20,fontWeight:900}}>{sport === "pickleball" ? "🏓" : "🎾"} Crear Partido de {sportInfo?.label || "Pádel"}</h2>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#1a1a1a",borderRadius:20,padding:24,maxWidth:500,width:"100%",maxHeight:"85vh",overflowY:"auto",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)"}}>
+            <h2 style={{color:"var(--sport-color)",marginBottom:20,fontSize:20,fontWeight:900}}>{sport === "pickleball" ? "🏓" : "🎾"} Crear Partido de {sportInfo?.label || "Pádel"}</h2>
             {saveError && <div style={{background:"rgba(220,38,38,0.2)",padding:10,borderRadius:8,color:"#ff6b6b",marginBottom:12,fontSize:12,fontWeight:700}}>{saveError}</div>}
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               <div>
@@ -1257,14 +1257,14 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                           <button key={slot.id} onClick={()=>{ setSelectedSlotId(slot.id); setForm(prev=>({...prev,time:slotTime,selectedSlotId:slot.id, pricePerPlayer: slot.price ? (slot.price/4).toFixed(2) : prev.pricePerPlayer})); }}
                             disabled={saving}
                             style={{padding:"6px 10px",borderRadius:10,border:"none",cursor:"pointer",fontSize:11,fontWeight:900,
-                              background:isSelected?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.07)",
+                              background:isSelected?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":"rgba(255,255,255,0.07)",
                               color:isSelected?"#000":"rgba(255,255,255,0.8)",
                               outline:isSelected?"none":"1px solid rgba(255,255,255,0.1)"}}>
                             🕐 {slotTime}
                             <span style={{display:"block",fontSize:9,fontWeight:700,opacity:0.7,marginTop:1}}>
                               {slot.club_courts?.name || "Pista"}
                             </span>
-                            {slot.price > 0 && <span style={{display:"block",fontSize:9,fontWeight:900,opacity:0.9,color:isSelected?"#000":"#74B800"}}>
+                            {slot.price > 0 && <span style={{display:"block",fontSize:9,fontWeight:900,opacity:0.9,color:isSelected?"#000":"var(--sport-color)"}}>
                               {(slot.price/4).toFixed(2)}€/p
                             </span>}
                           </button>
@@ -1291,7 +1291,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Precio/jugador €</label>
                   {form.selectedSlotId && availableSlots.find(s=>s.id===form.selectedSlotId)?.price > 0 ? (
                     <div style={{...IS, display:"flex", flexDirection:"column", gap:2, cursor:"default"}}>
-                      <div style={{fontSize:15,fontWeight:900,color:"#74B800"}}>{form.pricePerPlayer}€ <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>por jugador</span></div>
+                      <div style={{fontSize:15,fontWeight:900,color:"var(--sport-color)"}}>{form.pricePerPlayer}€ <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontWeight:700}}>por jugador</span></div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>Total pista: {(parseFloat(form.pricePerPlayer)*4).toFixed(2)}€ · fijado por el club</div>
                     </div>
                   ) : (
@@ -1358,7 +1358,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
 
               <div style={{display:"flex",gap:10,marginTop:6}}>
                 <button onClick={handleCreate} disabled={saving}
-                  style={{flex:1,padding:14,borderRadius:12,background:saving?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:saving?"not-allowed":"pointer",fontSize:14,boxShadow:"0 4px 12px rgba(116,184,0,0.3)"}}>
+                  style={{flex:1,padding:14,borderRadius:12,background:saving?"rgba(var(--sport-color-rgb, 46,204,113),0.4)":"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000",fontWeight:900,border:"none",cursor:saving?"not-allowed":"pointer",fontSize:14,boxShadow:"0 4px 12px rgba(var(--sport-color-rgb, 46,204,113),0.3)"}}>
                   {saving?"⏳ Creando...":"✅ Crear Partido"}
                 </button>
                 <button onClick={()=>setOpenCreate(false)} disabled={saving}
@@ -1387,8 +1387,8 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                 const pname = p?.name||p?.handle||"?";
                 return (
                   <div key={p?.id||i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,flexShrink:0}}>
-                    <div style={{width:32,height:32,borderRadius:999,overflow:"hidden",background:"rgba(116,184,0,0.2)",border:"1.5px solid rgba(116,184,0,0.3)",display:"grid",placeItems:"center"}}>
-                      {p?.avatar_url ? <img src={p.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:14,fontWeight:900,color:"#74B800"}}>{pname[0].toUpperCase()}</span>}
+                    <div style={{width:32,height:32,borderRadius:999,overflow:"hidden",background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",border:"1.5px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",display:"grid",placeItems:"center"}}>
+                      {p?.avatar_url ? <img src={p.avatar_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:14,fontWeight:900,color:"var(--sport-color)"}}>{pname[0].toUpperCase()}</span>}
                     </div>
                     <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:700,maxWidth:36,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{pname.split(" ")[0]}</div>
                   </div>
@@ -1414,13 +1414,13 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       return (
                         <div key={it.id||idx} style={{display:"flex",flexDirection:isMe?"row-reverse":"row",alignItems:"flex-end",gap:6}}>
                           {!isMe && (
-                            <div style={{width:26,height:26,borderRadius:999,overflow:"hidden",background:"rgba(116,184,0,0.2)",flexShrink:0,display:"grid",placeItems:"center",visibility:showName?"visible":"hidden"}}>
-                              {avatar ? <img src={avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:12,fontWeight:900,color:"#74B800"}}>{pname[0].toUpperCase()}</span>}
+                            <div style={{width:26,height:26,borderRadius:999,overflow:"hidden",background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",flexShrink:0,display:"grid",placeItems:"center",visibility:showName?"visible":"hidden"}}>
+                              {avatar ? <img src={avatar} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /> : <span style={{fontSize:12,fontWeight:900,color:"var(--sport-color)"}}>{pname[0].toUpperCase()}</span>}
                             </div>
                           )}
                           <div style={{maxWidth:"72%",display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start",gap:2}}>
-                            {showName && <div style={{fontSize:10,color:"#74B800",fontWeight:800,paddingLeft:4}}>{pname}</div>}
-                            <div style={{padding:"8px 12px",borderRadius:isMe?"14px 14px 4px 14px":"14px 14px 14px 4px",background:isMe?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.09)",color:isMe?"#000":"#fff",fontSize:13,lineHeight:1.4,overflowWrap:"anywhere",fontWeight:isMe?700:400}}>
+                            {showName && <div style={{fontSize:10,color:"var(--sport-color)",fontWeight:800,paddingLeft:4}}>{pname}</div>}
+                            <div style={{padding:"8px 12px",borderRadius:isMe?"14px 14px 4px 14px":"14px 14px 14px 4px",background:isMe?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":"rgba(255,255,255,0.09)",color:isMe?"#000":"#fff",fontSize:13,lineHeight:1.4,overflowWrap:"anywhere",fontWeight:isMe?700:400}}>
                               {it.message||it.text||""}
                             </div>
                             <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",paddingLeft:4,paddingRight:4}}>{time}</div>
@@ -1436,7 +1436,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                 placeholder="Escribe un mensaje…"
                 style={{flex:1,padding:"10px 14px",borderRadius:999,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:14,outline:"none",minWidth:0}} />
               <button onClick={handleSendChat} disabled={!chatText.trim()}
-                style={{width:38,height:38,borderRadius:999,background:chatText.trim()?"linear-gradient(135deg,#74B800,#9BE800)":"rgba(255,255,255,0.08)",border:"none",color:chatText.trim()?"#000":"rgba(255,255,255,0.3)",cursor:chatText.trim()?"pointer":"default",fontSize:18,display:"grid",placeItems:"center",flexShrink:0,transition:"all .15s"}}>↑</button>
+                style={{width:38,height:38,borderRadius:999,background:chatText.trim()?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":"rgba(255,255,255,0.08)",border:"none",color:chatText.trim()?"#000":"rgba(255,255,255,0.3)",cursor:chatText.trim()?"pointer":"default",fontSize:18,display:"grid",placeItems:"center",flexShrink:0,transition:"all .15s"}}>↑</button>
             </div>
           </div>
         </div>
@@ -1449,7 +1449,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         <div onClick={()=>setRequestsOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:28000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:560,background:"#111",borderRadius:18,border:"1px solid rgba(255,255,255,0.14)",padding:16,maxHeight:"80vh",overflow:"auto",boxSizing:"border-box"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <div style={{fontWeight:900,color:"#74B800",fontSize:16}}>📥 Solicitudes pendientes</div>
+              <div style={{fontWeight:900,color:"var(--sport-color)",fontSize:16}}>📥 Solicitudes pendientes</div>
               <button onClick={()=>setRequestsOpenFor(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontWeight:900}}>❌</button>
             </div>
             {pendingBusy ? <div style={{color:"rgba(255,255,255,0.6)"}}>Cargando…</div>
@@ -1473,10 +1473,10 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                         {r.mood==="win"?"🔥 Viene a ganar":r.mood==="fun"?"😎 A pasarlo bien":r.mood==="beer"?"🍺 Penúltimo Sed":""}
                       </div>
                     )}
-                    {r.paid && <div style={{fontSize:10,color:"#74B800",marginTop:2,fontWeight:800}}>💳 Pago confirmado</div>}
+                    {r.paid && <div style={{fontSize:10,color:"var(--sport-color)",marginTop:2,fontWeight:800}}>💳 Pago confirmado</div>}
                   </div>
                   <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>handleApprove(r.id)} style={{padding:"7px 12px",borderRadius:8,background:"#74B800",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>Aprobar</button>
+                    <button onClick={()=>handleApprove(r.id)} style={{padding:"7px 12px",borderRadius:8,background:"var(--sport-color)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>Aprobar</button>
                     <button onClick={()=>handleReject(r.id)} style={{padding:"7px 12px",borderRadius:8,background:"rgba(255,255,255,0.08)",color:"#fff",fontWeight:900,border:"1px solid rgba(255,255,255,0.15)",cursor:"pointer",fontSize:12}}>Rechazar</button>
                     {(normStatus(r.status)==="approved"||normStatus(r.status)==="red_carded") && (
                       <button
@@ -1503,7 +1503,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         <div onClick={()=>setInviteOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:29000,display:"flex",alignItems:"center",justifyContent:"center",padding:12}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"min(560px,calc(100% - 24px))",background:"#111",borderRadius:18,border:"1px solid rgba(255,255,255,0.14)",padding:16,maxHeight:"70vh",overflow:"auto",boxSizing:"border-box"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <div style={{fontWeight:900,color:"#74B800",fontSize:16}}>📣 Invitar jugadores</div>
+              <div style={{fontWeight:900,color:"var(--sport-color)",fontSize:16}}>📣 Invitar jugadores</div>
               <button onClick={()=>setInviteOpenFor(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontWeight:900}}>❌</button>
             </div>
             <input value={inviteQuery} onChange={e=>setInviteQuery(e.target.value)} placeholder="Busca por nombre o @handle… (mín. 3 letras)" style={{...IS,marginBottom:10}} />
@@ -1511,7 +1511,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
               <div style={{marginBottom:10,display:"flex",gap:6,flexWrap:"wrap"}}>
                 {inviteSelected.map(id=>(
                   <button key={id} onClick={()=>setInviteSelected(prev=>prev.filter(x=>x!==id))}
-                    style={{padding:"3px 8px",borderRadius:8,background:"rgba(116,184,0,0.2)",border:"1px solid #74B800",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:800}}>
+                    style={{padding:"3px 8px",borderRadius:8,background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",border:"1px solid var(--sport-color)",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:800}}>
                     ✅ {String(id).slice(0,8)} ✕
                   </button>
                 ))}
@@ -1525,7 +1525,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
               const selected=inviteSelected.includes(pid);
               return (
                 <button key={pid} onClick={()=>setInviteSelected(prev=>prev.includes(pid)?prev.filter(x=>x!==pid):[...prev,pid].slice(0,10))}
-                  style={{width:"100%",textAlign:"left",marginBottom:6,padding:10,borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",background:selected?"rgba(116,184,0,0.18)":"rgba(255,255,255,0.04)",color:"#fff",cursor:"pointer"}}>
+                  style={{width:"100%",textAlign:"left",marginBottom:6,padding:10,borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",background:selected?"rgba(var(--sport-color-rgb, 46,204,113),0.18)":"rgba(255,255,255,0.04)",color:"#fff",cursor:"pointer"}}>
                   <div style={{fontWeight:900}}>{selected?"✅ ":""}{name}</div>
                   <div style={{opacity:0.5,fontSize:11}}>@{p?.handle||pid.slice(0,6)}</div>
                 </button>
@@ -1533,7 +1533,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
             })}
             <div style={{display:"flex",gap:8,marginTop:12}}>
               <button onClick={()=>sendInvites({matchId:inviteOpenFor,userIds:inviteSelected})} disabled={inviteBusy||inviteSelected.length===0}
-                style={{flex:1,padding:12,borderRadius:10,background:inviteBusy||inviteSelected.length===0?"rgba(116,184,0,0.3)":"#74B800",color:"#000",fontWeight:900,border:"none",cursor:inviteBusy||inviteSelected.length===0?"not-allowed":"pointer",fontSize:13}}>
+                style={{flex:1,padding:12,borderRadius:10,background:inviteBusy||inviteSelected.length===0?"rgba(var(--sport-color-rgb, 46,204,113),0.3)":"var(--sport-color)",color:"#000",fontWeight:900,border:"none",cursor:inviteBusy||inviteSelected.length===0?"not-allowed":"pointer",fontSize:13}}>
                 {inviteBusy?"Enviando…":`Enviar (${inviteSelected.length})`}
               </button>
               <button onClick={()=>{setInviteQuery("");setInviteResults([]);setInviteSelected([]);}}
@@ -1550,7 +1550,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         <div onClick={()=>setCedeOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:26000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:560,background:"#111",borderRadius:18,border:"1px solid rgba(255,255,255,0.14)",padding:16,maxHeight:"80vh",overflow:"auto",boxSizing:"border-box"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <div style={{fontWeight:900,color:"#74B800",fontSize:16}}>🤝 Ceder plaza</div>
+              <div style={{fontWeight:900,color:"var(--sport-color)",fontSize:16}}>🤝 Ceder plaza</div>
               <button onClick={()=>setCedeOpenFor(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontWeight:900}}>❌</button>
             </div>
             <input value={cedeQuery} onChange={e=>setCedeQuery(e.target.value)} placeholder="Busca a quién ceder (mín. 3 letras)…" style={IS} />
@@ -1567,7 +1567,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       <div style={{opacity:0.5,fontSize:11}}>@{p?.handle||pid.slice(0,6)}</div>
                     </div>
                     <button onClick={()=>transferSpot({matchId:cedeOpenFor,toUserId:pid})} disabled={cedeBusy}
-                      style={{padding:"7px 14px",borderRadius:8,background:"#74B800",color:"#000",fontWeight:900,border:"none",cursor:cedeBusy?"not-allowed":"pointer",fontSize:12,opacity:cedeBusy?0.6:1}}>
+                      style={{padding:"7px 14px",borderRadius:8,background:"var(--sport-color)",color:"#000",fontWeight:900,border:"none",cursor:cedeBusy?"not-allowed":"pointer",fontSize:12,opacity:cedeBusy?0.6:1}}>
                       {cedeBusy?"Cediendo…":"Ceder"}
                     </button>
                   </div>
@@ -1583,9 +1583,9 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
       ══════════════════════════════ */}
       {postOpenFor && (
         <div onClick={()=>setPostOpenFor(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:35000,display:"flex",alignItems:"center",justifyContent:"center",padding:16,backdropFilter:"blur(4px)"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:500,background:"#1a1a1a",borderRadius:20,padding:20,maxHeight:"85vh",overflowY:"auto",border:"1px solid rgba(116,184,0,0.25)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:500,background:"#1a1a1a",borderRadius:20,padding:20,maxHeight:"85vh",overflowY:"auto",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div style={{fontSize:18,fontWeight:900,color:"#74B800"}}>📊 Post Partido</div>
+              <div style={{fontSize:18,fontWeight:900,color:"var(--sport-color)"}}>📊 Post Partido</div>
               <button onClick={()=>setPostOpenFor(null)} style={{background:"rgba(255,255,255,0.1)",border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontWeight:900}}>❌</button>
             </div>
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:14,marginBottom:14}}>
@@ -1594,12 +1594,12 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {(postResult.sets||[{l:postResult.score_left,r:postResult.score_right}]).map((s,i)=>(
                     <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,padding:"8px",borderRadius:10,background:"rgba(255,255,255,0.04)"}}>
-                      <span style={{fontSize:22,fontWeight:900,color:s.l>s.r?"#74B800":"rgba(255,255,255,0.5)"}}>{s.l}</span>
+                      <span style={{fontSize:22,fontWeight:900,color:s.l>s.r?"var(--sport-color)":"rgba(255,255,255,0.5)"}}>{s.l}</span>
                       <span style={{fontSize:12,color:"rgba(255,255,255,0.3)"}}>Set {i+1}</span>
-                      <span style={{fontSize:22,fontWeight:900,color:s.r>s.l?"#74B800":"rgba(255,255,255,0.5)"}}>{s.r}</span>
+                      <span style={{fontSize:22,fontWeight:900,color:s.r>s.l?"var(--sport-color)":"rgba(255,255,255,0.5)"}}>{s.r}</span>
                     </div>
                   ))}
-                  <div style={{textAlign:"center",fontSize:14,fontWeight:900,color:"#74B800",marginTop:4}}>
+                  <div style={{textAlign:"center",fontSize:14,fontWeight:900,color:"var(--sport-color)",marginTop:4}}>
                     {(()=>{const wL=(postResult.sets||[]).filter(s=>s.l>s.r).length;const wR=(postResult.sets||[]).filter(s=>s.r>s.l).length;return wL||wR?`Resultado: Eq. A ${wL} — ${wR} Eq. B`:""})()}
                   </div>
                   {postResult.notes && <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,textAlign:"center"}}>{postResult.notes}</div>}
@@ -1609,7 +1609,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                       <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>Sets</div>
-                      <button onClick={()=>setPostSets(s=>[...s,{l:0,r:0}])} style={{padding:"4px 10px",borderRadius:8,background:"rgba(116,184,0,0.2)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:900,fontSize:11,cursor:"pointer"}}>+ Set</button>
+                      <button onClick={()=>setPostSets(s=>[...s,{l:0,r:0}])} style={{padding:"4px 10px",borderRadius:8,background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",color:"var(--sport-color)",fontWeight:900,fontSize:11,cursor:"pointer"}}>+ Set</button>
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"auto 1fr auto 1fr auto",alignItems:"center",gap:4,marginBottom:4}}>
                       <div style={{fontSize:10,fontWeight:900,color:"rgba(255,255,255,0.3)",textAlign:"center"}}>Eq. A</div>
@@ -1622,26 +1622,26 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       <div key={si} style={{display:"grid",gridTemplateColumns:"1fr auto 1fr auto",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
                         <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
                           <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,l:Math.max(0,x.l-1)}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>−</button>
-                          <span style={{fontSize:24,fontWeight:900,color:set.l>set.r?"#74B800":set.l<set.r?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.l}</span>
-                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,l:x.l+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(116,184,0,0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
+                          <span style={{fontSize:24,fontWeight:900,color:set.l>set.r?"var(--sport-color)":set.l<set.r?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.l}</span>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,l:x.l+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
                         </div>
                         <div style={{fontSize:14,fontWeight:900,color:"rgba(255,255,255,0.2)",textAlign:"center"}}>—</div>
                         <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
                           <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,r:Math.max(0,x.r-1)}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(255,255,255,0.08)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>−</button>
-                          <span style={{fontSize:24,fontWeight:900,color:set.r>set.l?"#74B800":set.r<set.l?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.r}</span>
-                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,r:x.r+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(116,184,0,0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
+                          <span style={{fontSize:24,fontWeight:900,color:set.r>set.l?"var(--sport-color)":set.r<set.l?"rgba(255,255,255,0.4)":"#fff",minWidth:28,textAlign:"center"}}>{set.r}</span>
+                          <button onClick={()=>setPostSets(s=>s.map((x,i)=>i===si?{...x,r:x.r+1}:x))} style={{width:26,height:26,borderRadius:6,background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)",border:"none",color:"#fff",cursor:"pointer",fontWeight:900}}>+</button>
                         </div>
                         {postSets.length>1 && <button onClick={()=>setPostSets(s=>s.filter((_,i)=>i!==si))} style={{width:22,height:22,borderRadius:6,background:"rgba(220,38,38,0.15)",border:"none",color:"#ff6b6b",cursor:"pointer",fontSize:12,fontWeight:900}}>✕</button>}
                         {postSets.length===1 && <div style={{width:22}}/>}
                       </div>
                     ))}
-                    {(()=>{const wL=postSets.filter(s=>s.l>s.r).length;const wR=postSets.filter(s=>s.r>s.l).length;if(!wL&&!wR)return null;return(<div style={{textAlign:"center",padding:"8px",borderRadius:10,background:wL>wR?"rgba(116,184,0,0.1)":wR>wL?"rgba(116,184,0,0.1)":"rgba(255,255,255,0.04)",border:"1px solid rgba(116,184,0,0.2)",marginTop:4}}><span style={{fontSize:13,fontWeight:900,color:"#74B800"}}>{wL>wR?"🏆 Gana Equipo A":"🏆 Gana Equipo B"} · {wL}–{wR}</span></div>);})()}
+                    {(()=>{const wL=postSets.filter(s=>s.l>s.r).length;const wR=postSets.filter(s=>s.r>s.l).length;if(!wL&&!wR)return null;return(<div style={{textAlign:"center",padding:"8px",borderRadius:10,background:wL>wR?"rgba(var(--sport-color-rgb, 46,204,113),0.1)":wR>wL?"rgba(var(--sport-color-rgb, 46,204,113),0.1)":"rgba(255,255,255,0.04)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)",marginTop:4}}><span style={{fontSize:13,fontWeight:900,color:"var(--sport-color)"}}>{wL>wR?"🏆 Gana Equipo A":"🏆 Gana Equipo B"} · {wL}–{wR}</span></div>);})()}
                     <input placeholder="Notas del partido (opcional)…" value={postNotes} onChange={e=>setPostNotes(e.target.value)} style={{...IS,fontSize:12,padding:"8px 10px"}} />
                     <button onClick={async()=>{
                       try { setPostSaving(true); const winsL=postSets.filter(s=>s.l>s.r).length; const winsR=postSets.filter(s=>s.r>s.l).length; const r = await submitMatchResult({matchId:postOpenFor,scoreLeft:winsL,scoreRight:winsR,notes:postNotes,sets:postSets}); setPostResult(r); toast.success("Resultado guardado ✅"); }
                       catch(e){ toast.error(e?.message||"Error"); } finally { setPostSaving(false); }
                     }} disabled={postSaving}
-                      style={{padding:"10px",borderRadius:10,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:13}}>
+                      style={{padding:"10px",borderRadius:10,background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:13}}>
                       {postSaving?"Guardando…":"✅ Guardar resultado"}
                     </button>
                   </div>
@@ -1661,16 +1661,16 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     const currentVibe = postVibes[pid] || myRating?.vibe || "";
                     const alreadyRated = !!myRating;
                     return (
-                      <div key={pid} style={{padding:10,borderRadius:10,background:"rgba(255,255,255,0.04)",border:`1px solid ${alreadyRated?"rgba(116,184,0,0.3)":"rgba(255,255,255,0.08)"}`}}>
+                      <div key={pid} style={{padding:10,borderRadius:10,background:"rgba(255,255,255,0.04)",border:`1px solid ${alreadyRated?"rgba(var(--sport-color-rgb, 46,204,113),0.3)":"rgba(255,255,255,0.08)"}`}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                           {p.avatar_url ? <img src={p.avatar_url} alt="" style={{width:28,height:28,borderRadius:"50%",objectFit:"cover"}} /> : <span style={{fontSize:20}}>🦍</span>}
                           <div style={{fontWeight:800,color:"#fff",fontSize:13}}>{p.name||p.handle||"Jugador"}</div>
-                          {alreadyRated && <span style={{marginLeft:"auto",fontSize:10,color:"#74B800",fontWeight:800}}>✅ Valorado</span>}
+                          {alreadyRated && <span style={{marginLeft:"auto",fontSize:10,color:"var(--sport-color)",fontWeight:800}}>✅ Valorado</span>}
                         </div>
                         <div style={{display:"flex",gap:4,marginBottom:8}}>
                           {[1,2,3,4,5].map(star=>(
                             <button key={star} onClick={()=>setPostRatings(prev=>({...prev,[pid]:star}))}
-                              style={{flex:1,padding:"6px 0",borderRadius:6,border:"none",cursor:"pointer",fontSize:16,background:currentRating>=star?"rgba(116,184,0,0.3)":"rgba(255,255,255,0.06)"}}>
+                              style={{flex:1,padding:"6px 0",borderRadius:6,border:"none",cursor:"pointer",fontSize:16,background:currentRating>=star?"rgba(var(--sport-color-rgb, 46,204,113),0.3)":"rgba(255,255,255,0.06)"}}>
                               {currentRating>=star?"⭐":"☆"}
                             </button>
                           ))}
@@ -1678,7 +1678,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                         <div style={{display:"flex",gap:4,marginBottom:8}}>
                           {["🔥","😎","🤝","💪","🧠"].map(v=>(
                             <button key={v} onClick={()=>setPostVibes(prev=>({...prev,[pid]:v}))}
-                              style={{flex:1,padding:"4px 0",borderRadius:6,border:currentVibe===v?"1px solid #74B800":"1px solid transparent",cursor:"pointer",fontSize:16,background:currentVibe===v?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.06)"}}>
+                              style={{flex:1,padding:"4px 0",borderRadius:6,border:currentVibe===v?"1px solid var(--sport-color)":"1px solid transparent",cursor:"pointer",fontSize:16,background:currentVibe===v?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.06)"}}>
                               {v}
                             </button>
                           ))}
@@ -1688,7 +1688,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                             try { await submitPlayerRating({matchId:postOpenFor,toUserId:pid,rating:currentRating,vibe:currentVibe}); setPostMyRatings(prev=>[...prev,{to_user_id:pid,rating:currentRating,vibe:currentVibe}]); toast.success("Valoración enviada 🦍"); }
                             catch(e){ toast.error(e?.message||"Error"); }
                           }}
-                            style={{width:"100%",padding:"7px",borderRadius:8,background:"#74B800",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>
+                            style={{width:"100%",padding:"7px",borderRadius:8,background:"var(--sport-color)",color:"#000",fontWeight:900,border:"none",cursor:"pointer",fontSize:12}}>
                             Enviar valoración
                           </button>
                         )}
@@ -1735,9 +1735,9 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         <div onClick={()=>setJugarAhora(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:60000,overflowY:'auto'}}>
           <div onClick={e=>e.stopPropagation()} style={{maxWidth:640,margin:'0 auto',padding:'20px 16px',paddingBottom:'max(32px,env(safe-area-inset-bottom))'}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
-              <button onClick={()=>setJugarAhora(false)} style={{background:'none',border:'none',color:'#74B800',fontSize:22,cursor:'pointer'}}>←</button>
+              <button onClick={()=>setJugarAhora(false)} style={{background:'none',border:'none',color:'var(--sport-color)',fontSize:22,cursor:'pointer'}}>←</button>
               <div>
-                <div style={{fontSize:18,fontWeight:900,color:'#9BE800'}}>⚡ Jugar ahora</div>
+                <div style={{fontSize:18,fontWeight:900,color:'var(--sport-color)'}}>⚡ Jugar ahora</div>
                 <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Próximas 2 horas</div>
               </div>
             </div>
@@ -1753,14 +1753,14 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     <div style={{fontSize:12,fontWeight:800,color:'rgba(255,255,255,0.4)',textTransform:'uppercase',letterSpacing:1,marginBottom:10}}>🏟️ Pistas libres ahora</div>
                     {jugarAhoraData.slots.map(s=>(
                       <div key={s.id} onClick={()=>{setJugarAhora(false); navigate(`/club/${s.club_id}?tab=reservar`);}}
-                        style={{background:'#111',borderRadius:12,border:'1px solid rgba(116,184,0,0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        style={{background:'#111',borderRadius:12,border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                         <div>
                           <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{s.club_courts?.name || 'Pista'} {s.club_courts?.court_type==='indoor'?'🏠':'☀️'}</div>
                           <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:2}}>🕐 {s.start_time?.slice(0,5)} – {s.end_time?.slice(0,5)}</div>
                           <div style={{fontSize:11,color:'rgba(255,255,255,0.3)',marginTop:2}}>{s.club_id}</div>
                         </div>
                         <div style={{textAlign:'right'}}>
-                          <div style={{fontSize:20,fontWeight:900,color:'#74B800'}}>{s.price}€</div>
+                          <div style={{fontSize:20,fontWeight:900,color:'var(--sport-color)'}}>{s.price}€</div>
                           <div style={{fontSize:10,color:'rgba(255,255,255,0.3)'}}>por hora</div>
                         </div>
                       </div>
@@ -1777,16 +1777,16 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                       const libres = 4 - ocupados;
                       return (
                         <div key={m.id} onClick={()=>{setJugarAhora(false); navigate(`/juega?openChat=${m.id}`);}}
-                          style={{background:'#111',borderRadius:12,border:'1px solid rgba(116,184,0,0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          style={{background:'#111',borderRadius:12,border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:'12px 14px',marginBottom:8,cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                           <div>
                             <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{m.club_name||'Partido'}</div>
                             <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',marginTop:2}}>🕐 {String(m.start_at||'').slice(11,16)} · {m.level}</div>
                           </div>
                           <div style={{textAlign:'right'}}>
-                            <div style={{fontSize:16,fontWeight:900,color:'#74B800'}}>{libres} libre{libres!==1?'s':''}</div>
+                            <div style={{fontSize:16,fontWeight:900,color:'var(--sport-color)'}}>{libres} libre{libres!==1?'s':''}</div>
                             <div style={{display:'flex',gap:3,marginTop:4}}>
                               {[0,1,2,3].map(i=>(
-                                <div key={i} style={{width:14,height:14,borderRadius:3,background:i<ocupados?'#74B800':'rgba(255,255,255,0.1)'}}/>
+                                <div key={i} style={{width:14,height:14,borderRadius:3,background:i<ocupados?'var(--sport-color)':'rgba(255,255,255,0.1)'}}/>
                               ))}
                             </div>
                           </div>
@@ -1802,7 +1802,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                     <div style={{fontSize:15,fontWeight:900,color:'#fff',marginBottom:6}}>Nada disponible ahora</div>
                     <div style={{fontSize:12,marginBottom:20}}>No hay pistas libres ni partidos con hueco en las próximas 2h</div>
                     <button onClick={()=>{setJugarAhora(false);setOpenCreate(true);}}
-                      style={{padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,#74B800,#9BE800)',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
+                      style={{padding:'12px 24px',borderRadius:12,background:'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',border:'none',color:'#000',fontWeight:900,fontSize:13,cursor:'pointer'}}>
                       ➕ Crear un partido
                     </button>
                   </div>

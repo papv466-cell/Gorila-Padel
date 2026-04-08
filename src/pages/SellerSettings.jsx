@@ -202,7 +202,7 @@ export default function SellerSettings() {
             onClick={handleSave}
             disabled={saving}
             style={{
-              background: '#74B800',
+              background: 'var(--sport-color)',
               flex: 1,
               minWidth: 200,
               opacity: saving ? 0.6 : 1,

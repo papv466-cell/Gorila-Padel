@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 
 const VIBE_LABELS = {
-  fair_play: { label: 'Fair Play', icon: '🤝', color: '#74B800' },
+  fair_play: { label: 'Fair Play', icon: '🤝', color: 'var(--sport-color)' },
   buen_nivel: { label: 'Buen nivel', icon: '🎾', color: '#3b82f6' },
   comunicativo: { label: 'Comunicativo', icon: '💬', color: '#f59e0b' },
   puntual: { label: 'Puntual', icon: '⏰', color: '#8b5cf6' },
@@ -11,10 +11,10 @@ const VIBE_LABELS = {
 };
 
 const LEVEL_COLORS = {
-  iniciacion: '#74B800', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6'
+  iniciacion: 'var(--sport-color)', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6'
 };
 
-function StatBar({ value, max, color = '#74B800' }) {
+function StatBar({ value, max, color = 'var(--sport-color)' }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
@@ -102,9 +102,9 @@ export default function PlayerStats({ userId, compact = false }) {
     return (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
         {[
-          { value: stats.matches_played, label: 'Partidos', color: '#74B800' },
+          { value: stats.matches_played, label: 'Partidos', color: 'var(--sport-color)' },
           { value: stats.avg_rating > 0 ? `⭐ ${stats.avg_rating.toFixed(1)}` : '—', label: 'Valoración', color: '#f59e0b' },
-          { value: stats.red_cards, label: 'Tarjetas 🟥', color: stats.red_cards > 0 ? '#ef4444' : '#74B800' },
+          { value: stats.red_cards, label: 'Tarjetas 🟥', color: stats.red_cards > 0 ? '#ef4444' : 'var(--sport-color)' },
         ].map((s, i) => (
           <div key={i} style={{ textAlign: 'center', padding: '10px 6px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div style={{ fontSize: 18, fontWeight: 900, color: s.color }}>{s.value}</div>
@@ -121,7 +121,7 @@ export default function PlayerStats({ userId, compact = false }) {
       <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 3, border: '1px solid rgba(255,255,255,0.06)' }}>
         {[{ key: 'stats', label: '📊 Stats' }, { key: 'historial', label: `🏓 Historial (${matchHistory.length})` }, { key: 'vibes', label: `✨ Vibes (${stats.rating_count})` }].map(t => (
           <button key={t.key} className="psTab" onClick={() => setTab(t.key)}
-            style={{ flex: 1, padding: '8px 6px', borderRadius: 8, fontSize: 11, fontWeight: 800, background: tab === t.key ? 'rgba(116,184,0,0.15)' : 'transparent', color: tab === t.key ? '#74B800' : 'rgba(255,255,255,0.4)', border: tab === t.key ? '1px solid rgba(116,184,0,0.2)' : '1px solid transparent' }}>
+            style={{ flex: 1, padding: '8px 6px', borderRadius: 8, fontSize: 11, fontWeight: 800, background: tab === t.key ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'transparent', color: tab === t.key ? 'var(--sport-color)' : 'rgba(255,255,255,0.4)', border: tab === t.key ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)' : '1px solid transparent' }}>
             {t.label}
           </button>
         ))}
@@ -131,10 +131,10 @@ export default function PlayerStats({ userId, compact = false }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
             {[
-              { value: stats.matches_played, label: 'Partidos jugados', icon: '🏓', color: '#74B800' },
+              { value: stats.matches_played, label: 'Partidos jugados', icon: '🏓', color: 'var(--sport-color)' },
               { value: stats.created_count, label: 'Partidos creados', icon: '➕', color: '#3b82f6' },
               { value: stats.avg_rating > 0 ? stats.avg_rating.toFixed(1) : '—', label: 'Valoración media', icon: '⭐', color: '#f59e0b', sub: <StarRating value={stats.avg_rating} /> },
-              { value: stats.red_cards, label: 'Tarjetas rojas', icon: '🟥', color: stats.red_cards > 0 ? '#ef4444' : '#74B800' },
+              { value: stats.red_cards, label: 'Tarjetas rojas', icon: '🟥', color: stats.red_cards > 0 ? '#ef4444' : 'var(--sport-color)' },
             ].map((s, i) => (
               <div key={i} style={{ padding: '14px 12px', borderRadius: 12, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
@@ -154,9 +154,9 @@ export default function PlayerStats({ userId, compact = false }) {
                   const h = m.avg ? (m.avg / 5) * 100 : 0;
                   return (
                     <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ fontSize: 9, color: '#74B800', fontWeight: 800 }}>{m.avg ? m.avg.toFixed(1) : ''}</div>
+                      <div style={{ fontSize: 9, color: 'var(--sport-color)', fontWeight: 800 }}>{m.avg ? m.avg.toFixed(1) : ''}</div>
                       <div style={{ width: '100%', background: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 40, display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
-                        <div style={{ width: '100%', height: `${h}%`, background: m.avg >= 4 ? '#74B800' : m.avg >= 3 ? '#f59e0b' : '#ef4444', borderRadius: '4px 4px 0 0', transition: 'height .5s ease', minHeight: m.avg ? 3 : 0 }} />
+                        <div style={{ width: '100%', height: `${h}%`, background: m.avg >= 4 ? 'var(--sport-color)' : m.avg >= 3 ? '#f59e0b' : '#ef4444', borderRadius: '4px 4px 0 0', transition: 'height .5s ease', minHeight: m.avg ? 3 : 0 }} />
                       </div>
                       <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>{m.label}</div>
                     </div>
@@ -182,11 +182,11 @@ export default function PlayerStats({ userId, compact = false }) {
           {matchHistory.length === 0
             ? <div style={{ textAlign: 'center', padding: 30, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}><div style={{ fontSize: 32, marginBottom: 8 }}>🏓</div>Sin historial</div>
             : matchHistory.map((m, i) => {
-                const lc = LEVEL_COLORS[m.level] || '#74B800';
+                const lc = LEVEL_COLORS[m.level] || 'var(--sport-color)';
                 const isPast = new Date(m.start_at) < new Date();
                 return (
                   <div key={m.id || i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 999, background: isPast ? 'rgba(255,255,255,0.2)' : '#74B800', flexShrink: 0 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: 999, background: isPast ? 'rgba(255,255,255,0.2)' : 'var(--sport-color)', flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.club_name || 'Club'}</div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{new Date(m.start_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
@@ -207,7 +207,7 @@ export default function PlayerStats({ userId, compact = false }) {
           {Object.keys(vibes).length === 0
             ? <div style={{ textAlign: 'center', padding: 30, color: 'rgba(255,255,255,0.3)', fontSize: 13 }}><div style={{ fontSize: 32, marginBottom: 8 }}>✨</div>Sin vibes aún</div>
             : Object.entries(vibes).sort((a, b) => b[1] - a[1]).map(([vibe, count]) => {
-                const info = VIBE_LABELS[vibe] || { label: vibe, icon: '✨', color: '#74B800' };
+                const info = VIBE_LABELS[vibe] || { label: vibe, icon: '✨', color: 'var(--sport-color)' };
                 return (
                   <div key={vibe} style={{ padding: '10px 14px', borderRadius: 10, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>

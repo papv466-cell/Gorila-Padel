@@ -24,7 +24,7 @@ export function showXPToast({ xpGained, newAchievements = [] }) {
         <div
           onClick={() => toast.dismiss(t.id)}
           style={{
-            background: "linear-gradient(135deg,#74B800,#9BE800)",
+            background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",
             color: "#000",
             borderRadius: 14,
             padding: "12px 18px",
@@ -33,7 +33,7 @@ export function showXPToast({ xpGained, newAchievements = [] }) {
             gap: 10,
             fontFamily: "Outfit, sans-serif",
             cursor: "pointer",
-            boxShadow: "0 8px 32px rgba(116,184,0,0.4)",
+            boxShadow: "0 8px 32px rgba(var(--sport-color-rgb, 46,204,113),0.4)",
             animation: t.visible ? "slideIn .3s ease" : "slideOut .2s ease",
           }}
         >
@@ -57,7 +57,7 @@ export function showXPToast({ xpGained, newAchievements = [] }) {
             onClick={() => toast.dismiss(t.id)}
             style={{
               background: "#111",
-              border: "1px solid rgba(116,184,0,0.4)",
+              border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)",
               borderRadius: 14,
               padding: "14px 18px",
               display: "flex",
@@ -71,15 +71,15 @@ export function showXPToast({ xpGained, newAchievements = [] }) {
           >
             <div style={{
               width: 48, height: 48, borderRadius: "50%",
-              background: "rgba(116,184,0,0.15)",
-              border: "2px solid rgba(116,184,0,0.4)",
+              background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)",
+              border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 24, flexShrink: 0,
             }}>
               {achievement.emoji}
             </div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: "#74B800", textTransform: "uppercase", letterSpacing: ".05em" }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: "var(--sport-color)", textTransform: "uppercase", letterSpacing: ".05em" }}>
                 🏅 Logro desbloqueado
               </div>
               <div style={{ fontWeight: 900, fontSize: 15, color: "#fff", marginTop: 2 }}>
@@ -87,7 +87,7 @@ export function showXPToast({ xpGained, newAchievements = [] }) {
               </div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>
                 {achievement.desc}
-                {achievement.xp > 0 && <span style={{ color: "#74B800", fontWeight: 800 }}> +{achievement.xp} XP</span>}
+                {achievement.xp > 0 && <span style={{ color: "var(--sport-color)", fontWeight: 800 }}> +{achievement.xp} XP</span>}
               </div>
             </div>
           </div>

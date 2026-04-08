@@ -35,7 +35,7 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-    border: 2px solid rgba(116, 184, 0, 0.2);
+    border: 2px solid rgba(var(--sport-color-rgb, 46,204,113), 0.2);
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
@@ -125,14 +125,14 @@
   
   .type-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(116, 184, 0, 0.3);
+    border-color: rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .type-btn.active {
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
-    border-color: #74B800;
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
+    border-color: var(--sport-color);
     color: white;
-    box-shadow: 0 4px 20px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   /* File input */
@@ -151,24 +151,24 @@
     justify-content: center;
     gap: 12px;
     padding: 40px 20px;
-    border: 2px dashed rgba(116, 184, 0, 0.3);
+    border: 2px dashed rgba(var(--sport-color-rgb, 46,204,113), 0.3);
     border-radius: 16px;
-    background: rgba(116, 184, 0, 0.05);
-    color: #74B800;
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.05);
+    color: var(--sport-color);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
   }
   
   .file-label:hover {
-    border-color: #74B800;
-    background: rgba(116, 184, 0, 0.1);
+    border-color: var(--sport-color);
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.1);
     transform: translateY(-2px);
   }
   
   .upload-icon {
     font-size: 48px;
-    filter: drop-shadow(0 0 10px rgba(116, 184, 0, 0.3));
+    filter: drop-shadow(0 0 10px rgba(var(--sport-color-rgb, 46,204,113), 0.3));
   }
   
   /* Previews */
@@ -212,8 +212,8 @@
   
   .caption-input:focus {
     background: rgba(255, 255, 255, 0.08);
-    border-color: #74B800;
-    box-shadow: 0 0 20px rgba(116, 184, 0, 0.1);
+    border-color: var(--sport-color);
+    box-shadow: 0 0 20px rgba(var(--sport-color-rgb, 46,204,113), 0.1);
   }
   
   .caption-input::placeholder {
@@ -223,7 +223,7 @@
   /* Submit */
   .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
     color: white;
     border: none;
     padding: 16px;
@@ -232,12 +232,12 @@
     font-size: 16px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .submit-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(116, 184, 0, 0.5);
+    box-shadow: 0 6px 28px rgba(var(--sport-color-rgb, 46,204,113), 0.5);
   }
   
   .submit-btn:active {
@@ -257,7 +257,7 @@
   }
   
   .upload-content::-webkit-scrollbar-thumb {
-    background: #74B800;
+    background: var(--sport-color);
     border-radius: 4px;
   }
   

@@ -32,12 +32,12 @@ export default function OrderConfirmed() {
             width: 120,
             height: 120,
             borderRadius: 999,
-            background: 'linear-gradient(135deg, #9BEF00, #74B800)',
+            background: 'linear-gradient(135deg, #9BEF00, var(--sport-color))',
             display: 'grid',
             placeItems: 'center',
             margin: '0 auto 30px',
             fontSize: 60,
-            boxShadow: '0 20px 60px rgba(116,184,0,0.35)',
+            boxShadow: '0 20px 60px rgba(var(--sport-color-rgb, 46,204,113),0.35)',
             animation: 'gpPulse 2s ease-in-out infinite'
           }}>
             ✓
@@ -82,8 +82,8 @@ export default function OrderConfirmed() {
               <div key={i} style={{
                 padding: 20,
                 borderRadius: 14,
-                background: i === 0 ? 'rgba(116,184,0,0.12)' : 'rgba(255,255,255,0.04)',
-                border: i === 0 ? '1px solid rgba(116,184,0,0.25)' : '1px solid rgba(255,255,255,0.08)'
+                background: i === 0 ? 'rgba(var(--sport-color-rgb, 46,204,113),0.12)' : 'rgba(255,255,255,0.04)',
+                border: i === 0 ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)' : '1px solid rgba(255,255,255,0.08)'
               }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>{step.icon}</div>
                 <div style={{ fontSize: 13, fontWeight: 900, opacity: i === 0 ? 1 : 0.6 }}>
@@ -98,7 +98,7 @@ export default function OrderConfirmed() {
             <Link
               to="/tienda"
               className="btn"
-              style={{ background: '#74B800' }}
+              style={{ background: 'var(--sport-color)' }}
             >
               Seguir comprando
             </Link>

@@ -40,16 +40,16 @@ function getWeekStart() {
   return monday.toISOString();
 }
 
-const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
+const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
 // ── Banner Gorila Sin Límites ─────────────────────────────────────────────
 function GorilaMovimientoBanner({ stats, onPress }) {
   const { weekCount = 0, totalCount = 0, playersCount = 0 } = stats || {};
   return (
-    <div onClick={onPress} style={{ marginBottom: 24, borderRadius: 18, overflow: "hidden", cursor: "pointer", position: "relative", background: "linear-gradient(135deg,#0d1f00,#1a3d00)", border: "1px solid rgba(116,184,0,0.3)" }}>
+    <div onClick={onPress} style={{ marginBottom: 24, borderRadius: 18, overflow: "hidden", cursor: "pointer", position: "relative", background: "linear-gradient(135deg,#0d1f00,#1a3d00)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" }}>
       {/* Fondo decorativo */}
-      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 50%, rgba(116,184,0,0.12), transparent 60%)", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(116,184,0,0.05)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 50%, rgba(var(--sport-color-rgb, 46,204,113),0.12), transparent 60%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: -20, right: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.05)", pointerEvents: "none" }} />
 
       <div style={{ padding: "18px 20px", position: "relative" }}>
         {/* Cabecera */}
@@ -57,11 +57,11 @@ function GorilaMovimientoBanner({ stats, onPress }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 28 }}>♿</div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 900, color: "#9BE800", letterSpacing: 0.3 }}>GORILA SIN LÍMITES</div>
-              <div style={{ fontSize: 10, color: "rgba(116,184,0,0.6)", fontWeight: 700 }}>Pádel, tenis y pickleball para todos</div>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "var(--sport-color)", letterSpacing: 0.3 }}>GORILA SIN LÍMITES</div>
+              <div style={{ fontSize: 10, color: "rgba(var(--sport-color-rgb, 46,204,113),0.6)", fontWeight: 700 }}>Pádel, tenis y pickleball para todos</div>
             </div>
           </div>
-          <div style={{ fontSize: 18, color: "rgba(116,184,0,0.5)" }}>→</div>
+          <div style={{ fontSize: 18, color: "rgba(var(--sport-color-rgb, 46,204,113),0.5)" }}>→</div>
         </div>
 
         {/* Stats */}
@@ -71,9 +71,9 @@ function GorilaMovimientoBanner({ stats, onPress }) {
             { value: totalCount, label: "en total", icon: "🏅" },
             { value: playersCount, label: "jugadores", icon: "🦍" },
           ].map((s, i) => (
-            <div key={i} style={{ textAlign: "center", padding: "10px 6px", borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.15)" }}>
+            <div key={i} style={{ textAlign: "center", padding: "10px 6px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.08)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)" }}>
               <div style={{ fontSize: 14, marginBottom: 2 }}>{s.icon}</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#9BE800", lineHeight: 1 }}>
+              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)", lineHeight: 1 }}>
                 {s.value > 0 ? s.value : "—"}
               </div>
               <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginTop: 2 }}>partidos {s.label}</div>
@@ -82,16 +82,16 @@ function GorilaMovimientoBanner({ stats, onPress }) {
         </div>
 
         {weekCount > 0 && (
-          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.2)", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 14 }}>🔥</span>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#9BE800" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "var(--sport-color)" }}>
               {weekCount} partido{weekCount !== 1 ? "s" : ""} inclusivo{weekCount !== 1 ? "s" : ""} esta semana · ¡únete al movimiento!
             </span>
           </div>
         )}
         {weekCount === 0 && (
-          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", textAlign: "center" }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "rgba(116,184,0,0.7)", wordBreak: "break-word" }}>Sé el primero en crear un partido inclusivo esta semana 💪</span>
+          <div style={{ marginTop: 12, padding: "8px 12px", borderRadius: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)", textAlign: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "rgba(var(--sport-color-rgb, 46,204,113),0.7)", wordBreak: "break-word" }}>Sé el primero en crear un partido inclusivo esta semana 💪</span>
           </div>
         )}
       </div>
@@ -185,11 +185,11 @@ export default function HomePage({ session: sessionProp }) {
         @keyframes ghHeroIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
         @keyframes ghPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
         .ghCtaBtn { transition: all .2s; }
-        .ghCtaBtn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(116,184,0,0.4) !important; }
+        .ghCtaBtn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(var(--sport-color-rgb, 46,204,113),0.4) !important; }
       `}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 20px 60px", textAlign: "center" }}>
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
-          <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(116,184,0,0.1)", padding: 12, border: "1px solid rgba(116,184,0,0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
+          <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", padding: 12, border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
           <h1 style={{ fontSize: 34, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.15 }}>
             MONKEY<br /><span style={{ color: "#2ECC71" }}>GORILA</span>
           </h1>
@@ -237,7 +237,7 @@ export default function HomePage({ session: sessionProp }) {
         .ghMatchCard { transition: transform .2s, box-shadow .2s; cursor: pointer; flex-shrink: 0; }
         .ghMatchCard:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.4) !important; }
         .ghQuickBtn { transition: all .15s; cursor: pointer; }
-        .ghQuickBtn:hover { transform: translateY(-2px); background: rgba(116,184,0,0.15) !important; }
+        .ghQuickBtn:hover { transform: translateY(-2px); background: rgba(var(--sport-color-rgb, 46,204,113),0.15) !important; }
         .ghProductCard { transition: transform .2s; cursor: pointer; flex-shrink: 0; }
         .ghProductCard:hover { transform: translateY(-3px); }
         .ghGoriPost { transition: transform .15s; cursor: pointer; flex-shrink: 0; }
@@ -259,15 +259,15 @@ export default function HomePage({ session: sessionProp }) {
             <div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 2 }}>{greeting} 👋</div>
               <h1 style={{ fontSize: 26, fontWeight: 900, color: "#fff", margin: 0, letterSpacing: -0.5 }}>
-                ¡Hola, <span style={{ color: "#74B800" }}>{firstName}</span>!
+                ¡Hola, <span style={{ color: "var(--sport-color)" }}>{firstName}</span>!
               </h1>
             </div>
             {profile?.avatar_url ? (
               <img src={profile.avatar_url} alt="" onClick={() => navigate("/perfil")}
-                style={{ width: 46, height: 46, borderRadius: 999, objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)", cursor: "pointer" }} />
+                style={{ width: 46, height: 46, borderRadius: 999, objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)", cursor: "pointer" }} />
             ) : (
               <div onClick={() => navigate("/perfil")}
-                style={{ width: 46, height: 46, borderRadius: 999, background: "linear-gradient(135deg,#74B800,#9BE800)", display: "grid", placeItems: "center", fontSize: 20, fontWeight: 900, color: "#000", cursor: "pointer" }}>
+                style={{ width: 46, height: 46, borderRadius: 999, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", display: "grid", placeItems: "center", fontSize: 20, fontWeight: 900, color: "#000", cursor: "pointer" }}>
                 {firstName[0]?.toUpperCase()}
               </div>
             )}
@@ -302,7 +302,7 @@ export default function HomePage({ session: sessionProp }) {
         {/* CTA principal */}
         <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".05s" }}>
           <button onClick={() => navigate("/juega")}
-            style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(116,184,0,0.3)" }}>
+            style={{ width: "100%", padding: "18px 20px", borderRadius: 16, border: "none", background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(var(--sport-color-rgb, 46,204,113),0.3)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: 28 }}>🦍</span>
               <div style={{ textAlign: "left" }}>
@@ -342,12 +342,12 @@ export default function HomePage({ session: sessionProp }) {
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".1s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🏓 Partidos próximos</div>
-              <Link to="/juega" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todos →</Link>
+              <Link to="/juega" style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 800, textDecoration: "none" }}>Ver todos →</Link>
             </div>
             <div className="ghScrollRow">
               {matches.map(m => {
                 const countdown = timeUntil(m.start_at);
-                const levelColor = LEVEL_COLORS[m.level] || "#74B800";
+                const levelColor = LEVEL_COLORS[m.level] || "var(--sport-color)";
                 const spots = 4 - (m.reserved_spots || 0);
                 return (
                   <div key={m.id} className="ghMatchCard"
@@ -364,10 +364,10 @@ export default function HomePage({ session: sessionProp }) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", gap: 4 }}>
                         {[...Array(4)].map((_, i) => (
-                          <div key={i} style={{ width: 10, height: 10, borderRadius: 3, background: i < (m.reserved_spots || 0) ? "#74B800" : "rgba(255,255,255,0.15)" }} />
+                          <div key={i} style={{ width: 10, height: 10, borderRadius: 3, background: i < (m.reserved_spots || 0) ? "var(--sport-color)" : "rgba(255,255,255,0.15)" }} />
                         ))}
                       </div>
-                      <div style={{ fontSize: 10, color: spots > 0 ? "#74B800" : "#ef4444", fontWeight: 800 }}>
+                      <div style={{ fontSize: 10, color: spots > 0 ? "var(--sport-color)" : "#ef4444", fontWeight: 800 }}>
                         {spots > 0 ? `${spots} libre${spots !== 1 ? "s" : ""}` : "Completo"}
                       </div>
                     </div>
@@ -404,17 +404,17 @@ export default function HomePage({ session: sessionProp }) {
         {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".12s" }}>
           <div onClick={() => navigate("/stack")} style={{
             borderRadius: 16, background: "linear-gradient(135deg,#0a1a00,#1a3500)",
-            border: "1px solid rgba(116,184,0,0.25)", padding: "16px 20px",
+            border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", padding: "16px 20px",
             display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ fontSize: 36 }}>🦍</div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 900, color: "#74B800" }}>GORILA WORD 🦍</div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: "var(--sport-color)" }}>GORILA WORD 🦍</div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Adivina la palabra deportiva · Reto diario</div>
               </div>
             </div>
-            <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", fontSize: 13, fontWeight: 900, color: "#74B800" }}>
+            <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", fontSize: 13, fontWeight: 900, color: "var(--sport-color)" }}>
               ¡Jugar!
             </div>
           </div>
@@ -423,7 +423,7 @@ export default function HomePage({ session: sessionProp }) {
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".15s", overflow: "hidden" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🎬 Gorilandia</div>
-              <Link to="/gorilandia" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todo →</Link>
+              <Link to="/gorilandia" style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 800, textDecoration: "none" }}>Ver todo →</Link>
             </div>
             <div className="ghScrollRow">
               {gorilandiaFeed.map((post, i) => {
@@ -449,10 +449,10 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
                 );
               })}
               <div className="ghGoriPost" onClick={() => navigate("/gorilandia")}
-                style={{ width: 120, height: 120, borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.2)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                style={{ width: 120, height: 120, borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.08)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", display: "grid", placeItems: "center", flexShrink: 0 }}>
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 24, marginBottom: 4 }}>🦍</div>
-                  <div style={{ fontSize: 10, fontWeight: 900, color: "#74B800" }}>Ver todo</div>
+                  <div style={{ fontSize: 10, fontWeight: 900, color: "var(--sport-color)" }}>Ver todo</div>
                 </div>
               </div>
             </div>
@@ -479,7 +479,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
         {false && <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".25s" }}>
           <div style={{ padding: "14px 16px", borderRadius: 14, background: "#111", border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", gap: 14, cursor: "pointer" }}
             onClick={() => navigate("/leaderboard")}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>🏆</div>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>🏆</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 2 }}>Tu posición</div>
               <div style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Ver ranking completo</div>
@@ -491,7 +491,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
           <div className="ghSection" style={{ marginBottom: 24, animationDelay: ".3s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff" }}>🛍️ Novedades tienda</div>
-              <Link to="/tienda" style={{ fontSize: 11, color: "#74B800", fontWeight: 800, textDecoration: "none" }}>Ver todo →</Link>
+              <Link to="/tienda" style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 800, textDecoration: "none" }}>Ver todo →</Link>
             </div>
             <div className="ghScrollRow">
               {products.map(p => {
@@ -512,7 +512,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
                     </div>
                     <div style={{ padding: "8px 10px 10px" }}>
                       <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", lineHeight: 1.3, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                      <div style={{ fontSize: 14, fontWeight: 900, color: "#74B800" }}>€{p.price}</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: "var(--sport-color)" }}>€{p.price}</div>
                     </div>
                   </div>
                 );

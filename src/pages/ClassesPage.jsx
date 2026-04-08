@@ -351,20 +351,20 @@ export default function ClassesPage({ session: sessionProp }) {
     <div className="page pageWithHeader" style={{background:"#0a0a0a",minHeight:"100vh"}}>
       <style>{`
         .clCard { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:16px; padding:16px; margin-bottom:10px; transition:all .2s; }
-        .clCard:hover { border-color:rgba(116,184,0,0.3); transform:translateY(-1px); }
+        .clCard:hover { border-color:rgba(var(--sport-color-rgb, 46,204,113),0.3); transform:translateY(-1px); }
         .clChip { display:inline-flex; align-items:center; gap:3px; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.7); }
         .clBtn { padding:9px 16px; border-radius:9px; font-weight:900; font-size:13px; cursor:pointer; border:none; transition:opacity .15s; }
         .clBtn:disabled { opacity:.5; cursor:not-allowed; }
-        .clBtnPrimary { background:linear-gradient(135deg,#74B800,#9BE800); color:#000; }
+        .clBtnPrimary { background:linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color:#000; }
         .clBtnGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
         .clBtnDanger { background:rgba(220,38,38,0.15); color:#ff6b6b; border:1px solid rgba(220,38,38,0.3) !important; }
-        .clBtnMine { background:rgba(116,184,0,0.15); color:#74B800; border:1px solid rgba(116,184,0,0.3) !important; }
+        .clBtnMine { background:rgba(var(--sport-color-rgb, 46,204,113),0.15); color:var(--sport-color); border:1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3) !important; }
         .clSection { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:16px; margin-bottom:10px; }
         .clGrid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .dayPicker { display:flex; gap:6px; overflow-x:auto; padding:4px 0 8px; scrollbar-width:none; }
         .dayPicker::-webkit-scrollbar { display:none; }
         .dayBtn { flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 12px; border-radius:12px; border:none; cursor:pointer; min-width:52px; transition:all .15s; }
-        .dayBtn.active { background:linear-gradient(135deg,#74B800,#9BE800); }
+        .dayBtn.active { background:linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); }
         .dayBtn:not(.active) { background:rgba(255,255,255,0.06); }
         .starBtn { background:none; border:none; cursor:pointer; font-size:32px; transition:transform .1s; padding:4px; }
         .starBtn:hover { transform:scale(1.2); }
@@ -388,7 +388,7 @@ export default function ClassesPage({ session: sessionProp }) {
               ) : !isTeacher ? (
                 <button className="clBtn clBtnGhost" style={{fontSize:12}} onClick={()=>{setCodeInput("");setShowTeacherCode(true);}}>Soy profesor</button>
               ) : (
-                <span style={{fontSize:11,color:"#74B800",fontWeight:800}}>🦍 Profesor</span>
+                <span style={{fontSize:11,color:"var(--sport-color)",fontWeight:800}}>🦍 Profesor</span>
               )}
               {isTeacher && (
                 <button className="clBtn clBtnPrimary" style={{fontSize:12}} onClick={()=>setShowCreateForm(f=>!f)}>
@@ -400,9 +400,9 @@ export default function ClassesPage({ session: sessionProp }) {
 
           {/* BANNER CLASE ACTIVA */}
           {activeInfo && (
-            <div style={{background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.25)",borderRadius:12,padding:"10px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <div style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.08)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)",borderRadius:12,padding:"10px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap"}}>
               <div>
-                <div style={{fontWeight:900,color:"#74B800",fontSize:13}}>🦍 Clase activa — quedan ~{activeInfo.minsLeft} min</div>
+                <div style={{fontWeight:900,color:"var(--sport-color)",fontSize:13}}>🦍 Clase activa — quedan ~{activeInfo.minsLeft} min</div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:2}}>Sonará el gorila a falta de 5 min y al terminar.</div>
               </div>
               <button className="clBtn clBtnGhost" style={{fontSize:11}} onClick={()=>{clearGorilaTimers();clearActiveClass();toast.success("Avisos desactivados ✅");}}>Parar avisos</button>
@@ -428,9 +428,9 @@ export default function ClassesPage({ session: sessionProp }) {
               <button className="clBtn clBtnGhost" style={{fontSize:11,padding:"6px 12px",color:"#ff6b6b"}} onClick={clearFilters}>✕ Limpiar</button>
             )}
             {/* Chips de filtros activos */}
-            {filterClubId && <span className="clChip" style={{background:"rgba(116,184,0,0.15)",color:"#74B800"}}>🏟️ {headerClubName||filterClubId.slice(0,8)}</span>}
-            {filterTeacher && <span className="clChip" style={{background:"rgba(116,184,0,0.15)",color:"#74B800"}}>👤 {teacherFilterOptions.find(t=>t.id===filterTeacher)?.name||"Profe"}</span>}
-            {filterPrice!=="all" && <span className="clChip" style={{background:"rgba(116,184,0,0.15)",color:"#74B800"}}>💶 {filterPrice==="le20"?"≤20€":filterPrice==="p20_30"?"20-30€":">30€"}</span>}
+            {filterClubId && <span className="clChip" style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",color:"var(--sport-color)"}}>🏟️ {headerClubName||filterClubId.slice(0,8)}</span>}
+            {filterTeacher && <span className="clChip" style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",color:"var(--sport-color)"}}>👤 {teacherFilterOptions.find(t=>t.id===filterTeacher)?.name||"Profe"}</span>}
+            {filterPrice!=="all" && <span className="clChip" style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",color:"var(--sport-color)"}}>💶 {filterPrice==="le20"?"≤20€":filterPrice==="p20_30"?"20-30€":">30€"}</span>}
           </div>
 
           {filtersOpen && (
@@ -453,9 +453,9 @@ export default function ClassesPage({ session: sessionProp }) {
                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                     {[["all","Todos"],["le20","≤20€"],["p20_30","20-30€"],["gt30",">30€"]].map(([v,l])=>(
                       <button key={v} onClick={()=>setFilterPrice(v)} style={{padding:"6px 12px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontWeight:800,
-                        background:filterPrice===v?"rgba(116,184,0,0.2)":"rgba(255,255,255,0.06)",
-                        color:filterPrice===v?"#74B800":"rgba(255,255,255,0.6)",
-                        outline:filterPrice===v?"1px solid rgba(116,184,0,0.4)":"1px solid rgba(255,255,255,0.08)"}}>
+                        background:filterPrice===v?"rgba(var(--sport-color-rgb, 46,204,113),0.2)":"rgba(255,255,255,0.06)",
+                        color:filterPrice===v?"var(--sport-color)":"rgba(255,255,255,0.6)",
+                        outline:filterPrice===v?"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)":"1px solid rgba(255,255,255,0.08)"}}>
                         {l}
                       </button>
                     ))}
@@ -468,7 +468,7 @@ export default function ClassesPage({ session: sessionProp }) {
           {/* CREAR CLASE */}
           {isTeacher && showCreateForm && (
             <div className="clSection">
-              <div style={{fontWeight:900,color:"#74B800",fontSize:15,marginBottom:14}}>➕ Nueva clase — {day}</div>
+              <div style={{fontWeight:900,color:"var(--sport-color)",fontSize:15,marginBottom:14}}>➕ Nueva clase — {day}</div>
               <div className="clGrid2">
                 <div><label style={LB}>Hora</label><input style={IS} type="time" value={slotTime} onChange={e=>setSlotTime(e.target.value)}/></div>
                 <div><label style={LB}>Duración (min)</label><input style={IS} type="number" value={slotMins} onChange={e=>setSlotMins(e.target.value)}/></div>
@@ -524,9 +524,9 @@ export default function ClassesPage({ session: sessionProp }) {
                         {durationMins&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:1}}>{durationMins} min</div>}
                       </div>
                       <span style={{fontSize:11,fontWeight:900,padding:"4px 12px",borderRadius:999,
-                        background:isMyBooking?"rgba(116,184,0,0.15)":booked?"rgba(220,38,38,0.15)":"rgba(116,184,0,0.15)",
-                        color:isMyBooking?"#74B800":booked?"#ff6b6b":"#74B800",
-                        border:isMyBooking?"1px solid rgba(116,184,0,0.3)":booked?"1px solid rgba(220,38,38,0.3)":"1px solid rgba(116,184,0,0.3)"}}>
+                        background:isMyBooking?"rgba(var(--sport-color-rgb, 46,204,113),0.15)":booked?"rgba(220,38,38,0.15)":"rgba(var(--sport-color-rgb, 46,204,113),0.15)",
+                        color:isMyBooking?"var(--sport-color)":booked?"#ff6b6b":"var(--sport-color)",
+                        border:isMyBooking?"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)":booked?"1px solid rgba(220,38,38,0.3)":"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)"}}>
                         {isMyBooking?"✅ Mi reserva":booked?"❌ Reservada":"✅ Libre"}
                       </span>
                     </div>
@@ -534,8 +534,8 @@ export default function ClassesPage({ session: sessionProp }) {
                     {/* PROFE */}
                     <div onClick={()=>navigate(`/profesores/${c.teacher_id}`)} style={{display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,padding:"10px 12px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
                       {avatar
-                        ?<img src={avatar} alt={profName} style={{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(116,184,0,0.3)"}}/>
-                        :<div style={{width:44,height:44,borderRadius:"50%",background:"rgba(116,184,0,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#74B800",fontSize:15,flexShrink:0,border:"2px solid rgba(116,184,0,0.2)"}}>{initials(profName)}</div>
+                        ?<img src={avatar} alt={profName} style={{width:44,height:44,borderRadius:"50%",objectFit:"cover",border:"2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)"}}/>
+                        :<div style={{width:44,height:44,borderRadius:"50%",background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"var(--sport-color)",fontSize:15,flexShrink:0,border:"2px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)"}}>{initials(profName)}</div>
                       }
                       <div style={{flex:1}}>
                         <div style={{fontWeight:900,color:"#fff",fontSize:14}}>{profName}</div>
@@ -549,7 +549,7 @@ export default function ClassesPage({ session: sessionProp }) {
                       {clubLabel&&<span className="clChip">🏟️ {clubLabel}</span>}
                       {c.court&&<span className="clChip">🎾 {c.court}</span>}
                       {c.location&&<span className="clChip">📍 {c.location}</span>}
-                      {c.price&&<span className="clChip" style={{background:"rgba(116,184,0,0.12)",color:"#74B800",border:"1px solid rgba(116,184,0,0.2)"}}>💶 {c.price}€</span>}
+                      {c.price&&<span className="clChip" style={{background:"rgba(var(--sport-color-rgb, 46,204,113),0.12)",color:"var(--sport-color)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)"}}>💶 {c.price}€</span>}
                     </div>
 
                     {c.notes&&<div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontStyle:"italic",marginBottom:10,padding:"8px 10px",background:"rgba(255,255,255,0.03)",borderRadius:8}}>{c.notes}</div>}
@@ -586,7 +586,7 @@ export default function ClassesPage({ session: sessionProp }) {
       {/* MODAL CÓDIGO PROFESOR */}
       {showTeacherCode && (
         <div onClick={()=>setShowTeacherCode(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:40000,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(4px)"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:"#1a1a1a",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",border:"1px solid rgba(116,184,0,0.25)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:"#1a1a1a",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)"}}>
             <div style={{width:40,height:4,background:"rgba(255,255,255,0.2)",borderRadius:999,margin:"0 auto 20px"}}/>
             <div style={{fontSize:18,fontWeight:900,color:"#fff",marginBottom:16}}>🦍 Activar modo profesor</div>
             <label style={LB}>Código de profesor</label>
@@ -602,7 +602,7 @@ export default function ClassesPage({ session: sessionProp }) {
       {/* MODAL VALORACIÓN PROFE */}
       {ratingModal && (
         <div onClick={()=>setRatingModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:40000,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(4px)"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:"#1a1a1a",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",border:"1px solid rgba(116,184,0,0.25)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:"#1a1a1a",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)"}}>
             <div style={{width:40,height:4,background:"rgba(255,255,255,0.2)",borderRadius:999,margin:"0 auto 20px"}}/>
             <div style={{fontSize:18,fontWeight:900,color:"#fff",marginBottom:4}}>⭐ Valorar clase</div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginBottom:20}}>con {ratingModal.teacherName}</div>

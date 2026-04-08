@@ -232,7 +232,7 @@ export default function LoginPage() {
               style={{
                 width: "100%",
                 padding: '14px',
-                background: 'linear-gradient(135deg, #74B800 0%, #9BE800 100%)',
+                background: 'linear-gradient(135deg, var(--sport-color) 0%, var(--sport-color) 100%)',
                 border: 'none',
                 borderRadius: 12,
                 color: '#000',
@@ -241,7 +241,7 @@ export default function LoginPage() {
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 marginTop: 8,
-                boxShadow: '0 4px 12px rgba(116, 184, 0, 0.3)',
+                boxShadow: '0 4px 12px rgba(var(--sport-color-rgb, 46,204,113), 0.3)',
                 letterSpacing: '0.3px'
               }}
             >
@@ -275,7 +275,7 @@ export default function LoginPage() {
               </span>{" "}
               <Link 
                 style={{ 
-                  color: '#74B800', 
+                  color: 'var(--sport-color)', 
                   fontWeight: 700, 
                   textDecoration: 'none' 
                 }} 

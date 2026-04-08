@@ -198,7 +198,7 @@ export default function GorilaStack() {
       background: keyColor(k),
       display:"flex", alignItems:"center", justifyContent:"center",
     }),
-    btn: { padding:"13px 32px", borderRadius:14, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, fontSize:16, border:"none", cursor:"pointer" },
+    btn: { padding:"13px 32px", borderRadius:14, background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color:"#000", fontWeight:900, fontSize:16, border:"none", cursor:"pointer" },
     ghost: { padding:"10px 24px", borderRadius:14, background:"rgba(255,255,255,0.08)", color:"#fff", fontWeight:700, fontSize:13, border:"1px solid rgba(255,255,255,0.15)", cursor:"pointer" },
   };
 
@@ -208,13 +208,13 @@ export default function GorilaStack() {
       {screen === "home" && (
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#121213",gap:14,padding:24}}>
           <div style={{fontSize:56}}>🦍</div>
-          <div style={{fontSize:30,fontWeight:900,color:"#74B800"}}>Gorila Word</div>
+          <div style={{fontSize:30,fontWeight:900,color:"var(--sport-color)"}}>Gorila Word</div>
           <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",textAlign:"center",maxWidth:280,lineHeight:1.7}}>
             Adivina la palabra deportiva en <strong style={{color:"#fff"}}>{MAX_ATTEMPTS} intentos</strong>.<br/>
             🟩 Letra correcta · 🟨 Está pero mal sitio · ⬛ No está<br/>
             <span style={{color:"rgba(255,255,255,0.3)",fontSize:11}}>Una palabra nueva cada día para todos</span>
           </div>
-          {streak > 0 && <div style={{fontSize:14,color:"#74B800",fontWeight:900}}>🔥 Racha: {streak} días</div>}
+          {streak > 0 && <div style={{fontSize:14,color:"var(--sport-color)",fontWeight:900}}>🔥 Racha: {streak} días</div>}
           <button style={S.btn} onClick={() => setScreen("game")}>▶ JUGAR HOY</button>
           <button style={S.ghost} onClick={() => navigate(-1)}>← Volver</button>
         </div>
@@ -270,7 +270,7 @@ export default function GorilaStack() {
       {screen === "result" && (
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#121213",gap:12,padding:24}}>
           <div style={{fontSize:48}}>{gameState==="won"?"🏆":"💥"}</div>
-          <div style={{fontSize:24,fontWeight:900,color:gameState==="won"?"#74B800":"#ff4444"}}>
+          <div style={{fontSize:24,fontWeight:900,color:gameState==="won"?"var(--sport-color)":"#ff4444"}}>
             {gameState==="won" ? `¡Lo conseguiste en ${guesses.length}!` : "¡Mañana será!"}
           </div>
           {gameState==="lost" && (

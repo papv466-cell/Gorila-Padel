@@ -6,7 +6,7 @@ import PlayerStats from '../components/PlayerStats';
 import { getLevelFromXp, ACHIEVEMENTS } from '../services/xp';
 
 const LEVEL_LABELS = { iniciacion: 'Iniciación', medio: 'Medio', avanzado: 'Avanzado', competicion: 'Competición' };
-const LEVEL_COLORS = { iniciacion: '#74B800', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6' };
+const LEVEL_COLORS = { iniciacion: 'var(--sport-color)', medio: '#f59e0b', avanzado: '#ef4444', competicion: '#8b5cf6' };
 const HAND_LABELS = { right: 'Diestro', left: 'Zurdo' };
 const SEX_LABELS = { M: '♂ Masculino', F: '♀ Femenino', X: '⚧ Mixto' };
 
@@ -40,11 +40,11 @@ function XPTrophy({ xp = 0, streak = 0, achievements = [] }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Badge nivel */}
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(116,184,0,0.12)', border: '1px solid rgba(116,184,0,0.3)', display: 'grid', placeItems: 'center', fontSize: 20 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.12)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)', display: 'grid', placeItems: 'center', fontSize: 20 }}>
               {lvl.level <= 2 ? '🌱' : lvl.level <= 4 ? '🎾' : lvl.level <= 6 ? '💪' : '🦍'}
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: '#74B800' }}>{lvl.label}</div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--sport-color)' }}>{lvl.label}</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Nivel {lvl.level} · {xp} XP</div>
             </div>
           </div>
@@ -67,7 +67,7 @@ function XPTrophy({ xp = 0, streak = 0, achievements = [] }) {
               <span>{lvl.next.label} · {lvl.next.minXp - xp} XP</span>
             </div>
             <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'linear-gradient(90deg,#74B800,#9BE800)', transition: 'width .6s ease' }} />
+              <div style={{ height: '100%', width: `${progress}%`, borderRadius: 999, background: 'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))', transition: 'width .6s ease' }} />
             </div>
           </div>
         )}
@@ -81,10 +81,10 @@ function XPTrophy({ xp = 0, streak = 0, achievements = [] }) {
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {unlockedList.map(a => (
-              <div key={a.key} title={a.desc} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: 'rgba(116,184,0,0.1)', border: '1px solid rgba(116,184,0,0.25)' }}>
+              <div key={a.key} title={a.desc} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.1)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)' }}>
                 <span style={{ fontSize: 16 }}>{a.emoji}</span>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: '#9BE800' }}>{a.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--sport-color)' }}>{a.label}</div>
                 </div>
               </div>
             ))}
@@ -236,13 +236,13 @@ export default function PublicProfilePage() {
       <div className="pageWrap" style={{ textAlign: 'center', paddingTop: 60 }}>
         <div style={{ fontSize: 48 }}>❌</div>
         <div style={{ fontWeight: 900, color: '#fff', marginTop: 12 }}>Usuario no encontrado</div>
-        <button onClick={() => navigate(-1)} style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: 'none', background: '#74B800', color: '#000', fontWeight: 900, cursor: 'pointer' }}>← Volver</button>
+        <button onClick={() => navigate(-1)} style={{ marginTop: 20, padding: '10px 20px', borderRadius: 10, border: 'none', background: 'var(--sport-color)', color: '#000', fontWeight: 900, cursor: 'pointer' }}>← Volver</button>
       </div>
     </div>
   );
 
   const displayName = user.name || user.handle || user.email?.split('@')[0] || '?';
-  const levelColor = LEVEL_COLORS[user.level] || '#74B800';
+  const levelColor = LEVEL_COLORS[user.level] || 'var(--sport-color)';
   const levelLabel = LEVEL_LABELS[user.level] || user.level;
 
   return (
@@ -252,7 +252,7 @@ export default function PublicProfilePage() {
         .ppTab { transition: all .15s; cursor: pointer; border: none; }
         .ppTab:hover { opacity: 1 !important; }
         .ppMatchCard { transition: transform .2s, border-color .15s; cursor: pointer; }
-        .ppMatchCard:hover { transform: translateY(-3px); border-color: rgba(116,184,0,0.3) !important; }
+        .ppMatchCard:hover { transform: translateY(-3px); border-color: rgba(var(--sport-color-rgb, 46,204,113),0.3) !important; }
       `}</style>
 
       <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 14px 60px', animation: 'ppFadeUp .4s ease' }}>
@@ -286,9 +286,9 @@ export default function PublicProfilePage() {
                   {session?.user?.id && session.user.id !== userId && (
                     <button onClick={toggleFollow} disabled={followSaving}
                       style={{ padding: '7px 14px', borderRadius: 20, cursor: 'pointer', fontWeight: 900, fontSize: 12, flexShrink: 0,
-                        background: isFollowing ? 'rgba(116,184,0,0.15)' : 'linear-gradient(135deg,#74B800,#9BE800)',
-                        color: isFollowing ? '#74B800' : '#000',
-                        border: isFollowing ? '1px solid rgba(116,184,0,0.4)' : 'none' }}>
+                        background: isFollowing ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))',
+                        color: isFollowing ? 'var(--sport-color)' : '#000',
+                        border: isFollowing ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)' : 'none' }}>
                       {followSaving ? '…' : isFollowing ? '✓ Siguiendo' : '+ Seguir'}
                     </button>
                   )}
@@ -305,7 +305,7 @@ export default function PublicProfilePage() {
             {/* Badges */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
               {user.gorila_sin_limites && (
-                <div style={{ padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 900, background: 'linear-gradient(135deg,rgba(116,184,0,0.25),rgba(155,232,0,0.15))', color: '#9BE800', border: '1px solid rgba(116,184,0,0.5)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 900, background: 'linear-gradient(135deg,rgba(var(--sport-color-rgb, 46,204,113),0.25),rgba(155,232,0,0.15))', color: 'var(--sport-color)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.5)', display: 'flex', alignItems: 'center', gap: 5 }}>
                   🦍 Gorila Sin Límites
                 </div>
               )}
@@ -334,7 +334,7 @@ export default function PublicProfilePage() {
                 { value: stats?.avgRating ? `⭐ ${stats.avgRating.toFixed(1)}` : '—', label: `${stats?.totalRatings || 0} valoraciones` },
               ].map((s, i) => (
                 <div key={i} style={{ textAlign: 'center', padding: '12px 8px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ fontSize: 20, fontWeight: 900, color: '#74B800', marginBottom: 2 }}>{s.value}</div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--sport-color)', marginBottom: 2 }}>{s.value}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{s.label}</div>
                 </div>
               ))}
@@ -358,7 +358,7 @@ export default function PublicProfilePage() {
           ].map(t => (
             <button key={t.key} className="ppTab"
               onClick={() => setTab(t.key)}
-              style={{ flex: 1, padding: '9px 8px', borderRadius: 9, fontSize: 12, fontWeight: 800, background: tab === t.key ? 'rgba(116,184,0,0.15)' : 'transparent', color: tab === t.key ? '#74B800' : 'rgba(255,255,255,0.45)', border: tab === t.key ? '1px solid rgba(116,184,0,0.25)' : '1px solid transparent' }}>
+              style={{ flex: 1, padding: '9px 8px', borderRadius: 9, fontSize: 12, fontWeight: 800, background: tab === t.key ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'transparent', color: tab === t.key ? 'var(--sport-color)' : 'rgba(255,255,255,0.45)', border: tab === t.key ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)' : '1px solid transparent' }}>
               {t.label}
             </button>
           ))}
@@ -381,7 +381,7 @@ export default function PublicProfilePage() {
               </div>
             ) : activeMatches.map(match => {
               const spots = 4 - (match.match_players?.length || 0);
-              const lc = LEVEL_COLORS[match.level] || '#74B800';
+              const lc = LEVEL_COLORS[match.level] || 'var(--sport-color)';
               return (
                 <div key={match.id} className="ppMatchCard"
                   onClick={() => navigate(`/partidos?openChat=${match.id}`)}
@@ -404,15 +404,15 @@ export default function PublicProfilePage() {
                         return (
                           <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="18" height="18">
                             <rect x="29" y="42" width="6" height="14" rx="3" fill={filled ? '#111' : 'rgba(255,255,255,0.15)'} />
-                            <ellipse cx="32" cy="28" rx="13" ry="16" fill={filled ? '#74B800' : 'rgba(255,255,255,0.15)'} stroke={filled ? '#111' : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
-                            <circle cx="28" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
-                            <circle cx="36" cy="24" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
-                            <circle cx="32" cy="30" r="2" fill={filled ? '#9BE800' : 'rgba(255,255,255,0.1)'} />
+                            <ellipse cx="32" cy="28" rx="13" ry="16" fill={filled ? 'var(--sport-color)' : 'rgba(255,255,255,0.15)'} stroke={filled ? '#111' : 'rgba(255,255,255,0.1)'} strokeWidth="2" />
+                            <circle cx="28" cy="24" r="2" fill={filled ? 'var(--sport-color)' : 'rgba(255,255,255,0.1)'} />
+                            <circle cx="36" cy="24" r="2" fill={filled ? 'var(--sport-color)' : 'rgba(255,255,255,0.1)'} />
+                            <circle cx="32" cy="30" r="2" fill={filled ? 'var(--sport-color)' : 'rgba(255,255,255,0.1)'} />
                           </svg>
                         );
                       })}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: spots > 0 ? '#74B800' : '#ef4444' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: spots > 0 ? 'var(--sport-color)' : '#ef4444' }}>
                       {spots > 0 ? `${spots} plaza${spots !== 1 ? 's' : ''} libre${spots !== 1 ? 's' : ''}` : 'Completo'}
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export default function PublicProfilePage() {
                   <div style={{ width: 38, height: 38, borderRadius: 999, overflow: 'hidden', background: '#1a1a1a', flexShrink: 0 }}>
                     {r.rater?.avatar_url
                       ? <img src={r.rater.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 16, fontWeight: 900, background: 'rgba(116,184,0,0.2)', color: '#74B800' }}>{raterName[0].toUpperCase()}</div>}
+                      : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 16, fontWeight: 900, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.2)', color: 'var(--sport-color)' }}>{raterName[0].toUpperCase()}</div>}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>

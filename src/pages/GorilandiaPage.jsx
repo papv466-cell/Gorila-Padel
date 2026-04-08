@@ -133,8 +133,8 @@ export default function GorilandiaPage({ session: sessionProp }) {
         .glPage { max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
         .glHeader { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 8px; }
         .glTitle { font-size: 22px; font-weight: 900; color: #fff; }
-        .glTitle span { color: #74B800; }
-        .glPublicar { padding: 9px 16px; border-radius: 10px; background: linear-gradient(135deg,#74B800,#9BE800); color: #000; font-weight: 900; border: none; cursor: pointer; font-size: 13px; }
+        .glTitle span { color: var(--sport-color); }
+        .glPublicar { padding: 9px 16px; border-radius: 10px; background: linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color: #000; font-weight: 900; border: none; cursor: pointer; font-size: 13px; }
         .glDivider { height: 1px; background: rgba(255,255,255,0.07); margin: 0; }
       `}</style>
 
@@ -153,8 +153,8 @@ export default function GorilandiaPage({ session: sessionProp }) {
               style={{
                 flex: 1, padding: '12px 0', border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: 13,
                 background: 'transparent',
-                color: tab === t.key ? '#74B800' : 'rgba(255,255,255,0.4)',
-                borderBottom: tab === t.key ? '2px solid #74B800' : '2px solid transparent'
+                color: tab === t.key ? 'var(--sport-color)' : 'rgba(255,255,255,0.4)',
+                borderBottom: tab === t.key ? '2px solid var(--sport-color)' : '2px solid transparent'
               }}>
               {t.label}
             </button>
@@ -174,7 +174,7 @@ export default function GorilandiaPage({ session: sessionProp }) {
                 <div style={{ fontWeight: 900, color: '#fff', fontSize: 18, marginBottom: 6 }}>Nadie ha publicado aún</div>
                 <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>¡Sé el primero en compartir tu momento deportivo!</div>
                 <button onClick={() => { if (!session) { navigate('/login'); return; } setShowUpload(true); }}
-                  style={{ padding: '10px 22px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: 13 }}>
+                  style={{ padding: '10px 22px', borderRadius: 10, background: 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', color: '#000', fontWeight: 900, border: 'none', cursor: 'pointer', fontSize: 13 }}>
                   ➕ Crear publicación
                 </button>
               </div>
@@ -214,11 +214,11 @@ export default function GorilandiaPage({ session: sessionProp }) {
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                       {item.player?.avatar_url
                         ? <img src={item.player.avatar_url} style={{ width: 36, height: 36, borderRadius: 999, objectFit: 'cover', flexShrink: 0 }} alt="" />
-                        : <div style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(116,184,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🦍</div>
+                        : <div style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🦍</div>
                       }
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
-                          <span style={{ color: '#74B800' }}>{item.player?.name || item.player?.handle || 'Jugador'}</span> jugó en {item.match?.club_name || 'un club'}
+                          <span style={{ color: 'var(--sport-color)' }}>{item.player?.name || item.player?.handle || 'Jugador'}</span> jugó en {item.match?.club_name || 'un club'}
                         </div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
                           🏓 {item.match?.level} · {String(item.match?.start_at || '').slice(11, 16)}
@@ -229,9 +229,9 @@ export default function GorilandiaPage({ session: sessionProp }) {
                   );
 
                   if (item.type === 'match_result') return (
-                    <div key={item.id} style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(116,184,0,0.06)', border: '1px solid rgba(116,184,0,0.15)' }}>
+                    <div key={item.id} style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.06)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#74B800' }}>🏆 Resultado</div>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--sport-color)' }}>🏆 Resultado</div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{timeAgo(item.created_at)}</div>
                       </div>
                       <div style={{ fontSize: 13, color: '#fff', fontWeight: 800, marginBottom: 4 }}>{item.match?.club_name}</div>
@@ -242,7 +242,7 @@ export default function GorilandiaPage({ session: sessionProp }) {
                           </div>
                         ))}
                         {item.winner_side && (
-                          <div style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(116,184,0,0.2)', fontSize: 11, fontWeight: 900, color: '#74B800' }}>
+                          <div style={{ padding: '4px 10px', borderRadius: 8, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.2)', fontSize: 11, fontWeight: 900, color: 'var(--sport-color)' }}>
                             Gana pareja {item.winner_side === 'a' ? 'A' : 'B'} 🏆
                           </div>
                         )}

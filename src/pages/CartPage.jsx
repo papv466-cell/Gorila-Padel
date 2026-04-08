@@ -40,7 +40,7 @@ export default function CartPage() {
           <div style={{ fontSize: 72, marginBottom: 16 }}>🛒</div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 10 }}>Tu carrito está vacío</h1>
           <p style={{ color: 'rgba(255,255,255,0.45)', marginBottom: 28, fontSize: 14 }}>Añade productos de la tienda para empezar</p>
-          <Link to="/tienda" style={{ padding: '12px 24px', borderRadius: 12, background: '#74B800', color: '#000', fontWeight: 900, textDecoration: 'none', fontSize: 14 }}>
+          <Link to="/tienda" style={{ padding: '12px 24px', borderRadius: 12, background: 'var(--sport-color)', color: '#000', fontWeight: 900, textDecoration: 'none', fontSize: 14 }}>
             Ver productos →
           </Link>
         </div>
@@ -59,31 +59,31 @@ export default function CartPage() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
           <span style={{ color: 'rgba(255,255,255,0.6)' }}>Envío</span>
-          <span style={{ fontWeight: 800, color: shipping === 0 ? '#74B800' : '#fff' }}>
+          <span style={{ fontWeight: 800, color: shipping === 0 ? 'var(--sport-color)' : '#fff' }}>
             {shipping === 0 ? '🎉 GRATIS' : `€${shipping.toFixed(2)}`}
           </span>
         </div>
         <div style={{ height: 1, background: 'rgba(255,255,255,0.07)' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontWeight: 900, fontSize: 17 }}>Total</span>
-          <span style={{ fontWeight: 900, fontSize: 22, color: '#74B800' }}>€{total.toFixed(2)}</span>
+          <span style={{ fontWeight: 900, fontSize: 22, color: 'var(--sport-color)' }}>€{total.toFixed(2)}</span>
         </div>
       </div>
 
       {/* Barra envío gratis */}
       {subtotal < 50 && (
-        <div style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 10, background: 'rgba(116,184,0,0.06)', border: '1px solid rgba(116,184,0,0.15)' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#74B800', marginBottom: 6 }}>
+        <div style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 10, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.06)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--sport-color)', marginBottom: 6 }}>
             🚚 Faltan €{(50 - subtotal).toFixed(2)} para envío gratis
           </div>
           <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${shippingProgress}%`, background: 'linear-gradient(90deg,#74B800,#9BE800)', borderRadius: 999, transition: 'width .4s' }} />
+            <div style={{ height: '100%', width: `${shippingProgress}%`, background: 'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))', borderRadius: 999, transition: 'width .4s' }} />
           </div>
         </div>
       )}
 
       <button onClick={() => navigate('/tienda/checkout')}
-        style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, fontSize: 15, cursor: 'pointer', marginBottom: 12 }}>
+        style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', color: '#000', fontWeight: 900, fontSize: 15, cursor: 'pointer', marginBottom: 12 }}>
         💳 Finalizar compra
       </button>
       <Link to="/tienda" style={{ display: 'block', textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontWeight: 700 }}>
@@ -97,7 +97,7 @@ export default function CartPage() {
       <style>{`
         @keyframes gcFadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         .gcItem { transition: border-color .15s; animation: gcFadeUp .3s ease both; }
-        .gcItem:hover { border-color: rgba(116,184,0,0.15) !important; }
+        .gcItem:hover { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.15) !important; }
         .gcQtyBtn { transition: all .12s; border: 1px solid rgba(255,255,255,0.1) !important; background: rgba(255,255,255,0.05) !important; }
         .gcQtyBtn:hover { background: rgba(255,255,255,0.12) !important; }
         .gcRemoveBtn { transition: all .12s; }
@@ -137,7 +137,7 @@ export default function CartPage() {
                         <Link to={`/tienda/producto/${product.slug}`} style={{ textDecoration: 'none' }}>
                           <div style={{ fontWeight: 800, fontSize: 14, color: '#fff', lineHeight: 1.3 }}>{product.title}</div>
                         </Link>
-                        <div style={{ fontSize: 17, fontWeight: 900, color: '#74B800', flexShrink: 0 }}>
+                        <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--sport-color)', flexShrink: 0 }}>
                           €{(product.price * item.quantity).toFixed(2)}
                         </div>
                       </div>

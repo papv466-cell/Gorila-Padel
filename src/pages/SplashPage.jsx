@@ -82,13 +82,13 @@ export default function SplashPage() {
         <div style={{ position:"relative" }}>
           <div style={{
             position:"absolute", inset:-16, borderRadius:"50%",
-            background:"radial-gradient(circle, rgba(116,184,0,0.25) 0%, transparent 70%)",
+            background:"radial-gradient(circle, rgba(var(--sport-color-rgb, 46,204,113),0.25) 0%, transparent 70%)",
             animation:"glow 2.5s ease-in-out infinite",
           }}/>
           <img src="/imglogog.png" alt="GorilaGo!" style={{
             width:100, height:100, objectFit:"contain", borderRadius:22,
-            border:"2px solid rgba(116,184,0,0.5)",
-            boxShadow:"0 0 40px rgba(116,184,0,0.35), 0 20px 60px rgba(0,0,0,0.7)",
+            border:"2px solid rgba(var(--sport-color-rgb, 46,204,113),0.5)",
+            boxShadow:"0 0 40px rgba(var(--sport-color-rgb, 46,204,113),0.35), 0 20px 60px rgba(0,0,0,0.7)",
             position:"relative", animation:"pulse 2.5s ease-in-out infinite",
           }}/>
         </div>
@@ -101,7 +101,7 @@ export default function SplashPage() {
         </div>
 
         <div style={{ width:160, height:3, borderRadius:999, background:"rgba(255,255,255,0.1)", overflow:"hidden", marginTop:8 }}>
-          <div style={{ height:"100%", borderRadius:999, background:"linear-gradient(90deg,#74B800,#9BE800)", animation:"load 1.8s ease-in-out infinite" }}/>
+          <div style={{ height:"100%", borderRadius:999, background:"linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))", animation:"load 1.8s ease-in-out infinite" }}/>
         </div>
         <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", letterSpacing:"0.12em", textTransform:"uppercase" }}>
           Cargando…

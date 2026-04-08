@@ -5,8 +5,8 @@ import { supabase } from "../services/supabaseClient";
 import { getLevelFromXp } from "../services/xp";
 
 const LEVELS = [
-  { key: "todos",       label: "Todos los niveles", color: "#74B800" },
-  { key: "iniciacion",  label: "Iniciación",         color: "#74B800" },
+  { key: "todos",       label: "Todos los niveles", color: "var(--sport-color)" },
+  { key: "iniciacion",  label: "Iniciación",         color: "var(--sport-color)" },
   { key: "medio",       label: "Medio",               color: "#f59e0b" },
   { key: "avanzado",    label: "Avanzado",            color: "#ef4444" },
   { key: "competicion", label: "Competición",         color: "#8b5cf6" },
@@ -37,7 +37,7 @@ function Avatar({ url, name, size = 44 }) {
   const initials = (name || "?").trim().split(" ").slice(0, 2).map(p => p[0]?.toUpperCase()).join("");
   if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 900, color: "#74B800", flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 900, color: "var(--sport-color)", flexShrink: 0 }}>
       {initials}
     </div>
   );
@@ -141,7 +141,7 @@ export default function FindPlayersPage({ session }) {
     }
   }
 
-  const levelColor = LEVELS.find(l => l.key === levelFilter)?.color || "#74B800";
+  const levelColor = LEVELS.find(l => l.key === levelFilter)?.color || "var(--sport-color)";
 
   return (
     <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
@@ -186,9 +186,9 @@ export default function FindPlayersPage({ session }) {
             <button key={d.key} onClick={() => setDistFilter(d.key)} style={{
               flexShrink: 0, padding: "6px 12px", borderRadius: 999, cursor: "pointer",
               fontSize: 12, fontWeight: 800,
-              background: distFilter === d.key ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.05)",
-              color: distFilter === d.key ? "#74B800" : "rgba(255,255,255,0.5)",
-              border: distFilter === d.key ? "1px solid rgba(116,184,0,0.4)" : "1px solid transparent",
+              background: distFilter === d.key ? "rgba(var(--sport-color-rgb, 46,204,113),0.2)" : "rgba(255,255,255,0.05)",
+              color: distFilter === d.key ? "var(--sport-color)" : "rgba(255,255,255,0.5)",
+              border: distFilter === d.key ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid transparent",
             }}>
               📍 {d.label}
             </button>
@@ -200,9 +200,9 @@ export default function FindPlayersPage({ session }) {
           <button onClick={() => setGorila(!gorila)} style={{
             padding: "7px 14px", borderRadius: 999, cursor: "pointer",
             fontSize: 12, fontWeight: 800,
-            background: gorila ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.05)",
-            color: gorila ? "#9BE800" : "rgba(255,255,255,0.5)",
-            border: gorila ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)",
+            background: gorila ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.05)",
+            color: gorila ? "var(--sport-color)" : "rgba(255,255,255,0.5)",
+            border: gorila ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid rgba(255,255,255,0.08)",
           }}>
             🦍 Solo Gorila Sin Límites
           </button>
@@ -237,7 +237,7 @@ export default function FindPlayersPage({ session }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {players.map(player => {
             const lvl = getLevelFromXp(player.xp || 0);
-            const lc = LEVELS.find(l => l.key === player.level)?.color || "#74B800";
+            const lc = LEVELS.find(l => l.key === player.level)?.color || "var(--sport-color)";
             const levelLabel = LEVELS.find(l => l.key === player.level)?.label || player.level;
             const isMe = player.id === session?.user?.id;
 
@@ -275,7 +275,7 @@ export default function FindPlayersPage({ session }) {
                       Nv.{lvl.level} · {lvl.label}
                     </span>
                     {player.xp > 0 && (
-                      <span style={{ fontSize: 10, color: "#74B800", fontWeight: 800 }}>{player.xp} XP</span>
+                      <span style={{ fontSize: 10, color: "var(--sport-color)", fontWeight: 800 }}>{player.xp} XP</span>
                     )}
                   </div>
                 </div>
@@ -284,7 +284,7 @@ export default function FindPlayersPage({ session }) {
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
                   {player.distKm != null ? (
                     <>
-                      <div style={{ fontSize: 14, fontWeight: 900, color: player.distKm < 5 ? "#74B800" : player.distKm < 15 ? "#f59e0b" : "rgba(255,255,255,0.5)" }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: player.distKm < 5 ? "var(--sport-color)" : player.distKm < 15 ? "#f59e0b" : "rgba(255,255,255,0.5)" }}>
                         {player.distKm < 1 ? "<1" : Math.round(player.distKm)} km
                       </div>
                       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>de distancia</div>

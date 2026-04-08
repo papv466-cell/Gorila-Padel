@@ -30,17 +30,17 @@ const LB = {
 
 function SpecPill({ item, active, categoryId, onToggle }) {
   const isInc = categoryId === "inclusion";
-  const color = item.color || "#74B800";
+  const color = item.color || "var(--sport-color)";
   return (
     <button type="button" onClick={onToggle}
       style={{
         display: "inline-flex", alignItems: "center", gap: 5,
         padding: "5px 11px", borderRadius: 999, cursor: "pointer",
         fontSize: 12, fontWeight: 800, border: "none", transition: "all .15s",
-        background: active ? (isInc ? `${color}22` : "rgba(116,184,0,0.18)") : "rgba(255,255,255,0.05)",
-        color: active ? (isInc ? color : "#74B800") : "rgba(255,255,255,0.5)",
+        background: active ? (isInc ? `${color}22` : "rgba(var(--sport-color-rgb, 46,204,113),0.18)") : "rgba(255,255,255,0.05)",
+        color: active ? (isInc ? color : "var(--sport-color)") : "rgba(255,255,255,0.5)",
         outline: active
-          ? `1.5px solid ${isInc ? color + "80" : "rgba(116,184,0,0.5)"}`
+          ? `1.5px solid ${isInc ? color + "80" : "rgba(var(--sport-color-rgb, 46,204,113),0.5)"}`
           : "1px solid rgba(255,255,255,0.08)",
       }}>
       <span style={{ fontSize: 14 }}>{item.emoji}</span>
@@ -66,7 +66,7 @@ function SpecCategory({ cat, selected, onChange }) {
         </span>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           {catSelected.length > 0 && (
-            <span style={{ fontSize: 11, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "2px 8px", borderRadius: 999, fontWeight: 900 }}>
+            <span style={{ fontSize: 11, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "2px 8px", borderRadius: 999, fontWeight: 900 }}>
               {catSelected.length} ✓
             </span>
           )}
@@ -246,7 +246,7 @@ export default function TeacherProfilePage() {
       <style>{`
         .tpS { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:18px; margin-bottom:10px; }
         .tpBtn { padding:9px 16px; border-radius:9px; font-weight:900; font-size:13px; cursor:pointer; border:none; }
-        .tpPrimary { background:linear-gradient(135deg,#74B800,#9BE800); color:#000; }
+        .tpPrimary { background:linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color:#000; }
         .tpGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
         .tpFav { background:rgba(255,215,0,0.15); color:#FFD700; border:1px solid rgba(255,215,0,0.35) !important; }
         .tpG2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -260,15 +260,15 @@ export default function TeacherProfilePage() {
           {/* HEADER */}
           <div style={{ padding: "12px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate(-1)}>← Volver</button>
-            {isMe && <span style={{ fontSize: 11, color: "#74B800", fontWeight: 800 }}>🦍 Tu perfil</span>}
+            {isMe && <span style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 800 }}>🦍 Tu perfil</span>}
           </div>
 
           {/* PERFIL PÚBLICO */}
           <div className="tpS">
             <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
               {avatar
-                ? <img src={avatar} alt={name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)", flexShrink: 0 }} />
-                : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(116,184,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#74B800", fontSize: 22, flexShrink: 0 }}>{initials(name)}</div>
+                ? <img src={avatar} alt={name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)", flexShrink: 0 }} />
+                : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "var(--sport-color)", fontSize: 22, flexShrink: 0 }}>{initials(name)}</div>
               }
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 900, fontSize: 20, color: "#fff" }}>{name}</div>
@@ -328,9 +328,9 @@ export default function TeacherProfilePage() {
                     ].map(x => (
                       <button key={x.label} onClick={() => x.set(!x.val)} disabled={favBusy}
                         style={{ padding: "5px 11px", borderRadius: 999, cursor: "pointer", fontSize: 11, fontWeight: 800, border: "none",
-                          background: x.val ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)",
-                          color: x.val ? "#74B800" : "rgba(255,255,255,0.4)",
-                          outline: x.val ? "1px solid rgba(116,184,0,0.3)" : "1px solid rgba(255,255,255,0.08)" }}>
+                          background: x.val ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.06)",
+                          color: x.val ? "var(--sport-color)" : "rgba(255,255,255,0.4)",
+                          outline: x.val ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" : "1px solid rgba(255,255,255,0.08)" }}>
                         {x.val ? "✅" : "○"} {x.label}
                       </button>
                     ))}
@@ -348,7 +348,7 @@ export default function TeacherProfilePage() {
           {/* EDITOR — solo el profe */}
           {isMe && (
             <div className="tpS">
-              <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 16 }}>✏️ Editar perfil público</div>
+              <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 16 }}>✏️ Editar perfil público</div>
 
               <div style={{ marginBottom: 14 }}>
                 <label style={LB}>Bio corta (visible a todos)</label>
@@ -374,7 +374,7 @@ export default function TeacherProfilePage() {
                   <span style={{ fontSize: 13, fontWeight: 900, color: "rgba(255,255,255,0.85)" }}>🎯 Especialidades</span>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     {editSpecialties.length > 0 && (
-                      <span style={{ fontSize: 11, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "2px 9px", borderRadius: 999, fontWeight: 900 }}>
+                      <span style={{ fontSize: 11, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "2px 9px", borderRadius: 999, fontWeight: 900 }}>
                         {editSpecialties.length} seleccionadas
                       </span>
                     )}

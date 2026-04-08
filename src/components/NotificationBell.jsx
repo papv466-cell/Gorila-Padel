@@ -150,7 +150,7 @@ export default function NotificationBell({ session }) {
             <div style={{display:"flex", alignItems:"center", gap:8}}>
               <h3 style={{margin:0}}>Notificaciones</h3>
               {unread.length > 0 && (
-                <span style={{fontSize:11, fontWeight:900, padding:"2px 8px", borderRadius:10, background:"rgba(116,184,0,0.2)", color:"#74B800"}}>
+                <span style={{fontSize:11, fontWeight:900, padding:"2px 8px", borderRadius:10, background:"rgba(var(--sport-color-rgb, 46,204,113),0.2)", color:"var(--sport-color)"}}>
                   {unread.length} nuevas
                 </span>
               )}
@@ -165,8 +165,8 @@ export default function NotificationBell({ session }) {
               {[["nuevas", false], ["historial", true]].map(([label, val]) => (
                 <button key={label} onClick={() => setShowAll(val)}
                   style={{flex:1, padding:"8px", border:"none", background:"transparent", cursor:"pointer", fontSize:12, fontWeight:800,
-                    color: showAll === val ? "#74B800" : "rgba(255,255,255,0.4)",
-                    borderBottom: showAll === val ? "2px solid #74B800" : "2px solid transparent"}}>
+                    color: showAll === val ? "var(--sport-color)" : "rgba(255,255,255,0.4)",
+                    borderBottom: showAll === val ? "2px solid var(--sport-color)" : "2px solid transparent"}}>
                   {label === "nuevas" ? `🔴 Nuevas (${unread.length})` : `📋 Historial (${read.length})`}
                 </button>
               ))}

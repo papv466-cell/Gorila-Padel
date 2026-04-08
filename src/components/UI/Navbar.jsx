@@ -41,7 +41,7 @@ export default function Navbar({ showBack = false, onBack }) {
 
   return (
     <>
-      <header className="siteHeader" style={{ borderBottom: `1px solid ${sportInfo?.colorBorder || "rgba(116,184,0,0.2)"}` }}>
+      <header className="siteHeader" style={{ borderBottom: `1px solid ${sportInfo?.colorBorder || "rgba(var(--sport-color-rgb, 46,204,113),0.2)"}` }}>
         <div className="headerInner">
           <NavLink to="/" className="headerLogo">
             <img className="headerLogoImg" src="/imglogog.png" alt="Gorila" />
@@ -87,9 +87,9 @@ export default function Navbar({ showBack = false, onBack }) {
           <div className="headerActions">
             {session && showNotif && <span id="btn-notif"><NotificationBell session={session} /></span>}
             {showCarrito && (
-              <Link to="/tienda/carrito" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 999, background: totalItems > 0 ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", border: totalItems > 0 ? "1px solid rgba(116,184,0,0.3)" : "1px solid rgba(255,255,255,0.10)", fontSize: 18, textDecoration: "none", flexShrink: 0 }}>
+              <Link to="/tienda/carrito" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 999, background: totalItems > 0 ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.06)", border: totalItems > 0 ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" : "1px solid rgba(255,255,255,0.10)", fontSize: 18, textDecoration: "none", flexShrink: 0 }}>
                 🛒
-                {totalItems > 0 && <div style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 999, background: "#74B800", color: "#111", fontSize: 11, fontWeight: 950, display: "grid", placeItems: "center", border: "2px solid #000" }}>{totalItems > 9 ? "9+" : totalItems}</div>}
+                {totalItems > 0 && <div style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 999, background: "var(--sport-color)", color: "#111", fontSize: 11, fontWeight: 950, display: "grid", placeItems: "center", border: "2px solid #000" }}>{totalItems > 9 ? "9+" : totalItems}</div>}
               </Link>
             )}
             <button className="headerButton" onClick={onLogout}>Salir</button>
@@ -115,7 +115,7 @@ export default function Navbar({ showBack = false, onBack }) {
             <li className="mobileMenuItem">
               <NavLink to="/tienda/carrito" className={({ isActive }) => `mobileMenuLink ${isActive ? "isActive" : ""}`} onClick={() => setOpen(false)}>
                 <span className="mobileMenuIcon">🛒</span>Carrito
-                {totalItems > 0 && <span style={{ marginLeft: "auto", padding: "3px 8px", borderRadius: 999, background: "#74B800", color: "#111", fontSize: 12, fontWeight: 950 }}>{totalItems}</span>}
+                {totalItems > 0 && <span style={{ marginLeft: "auto", padding: "3px 8px", borderRadius: 999, background: "var(--sport-color)", color: "#111", fontSize: 12, fontWeight: 950 }}>{totalItems}</span>}
               </NavLink>
             </li>
           )}

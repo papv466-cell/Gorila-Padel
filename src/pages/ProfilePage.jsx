@@ -374,11 +374,11 @@ export default function ProfilePage({ session: sessionProp }) {
         .pfSection { background: #111; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 18px; margin-bottom: 12px; }
         .pfLabel { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 5px; }
         .pfInput { width: 100%; padding: 10px 12px; border-radius: 9px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 13px; box-sizing: border-box; }
-        .pfInput:focus { outline: none; border-color: #74B800; }
+        .pfInput:focus { outline: none; border-color: var(--sport-color); }
         .pfGrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media(max-width:480px) { .pfGrid2 { grid-template-columns: 1fr; } }
         .pfBtn { padding: 11px 18px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; border: none; }
-        .pfBtnPrimary { background: linear-gradient(135deg,#74B800,#9BE800); color: #000; }
+        .pfBtnPrimary { background: linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color: #000; }
         .pfBtnGhost { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15) !important; }
         .statBox { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.07); }
         .badgePill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
@@ -418,7 +418,7 @@ export default function ProfilePage({ session: sessionProp }) {
             <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 16 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <img src={shownAvatar} alt="Avatar"
-                  style={{ width: 76, height: 76, borderRadius: 20, objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)", background: "rgba(255,255,255,0.05)" }} />
+                  style={{ width: 76, height: 76, borderRadius: 20, objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)", background: "rgba(255,255,255,0.05)" }} />
                 {stats.red_cards >= 3 && (
                   <div style={{ position: "absolute", top: -6, right: -6, fontSize: 16 }}>🟥</div>
                 )}
@@ -492,8 +492,8 @@ export default function ProfilePage({ session: sessionProp }) {
               <div className="pfField">
                 <label className="pfLabel">🆘 Avisos SOS de partidos</label>
                 <div onClick={() => setForm(p => ({ ...p, sos_enabled: !p.sos_enabled }))}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: form.sos_enabled ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
-                  <div style={{ width: 44, height: 24, borderRadius: 999, background: form.sos_enabled ? "#74B800" : "rgba(255,255,255,0.15)", position: "relative", transition: "background .2s", flexShrink: 0 }}>
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: form.sos_enabled ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+                  <div style={{ width: 44, height: 24, borderRadius: 999, background: form.sos_enabled ? "var(--sport-color)" : "rgba(255,255,255,0.15)", position: "relative", transition: "background .2s", flexShrink: 0 }}>
                     <div style={{ position: "absolute", top: 2, left: form.sos_enabled ? 22 : 2, width: 20, height: 20, borderRadius: 999, background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }} />
                   </div>
                   <div>
@@ -504,10 +504,10 @@ export default function ProfilePage({ session: sessionProp }) {
               </div>
               {form.sos_enabled && (
                 <div className="pfField">
-                  <label className="pfLabel">📡 Radio de avisos SOS: <span style={{ color: "#74B800", fontWeight: 900 }}>{form.sos_radius_km} km</span></label>
+                  <label className="pfLabel">📡 Radio de avisos SOS: <span style={{ color: "var(--sport-color)", fontWeight: 900 }}>{form.sos_radius_km} km</span></label>
                   <input type="range" min={5} max={200} step={5} value={form.sos_radius_km || 50}
                     onChange={e => setForm(p => ({ ...p, sos_radius_km: Number(e.target.value) }))}
-                    style={{ width: "100%", accentColor: "#74B800", cursor: "pointer" }} />
+                    style={{ width: "100%", accentColor: "var(--sport-color)", cursor: "pointer" }} />
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
                     <span>5 km</span><span>50 km</span><span>100 km</span><span>200 km</span>
                   </div>
@@ -518,9 +518,9 @@ export default function ProfilePage({ session: sessionProp }) {
                 <div style={{ display: "flex", gap: 8 }}>
                   {[{ key: "notify_morning", label: "🌅 Mañana", sub: "Antes de las 14h" }, { key: "notify_afternoon", label: "🌆 Tarde", sub: "Después de las 14h" }].map(({ key, label, sub }) => (
                     <div key={key} onClick={() => setForm(p => ({ ...p, [key]: !p[key] }))}
-                      style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: form[key] ? "rgba(116,184,0,0.12)" : "rgba(255,255,255,0.04)", border: form[key] ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: "center" }}>
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: 10, background: form[key] ? "rgba(var(--sport-color-rgb, 46,204,113),0.12)" : "rgba(255,255,255,0.04)", border: form[key] ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: "center" }}>
                       <div style={{ fontSize: 18, marginBottom: 2 }}>{label.split(" ")[0]}</div>
-                      <div style={{ fontSize: 12, fontWeight: 800, color: form[key] ? "#74B800" : "#fff" }}>{label.split(" ")[1]}</div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: form[key] ? "var(--sport-color)" : "#fff" }}>{label.split(" ")[1]}</div>
                       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{sub}</div>
                     </div>
                   ))}
@@ -533,7 +533,7 @@ export default function ProfilePage({ session: sessionProp }) {
                 {(form.followed_clubs || []).length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
                     {(form.followed_clubs || []).map(c => (
-                      <div key={c} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", color: "#74B800", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div key={c} style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", color: "var(--sport-color)", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
                         {c}
                         <span onClick={() => setForm(p => ({ ...p, followed_clubs: (p.followed_clubs || []).filter(x => x !== c) }))} style={{ cursor: "pointer", opacity: 0.6, fontSize: 11 }}>✕</span>
                       </div>
@@ -558,7 +558,7 @@ export default function ProfilePage({ session: sessionProp }) {
             {isClubAdmin && (
               <div style={{ marginTop: 14 }}>
                 <button onClick={() => navigate(myClubId ? `/club-admin?clubId=${myClubId}` : "/club-admin")}
-                  style={{ width: "100%", padding: "12px", borderRadius: 12, background: "linear-gradient(135deg,#1a2a00,#2a4000)", border: "1px solid rgba(116,184,0,0.4)", color: "#74B800", fontWeight: 900, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  style={{ width: "100%", padding: "12px", borderRadius: 12, background: "linear-gradient(135deg,#1a2a00,#2a4000)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)", color: "var(--sport-color)", fontWeight: 900, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🏟️ Panel de administración del club
                 </button>
               </div>
@@ -566,7 +566,7 @@ export default function ProfilePage({ session: sessionProp }) {
             {!isClubAdmin && (
               <div style={{ marginTop: 8 }}>
                 <button onClick={() => navigate("/registrar-club")}
-                  style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.25)", color: "rgba(116,184,0,0.8)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  style={{ width: "100%", padding: "10px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", color: "rgba(var(--sport-color-rgb, 46,204,113),0.8)", fontWeight: 900, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   🏟️ ¿Tienes un club? Regístralo gratis
                 </button>
               </div>
@@ -598,7 +598,7 @@ export default function ProfilePage({ session: sessionProp }) {
           </div>
 
           <div ref={statsRef} className="pfSection">
-            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📊 Mis Stats Gorila</div>
+            <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 14 }}>📊 Mis Stats Gorila</div>
 
             {/* XP Bar */}
             <div style={{ marginBottom: 16 }}>
@@ -618,25 +618,25 @@ export default function ProfilePage({ session: sessionProp }) {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 8 }}>
               <div className="statBox">
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.matches_played}</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>{stats.matches_played}</div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🎾 Partidos</div>
               </div>
               <div className="statBox">
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.pulls_played || 0}</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>{stats.pulls_played || 0}</div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🤝 Pulls</div>
               </div>
               <div className="statBox">
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.trainings_played || 0}</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>{stats.trainings_played || 0}</div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>🏋️ Entrenos</div>
               </div>
               <div className="statBox">
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>{stats.challenges_played || 0}</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>{stats.challenges_played || 0}</div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>⚔️ Retos</div>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 16 }}>
               <div className="statBox">
-                <div style={{ fontSize: 20, fontWeight: 900, color: stats.avg_rating >= 4 ? "#74B800" : "#fff" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: stats.avg_rating >= 4 ? "var(--sport-color)" : "#fff" }}>
                   {stats.rating_count > 0 ? stats.avg_rating.toFixed(1) : "—"}
                 </div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>⭐ Valoración</div>
@@ -646,7 +646,7 @@ export default function ProfilePage({ session: sessionProp }) {
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>💬 Reseñas</div>
               </div>
               <div className="statBox" style={{ borderColor: stats.red_cards > 0 ? "rgba(220,38,38,0.3)" : "rgba(255,255,255,0.07)" }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: stats.red_cards > 0 ? "#ff6b6b" : "#74B800" }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: stats.red_cards > 0 ? "#ff6b6b" : "var(--sport-color)" }}>
                   {stats.red_cards > 0 ? "🟥".repeat(Math.min(stats.red_cards, 3)) : "✅"}
                 </div>
                 <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>T. Rojas</div>
@@ -656,7 +656,7 @@ export default function ProfilePage({ session: sessionProp }) {
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {badges.map(b => (
                 <div key={b.key} title={b.desc} className="badgePill"
-                  style={{ background: b.earned ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.04)", border: b.earned ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)", color: b.earned ? "#fff" : "rgba(255,255,255,0.3)", filter: b.earned ? "none" : "grayscale(1)" }}>
+                  style={{ background: b.earned ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.04)", border: b.earned ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid rgba(255,255,255,0.08)", color: b.earned ? "#fff" : "rgba(255,255,255,0.3)", filter: b.earned ? "none" : "grayscale(1)" }}>
                   <span style={{ fontSize: 16 }}>{b.emoji}</span>
                   <span style={{ fontSize: 11 }}>{b.label}</span>
                 </div>
@@ -670,13 +670,13 @@ export default function ProfilePage({ session: sessionProp }) {
           </div>
 
           <div className="pfSection">
-            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 14 }}>📈 Estadísticas avanzadas</div>
+            <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 14 }}>📈 Estadísticas avanzadas</div>
             <PlayerStats userId={session?.user?.id} />
           </div>
 
           {ratings.length > 0 && (
             <div className="pfSection">
-              <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>
+              <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 12 }}>
                 ⭐ Valoraciones recibidas
                 <span style={{ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.5)", marginLeft: 8 }}>
                   Media: {stats.avg_rating.toFixed(1)} / 5
@@ -702,7 +702,7 @@ export default function ProfilePage({ session: sessionProp }) {
 
           {/* HISTORIAL DE ACTIVIDAD */}
           <div className="pfSection">
-            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>📅 Mi actividad reciente</div>
+            <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 12 }}>📅 Mi actividad reciente</div>
             {historyLoading ? (
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Cargando…</div>
             ) : activityHistory.length === 0 ? (
@@ -711,10 +711,10 @@ export default function ProfilePage({ session: sessionProp }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {activityHistory.map((a, i) => {
                   const typeConfig = {
-                    match: { emoji: "🎾", color: "#74B800", label: "Partido" },
+                    match: { emoji: "🎾", color: "var(--sport-color)", label: "Partido" },
                     pull: { emoji: "🤝", color: "#8b5cf6", label: "Pull" },
                     training: { emoji: "🏋️", color: "#3b82f6", label: "Entrenamiento" },
-                  }[a.type] || { emoji: "🎾", color: "#74B800", label: "" };
+                  }[a.type] || { emoji: "🎾", color: "var(--sport-color)", label: "" };
                   const dateStr = a.date ? new Date(a.date).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -736,7 +736,7 @@ export default function ProfilePage({ session: sessionProp }) {
 
           {/* MIS RESERVAS */}
           <div className="pfSection">
-            <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15, marginBottom: 12 }}>🏟️ Mis reservas de pista</div>
+            <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 12 }}>🏟️ Mis reservas de pista</div>
             {bookingsLoading ? (
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Cargando…</div>
             ) : myBookings.length === 0 ? (
@@ -749,7 +749,7 @@ export default function ProfilePage({ session: sessionProp }) {
                 {myBookings.map(b => {
                   const hoursUntil = (new Date(`${b.date}T00:00:00`) - new Date()) / (1000*60*60);
                   const canCancel = b.status !== 'cancelled' && b.status !== 'completed';
-                  const statusColor = b.status === 'confirmed' ? '#74B800' : b.status === 'cancelled' ? '#ef4444' : '#f59e0b';
+                  const statusColor = b.status === 'confirmed' ? 'var(--sport-color)' : b.status === 'cancelled' ? '#ef4444' : '#f59e0b';
                   const statusLabel = b.status === 'confirmed' ? '✅ Confirmada' : b.status === 'cancelled' ? '❌ Cancelada' : '⏳ Pendiente';
                   return (
                     <div key={b.id} style={{ padding: "12px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: `1px solid ${statusColor}25`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
@@ -776,7 +776,7 @@ export default function ProfilePage({ session: sessionProp }) {
 
           <div ref={favRef} className="pfSection">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div style={{ fontWeight: 900, color: "#74B800", fontSize: 15 }}>
+              <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15 }}>
                 ⭐ Mis profes favoritos
                 {favorites.length > 0 && <span style={{ fontWeight: 400, fontSize: 12, color: "rgba(255,255,255,0.5)", marginLeft: 6 }}>({favorites.length})</span>}
               </div>
@@ -801,7 +801,7 @@ export default function ProfilePage({ session: sessionProp }) {
                         {avatar ? (
                           <img src={avatar} alt={teacherName} style={{ width: 42, height: 42, borderRadius: 999, objectFit: "cover" }} />
                         ) : (
-                          <div style={{ width: 42, height: 42, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 900, background: "rgba(116,184,0,0.15)", color: "#74B800", fontSize: 14 }}>
+                          <div style={{ width: 42, height: 42, borderRadius: 999, display: "grid", placeItems: "center", fontWeight: 900, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", color: "var(--sport-color)", fontSize: 14 }}>
                             {initials(teacherName)}
                           </div>
                         )}

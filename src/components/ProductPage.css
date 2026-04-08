@@ -119,7 +119,7 @@
     font-weight: 900;
     font-size: 14px;
     letter-spacing: 1px;
-    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+    box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.4);
     animation: badgePulse 2s ease-in-out infinite;
   }
   

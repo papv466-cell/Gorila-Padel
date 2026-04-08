@@ -28,7 +28,7 @@ function Avatar({ url, name, size = 40 }) {
   const initials = (name || "?").trim().split(" ").slice(0, 2).map(p => p[0]?.toUpperCase()).join("");
   if (url) return <img src={url} alt={name} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />;
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(116,184,0,0.15)", border: "1px solid rgba(116,184,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 900, color: "#74B800", flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.35, fontWeight: 900, color: "var(--sport-color)", flexShrink: 0 }}>
       {initials}
     </div>
   );
@@ -215,12 +215,12 @@ export default function LeaderboardPage({ session }) {
   }
 
   function getMetric(row) {
-    if (tab === "xp") return { value: row.xp, label: "XP", color: "#74B800" };
-    if (tab === "partidos") return { value: row.partidos, label: row.partidos === 1 ? "partido" : "partidos", color: "#74B800" };
+    if (tab === "xp") return { value: row.xp, label: "XP", color: "var(--sport-color)" };
+    if (tab === "partidos") return { value: row.partidos, label: row.partidos === 1 ? "partido" : "partidos", color: "var(--sport-color)" };
     if (tab === "racha") return { value: row.streak_days, label: row.streak_days === 1 ? "día" : "días", color: "#F97316" };
     if (tab === "global") {
       const lvl = getLevelFromXp(row.xp || 0);
-      return { value: row.xp, label: `XP · Nv.${lvl.level}`, color: "#74B800" };
+      return { value: row.xp, label: `XP · Nv.${lvl.level}`, color: "var(--sport-color)" };
     }
   }
 
@@ -253,7 +253,7 @@ export default function LeaderboardPage({ session }) {
               <button key={c} onClick={() => setClubFilter(c)} style={{
                 flexShrink: 0, padding: "6px 12px", borderRadius: 999, border: "none", cursor: "pointer",
                 fontSize: 12, fontWeight: 800,
-                background: clubFilter === c ? "#74B800" : "rgba(255,255,255,0.07)",
+                background: clubFilter === c ? "var(--sport-color)" : "rgba(255,255,255,0.07)",
                 color: clubFilter === c ? "#000" : "rgba(255,255,255,0.6)",
               }}>
                 {c === "todos" ? "🌍 Todos" : c}
@@ -266,9 +266,9 @@ export default function LeaderboardPage({ session }) {
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)} style={{
                 padding: "10px 4px", borderRadius: 12, border: "none", cursor: "pointer",
-                background: tab === t.id ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.04)",
-                borderBottom: tab === t.id ? "2px solid #74B800" : "2px solid transparent",
-                color: tab === t.id ? "#74B800" : "rgba(255,255,255,0.4)",
+                background: tab === t.id ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.04)",
+                borderBottom: tab === t.id ? "2px solid var(--sport-color)" : "2px solid transparent",
+                color: tab === t.id ? "var(--sport-color)" : "rgba(255,255,255,0.4)",
               }}>
                 <div style={{ fontSize: 16 }}>{t.label.split(" ")[0]}</div>
                 <div style={{ fontSize: 10, fontWeight: 800, marginTop: 2 }}>{t.label.split(" ").slice(1).join(" ")}</div>
@@ -279,10 +279,10 @@ export default function LeaderboardPage({ session }) {
 
           {/* MI POSICIÓN */}
           {myRank && !loading && (
-            <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.08)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 18 }}>📍</span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 900, color: "#74B800" }}>Tu posición: #{myRank}</div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: "var(--sport-color)" }}>Tu posición: #{myRank}</div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
                   {myRank === 1 ? "¡Eres el número 1! 🏆" : `${myRank - 1} posición${myRank - 1 > 1 ? "es" : ""} por encima de ti`}
                 </div>
@@ -315,7 +315,7 @@ export default function LeaderboardPage({ session }) {
                       borderRadius: 14, padding: "12px 14px",
                       display: "flex", alignItems: "center", gap: 12,
                       cursor: "pointer",
-                      outline: isMe ? "2px solid rgba(116,184,0,0.5)" : "none",
+                      outline: isMe ? "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.5)" : "none",
                       transition: "opacity .15s",
                     }}
                   >
@@ -329,9 +329,9 @@ export default function LeaderboardPage({ session }) {
 
                     {/* Nombre */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 900, color: isMe ? "#74B800" : "#fff", display: "flex", alignItems: "center", gap: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: isMe ? "var(--sport-color)" : "#fff", display: "flex", alignItems: "center", gap: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {row.name || row.handle || "Jugador"}
-                        {isMe && <span style={{ fontSize: 10, background: "rgba(116,184,0,0.2)", color: "#74B800", padding: "1px 6px", borderRadius: 999, fontWeight: 800, flexShrink: 0 }}>TÚ</span>}
+                        {isMe && <span style={{ fontSize: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.2)", color: "var(--sport-color)", padding: "1px 6px", borderRadius: 999, fontWeight: 800, flexShrink: 0 }}>TÚ</span>}
                       </div>
                       <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
                         @{row.handle || "—"}

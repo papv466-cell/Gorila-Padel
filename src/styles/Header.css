@@ -48,7 +48,7 @@
   }
   
   .headerLogoText span {
-    color: #74B800;
+    color: var(--sport-color);
   }
   
   /* Menú hamburguesa */
@@ -71,7 +71,7 @@
   
   .menuToggle:hover {
     background: rgba(255, 255, 255, 0.12);
-    border-color: #74B800;
+    border-color: var(--sport-color);
   }
   
   .menuToggle span {
@@ -166,9 +166,9 @@
   
   .mobileMenuLink:hover,
   .mobileMenuLink.isActive {
-    background: rgba(116, 184, 0, 0.1);
-    color: #74B800;
-    border-left-color: #74B800;
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.1);
+    color: var(--sport-color);
+    border-left-color: var(--sport-color);
   }
   
   .mobileMenuIcon {
@@ -203,7 +203,7 @@
     height: 40px;
     border-radius: 10px;
     object-fit: cover;
-    background: rgba(116, 184, 0, 0.2);
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.2);
   }
   
   .mobileMenuUserInfo {
@@ -253,17 +253,17 @@
   
   .headerButton:hover {
     background: rgba(255, 255, 255, 0.12);
-    border-color: #74B800;
+    border-color: var(--sport-color);
   }
   
   .headerButton.primary {
-    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, var(--sport-color) 100%);
     border-color: transparent;
     color: #000;
   }
   
   .headerButton.primary:hover {
-    box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
     transform: translateY(-1px);
   }
   
@@ -305,7 +305,7 @@
     .headerNavLink:hover,
     .headerNavLink.isActive {
       background: rgba(255, 255, 255, 0.08);
-      color: #74B800;
+      color: var(--sport-color);
     }
   
     .mobileMenu,

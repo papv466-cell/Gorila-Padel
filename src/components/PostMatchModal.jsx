@@ -66,24 +66,24 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   ctx.fillRect(0, 0, W, H);
 
   const gradTop = ctx.createRadialGradient(540, 0, 0, 540, 0, 900);
-  gradTop.addColorStop(0, "rgba(116,184,0,0.25)");
+  gradTop.addColorStop(0, "rgba(var(--sport-color-rgb, 46,204,113),0.25)");
   gradTop.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = gradTop;
   ctx.fillRect(0, 0, W, H);
 
   const gradBot = ctx.createLinearGradient(0, 1400, 0, H);
   gradBot.addColorStop(0, "rgba(0,0,0,0)");
-  gradBot.addColorStop(1, "rgba(116,184,0,0.12)");
+  gradBot.addColorStop(1, "rgba(var(--sport-color-rgb, 46,204,113),0.12)");
   ctx.fillStyle = gradBot;
   ctx.fillRect(0, 1400, W, H - 1400);
 
-  ctx.strokeStyle = "rgba(116,184,0,0.06)";
+  ctx.strokeStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.06)";
   ctx.lineWidth = 1;
   for (let i = 0; i < W; i += 80) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
   for (let i = 0; i < H; i += 80) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#74B800";
+  ctx.fillStyle = "var(--sport-color)";
   ctx.font = "bold 64px Arial";
   ctx.fillText("GORILA GO!", W / 2, 140);
   ctx.font = "80px Arial";
@@ -98,9 +98,9 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   ctx.fillText(fecha, W / 2, 368);
 
   const sepGrad = ctx.createLinearGradient(100, 0, W - 100, 0);
-  sepGrad.addColorStop(0, "rgba(116,184,0,0)");
-  sepGrad.addColorStop(0.5, "rgba(116,184,0,0.6)");
-  sepGrad.addColorStop(1, "rgba(116,184,0,0)");
+  sepGrad.addColorStop(0, "rgba(var(--sport-color-rgb, 46,204,113),0)");
+  sepGrad.addColorStop(0.5, "rgba(var(--sport-color-rgb, 46,204,113),0.6)");
+  sepGrad.addColorStop(1, "rgba(var(--sport-color-rgb, 46,204,113),0)");
   ctx.strokeStyle = sepGrad;
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(100, 400); ctx.lineTo(W - 100, 400); ctx.stroke();
@@ -113,7 +113,7 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   drawRoundedRect(ctx, 80, 430, W - 160, 280, 28);
   ctx.fillStyle = "rgba(255,255,255,0.04)";
   ctx.fill();
-  ctx.strokeStyle = "rgba(116,184,0,0.2)";
+  ctx.strokeStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.2)";
   ctx.lineWidth = 1.5;
   ctx.stroke();
   ctx.restore();
@@ -128,13 +128,13 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   ctx.textAlign = "center";
   const winA = totalA > totalB, winB = totalB > totalA;
   ctx.font = "bold 160px Arial";
-  ctx.fillStyle = winA ? "#74B800" : "rgba(255,255,255,0.4)";
+  ctx.fillStyle = winA ? "var(--sport-color)" : "rgba(255,255,255,0.4)";
   ctx.fillText(String(totalA), 260, 640);
   ctx.fillStyle = "rgba(255,255,255,0.15)";
   ctx.font = "bold 80px Arial";
   ctx.fillText("–", W / 2, 620);
   ctx.font = "bold 160px Arial";
-  ctx.fillStyle = winB ? "#74B800" : "rgba(255,255,255,0.4)";
+  ctx.fillStyle = winB ? "var(--sport-color)" : "rgba(255,255,255,0.4)";
   ctx.fillText(String(totalB), W - 260, 640);
 
   if (setsValidos.length > 0) {
@@ -148,12 +148,12 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
     ctx.save();
     drawRoundedRect(ctx, W / 2 - 200, 730, 400, 60, 14);
     const winGrad = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
-    winGrad.addColorStop(0, "rgba(116,184,0,0.3)");
+    winGrad.addColorStop(0, "rgba(var(--sport-color-rgb, 46,204,113),0.3)");
     winGrad.addColorStop(1, "rgba(155,232,0,0.3)");
     ctx.fillStyle = winGrad;
     ctx.fill();
     ctx.restore();
-    ctx.fillStyle = "#9BE800";
+    ctx.fillStyle = "var(--sport-color)";
     ctx.font = "bold 32px Arial";
     ctx.fillText(winA ? "🏆 Victoria Pareja A" : "🏆 Victoria Pareja B", W / 2, 769);
   }
@@ -178,8 +178,8 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
         ctx.arc(px, avatarY, hasGSL ? 58 : 56, 0, Math.PI * 2);
         if (hasGSL) {
           const gslGrad = ctx.createLinearGradient(px - 58, avatarY - 58, px + 58, avatarY + 58);
-          gslGrad.addColorStop(0, "#74B800");
-          gslGrad.addColorStop(1, "#9BE800");
+          gslGrad.addColorStop(0, "var(--sport-color)");
+          gslGrad.addColorStop(1, "var(--sport-color)");
           ctx.strokeStyle = gslGrad;
           ctx.lineWidth = 5;
         } else {
@@ -194,7 +194,7 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
       ctx.save();
       ctx.beginPath();
       ctx.arc(px, avatarY, 52, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(116,184,0,0.15)";
+      ctx.fillStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.15)";
       ctx.fill();
       ctx.restore();
       ctx.font = "52px Arial";
@@ -206,8 +206,8 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
       ctx.save();
       drawRoundedRect(ctx, px - 44, avatarY + 56, 88, 28, 8);
       const badgeGrad = ctx.createLinearGradient(px - 44, 0, px + 44, 0);
-      badgeGrad.addColorStop(0, "#74B800");
-      badgeGrad.addColorStop(1, "#9BE800");
+      badgeGrad.addColorStop(0, "var(--sport-color)");
+      badgeGrad.addColorStop(1, "var(--sport-color)");
       ctx.fillStyle = badgeGrad;
       ctx.fill();
       ctx.restore();
@@ -218,7 +218,7 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
     }
 
     const nombre = p.name || p.profiles_public?.name || p.handle || "Jugador";
-    ctx.fillStyle = hasGSL ? "#9BE800" : "rgba(255,255,255,0.8)";
+    ctx.fillStyle = hasGSL ? "var(--sport-color)" : "rgba(255,255,255,0.8)";
     ctx.font = "bold 26px Arial";
     ctx.textAlign = "center";
     ctx.fillText(nombre.split(" ")[0], px, avatarY + 110 + (hasGSL ? 10 : 0));
@@ -226,13 +226,13 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
 
   ctx.save();
   drawRoundedRect(ctx, W / 2 - 120, 1020, 240, 50, 12);
-  ctx.fillStyle = "rgba(116,184,0,0.12)";
+  ctx.fillStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.12)";
   ctx.fill();
-  ctx.strokeStyle = "rgba(116,184,0,0.3)";
+  ctx.strokeStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.3)";
   ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
-  ctx.fillStyle = "#74B800";
+  ctx.fillStyle = "var(--sport-color)";
   ctx.font = "bold 26px Arial";
   ctx.textAlign = "center";
   ctx.fillText(`🎚️ Nivel ${(match?.level || "").toUpperCase()}`, W / 2, 1053);
@@ -241,11 +241,11 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(100, 1100); ctx.lineTo(W - 100, 1100); ctx.stroke();
 
-  ctx.fillStyle = "rgba(116,184,0,0.7)";
+  ctx.fillStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.7)";
   ctx.font = "bold 34px Arial";
   ctx.fillText("#GorilaoPadel", W / 2, 1820);
   ctx.font = "28px Arial";
-  ctx.fillStyle = "rgba(116,184,0,0.45)";
+  ctx.fillStyle = "rgba(var(--sport-color-rgb, 46,204,113),0.45)";
   ctx.fillText("#PadelInclusivoSinLimites  #GorilasinLimites", W / 2, 1868);
   ctx.fillStyle = "rgba(255,255,255,0.2)";
   ctx.font = "24px Arial";
@@ -354,10 +354,10 @@ export default function PostMatchModal({ match, players, session, onClose }) {
 
   const S = {
     overlay: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 99999, display: "flex", alignItems: "flex-end", justifyContent: "center" },
-    modal: { width: "min(640px,100%)", background: "#111", borderRadius: "24px 24px 0 0", border: "1px solid rgba(116,184,0,0.2)", padding: 24, paddingBottom: "max(32px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" },
-    title: { fontSize: 20, fontWeight: 900, color: "#74B800", marginBottom: 4 },
+    modal: { width: "min(640px,100%)", background: "#111", borderRadius: "24px 24px 0 0", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", padding: 24, paddingBottom: "max(32px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" },
+    title: { fontSize: 20, fontWeight: 900, color: "var(--sport-color)", marginBottom: 4 },
     sub: { fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 20 },
-    btn: (c) => ({ padding: "13px", borderRadius: 12, border: "none", cursor: "pointer", fontWeight: 900, fontSize: 14, width: "100%", background: c === "green" ? "linear-gradient(135deg,#74B800,#9BE800)" : "rgba(255,255,255,0.08)", color: c === "green" ? "#000" : "#fff" }),
+    btn: (c) => ({ padding: "13px", borderRadius: 12, border: "none", cursor: "pointer", fontWeight: 900, fontSize: 14, width: "100%", background: c === "green" ? "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))" : "rgba(255,255,255,0.08)", color: c === "green" ? "#000" : "#fff" }),
     input: { width: 60, padding: "10px 6px", borderRadius: 10, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: 22, fontWeight: 900, textAlign: "center", outline: "none" },
   };
 
@@ -395,7 +395,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
             {otherPlayers.map(p => (
               <div key={p.player_uuid} style={{ marginBottom: 16, padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  {p.avatar_url ? <img src={p.avatar_url} style={{ width: 36, height: 36, borderRadius: 999, objectFit: "cover" }} alt="" /> : <div style={{ width: 36, height: 36, borderRadius: 999, background: "rgba(116,184,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🦍</div>}
+                  {p.avatar_url ? <img src={p.avatar_url} style={{ width: 36, height: 36, borderRadius: 999, objectFit: "cover" }} alt="" /> : <div style={{ width: 36, height: 36, borderRadius: 999, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🦍</div>}
                   <div style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>{p.name || p.handle || "Jugador"}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 10 }}>
@@ -408,7 +408,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
                   {VIBES.map(v => {
                     const sel = ratings[p.player_uuid]?.vibe === v.key;
                     return <button key={v.key} onClick={() => setRatings(prev => ({ ...prev, [p.player_uuid]: { ...prev[p.player_uuid], vibe: sel ? null : v.key } }))}
-                      style={{ padding: "5px 10px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, background: sel ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.06)", color: sel ? "#74B800" : "rgba(255,255,255,0.5)" }}>{v.icon} {v.label}</button>;
+                      style={{ padding: "5px 10px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, background: sel ? "rgba(var(--sport-color-rgb, 46,204,113),0.2)" : "rgba(255,255,255,0.06)", color: sel ? "var(--sport-color)" : "rgba(255,255,255,0.5)" }}>{v.icon} {v.label}</button>;
                   })}
                 </div>
               </div>
@@ -427,13 +427,13 @@ export default function PostMatchModal({ match, players, session, onClose }) {
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24, flexWrap: "wrap" }}>
               {MOODS.map(m => (
                 <button key={m.key} onClick={() => setMood(m.key)}
-                  style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "center", minWidth: 60, background: mood === m.key ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.05)", border: mood === m.key ? "1px solid #74B800" : "1px solid rgba(255,255,255,0.08)" }}>
+                  style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "center", minWidth: 60, background: mood === m.key ? "rgba(var(--sport-color-rgb, 46,204,113),0.2)" : "rgba(255,255,255,0.05)", border: mood === m.key ? "1px solid var(--sport-color)" : "1px solid rgba(255,255,255,0.08)" }}>
                   <div style={{ fontSize: 28 }}>{m.emoji}</div>
-                  <div style={{ fontSize: 10, color: mood === m.key ? "#74B800" : "rgba(255,255,255,0.4)", fontWeight: 800, marginTop: 4 }}>{m.label}</div>
+                  <div style={{ fontSize: 10, color: mood === m.key ? "var(--sport-color)" : "rgba(255,255,255,0.4)", fontWeight: 800, marginTop: 4 }}>{m.label}</div>
                 </button>
               ))}
             </div>
-            <div style={{ padding: 16, borderRadius: 14, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", marginBottom: 16, textAlign: "center" }}>
+            <div style={{ padding: 16, borderRadius: 14, background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)", marginBottom: 16, textAlign: "center" }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>📸</div>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 4 }}>¿Foto del partido?</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Publícala en Gorilandia con el resultado</div>
@@ -450,14 +450,14 @@ export default function PostMatchModal({ match, players, session, onClose }) {
         {step === 4 && !donationStep && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <div style={{ fontSize: 60, marginBottom: 12 }}>🦍</div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¡Buen partido!</div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "var(--sport-color)", marginBottom: 8 }}>¡Buen partido!</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 24 }}>Tus valoraciones han sido enviadas</div>
             {previewUrl && (
               <div style={{ marginBottom: 16 }}>
-                <img src={previewUrl} alt="Story preview" style={{ width: "100%", maxWidth: 280, borderRadius: 16, border: "2px solid rgba(116,184,0,0.3)" }} />
+                <img src={previewUrl} alt="Story preview" style={{ width: "100%", maxWidth: 280, borderRadius: 16, border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" }} />
               </div>
             )}
-            <div style={{ padding: 16, borderRadius: 14, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)", marginBottom: 16 }}>
+            <div style={{ padding: 16, borderRadius: 14, background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)", marginBottom: 16 }}>
               <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", marginBottom: 4 }}>📲 Comparte tu resultado</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12 }}>Imagen para Instagram Stories con resultado y jugadores 🦍</div>
               <button onClick={handleGenerarYCompartir} disabled={sharing} style={{ ...S.btn("green"), fontSize: 13, marginBottom: 8, opacity: sharing ? 0.7 : 1 }}>
@@ -592,9 +592,9 @@ export default function PostMatchModal({ match, players, session, onClose }) {
                     return (
                       <button key={tag} onClick={() => setClubComment(prev => sel ? prev.replace(tag, '').trim() : (prev + ' ' + tag).trim())}
                         style={{ padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
-                          background: sel ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.06)",
-                          color: sel ? "#74B800" : "rgba(255,255,255,0.6)",
-                          outline: sel ? "1px solid rgba(116,184,0,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
+                          background: sel ? "rgba(var(--sport-color-rgb, 46,204,113),0.2)" : "rgba(255,255,255,0.06)",
+                          color: sel ? "var(--sport-color)" : "rgba(255,255,255,0.6)",
+                          outline: sel ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
                         {tag}
                       </button>
                     );

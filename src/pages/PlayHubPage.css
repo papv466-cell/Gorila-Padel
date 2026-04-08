@@ -34,16 +34,16 @@
 
 .gpStatCard:hover {
   transform: translateY(-3px);
-  border-color: #74B800;
-  box-shadow: 0 8px 24px rgba(116, 184, 0, 0.2);
-  background: rgba(116, 184, 0, 0.05);
+  border-color: var(--sport-color);
+  box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.2);
+  background: rgba(var(--sport-color-rgb, 46,204,113), 0.05);
 }
 
 .gpStatValue {
   font-size: 36px;
   font-weight: 900;
   font-family: 'Space Mono', monospace;
-  color: #74B800;
+  color: var(--sport-color);
   margin-bottom: 6px;
   line-height: 1;
 }
@@ -80,7 +80,7 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: #74B800;
+  background: var(--sport-color);
   transform: scaleY(0);
   transition: transform 0.3s;
   z-index: 1;
@@ -101,14 +101,14 @@
   right: 24px;
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+  background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
   border: none;
   border-radius: 50%;
   color: #000;
   font-size: 36px;
   font-weight: 300;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.4);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 998;
   display: flex;
@@ -120,16 +120,16 @@
 
 @keyframes fabPulse {
   0%, 100% {
-    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.4);
+    box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.4);
   }
   50% {
-    box-shadow: 0 8px 32px rgba(116, 184, 0, 0.6);
+    box-shadow: 0 8px 32px rgba(var(--sport-color-rgb, 46,204,113), 0.6);
   }
 }
 
 .gpFabCreate:hover {
   transform: scale(1.1) rotate(90deg);
-  box-shadow: 0 12px 36px rgba(116, 184, 0, 0.7);
+  box-shadow: 0 12px 36px rgba(var(--sport-color-rgb, 46,204,113), 0.7);
   animation: none;
 }
 

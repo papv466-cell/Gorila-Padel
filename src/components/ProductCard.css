@@ -78,8 +78,8 @@
   }
   
   @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 4px 12px rgba(116, 184, 0, 0.3); }
-    50% { box-shadow: 0 4px 20px rgba(116, 184, 0, 0.6); }
+    0%, 100% { box-shadow: 0 4px 12px rgba(var(--sport-color-rgb, 46,204,113), 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(var(--sport-color-rgb, 46,204,113), 0.6); }
   }
   
   .discount-badge {

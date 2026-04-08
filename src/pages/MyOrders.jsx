@@ -30,7 +30,7 @@ export default function MyOrders() {
     pending:   { label: 'Pendiente',  color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)',  icon: '⏳' },
     paid:      { label: 'Pagado',     color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.25)',  icon: '💳' },
     shipped:   { label: 'Enviado',    color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.25)', icon: '🚚' },
-    delivered: { label: 'Entregado',  color: '#74B800', bg: 'rgba(116,184,0,0.12)',  border: 'rgba(116,184,0,0.25)',  icon: '✅' },
+    delivered: { label: 'Entregado',  color: 'var(--sport-color)', bg: 'rgba(var(--sport-color-rgb, 46,204,113),0.12)',  border: 'rgba(var(--sport-color-rgb, 46,204,113),0.25)',  icon: '✅' },
     cancelled: { label: 'Cancelado',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  icon: '❌' },
   };
 
@@ -41,7 +41,7 @@ export default function MyOrders() {
       <style>{`
         @keyframes goFadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .goOrderCard { transition: border-color .15s; }
-        .goOrderCard:hover { border-color: rgba(116,184,0,0.2) !important; }
+        .goOrderCard:hover { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.2) !important; }
       `}</style>
       <div className="pageWrap">
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 60px' }}>
@@ -64,7 +64,7 @@ export default function MyOrders() {
               <div style={{ fontSize: 52 }}>📦</div>
               <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', marginTop: 16, marginBottom: 8 }}>No tienes pedidos aún</div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginBottom: 24 }}>Cuando hagas una compra aparecerá aquí</div>
-              <Link to="/tienda" style={{ padding: '11px 22px', borderRadius: 12, background: '#74B800', color: '#000', fontWeight: 900, textDecoration: 'none', fontSize: 14 }}>
+              <Link to="/tienda" style={{ padding: '11px 22px', borderRadius: 12, background: 'var(--sport-color)', color: '#000', fontWeight: 900, textDecoration: 'none', fontSize: 14 }}>
                 Ir a la tienda →
               </Link>
             </div>
@@ -95,7 +95,7 @@ export default function MyOrders() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                        <span style={{ fontSize: 18, fontWeight: 900, color: '#74B800' }}>€{order.total}</span>
+                        <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--sport-color)' }}>€{order.total}</span>
                         <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16 }}>{isExpanded ? '▲' : '▼'}</span>
                       </div>
                     </div>
@@ -109,14 +109,14 @@ export default function MyOrders() {
                           <div style={{ marginBottom: 16 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                               {STEPS.map((s, i) => (
-                                <div key={s} style={{ fontSize: 10, fontWeight: 800, color: i <= stepIdx ? '#74B800' : 'rgba(255,255,255,0.2)', textAlign: 'center', flex: 1 }}>
+                                <div key={s} style={{ fontSize: 10, fontWeight: 800, color: i <= stepIdx ? 'var(--sport-color)' : 'rgba(255,255,255,0.2)', textAlign: 'center', flex: 1 }}>
                                   {STATUS[s]?.icon}
                                   <div style={{ marginTop: 2 }}>{STATUS[s]?.label}</div>
                                 </div>
                               ))}
                             </div>
                             <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${((stepIdx + 1) / STEPS.length) * 100}%`, background: 'linear-gradient(90deg,#74B800,#9BE800)', borderRadius: 999, transition: 'width .5s' }} />
+                              <div style={{ height: '100%', width: `${((stepIdx + 1) / STEPS.length) * 100}%`, background: 'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))', borderRadius: 999, transition: 'width .5s' }} />
                             </div>
                           </div>
                         )}
@@ -135,7 +135,7 @@ export default function MyOrders() {
                                 <div style={{ fontSize: 13, fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
                                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>x{item.quantity}</div>
                               </div>
-                              <div style={{ fontSize: 14, fontWeight: 900, color: '#74B800', flexShrink: 0 }}>€{(item.price * item.quantity).toFixed(2)}</div>
+                              <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--sport-color)', flexShrink: 0 }}>€{(item.price * item.quantity).toFixed(2)}</div>
                             </div>
                           ))}
                         </div>

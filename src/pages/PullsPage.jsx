@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
 
-const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", alto: "#ef4444", competicion: "#8b5cf6" };
+const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", alto: "#ef4444", competicion: "#8b5cf6" };
 const IS = { width: "100%", padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: 13, boxSizing: "border-box" };
 
 function toDateInputValue(d = new Date()) {
@@ -356,7 +356,7 @@ export default function PullsPage({ session }) {
           <div style={{ padding: "10px 0 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#fff" }}>
-                <span style={{ color: "#74B800" }}>🎯 Pulls</span>
+                <span style={{ color: "var(--sport-color)" }}>🎯 Pulls</span>
               </h1>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Quedadas abiertas de pádel, tenis y pickleball</div>
             </div>
@@ -364,12 +364,12 @@ export default function PullsPage({ session }) {
               {uid && (
                 <button onClick={toggleNotify}
                   title={notifyPulls ? "Desactivar avisos de nuevos pulls" : "Activarme avisos cuando se cree un pull"}
-                  style={{ width: 36, height: 36, borderRadius: 10, background: notifyPulls ? "rgba(116,184,0,0.2)" : "rgba(255,255,255,0.08)", border: notifyPulls ? "1px solid #74B800" : "1px solid transparent", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>
+                  style={{ width: 36, height: 36, borderRadius: 10, background: notifyPulls ? "rgba(var(--sport-color-rgb, 46,204,113),0.2)" : "rgba(255,255,255,0.08)", border: notifyPulls ? "1px solid var(--sport-color)" : "1px solid transparent", cursor: "pointer", fontSize: 16, display: "grid", placeItems: "center" }}>
                   {notifyPulls ? "🔔" : "🔕"}
                 </button>
               )}
               <button onClick={() => setOpenCreate(true)}
-                style={{ padding: "10px 16px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", fontSize: 13, cursor: "pointer" }}>
+                style={{ padding: "10px 16px", borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", fontSize: 13, cursor: "pointer" }}>
                 ➕ Crear
               </button>
             </div>
@@ -380,14 +380,14 @@ export default function PullsPage({ session }) {
             <div style={{ display: "flex", background: "rgba(255,255,255,0.06)", borderRadius: 10, overflow: "hidden" }}>
               {["all", "mine"].map(mode => (
                 <button key={mode} onClick={() => setViewMode(mode)}
-                  style={{ padding: "7px 14px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: viewMode === mode ? "#74B800" : "transparent", color: viewMode === mode ? "#000" : "rgba(255,255,255,0.7)" }}>
+                  style={{ padding: "7px 14px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: viewMode === mode ? "var(--sport-color)" : "transparent", color: viewMode === mode ? "#000" : "rgba(255,255,255,0.7)" }}>
                   {mode === "all" ? "Todos" : "Los míos"}
                 </button>
               ))}
             </div>
             {["", "iniciacion", "medio", "alto", "competicion"].map(lvl => (
               <button key={lvl} onClick={() => setFilterLevel(lvl)}
-                style={{ padding: "5px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, background: filterLevel === lvl ? (LEVEL_COLORS[lvl] || "#74B800") : "rgba(255,255,255,0.08)", color: filterLevel === lvl ? "#000" : "rgba(255,255,255,0.7)" }}>
+                style={{ padding: "5px 10px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800, background: filterLevel === lvl ? (LEVEL_COLORS[lvl] || "var(--sport-color)") : "rgba(255,255,255,0.08)", color: filterLevel === lvl ? "#000" : "rgba(255,255,255,0.7)" }}>
                 {lvl === "" ? "Todos" : lvl.charAt(0).toUpperCase() + lvl.slice(1)}
               </button>
             ))}
@@ -406,7 +406,7 @@ export default function PullsPage({ session }) {
                 Activa 🔔 para que te avisemos cuando se cree uno
               </div>
               <button onClick={() => setOpenCreate(true)}
-                style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
+                style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
                 ➕ Crear pull
               </button>
             </div>
@@ -418,14 +418,14 @@ export default function PullsPage({ session }) {
                 const isJoined = pullJoiners.some(j => j.user_id === uid);
                 const isFav = favorites.has(pull.id);
                 const isWL = waitlist.has(pull.id);
-                const levelColor = LEVEL_COLORS[pull.level] || "#74B800";
+                const levelColor = LEVEL_COLORS[pull.level] || "var(--sport-color)";
                 const spotsLeft = pull.total_spots - pull.filled_spots;
                 const isFull = pull.status === "full" || spotsLeft <= 0;
                 const creator = profiles[pull.created_by_user];
                 const canChat = isMine || isJoined;
 
                 return (
-                  <div key={pull.id} style={{ background: "#111", borderRadius: 14, border: `1px solid ${isFull ? "rgba(255,165,0,0.3)" : "rgba(116,184,0,0.2)"}`, overflow: "hidden" }}>
+                  <div key={pull.id} style={{ background: "#111", borderRadius: 14, border: `1px solid ${isFull ? "rgba(255,165,0,0.3)" : "rgba(var(--sport-color-rgb, 46,204,113),0.2)"}`, overflow: "hidden" }}>
                     {/* HEAD */}
                     <div style={{ padding: "10px 14px", background: "#000", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => navigate(`/usuario/${pull.created_by_user}`)}>
@@ -437,7 +437,7 @@ export default function PullsPage({ session }) {
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         {isMine && <span style={{ fontSize: 10, color: "#FFD700", fontWeight: 900 }}>👑 Tuyo</span>}
                         {isFull && <span style={{ fontSize: 10, color: "#FFA500", fontWeight: 900, background: "rgba(255,165,0,0.15)", padding: "2px 8px", borderRadius: 999 }}>🔒 Completo</span>}
-                        {isJoined && !isMine && <span style={{ fontSize: 10, color: "#74B800", fontWeight: 900 }}>✅ Apuntado</span>}
+                        {isJoined && !isMine && <span style={{ fontSize: 10, color: "var(--sport-color)", fontWeight: 900 }}>✅ Apuntado</span>}
                         {isWL && <span style={{ fontSize: 10, color: "#f59e0b", fontWeight: 900 }}>⏳ En espera</span>}
                       </div>
                     </div>
@@ -451,19 +451,19 @@ export default function PullsPage({ session }) {
                         <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)" }}>⏱️ {pull.duration_min}min</span>
                         <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: `${levelColor}20`, color: levelColor, fontWeight: 800 }}>🎚️ {pull.level}</span>
                         {pull.club_name && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)" }}>📍 {pull.club_name}</span>}
-                        {pull.price_per_spot > 0 && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "rgba(116,184,0,0.12)", color: "#74B800", fontWeight: 800 }}>💶 {pull.price_per_spot}€/plaza</span>}
+                        {pull.price_per_spot > 0 && <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 999, background: "rgba(var(--sport-color-rgb, 46,204,113),0.12)", color: "var(--sport-color)", fontWeight: 800 }}>💶 {pull.price_per_spot}€/plaza</span>}
                       </div>
 
                       {/* Barra plazas */}
                       <div style={{ marginBottom: 12 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>Plazas</span>
-                          <span style={{ fontSize: 11, fontWeight: 900, color: isFull ? "#FFA500" : "#74B800" }}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: isFull ? "#FFA500" : "var(--sport-color)" }}>
                             {pull.filled_spots}/{pull.total_spots} · {spotsLeft > 0 ? `${spotsLeft} libre${spotsLeft > 1 ? "s" : ""}` : "Completo"}
                           </span>
                         </div>
                         <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
-                          <div style={{ height: "100%", borderRadius: 999, background: isFull ? "#FFA500" : "linear-gradient(90deg,#74B800,#9BE800)", width: `${Math.min(100, (pull.filled_spots / pull.total_spots) * 100)}%`, transition: "width .3s" }} />
+                          <div style={{ height: "100%", borderRadius: 999, background: isFull ? "#FFA500" : "linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))", width: `${Math.min(100, (pull.filled_spots / pull.total_spots) * 100)}%`, transition: "width .3s" }} />
                         </div>
                         {pullJoiners.length > 0 && (
                           <div style={{ display: "flex", gap: 4, marginTop: 6 }}>
@@ -471,7 +471,7 @@ export default function PullsPage({ session }) {
                               const p = profiles[j.user_id];
                               return p?.avatar_url
                                 ? <img key={j.user_id} src={p.avatar_url} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover", border: "1.5px solid #111" }} />
-                                : <div key={j.user_id} style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(116,184,0,0.2)", display: "grid", placeItems: "center", fontSize: 10, border: "1.5px solid #111" }}>🦍</div>;
+                                : <div key={j.user_id} style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.2)", display: "grid", placeItems: "center", fontSize: 10, border: "1.5px solid #111" }}>🦍</div>;
                             })}
                             {pullJoiners.length > 10 && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", alignSelf: "center" }}>+{pullJoiners.length - 10}</span>}
                           </div>
@@ -482,7 +482,7 @@ export default function PullsPage({ session }) {
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {!isMine && !isJoined && !isFull && (
                           <button onClick={() => handleJoin(pull)}
-                            style={{ flex: 1, minWidth: 80, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
+                            style={{ flex: 1, minWidth: 80, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
                             🎯 Apuntarme
                           </button>
                         )}
@@ -553,13 +553,13 @@ export default function PullsPage({ session }) {
                       return (
                         <div key={msg.id} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", alignItems: "flex-end", gap: 6 }}>
                           {!isMe && (
-                            <div style={{ width: 26, height: 26, borderRadius: 999, overflow: "hidden", background: "rgba(116,184,0,0.2)", flexShrink: 0, display: "grid", placeItems: "center", visibility: showName ? "visible" : "hidden" }}>
-                              {prof?.avatar_url ? <img src={prof.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12, fontWeight: 900, color: "#74B800" }}>{pname[0]?.toUpperCase()}</span>}
+                            <div style={{ width: 26, height: 26, borderRadius: 999, overflow: "hidden", background: "rgba(var(--sport-color-rgb, 46,204,113),0.2)", flexShrink: 0, display: "grid", placeItems: "center", visibility: showName ? "visible" : "hidden" }}>
+                              {prof?.avatar_url ? <img src={prof.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12, fontWeight: 900, color: "var(--sport-color)" }}>{pname[0]?.toUpperCase()}</span>}
                             </div>
                           )}
                           <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start", gap: 2 }}>
-                            {showName && <div style={{ fontSize: 10, color: "#74B800", fontWeight: 800, paddingLeft: 4 }}>{pname}</div>}
-                            <div style={{ padding: "8px 12px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: isMe ? "linear-gradient(135deg,#74B800,#9BE800)" : "rgba(255,255,255,0.09)", color: isMe ? "#000" : "#fff", fontSize: 13, lineHeight: 1.4, overflowWrap: "anywhere", fontWeight: isMe ? 700 : 400 }}>
+                            {showName && <div style={{ fontSize: 10, color: "var(--sport-color)", fontWeight: 800, paddingLeft: 4 }}>{pname}</div>}
+                            <div style={{ padding: "8px 12px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: isMe ? "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))" : "rgba(255,255,255,0.09)", color: isMe ? "#000" : "#fff", fontSize: 13, lineHeight: 1.4, overflowWrap: "anywhere", fontWeight: isMe ? 700 : 400 }}>
                               {msg.message}
                             </div>
                             <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>{timeAgo(msg.created_at)}</div>
@@ -576,7 +576,7 @@ export default function PullsPage({ session }) {
                 placeholder="Escribe un mensaje…"
                 style={{ flex: 1, padding: "10px 14px", borderRadius: 999, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, outline: "none" }} />
               <button onClick={sendChat} disabled={!chatText.trim()}
-                style={{ width: 38, height: 38, borderRadius: 999, background: chatText.trim() ? "linear-gradient(135deg,#74B800,#9BE800)" : "rgba(255,255,255,0.08)", border: "none", color: chatText.trim() ? "#000" : "rgba(255,255,255,0.3)", cursor: chatText.trim() ? "pointer" : "default", fontSize: 18, display: "grid", placeItems: "center", fontWeight: 900 }}>↑</button>
+                style={{ width: 38, height: 38, borderRadius: 999, background: chatText.trim() ? "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))" : "rgba(255,255,255,0.08)", border: "none", color: chatText.trim() ? "#000" : "rgba(255,255,255,0.3)", cursor: chatText.trim() ? "pointer" : "default", fontSize: 18, display: "grid", placeItems: "center", fontWeight: 900 }}>↑</button>
             </div>
           </div>
         </div>
@@ -587,7 +587,7 @@ export default function PullsPage({ session }) {
         <div onClick={() => setInviteOpenFor(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 29000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: "min(560px,100%)", background: "#111", borderRadius: 18, border: "1px solid rgba(255,255,255,0.14)", padding: 16, maxHeight: "70vh", overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <div style={{ fontWeight: 900, color: "#74B800", fontSize: 16 }}>📣 Invitar jugadores</div>
+              <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 16 }}>📣 Invitar jugadores</div>
               <button onClick={() => setInviteOpenFor(null)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, color: "#fff", padding: "4px 10px", cursor: "pointer", fontWeight: 900 }}>✕</button>
             </div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>"{invitePull.title}" · {formatWhen(invitePull.start_at)}</div>
@@ -596,7 +596,7 @@ export default function PullsPage({ session }) {
               <div style={{ marginBottom: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {inviteSelected.map(id => (
                   <button key={id} onClick={() => setInviteSelected(prev => prev.filter(x => x !== id))}
-                    style={{ padding: "3px 8px", borderRadius: 8, background: "rgba(116,184,0,0.2)", border: "1px solid #74B800", color: "#fff", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>
+                    style={{ padding: "3px 8px", borderRadius: 8, background: "rgba(var(--sport-color-rgb, 46,204,113),0.2)", border: "1px solid var(--sport-color)", color: "#fff", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>
                     {profiles[id]?.name || id.slice(0, 8)} ✕
                   </button>
                 ))}
@@ -611,7 +611,7 @@ export default function PullsPage({ session }) {
                     const sel = inviteSelected.includes(pid);
                     return (
                       <button key={pid} onClick={() => setInviteSelected(prev => prev.includes(pid) ? prev.filter(x => x !== pid) : [...prev, pid].slice(0, 10))}
-                        style={{ width: "100%", textAlign: "left", marginBottom: 6, padding: 10, borderRadius: 10, border: `1px solid ${sel ? "#74B800" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(116,184,0,0.18)" : "rgba(255,255,255,0.04)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                        style={{ width: "100%", textAlign: "left", marginBottom: 6, padding: 10, borderRadius: 10, border: `1px solid ${sel ? "var(--sport-color)" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(var(--sport-color-rgb, 46,204,113),0.18)" : "rgba(255,255,255,0.04)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                         {p.avatar_url ? <img src={p.avatar_url} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 20 }}>🦍</span>}
                         <div>
                           <div style={{ fontWeight: 900, fontSize: 13 }}>{sel ? "✅ " : ""}{p.name || p.handle}</div>
@@ -623,7 +623,7 @@ export default function PullsPage({ session }) {
             }
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button onClick={() => sendInvites(invitePull)} disabled={inviteBusy || inviteSelected.length === 0}
-                style={{ flex: 1, padding: 12, borderRadius: 10, background: inviteBusy || inviteSelected.length === 0 ? "rgba(116,184,0,0.3)" : "#74B800", color: "#000", fontWeight: 900, border: "none", cursor: inviteBusy || inviteSelected.length === 0 ? "not-allowed" : "pointer", fontSize: 13 }}>
+                style={{ flex: 1, padding: 12, borderRadius: 10, background: inviteBusy || inviteSelected.length === 0 ? "rgba(var(--sport-color-rgb, 46,204,113),0.3)" : "var(--sport-color)", color: "#000", fontWeight: 900, border: "none", cursor: inviteBusy || inviteSelected.length === 0 ? "not-allowed" : "pointer", fontSize: 13 }}>
                 {inviteBusy ? "Enviando…" : `📣 Invitar${inviteSelected.length ? ` (${inviteSelected.length})` : ""}`}
               </button>
               <button onClick={() => { setInviteQuery(""); setInviteResults([]); setInviteSelected([]); }}
@@ -636,8 +636,8 @@ export default function PullsPage({ session }) {
       {/* MODAL CREAR */}
       {openCreate && (
         <div onClick={() => setOpenCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20, backdropFilter: "blur(4px)" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 20, padding: 24, maxWidth: 500, width: "100%", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(116,184,0,0.25)" }}>
-            <h2 style={{ color: "#74B800", marginBottom: 20, fontSize: 18, fontWeight: 900 }}>🎯 Crear Pull</h2>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 20, padding: 24, maxWidth: 500, width: "100%", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)" }}>
+            <h2 style={{ color: "var(--sport-color)", marginBottom: 20, fontSize: 18, fontWeight: 900 }}>🎯 Crear Pull</h2>
             {saveError && <div style={{ background: "rgba(220,38,38,0.2)", padding: 10, borderRadius: 8, color: "#ff6b6b", marginBottom: 12, fontSize: 12, fontWeight: 700 }}>{saveError}</div>}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
@@ -693,7 +693,7 @@ export default function PullsPage({ session }) {
               </div>
               <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                 <button onClick={handleCreate} disabled={saving}
-                  style={{ flex: 1, padding: 14, borderRadius: 12, background: saving ? "rgba(116,184,0,0.4)" : "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
+                  style={{ flex: 1, padding: 14, borderRadius: 12, background: saving ? "rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
                   {saving ? "⏳ Creando..." : "✅ Crear Pull"}
                 </button>
                 <button onClick={() => setOpenCreate(false)}

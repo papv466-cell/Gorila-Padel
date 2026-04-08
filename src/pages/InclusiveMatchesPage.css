@@ -37,7 +37,7 @@
   padding: 16px;
   background: rgba(0,0,0,0.95);
   backdrop-filter: blur(15px);
-  border-bottom: 2px solid rgba(116,184,0,0.3);
+  border-bottom: 2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3);
 }
 
 .gpClubName {
@@ -136,8 +136,8 @@
 }
 
 .gpBadge {
-  background: rgba(116,184,0,0.2) !important;
-  border: 2px solid rgba(116,184,0,0.5) !important;
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.2) !important;
+  border: 2px solid rgba(var(--sport-color-rgb, 46,204,113),0.5) !important;
   padding: 10px 18px !important;
   border-radius: 999px;
   font-size: 15px !important;
@@ -156,8 +156,8 @@
 }
 
 .gpInfoChip {
-  background: rgba(116,184,0,0.2) !important;
-  border: 2px solid rgba(116,184,0,0.5) !important;
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.2) !important;
+  border: 2px solid rgba(var(--sport-color-rgb, 46,204,113),0.5) !important;
   padding: 10px 16px !important;
   border-radius: 999px;
   font-size: 9px !important;
@@ -171,7 +171,7 @@
 /* ==================== DIVIDER ==================== */
 .gpDivider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(116,184,0,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--sport-color-rgb, 46,204,113),0.5), transparent);
 }
 
 /* ==================== BOTONES ==================== */
@@ -181,7 +181,7 @@
   gap: 12px;
   flex-wrap: wrap;
   background: #1a1a1a !important;
-  border-top: 2px solid rgba(116,184,0,0.3);
+  border-top: 2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3);
 }
 
 .gpActionBtn {
@@ -190,9 +190,9 @@
   font-size: 15px;
   font-weight: 900;
   cursor: pointer;
-  background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+  background: linear-gradient(135deg, var(--sport-color) 0%, var(--sport-color) 100%);
   color: #ffffff !important;
-  border: 2px solid #74B800;
+  border: 2px solid var(--sport-color);
   text-shadow: none !important;
 }
 
@@ -203,7 +203,7 @@
 }
 
 .gpActionBtn.secondary {
-  background: rgba(116,184,0,0.85);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.85);
 }
 
 .gpActionBtn.danger {
@@ -228,14 +228,14 @@
 }
 
 .gpDayPill.hasMatches:not(.isActive) .gpDayNumber {
-  color: #74B800;
+  color: var(--sport-color);
   font-weight: 950;
   animation: pulse 1.8s ease-in-out infinite;
 }
 
 .gpDayPill.isActive {
-  background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
-  border: 3px solid #74B800;
+  background: linear-gradient(135deg, var(--sport-color) 0%, var(--sport-color) 100%);
+  border: 3px solid var(--sport-color);
 }
 
 .gpDayPill.isActive .gpDayLabel,

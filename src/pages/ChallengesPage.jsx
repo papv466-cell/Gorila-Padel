@@ -8,7 +8,7 @@ const IS = { width: "100%", padding: "10px 12px", borderRadius: 10, background: 
 
 const STATUS_LABELS = {
   pending: { label: "⏳ Pendiente", color: "#f59e0b" },
-  accepted: { label: "✅ Aceptado", color: "#74B800" },
+  accepted: { label: "✅ Aceptado", color: "var(--sport-color)" },
   rejected: { label: "❌ Rechazado", color: "#ef4444" },
   expired: { label: "💨 Expirado", color: "rgba(255,255,255,0.3)" },
   completed: { label: "🏆 Completado", color: "#8b5cf6" },
@@ -47,7 +47,7 @@ function SearchInput({ label, query, setQuery, results, onSelect, selected, plac
     <div>
       <label style={{ color: "#fff", display: "block", marginBottom: 6, fontSize: 12, fontWeight: 700 }}>{label}</label>
       {selected ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(116,184,0,0.12)", border: "1px solid rgba(116,184,0,0.3)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.12)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" }}>
           {selected.avatar_url ? <img src={selected.avatar_url} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover" }} /> : <span>🦍</span>}
           <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", flex: 1 }}>{selected.name || selected.handle}</span>
           <button onClick={() => onSelect(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16 }}>✕</button>
@@ -316,12 +316,12 @@ export default function ChallengesPage({ session }) {
           <div style={{ padding: "10px 0 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: "#fff" }}>
-                <span style={{ color: "#74B800" }}>⚔️ Retos</span>
+                <span style={{ color: "var(--sport-color)" }}>⚔️ Retos</span>
               </h1>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Pareja vs pareja</div>
             </div>
             <button onClick={() => setOpenCreate(true)}
-              style={{ padding: "10px 16px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", fontSize: 13, cursor: "pointer" }}>
+              style={{ padding: "10px 16px", borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", fontSize: 13, cursor: "pointer" }}>
               ⚔️ Retar
             </button>
           </div>
@@ -334,7 +334,7 @@ export default function ChallengesPage({ session }) {
               { key: "incoming", label: `Recibidos${incomingCount > 0 ? ` (${incomingCount})` : ""}` },
             ].map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                style={{ flex: 1, padding: "8px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: tab === t.key ? "#74B800" : "transparent", color: tab === t.key ? "#000" : "rgba(255,255,255,0.7)" }}>
+                style={{ flex: 1, padding: "8px", border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: tab === t.key ? "var(--sport-color)" : "transparent", color: tab === t.key ? "#000" : "rgba(255,255,255,0.7)" }}>
                 {t.label}
               </button>
             ))}
@@ -351,7 +351,7 @@ export default function ChallengesPage({ session }) {
               <div style={{ fontWeight: 900, color: "#fff", fontSize: 16 }}>No hay retos</div>
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 6, marginBottom: 16 }}>¿Te atreves a retar a otra pareja?</div>
               <button onClick={() => setOpenCreate(true)}
-                style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
+                style={{ padding: "10px 20px", borderRadius: 10, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
                 ⚔️ Crear reto
               </button>
             </div>
@@ -380,7 +380,7 @@ export default function ChallengesPage({ session }) {
                       {/* Equipos */}
                       <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center", marginBottom: 12 }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <div style={{ fontSize: 10, color: "#74B800", fontWeight: 900, marginBottom: 2 }}>RETADORES</div>
+                          <div style={{ fontSize: 10, color: "var(--sport-color)", fontWeight: 900, marginBottom: 2 }}>RETADORES</div>
                           <PlayerChip userId={c.challenger_1} profiles={profiles} navigate={navigate} label="Creador" />
                           {c.challenger_2 && <PlayerChip userId={c.challenger_2} profiles={profiles} navigate={navigate} label={c.challenger_2_accepted ? "✅ Aceptó" : "⏳ Pendiente"} />}
                         </div>
@@ -403,7 +403,7 @@ export default function ChallengesPage({ session }) {
                         {needsPartnerAccept && (
                           <>
                             <button onClick={() => handlePartnerAccept(c)}
-                              style={{ flex: 1, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
+                              style={{ flex: 1, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
                               ✅ Confirmar compañero
                             </button>
                             <button onClick={() => handleReject(c)}
@@ -415,7 +415,7 @@ export default function ChallengesPage({ session }) {
                         {needsChallengedAccept && (
                           <>
                             <button onClick={() => handleChallengedAccept(c)}
-                              style={{ flex: 1, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
+                              style={{ flex: 1, padding: "9px", borderRadius: 10, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 13 }}>
                               ⚔️ Aceptar reto
                             </button>
                             <button onClick={() => handleReject(c)}
@@ -426,7 +426,7 @@ export default function ChallengesPage({ session }) {
                         )}
                         {canChat && (
                           <button onClick={() => { setChatOpenFor(c.id); loadChat(c.id); }}
-                            style={{ flex: 1, padding: "9px", borderRadius: 10, background: "rgba(116,184,0,0.12)", color: "#74B800", fontWeight: 900, border: "1px solid rgba(116,184,0,0.3)", cursor: "pointer", fontSize: 13 }}>
+                            style={{ flex: 1, padding: "9px", borderRadius: 10, background: "rgba(var(--sport-color-rgb, 46,204,113),0.12)", color: "var(--sport-color)", fontWeight: 900, border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", cursor: "pointer", fontSize: 13 }}>
                             💬 Chat del reto
                           </button>
                         )}
@@ -480,13 +480,13 @@ export default function ChallengesPage({ session }) {
                       return (
                         <div key={msg.id} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", alignItems: "flex-end", gap: 6 }}>
                           {!isMe && (
-                            <div style={{ width: 26, height: 26, borderRadius: 999, overflow: "hidden", background: "rgba(116,184,0,0.2)", flexShrink: 0, display: "grid", placeItems: "center", visibility: showName ? "visible" : "hidden" }}>
-                              {prof?.avatar_url ? <img src={prof.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12, fontWeight: 900, color: "#74B800" }}>{pname[0]?.toUpperCase()}</span>}
+                            <div style={{ width: 26, height: 26, borderRadius: 999, overflow: "hidden", background: "rgba(var(--sport-color-rgb, 46,204,113),0.2)", flexShrink: 0, display: "grid", placeItems: "center", visibility: showName ? "visible" : "hidden" }}>
+                              {prof?.avatar_url ? <img src={prof.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12, fontWeight: 900, color: "var(--sport-color)" }}>{pname[0]?.toUpperCase()}</span>}
                             </div>
                           )}
                           <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start", gap: 2 }}>
-                            {showName && <div style={{ fontSize: 10, color: "#74B800", fontWeight: 800, paddingLeft: 4 }}>{pname}</div>}
-                            <div style={{ padding: "8px 12px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: isMe ? "linear-gradient(135deg,#74B800,#9BE800)" : "rgba(255,255,255,0.09)", color: isMe ? "#000" : "#fff", fontSize: 13, lineHeight: 1.4, overflowWrap: "anywhere", fontWeight: isMe ? 700 : 400 }}>
+                            {showName && <div style={{ fontSize: 10, color: "var(--sport-color)", fontWeight: 800, paddingLeft: 4 }}>{pname}</div>}
+                            <div style={{ padding: "8px 12px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", background: isMe ? "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))" : "rgba(255,255,255,0.09)", color: isMe ? "#000" : "#fff", fontSize: 13, lineHeight: 1.4, overflowWrap: "anywhere", fontWeight: isMe ? 700 : 400 }}>
                               {msg.message}
                             </div>
                             <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>{timeAgo(msg.created_at)}</div>
@@ -503,7 +503,7 @@ export default function ChallengesPage({ session }) {
                 placeholder="Acordad fecha, club, hora…"
                 style={{ flex: 1, padding: "10px 14px", borderRadius: 999, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, outline: "none" }} />
               <button onClick={sendChat} disabled={!chatText.trim()}
-                style={{ width: 38, height: 38, borderRadius: 999, background: chatText.trim() ? "linear-gradient(135deg,#74B800,#9BE800)" : "rgba(255,255,255,0.08)", border: "none", color: chatText.trim() ? "#000" : "rgba(255,255,255,0.3)", cursor: chatText.trim() ? "pointer" : "default", fontSize: 18, display: "grid", placeItems: "center", fontWeight: 900 }}>↑</button>
+                style={{ width: 38, height: 38, borderRadius: 999, background: chatText.trim() ? "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))" : "rgba(255,255,255,0.08)", border: "none", color: chatText.trim() ? "#000" : "rgba(255,255,255,0.3)", cursor: chatText.trim() ? "pointer" : "default", fontSize: 18, display: "grid", placeItems: "center", fontWeight: 900 }}>↑</button>
             </div>
           </div>
         </div>
@@ -512,13 +512,13 @@ export default function ChallengesPage({ session }) {
       {/* MODAL CREAR RETO */}
       {openCreate && (
         <div onClick={() => setOpenCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, padding: 20, backdropFilter: "blur(4px)" }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 20, padding: 24, maxWidth: 480, width: "100%", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(116,184,0,0.25)" }}>
-            <h2 style={{ color: "#74B800", marginBottom: 6, fontSize: 18, fontWeight: 900 }}>⚔️ Nuevo Reto</h2>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 20, padding: 24, maxWidth: 480, width: "100%", maxHeight: "85vh", overflowY: "auto", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)" }}>
+            <h2 style={{ color: "var(--sport-color)", marginBottom: 6, fontSize: 18, fontWeight: 900 }}>⚔️ Nuevo Reto</h2>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>Tu pareja vs otra pareja</div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div style={{ padding: "12px", borderRadius: 12, background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.15)" }}>
-                <div style={{ fontSize: 11, color: "#74B800", fontWeight: 900, marginBottom: 10 }}>TU EQUIPO</div>
+              <div style={{ padding: "12px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)" }}>
+                <div style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 900, marginBottom: 10 }}>TU EQUIPO</div>
                 <SearchInput
                   label="Tu compañero *"
                   query={partnerQuery} setQuery={setPartnerQuery}
@@ -556,7 +556,7 @@ export default function ChallengesPage({ session }) {
 
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={handleCreate} disabled={saving || !selectedPartner || !selectedOpp1 || !selectedOpp2}
-                  style={{ flex: 1, padding: 14, borderRadius: 12, background: saving || !selectedPartner || !selectedOpp1 || !selectedOpp2 ? "rgba(116,184,0,0.3)" : "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
+                  style={{ flex: 1, padding: 14, borderRadius: 12, background: saving || !selectedPartner || !selectedOpp1 || !selectedOpp2 ? "rgba(var(--sport-color-rgb, 46,204,113),0.3)" : "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 14 }}>
                   {saving ? "⏳ Enviando…" : "⚔️ Enviar reto"}
                 </button>
                 <button onClick={() => setOpenCreate(false)}

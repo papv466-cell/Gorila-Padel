@@ -32,7 +32,7 @@ function PayForm({ slotData, onSuccess, extraDonation = 0.10, splitEnabled = fal
       <PaymentElement options={{ layout: "tabs" }} />
       {error && <div style={{marginTop:10,padding:10,borderRadius:8,background:"rgba(239,68,68,0.15)",color:"#ff6b6b",fontSize:12}}>{error}</div>}
       <button type="submit" disabled={!stripe||loading}
-        style={{marginTop:16,width:"100%",padding:14,borderRadius:12,background:loading?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:loading?"not-allowed":"pointer",fontSize:14}}>
+        style={{marginTop:16,width:"100%",padding:14,borderRadius:12,background:loading?"rgba(var(--sport-color-rgb, 46,204,113),0.4)":"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000",fontWeight:900,border:"none",cursor:loading?"not-allowed":"pointer",fontSize:14}}>
         {loading ? "Procesando…" : (() => {
           const base = splitEnabled ? (slotData?.price||0)/4 : (slotData?.price||0);
           const total = (base + 0.10 + extraDonation + 0.10).toFixed(2);
@@ -94,19 +94,19 @@ export default function CourtCheckoutPage() {
     setTimeout(() => navigate("/partidos"), 3000);
   }
 
-  const appearance = { theme:"night", variables:{ colorPrimary:"#74B800", colorBackground:"#111", colorText:"#ffffff", colorDanger:"#ef4444", fontFamily:"system-ui", borderRadius:"10px" } };
+  const appearance = { theme:"night", variables:{ colorPrimary:"var(--sport-color)", colorBackground:"#111", colorText:"#ffffff", colorDanger:"#ef4444", fontFamily:"system-ui", borderRadius:"10px" } };
 
   return (
     <div style={{background:"#0a0a0a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-      <div style={{width:"100%",maxWidth:440,background:"#111",borderRadius:20,border:"1px solid rgba(116,184,0,0.2)",padding:24}}>
+      <div style={{width:"100%",maxWidth:440,background:"#111",borderRadius:20,border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)",padding:24}}>
         <button onClick={()=>navigate(-1)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}}>← Volver</button>
-        <h2 style={{color:"#74B800",fontWeight:900,fontSize:20,margin:"0 0 4px"}}>💳 Pagar reserva</h2>
+        <h2 style={{color:"var(--sport-color)",fontWeight:900,fontSize:20,margin:"0 0 4px"}}>💳 Pagar reserva</h2>
 
         {slotData && (
-          <div style={{padding:"10px 14px",borderRadius:10,background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.15)",marginBottom:20}}>
+          <div style={{padding:"10px 14px",borderRadius:10,background:"rgba(var(--sport-color-rgb, 46,204,113),0.08)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)",marginBottom:20}}>
             <div style={{fontSize:13,fontWeight:900,color:"#fff"}}>{slotData.courtName}</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:3}}>📅 {slotData.date} · 🕐 {slotData.startTime}–{slotData.endTime}</div>
-            <div style={{fontSize:20,fontWeight:900,color:"#74B800",marginTop:6}}>
+            <div style={{fontSize:20,fontWeight:900,color:"var(--sport-color)",marginTop:6}}>
               {splitEnabled ? `${(slotData.price/4).toFixed(2)}€` : `${slotData.price}€`}
               {splitEnabled && <span style={{fontSize:12,color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:6}}>tu parte (1/4)</span>}
             </div>
@@ -160,7 +160,7 @@ export default function CourtCheckoutPage() {
         {success ? (
           <div style={{textAlign:"center",padding:20}}>
             <div style={{fontSize:48,marginBottom:12}}>✅</div>
-            <div style={{fontSize:18,fontWeight:900,color:"#74B800"}}>¡Pago completado!</div>
+            <div style={{fontSize:18,fontWeight:900,color:"var(--sport-color)"}}>¡Pago completado!</div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.4)",marginTop:6}}>Redirigiendo…</div>
           </div>
         ) : loading ? (

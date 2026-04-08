@@ -138,12 +138,12 @@
     font-size: 14px;
     letter-spacing: 0.5px;
     transition: all 0.3s;
-    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .btn-continue-shopping:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(116, 184, 0, 0.5);
+    box-shadow: 0 12px 32px rgba(var(--sport-color-rgb, 46,204,113), 0.5);
   }
   
   /* ============================================
@@ -318,7 +318,7 @@
     color: var(--text-secondary);
     text-align: center;
     padding: 12px;
-    background: rgba(116, 184, 0, 0.1);
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.1);
     border-radius: 8px;
     margin-bottom: 16px;
   }
@@ -357,12 +357,12 @@
   .btn-checkout {
     background: linear-gradient(135deg, var(--gorila-green) 0%, var(--gorila-green-dark) 100%);
     color: #000;
-    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .btn-checkout:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(116, 184, 0, 0.5);
+    box-shadow: 0 12px 32px rgba(var(--sport-color-rgb, 46,204,113), 0.5);
   }
   
   /* ============================================

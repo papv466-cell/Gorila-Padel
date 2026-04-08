@@ -10,10 +10,10 @@ const S = {
   title: { margin:0, fontSize:22, fontWeight:900, color:"#fff" },
   card: { background:"#111", borderRadius:14, border:"1px solid rgba(255,255,255,0.08)", padding:16, marginBottom:10 },
   btn: (c) => ({ padding:"11px 16px", borderRadius:12, border:"none", cursor:"pointer", fontWeight:900, fontSize:13,
-    background:c==="green"?"linear-gradient(135deg,#74B800,#9BE800)":c==="ghost"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)",
+    background:c==="green"?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":c==="ghost"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)",
     color:c==="green"?"#000":"#fff", width:"100%" }),
   input: { width:"100%", padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", color:"#fff", fontSize:13, outline:"none", boxSizing:"border-box" },
-  tab: (active) => ({ flex:1, padding:"10px 0", border:"none", cursor:"pointer", fontWeight:900, fontSize:12, background:"transparent", color:active?"#74B800":"rgba(255,255,255,0.4)", borderBottom:active?"2px solid #74B800":"2px solid transparent" }),
+  tab: (active) => ({ flex:1, padding:"10px 0", border:"none", cursor:"pointer", fontWeight:900, fontSize:12, background:"transparent", color:active?"var(--sport-color)":"rgba(255,255,255,0.4)", borderBottom:active?"2px solid var(--sport-color)":"2px solid transparent" }),
 };
 
 export default function LeaguePage() {
@@ -172,18 +172,18 @@ export default function LeaguePage() {
             </div>
             {clasificacion.map((p,i)=>(
               <div key={p.id} style={{display:"grid",gridTemplateColumns:"auto 1fr auto auto auto auto",gap:"6px 8px",alignItems:"center",padding:"10px",borderRadius:10,marginBottom:4,
-                background:p.id===session?.user?.id?"rgba(116,184,0,0.08)":"rgba(255,255,255,0.03)",
-                border:p.id===session?.user?.id?"1px solid rgba(116,184,0,0.2)":"1px solid rgba(255,255,255,0.05)"}}>
+                background:p.id===session?.user?.id?"rgba(var(--sport-color-rgb, 46,204,113),0.08)":"rgba(255,255,255,0.03)",
+                border:p.id===session?.user?.id?"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)":"1px solid rgba(255,255,255,0.05)"}}>
                 <span style={{fontSize:14,fontWeight:900,color:i===0?"#FFD700":i===1?"#C0C0C0":i===2?"#CD7F32":"rgba(255,255,255,0.4)",minWidth:20,textAlign:"center"}}>
                   {i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}
                 </span>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   {p.avatar_url?<img src={p.avatar_url} style={{width:28,height:28,borderRadius:999,objectFit:"cover"}} alt=""/>
-                    :<div style={{width:28,height:28,borderRadius:999,background:"rgba(116,184,0,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🦍</div>}
-                  <span style={{fontSize:12,fontWeight:800,color:p.id===session?.user?.id?"#74B800":"#fff"}}>{p.name||p.handle||"Jugador"}</span>
+                    :<div style={{width:28,height:28,borderRadius:999,background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🦍</div>}
+                  <span style={{fontSize:12,fontWeight:800,color:p.id===session?.user?.id?"var(--sport-color)":"#fff"}}>{p.name||p.handle||"Jugador"}</span>
                 </div>
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.5)",textAlign:"center"}}>{p.pj}</span>
-                <span style={{fontSize:12,color:"#74B800",textAlign:"center",fontWeight:800}}>{p.pg}</span>
+                <span style={{fontSize:12,color:"var(--sport-color)",textAlign:"center",fontWeight:800}}>{p.pg}</span>
                 <span style={{fontSize:12,color:"rgba(255,100,100,0.7)",textAlign:"center"}}>{p.pp}</span>
                 <span style={{fontSize:14,fontWeight:900,color:"#fff",textAlign:"center"}}>{p.pts}</span>
               </div>
@@ -203,15 +203,15 @@ export default function LeaguePage() {
                   <div key={m.id} style={{...S.card, padding:"12px 14px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                       <div style={{fontSize:12,fontWeight:800,color:"#fff"}}>
-                        <span style={{color:m.winner_side==="a"?"#74B800":"#fff"}}>{playerName(m.player_a1)} / {playerName(m.player_a2)}</span>
+                        <span style={{color:m.winner_side==="a"?"var(--sport-color)":"#fff"}}>{playerName(m.player_a1)} / {playerName(m.player_a2)}</span>
                         <span style={{color:"rgba(255,255,255,0.3)",margin:"0 6px"}}>vs</span>
-                        <span style={{color:m.winner_side==="b"?"#74B800":"#fff"}}>{playerName(m.player_b1)} / {playerName(m.player_b2)}</span>
+                        <span style={{color:m.winner_side==="b"?"var(--sport-color)":"#fff"}}>{playerName(m.player_b1)} / {playerName(m.player_b2)}</span>
                       </div>
                     </div>
                     {m.sets?.length ? (
                       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                         {m.sets.map((s,i)=><div key={i} style={{padding:"3px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",fontSize:13,fontWeight:900,color:"#fff"}}>{s.a}–{s.b}</div>)}
-                        <div style={{padding:"3px 10px",borderRadius:6,background:"rgba(116,184,0,0.15)",fontSize:11,fontWeight:900,color:"#74B800"}}>
+                        <div style={{padding:"3px 10px",borderRadius:6,background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",fontSize:11,fontWeight:900,color:"var(--sport-color)"}}>
                           Gana {m.winner_side==="a"?`${playerName(m.player_a1)}/${playerName(m.player_a2)}`:`${playerName(m.player_b1)}/${playerName(m.player_b2)}`} 🏆
                         </div>
                       </div>
@@ -234,8 +234,8 @@ export default function LeaguePage() {
       {/* MODAL RESULTADO */}
       {resultModal && (
         <div onClick={()=>setResultModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:99999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,100%)",background:"#111",borderRadius:"20px 20px 0 0",border:"1px solid rgba(116,184,0,0.2)",padding:24,paddingBottom:"max(24px,env(safe-area-inset-bottom))"}}>
-            <div style={{fontSize:16,fontWeight:900,color:"#74B800",marginBottom:4}}>📝 Resultado</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,100%)",background:"#111",borderRadius:"20px 20px 0 0",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)",padding:24,paddingBottom:"max(24px,env(safe-area-inset-bottom))"}}>
+            <div style={{fontSize:16,fontWeight:900,color:"var(--sport-color)",marginBottom:4}}>📝 Resultado</div>
             <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:16}}>
               {playerName(resultModal.player_a1)}/{playerName(resultModal.player_a2)} vs {playerName(resultModal.player_b1)}/{playerName(resultModal.player_b2)}
             </div>
@@ -265,7 +265,7 @@ export default function LeaguePage() {
     <div className="page pageWithHeader" style={S.page}>
       <div style={S.container}>
         <div style={S.header}>
-          <h1 style={S.title}>🏆 <span style={{color:"#74B800"}}>Ligas</span></h1>
+          <h1 style={S.title}>🏆 <span style={{color:"var(--sport-color)"}}>Ligas</span></h1>
           <button onClick={()=>setTab(tab==="crear"?"mis":"crear")} style={{...S.btn("green"),width:"auto",padding:"9px 16px"}}>
             {tab==="crear"?"← Volver":"➕ Crear liga"}
           </button>
@@ -325,7 +325,7 @@ export default function LeaguePage() {
                     <div key={p.id} onClick={()=>{ setInvitedUsers(prev=>[...prev,p]); setInviteSearch(""); setInviteResults([]); }}
                       style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
                       {p.avatar_url?<img src={p.avatar_url} style={{width:32,height:32,borderRadius:999,objectFit:"cover"}} alt=""/>
-                        :<div style={{width:32,height:32,borderRadius:999,background:"rgba(116,184,0,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🦍</div>}
+                        :<div style={{width:32,height:32,borderRadius:999,background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🦍</div>}
                       <div>
                         <div style={{fontSize:13,fontWeight:800,color:"#fff"}}>{p.name||p.handle}</div>
                         {p.handle&&p.name&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>@{p.handle}</div>}
@@ -337,8 +337,8 @@ export default function LeaguePage() {
               {invitedUsers.length>0&&(
                 <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
                   {invitedUsers.map(u=>(
-                    <div key={u.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:20,background:"rgba(116,184,0,0.12)",border:"1px solid rgba(116,184,0,0.25)"}}>
-                      <span style={{fontSize:12,fontWeight:800,color:"#74B800"}}>{u.name||u.handle}</span>
+                    <div key={u.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:20,background:"rgba(var(--sport-color-rgb, 46,204,113),0.12)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)"}}>
+                      <span style={{fontSize:12,fontWeight:800,color:"var(--sport-color)"}}>{u.name||u.handle}</span>
                       <span onClick={()=>setInvitedUsers(p=>p.filter(x=>x.id!==u.id))} style={{cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.4)"}}>✕</span>
                     </div>
                   ))}
@@ -394,8 +394,8 @@ function NewMatchForm({league, players, session, onSaved, jornadasGroup}) {
         <input type="number" min="1" value={jornada} onChange={e=>setJornada(parseInt(e.target.value)||1)}
           style={{width:"100%",padding:"9px 10px",borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
       </div>
-      <div style={{padding:14,borderRadius:12,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.15)"}}>
-        <div style={{fontSize:11,fontWeight:800,color:"#74B800",marginBottom:8}}>PAREJA A</div>
+      <div style={{padding:14,borderRadius:12,background:"rgba(var(--sport-color-rgb, 46,204,113),0.06)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)"}}>
+        <div style={{fontSize:11,fontWeight:800,color:"var(--sport-color)",marginBottom:8}}>PAREJA A</div>
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           {sel(pa1,setPa1,[pa2,pb1,pb2])}
           {sel(pa2,setPa2,[pa1,pb1,pb2])}
@@ -408,7 +408,7 @@ function NewMatchForm({league, players, session, onSaved, jornadasGroup}) {
           {sel(pb2,setPb2,[pa1,pa2,pb1])}
         </div>
       </div>
-      <button onClick={save} disabled={saving} style={{padding:"12px",borderRadius:12,border:"none",cursor:"pointer",fontWeight:900,fontSize:14,background:"linear-gradient(135deg,#74B800,#9BE800)",color:"#000"}}>
+      <button onClick={save} disabled={saving} style={{padding:"12px",borderRadius:12,border:"none",cursor:"pointer",fontWeight:900,fontSize:14,background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",color:"#000"}}>
         {saving?"Guardando…":"✅ Crear partido de liga"}
       </button>
     </div>

@@ -81,9 +81,9 @@
 
 /* Indicador verde cuando hay partidos ese día */
 .gpMatchesPage .gpRow .gpInput.hasMatches {
-  border: 2px solid #74B800 !important;
-  box-shadow: 0 0 12px rgba(116, 184, 0, 0.4) !important;
-  background: rgba(116, 184, 0, 0.1) !important;
+  border: 2px solid var(--sport-color) !important;
+  box-shadow: 0 0 12px rgba(var(--sport-color-rgb, 46,204,113), 0.4) !important;
+  background: rgba(var(--sport-color-rgb, 46,204,113), 0.1) !important;
 }
 
 /* Círculo verde pequeño como indicador alternativo */
@@ -94,9 +94,9 @@
   right: 2px !important;
   width: 8px !important;
   height: 8px !important;
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   border-radius: 50% !important;
-  box-shadow: 0 0 4px rgba(116, 184, 0, 0.8) !important;
+  box-shadow: 0 0 4px rgba(var(--sport-color-rgb, 46,204,113), 0.8) !important;
 }
 
 /* ✅ Segmented VISIBLE */

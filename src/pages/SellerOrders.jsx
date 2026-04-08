@@ -154,9 +154,9 @@ export default function SellerOrders() {
             <button key={f.value} onClick={() => setFilter(f.value)}
               style={{
                 padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 900, cursor: 'pointer',
-                border: filter === f.value ? '1px solid #74B800' : '1px solid rgba(255,255,255,0.12)',
-                background: filter === f.value ? 'rgba(116,184,0,0.15)' : 'rgba(255,255,255,0.04)',
-                color: filter === f.value ? '#74B800' : '#fff'
+                border: filter === f.value ? '1px solid var(--sport-color)' : '1px solid rgba(255,255,255,0.12)',
+                background: filter === f.value ? 'rgba(var(--sport-color-rgb, 46,204,113),0.15)' : 'rgba(255,255,255,0.04)',
+                color: filter === f.value ? 'var(--sport-color)' : '#fff'
               }}>
               {f.label}
             </button>
@@ -206,7 +206,7 @@ export default function SellerOrders() {
                       <div style={{ fontSize: isMobile ? 12 : 13, opacity: 0.7 }}>
                         {item.quantity} ud × €{item.price}
                       </div>
-                      <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 950, color: '#74B800' }}>
+                      <div style={{ fontSize: isMobile ? 13 : 14, fontWeight: 950, color: 'var(--sport-color)' }}>
                         €{(item.price * item.quantity).toFixed(2)}
                       </div>
                     </div>
@@ -233,7 +233,7 @@ export default function SellerOrders() {
 
                   <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
                     <div style={{ fontSize: 11, fontWeight: 900, opacity: 0.6, marginBottom: 6 }}>TOTAL</div>
-                    <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 950, color: '#74B800' }}>
+                    <div style={{ fontSize: isMobile ? 20 : 24, fontWeight: 950, color: 'var(--sport-color)' }}>
                       €{totalOrder.toFixed(2)}
                     </div>
                   </div>

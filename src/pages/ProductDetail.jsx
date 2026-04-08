@@ -81,7 +81,7 @@ export default function ProductDetail() {
         <div style={{ textAlign: 'center', paddingTop: 60 }}>
           <div style={{ fontSize: 60, marginBottom: 16 }}>😕</div>
           <h1 style={{ fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Producto no encontrado</h1>
-          <Link to="/tienda" style={{ padding: '10px 20px', borderRadius: 12, background: '#74B800', color: '#000', fontWeight: 900, textDecoration: 'none' }}>← Volver</Link>
+          <Link to="/tienda" style={{ padding: '10px 20px', borderRadius: 12, background: 'var(--sport-color)', color: '#000', fontWeight: 900, textDecoration: 'none' }}>← Volver</Link>
         </div>
       </div>
     </div>
@@ -109,7 +109,7 @@ export default function ProductDetail() {
           <div style={{ padding: '12px 0 20px', fontSize: 12, color: 'rgba(255,255,255,0.4)', display: 'flex', gap: 6, alignItems: 'center' }}>
             <Link to="/tienda" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Tienda</Link>
             <span>›</span>
-            <span style={{ color: '#74B800' }}>{product.category}</span>
+            <span style={{ color: 'var(--sport-color)' }}>{product.category}</span>
             <span>›</span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>{product.title}</span>
           </div>
@@ -134,7 +134,7 @@ export default function ProductDetail() {
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {images.map((img, i) => (
                     <div key={i} className="gsThumb" onClick={() => setSelectedImage(i)}
-                      style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: selectedImage === i ? '2px solid #74B800' : '2px solid rgba(255,255,255,0.08)', opacity: selectedImage === i ? 1 : 0.5 }}>
+                      style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: selectedImage === i ? '2px solid var(--sport-color)' : '2px solid rgba(255,255,255,0.08)', opacity: selectedImage === i ? 1 : 0.5 }}>
                       <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   ))}
@@ -145,7 +145,7 @@ export default function ProductDetail() {
             {/* INFO + COMPRA */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1.5, color: '#74B800', marginBottom: 8 }}>{product.category}</div>
+                <div style={{ fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--sport-color)', marginBottom: 8 }}>{product.category}</div>
                 <h1 style={{ fontSize: 28, fontWeight: 900, color: '#fff', margin: 0, lineHeight: 1.2, letterSpacing: -0.5 }}>{product.title}</h1>
                 {product.seller?.business_name && (
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 8 }}>
@@ -156,7 +156,7 @@ export default function ProductDetail() {
 
               <div style={{ padding: '16px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                  <span style={{ fontSize: 38, fontWeight: 900, color: '#74B800', lineHeight: 1 }}>€{product.price}</span>
+                  <span style={{ fontSize: 38, fontWeight: 900, color: 'var(--sport-color)', lineHeight: 1 }}>€{product.price}</span>
                   {hasDiscount && <span style={{ fontSize: 18, color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>€{product.compare_at_price}</span>}
                   {hasDiscount && (
                     <span style={{ padding: '3px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', color: '#ef4444', fontSize: 12, fontWeight: 900, border: '1px solid rgba(239,68,68,0.25)' }}>
@@ -167,9 +167,9 @@ export default function ProductDetail() {
                 <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>IVA incluido · Envío calculado al finalizar</div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: inStock ? 'rgba(116,184,0,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${inStock ? 'rgba(116,184,0,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: inStock ? '#74B800' : '#ef4444', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 800, color: inStock ? '#74B800' : '#ef4444' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: inStock ? 'rgba(var(--sport-color-rgb, 46,204,113),0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${inStock ? 'rgba(var(--sport-color-rgb, 46,204,113),0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: inStock ? 'var(--sport-color)' : '#ef4444', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 800, color: inStock ? 'var(--sport-color)' : '#ef4444' }}>
                   {inStock ? `En stock · ${product.stock_quantity} disponibles` : 'Sin stock'}
                 </span>
                 {inStock && product.stock_quantity <= 5 && (
@@ -187,7 +187,7 @@ export default function ProductDetail() {
                       style={{ width: 36, height: 36, borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 18, fontWeight: 900, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>+</button>
                   </div>
                   <button onClick={handleAddToCart} disabled={addingToCart || addedFeedback}
-                    style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: addedFeedback ? 'rgba(116,184,0,0.3)' : 'linear-gradient(135deg,#74B800,#9BE800)', color: addedFeedback ? '#74B800' : '#000', fontWeight: 900, fontSize: 15, cursor: addingToCart ? 'not-allowed' : 'pointer', transition: 'all .2s', animation: addedFeedback ? 'gsAddedPulse 0.3s ease' : 'none' }}>
+                    style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: addedFeedback ? 'rgba(var(--sport-color-rgb, 46,204,113),0.3)' : 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', color: addedFeedback ? 'var(--sport-color)' : '#000', fontWeight: 900, fontSize: 15, cursor: addingToCart ? 'not-allowed' : 'pointer', transition: 'all .2s', animation: addedFeedback ? 'gsAddedPulse 0.3s ease' : 'none' }}>
                     {addedFeedback ? '✅ ¡Añadido!' : addingToCart ? '⏳...' : '🛒 Añadir al carrito'}
                   </button>
                   <button onClick={() => {
@@ -195,7 +195,7 @@ export default function ProductDetail() {
                     const text = `🦍 Mira este producto en GorilaGo!:\n*${product.title}* — €${product.price}\n${url}`;
                     if (navigator.share) navigator.share({ title: product.title, text, url });
                     else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                  }} style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(116,184,0,0.3)', background: 'rgba(116,184,0,0.08)', color: '#74B800', fontSize: 22, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  }} style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)', background: 'rgba(var(--sport-color-rgb, 46,204,113),0.08)', color: 'var(--sport-color)', fontSize: 22, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                     📤
                   </button>
                 </div>
@@ -222,12 +222,12 @@ export default function ProductDetail() {
 
               {product.seller && (
                 <div style={{ padding: '14px 18px', borderRadius: 14, background: '#111', border: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, overflow: 'hidden', background: 'rgba(116,184,0,0.1)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 10, overflow: 'hidden', background: 'rgba(var(--sport-color-rgb, 46,204,113),0.1)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                     {product.seller.logo_url ? <img src={product.seller.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 20 }}>🏪</span>}
                   </div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 900, color: '#fff' }}>{product.seller.business_name}</div>
-                    {product.seller.rating && <div style={{ fontSize: 11, color: '#74B800', marginTop: 2 }}>⭐ {product.seller.rating}</div>}
+                    {product.seller.rating && <div style={{ fontSize: 11, color: 'var(--sport-color)', marginTop: 2 }}>⭐ {product.seller.rating}</div>}
                   </div>
                 </div>
               )}

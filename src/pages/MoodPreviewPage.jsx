@@ -14,7 +14,7 @@ export default function MoodPreviewPage() {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 99999 }}>
-      <div style={{ width: "min(640px,100%)", background: "#111", borderRadius: "24px 24px 0 0", border: "1px solid rgba(116,184,0,0.2)", padding: 24, paddingBottom: "max(32px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" }}>
+      <div style={{ width: "min(640px,100%)", background: "#111", borderRadius: "24px 24px 0 0", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", padding: 24, paddingBottom: "max(32px,env(safe-area-inset-bottom))", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 28, marginBottom: 6 }}>🦍</div>
           <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>¿Con qué Gorila Mood vienes?</div>
@@ -25,8 +25,8 @@ export default function MoodPreviewPage() {
           {moods.map(m => (
             <button key={m.key} onClick={() => setSelected(m.key)}
               style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 14,
-                background: selected === m.key ? "rgba(116,184,0,0.12)" : "rgba(255,255,255,0.06)",
-                border: selected === m.key ? "1px solid #74B800" : "1px solid rgba(255,255,255,0.1)",
+                background: selected === m.key ? "rgba(var(--sport-color-rgb, 46,204,113),0.12)" : "rgba(255,255,255,0.06)",
+                border: selected === m.key ? "1px solid var(--sport-color)" : "1px solid rgba(255,255,255,0.1)",
                 cursor: "pointer", textAlign: "left", width: "100%" }}>
               <span style={{ fontSize: 30, flexShrink: 0 }}>{m.emoji}</span>
               <div>

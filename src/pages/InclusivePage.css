@@ -28,7 +28,7 @@
 .gpInclusiveTitle {
   font-size: 16px !important;
   font-weight: 900;
-  color: #74B800;
+  color: var(--sport-color);
   line-height: 1.05 !important;
   margin: 0 0 4px 0 !important;
   letter-spacing: -0.3px;
@@ -94,7 +94,7 @@
 
 .gpInclusiveCard:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(116, 184, 0, 0.3);
+  border-color: rgba(var(--sport-color-rgb, 46,204,113), 0.3);
 }
 
 .gpInclusiveCardIcon {
@@ -279,8 +279,8 @@
 }
 
 .gpIncChip.isOn{
-  background: rgba(116,184,0,0.22);
-  border-color: rgba(116,184,0,0.55);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.22);
+  border-color: rgba(var(--sport-color-rgb, 46,204,113),0.55);
 }
 
 .gpIncChipImg{

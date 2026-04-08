@@ -45,7 +45,7 @@ function dateToISO(d) {
 }
 
 const STATUS_COLORS = {
-  available: { bg: 'rgba(116,184,0,0.15)', border: 'rgba(116,184,0,0.4)', text: '#74B800' },
+  available: { bg: 'rgba(var(--sport-color-rgb, 46,204,113),0.15)', border: 'rgba(var(--sport-color-rgb, 46,204,113),0.4)', text: 'var(--sport-color)' },
   booked: { bg: 'rgba(220,38,38,0.15)', border: 'rgba(220,38,38,0.4)', text: '#ff6b6b' },
   pending: { bg: 'rgba(255,165,0,0.15)', border: 'rgba(255,165,0,0.4)', text: '#FFA500' },
   blocked: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', text: 'rgba(255,255,255,0.2)' },
@@ -658,25 +658,25 @@ async function deleteSchedule(id) {
 
   const S = {
     page: { minHeight:'100vh', background:'#0a0a0a', color:'#fff', fontFamily:'system-ui,sans-serif', paddingBottom:60 },
-    header: { background:'linear-gradient(135deg,#0f1a00,#1a2a00)', borderBottom:'1px solid rgba(116,184,0,0.2)', padding:'14px 16px', display:'flex', alignItems:'center', gap:12 },
+    header: { background:'linear-gradient(135deg,#0f1a00,#1a2a00)', borderBottom:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)', padding:'14px 16px', display:'flex', alignItems:'center', gap:12 },
     tabs: { display:'flex', gap:2, padding:'8px 12px', borderBottom:'1px solid rgba(255,255,255,0.06)', overflowX:'auto', WebkitOverflowScrolling:'touch' },
-    tab: (a) => ({ padding:'8px 12px', borderRadius:8, border:'none', cursor:'pointer', fontSize:12, fontWeight:800, whiteSpace:'nowrap', background:a?'rgba(116,184,0,0.15)':'transparent', color:a?'#74B800':'rgba(255,255,255,0.4)', borderBottom:a?'2px solid #74B800':'2px solid transparent' }),
+    tab: (a) => ({ padding:'8px 12px', borderRadius:8, border:'none', cursor:'pointer', fontSize:12, fontWeight:800, whiteSpace:'nowrap', background:a?'rgba(var(--sport-color-rgb, 46,204,113),0.15)':'transparent', color:a?'var(--sport-color)':'rgba(255,255,255,0.4)', borderBottom:a?'2px solid var(--sport-color)':'2px solid transparent' }),
     card: { background:'#111', borderRadius:14, border:'1px solid rgba(255,255,255,0.07)', padding:14, marginBottom:10 },
     input: { padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', color:'#fff', fontSize:13, outline:'none', width:'100%', boxSizing:'border-box' },
-    btn: (c) => ({ padding:'10px 16px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:900, fontSize:13, background:c==='green'?'linear-gradient(135deg,#74B800,#9BE800)':c==='red'?'rgba(220,38,38,0.15)':c==='blue'?'rgba(59,130,246,0.15)':'rgba(255,255,255,0.08)', color:c==='green'?'#000':c==='red'?'#ff6b6b':c==='blue'?'#60a5fa':'#fff' }),
-    badge: (s) => ({ padding:'3px 8px', borderRadius:999, fontSize:10, fontWeight:800, background:s==='confirmed'||s==='available'?'rgba(116,184,0,0.15)':s==='pending'?'rgba(255,165,0,0.15)':'rgba(220,38,38,0.15)', color:s==='confirmed'||s==='available'?'#74B800':s==='pending'?'#FFA500':'#ff6b6b' }),
+    btn: (c) => ({ padding:'10px 16px', borderRadius:10, border:'none', cursor:'pointer', fontWeight:900, fontSize:13, background:c==='green'?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':c==='red'?'rgba(220,38,38,0.15)':c==='blue'?'rgba(59,130,246,0.15)':'rgba(255,255,255,0.08)', color:c==='green'?'#000':c==='red'?'#ff6b6b':c==='blue'?'#60a5fa':'#fff' }),
+    badge: (s) => ({ padding:'3px 8px', borderRadius:999, fontSize:10, fontWeight:800, background:s==='confirmed'||s==='available'?'rgba(var(--sport-color-rgb, 46,204,113),0.15)':s==='pending'?'rgba(255,165,0,0.15)':'rgba(220,38,38,0.15)', color:s==='confirmed'||s==='available'?'var(--sport-color)':s==='pending'?'#FFA500':'#ff6b6b' }),
   };
 
   {/* ── HORARIOS RECURRENTES ── */}
 {tab === 'horarios' && (
   <div style={{ padding: 16 }}>
-    <div style={{ fontWeight: 900, color: '#74B800', fontSize: 16, marginBottom: 16 }}>🕐 Horarios recurrentes</div>
+    <div style={{ fontWeight: 900, color: 'var(--sport-color)', fontSize: 16, marginBottom: 16 }}>🕐 Horarios recurrentes</div>
     <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 20 }}>
       Define el horario base de cada pista. Los slots se generarán automáticamente para las próximas 4 semanas.
     </p>
 
     {/* Formulario nuevo horario */}
-    <div style={{ background: '#1a1a1a', borderRadius: 12, padding: 16, marginBottom: 20, border: '1px solid rgba(116,184,0,0.2)' }}>
+    <div style={{ background: '#1a1a1a', borderRadius: 12, padding: 16, marginBottom: 20, border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)' }}>
       <div style={{ fontWeight: 800, color: '#fff', marginBottom: 12 }}>➕ Nuevo horario</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         <div>
@@ -720,7 +720,7 @@ async function deleteSchedule(id) {
         </div>
       </div>
       <button onClick={saveSchedule} disabled={savingSchedule || !scheduleForm.court_id}
-        style={{ marginTop: 14, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer' }}>
+        style={{ marginTop: 14, padding: '10px 20px', borderRadius: 10, background: 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', color: '#000', fontWeight: 900, fontSize: 13, border: 'none', cursor: 'pointer' }}>
         {savingSchedule ? 'Guardando...' : '✅ Guardar y generar slots'}
       </button>
     </div>
@@ -766,12 +766,12 @@ async function deleteSchedule(id) {
     <div style={S.page}>
       {/* Header */}
       <div style={S.header}>
-        <button onClick={()=>navigate(-1)} style={{background:'none',border:'none',color:'#74B800',fontSize:20,cursor:'pointer'}}>←</button>
+        <button onClick={()=>navigate(-1)} style={{background:'none',border:'none',color:'var(--sport-color)',fontSize:20,cursor:'pointer'}}>←</button>
         <div style={{flex:1}}>
-          <div style={{fontSize:17,fontWeight:900,color:'#74B800'}}>🏟️ {clubAdmin.club_name}</div>
+          <div style={{fontSize:17,fontWeight:900,color:'var(--sport-color)'}}>🏟️ {clubAdmin.club_name}</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Panel de administración</div>
         </div>
-        <div style={{fontSize:11,color:'rgba(116,184,0,0.6)',fontWeight:700,background:'rgba(116,184,0,0.08)',padding:'4px 8px',borderRadius:6}}>
+        <div style={{fontSize:11,color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)',fontWeight:700,background:'rgba(var(--sport-color-rgb, 46,204,113),0.08)',padding:'4px 8px',borderRadius:6}}>
           {courts.length} pistas
         </div>
       </div>
@@ -789,13 +789,13 @@ async function deleteSchedule(id) {
             {courts.map(c => (
               <button key={c.id} onClick={()=>setSelectedCourt(c.id)}
                 style={{padding:'6px 14px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:12, whiteSpace:'nowrap',
-                  background:selectedCourt===c.id?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                  background:selectedCourt===c.id?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':'rgba(255,255,255,0.08)',
                   color:selectedCourt===c.id?'#000':'#fff'}}>
                 {c.name} {c.court_type==='indoor'?'🏠':'☀️'}
               </button>
             ))}
             <button onClick={()=>setShowNewCourt(true)}
-              style={{padding:'6px 14px', borderRadius:20, border:'1px dashed rgba(116,184,0,0.3)', cursor:'pointer', fontWeight:800, fontSize:12, background:'transparent', color:'rgba(116,184,0,0.6)', whiteSpace:'nowrap'}}>
+              style={{padding:'6px 14px', borderRadius:20, border:'1px dashed rgba(var(--sport-color-rgb, 46,204,113),0.3)', cursor:'pointer', fontWeight:800, fontSize:12, background:'transparent', color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)', whiteSpace:'nowrap'}}>
               + Añadir
             </button>
           </div>
@@ -833,7 +833,7 @@ async function deleteSchedule(id) {
                   {[2,5,7,14,30].map(d=>(
                     <button key={d} onClick={()=>setCalDays(d)}
                       style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', fontSize:10, fontWeight:800,
-                        background:calDays===d?'#74B800':'rgba(255,255,255,0.08)',
+                        background:calDays===d?'var(--sport-color)':'rgba(255,255,255,0.08)',
                         color:calDays===d?'#000':'rgba(255,255,255,0.5)'}}>
                       {d}d
                     </button>
@@ -918,9 +918,9 @@ async function deleteSchedule(id) {
                   {weekDates.map((d,i) => {
                     const isToday = dateToISO(d) === dateToISO(new Date());
                     return (
-                      <div key={i} style={{padding:'6px 2px', textAlign:'center', fontSize:11, fontWeight:800, color:isToday?'#74B800':'rgba(255,255,255,0.5)'}}>
+                      <div key={i} style={{padding:'6px 2px', textAlign:'center', fontSize:11, fontWeight:800, color:isToday?'var(--sport-color)':'rgba(255,255,255,0.5)'}}>
                         <div>{DAYS[i]}</div>
-                        <div style={{fontSize:13, color:isToday?'#74B800':'#fff', fontWeight:900}}>{d.getDate()}</div>
+                        <div style={{fontSize:13, color:isToday?'var(--sport-color)':'#fff', fontWeight:900}}>{d.getDate()}</div>
                       </div>
                     );
                   })}
@@ -1042,29 +1042,29 @@ async function deleteSchedule(id) {
             ].map(({label,value,icon})=>(
               <div key={label} style={{...S.card, textAlign:'center', padding:16}}>
                 <div style={{fontSize:24}}>{icon}</div>
-                <div style={{fontSize:24, fontWeight:900, color:'#74B800'}}>{value}</div>
+                <div style={{fontSize:24, fontWeight:900, color:'var(--sport-color)'}}>{value}</div>
                 <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', fontWeight:700}}>{label}</div>
               </div>
             ))}
           </div>
 
           <div style={S.card}>
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:12}}>⏰ Ocupación por hora</div>
+            <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:12}}>⏰ Ocupación por hora</div>
             {stats.occupancyByHour?.map(({hour, count})=>(
               <div key={hour} style={{display:'flex', alignItems:'center', gap:8, marginBottom:4}}>
                 <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', width:40, textAlign:'right', fontWeight:700}}>{hour}</div>
                 <div style={{flex:1, height:16, background:'rgba(255,255,255,0.04)', borderRadius:4, overflow:'hidden'}}>
-                  <div style={{height:'100%', width:`${stats.maxCount?count/stats.maxCount*100:0}%`, background:'linear-gradient(90deg,#74B800,#9BE800)', borderRadius:4, transition:'width .3s'}}/>
+                  <div style={{height:'100%', width:`${stats.maxCount?count/stats.maxCount*100:0}%`, background:'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))', borderRadius:4, transition:'width .3s'}}/>
                 </div>
                 <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', width:20}}>{count}</div>
               </div>
             ))}
           </div>
 
-          <div style={{...S.card, background:'rgba(116,184,0,0.05)', border:'1px solid rgba(116,184,0,0.15)'}}>
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:8}}>💚 Modelo de reparto</div>
+          <div style={{...S.card, background:'rgba(var(--sport-color-rgb, 46,204,113),0.05)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)'}}>
+            <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:8}}>💚 Modelo de reparto</div>
             <div style={{display:'flex', gap:8}}>
-              {[{l:'Tu club',c:'#74B800'},{l:'Gorila',c:'#9BE800'},{l:'Fundación',c:'#4ade80'}].map(({l,c})=>(
+              {[{l:'Tu club',c:'var(--sport-color)'},{l:'Gorila',c:'var(--sport-color)'},{l:'Fundación',c:'#4ade80'}].map(({l,c})=>(
                 <div key={l} style={{flex:1, padding:'10px 6px', borderRadius:10, background:'rgba(255,255,255,0.04)', textAlign:'center'}}>
                   <div style={{fontSize:16, fontWeight:900, color:c}}>10cts</div>
                   <div style={{fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:2}}>{l}</div>
@@ -1082,7 +1082,7 @@ async function deleteSchedule(id) {
           <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. GorilaGo! gestiona la transferencia mensual.</div>
 
           {/* Saldo acumulado */}
-          <div style={{...S.card, background:'linear-gradient(135deg,rgba(74,222,128,0.1),rgba(116,184,0,0.08))', border:'1px solid rgba(74,222,128,0.25)', marginBottom:16}}>
+          <div style={{...S.card, background:'linear-gradient(135deg,rgba(74,222,128,0.1),rgba(var(--sport-color-rgb, 46,204,113),0.08))', border:'1px solid rgba(74,222,128,0.25)', marginBottom:16}}>
             <div style={{fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.4)', marginBottom:4}}>SALDO ACUMULADO PARA DONAR</div>
             <div style={{fontSize:36, fontWeight:900, color:'#4ade80', lineHeight:1}}>{(totalDonated/100).toFixed(2)}€</div>
             <div style={{fontSize:11, color:'rgba(255,255,255,0.3)', marginTop:4}}>
@@ -1097,26 +1097,26 @@ async function deleteSchedule(id) {
               const isSelected = selectedFoundation === f.id;
               return (
                 <div key={f.id} onClick={()=>saveFoundation(f.id)}
-                  style={{...S.card, cursor:'pointer', border: isSelected ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.08)',
-                    background: isSelected ? 'rgba(116,184,0,0.08)' : 'rgba(255,255,255,0.03)',
+                  style={{...S.card, cursor:'pointer', border: isSelected ? '2px solid var(--sport-color)' : '1px solid rgba(255,255,255,0.08)',
+                    background: isSelected ? 'rgba(var(--sport-color-rgb, 46,204,113),0.08)' : 'rgba(255,255,255,0.03)',
                     transition:'all .2s', position:'relative'}}>
                   <div style={{display:'flex', alignItems:'center', gap:12}}>
-                    <div style={{width:48, height:48, borderRadius:12, background: isSelected?'rgba(116,184,0,0.2)':'rgba(255,255,255,0.06)',
-                      display:'grid', placeItems:'center', fontSize:24, flexShrink:0, border: isSelected?'1px solid rgba(116,184,0,0.3)':'1px solid rgba(255,255,255,0.08)'}}>
+                    <div style={{width:48, height:48, borderRadius:12, background: isSelected?'rgba(var(--sport-color-rgb, 46,204,113),0.2)':'rgba(255,255,255,0.06)',
+                      display:'grid', placeItems:'center', fontSize:24, flexShrink:0, border: isSelected?'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)':'1px solid rgba(255,255,255,0.08)'}}>
                       {f.logo_url?.startsWith('http') ? <img src={f.logo_url} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/> : (f.logo_url || '💚')}
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:14, fontWeight:900, color: isSelected?'#74B800':'#fff'}}>{f.name}</div>
+                      <div style={{fontSize:14, fontWeight:900, color: isSelected?'var(--sport-color)':'#fff'}}>{f.name}</div>
                       <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2, lineHeight:1.3}}>{f.description}</div>
-                      {f.website && <div style={{fontSize:10, color:'rgba(116,184,0,0.6)', marginTop:3}}>{f.website}</div>}
+                      {f.website && <div style={{fontSize:10, color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)', marginTop:3}}>{f.website}</div>}
                     </div>
                     <div style={{width:22, height:22, borderRadius:'50%', border: isSelected?'none':'2px solid rgba(255,255,255,0.15)',
-                      background: isSelected?'#74B800':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
+                      background: isSelected?'var(--sport-color)':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
                       {isSelected && <span style={{fontSize:12, color:'#000', fontWeight:900}}>✓</span>}
                     </div>
                   </div>
                   {isSelected && savingFoundation && (
-                    <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)',borderRadius:12,display:'grid',placeItems:'center',fontSize:12,color:'#74B800'}}>Guardando…</div>
+                    <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)',borderRadius:12,display:'grid',placeItems:'center',fontSize:12,color:'var(--sport-color)'}}>Guardando…</div>
                   )}
                 </div>
               );
@@ -1124,14 +1124,14 @@ async function deleteSchedule(id) {
 
             {/* Opción personalizada */}
             <div onClick={()=>{setShowCustomForm(!showCustomForm); setSelectedFoundation(showCustomForm?selectedFoundation:'custom');}}
-              style={{...S.card, cursor:'pointer', border: selectedFoundation==='custom' ? '2px solid #74B800' : '1px solid rgba(255,255,255,0.08)',
-                background: selectedFoundation==='custom' ? 'rgba(116,184,0,0.08)' : 'rgba(255,255,255,0.03)', transition:'all .2s'}}>
+              style={{...S.card, cursor:'pointer', border: selectedFoundation==='custom' ? '2px solid var(--sport-color)' : '1px solid rgba(255,255,255,0.08)',
+                background: selectedFoundation==='custom' ? 'rgba(var(--sport-color-rgb, 46,204,113),0.08)' : 'rgba(255,255,255,0.03)', transition:'all .2s'}}>
               <div style={{display:'flex', alignItems:'center', gap:12}}>
                 <div style={{width:48, height:48, borderRadius:12, background:'rgba(255,255,255,0.06)', display:'grid', placeItems:'center', fontSize:24, flexShrink:0}}>
                   {customFoundation.logo?.startsWith('http') ? <img src={customFoundation.logo} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:10}}/> : (customFoundation.logo || '🏢')}
                 </div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:14, fontWeight:900, color: selectedFoundation==='custom'?'#74B800':'#fff'}}>
+                  <div style={{fontSize:14, fontWeight:900, color: selectedFoundation==='custom'?'var(--sport-color)':'#fff'}}>
                     {customFoundation.name || 'Otra asociación…'}
                   </div>
                   <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', marginTop:2}}>
@@ -1139,7 +1139,7 @@ async function deleteSchedule(id) {
                   </div>
                 </div>
                 <div style={{width:22, height:22, borderRadius:'50%', border: selectedFoundation==='custom'?'none':'2px solid rgba(255,255,255,0.15)',
-                  background: selectedFoundation==='custom'?'#74B800':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
+                  background: selectedFoundation==='custom'?'var(--sport-color)':'transparent', display:'grid', placeItems:'center', flexShrink:0}}>
                   {selectedFoundation==='custom' && <span style={{fontSize:12, color:'#000', fontWeight:900}}>✓</span>}
                 </div>
               </div>
@@ -1226,7 +1226,7 @@ async function deleteSchedule(id) {
                   </div>
                 </div>
                 <div style={{textAlign:'right'}}>
-                  <div style={{fontSize:20, fontWeight:900, color:'#74B800'}}>{(b.precio_cents/100).toFixed(2)}€</div>
+                  <div style={{fontSize:20, fontWeight:900, color:'var(--sport-color)'}}>{(b.precio_cents/100).toFixed(2)}€</div>
                   <span style={S.badge(b.activo ? 'available' : 'rejected')}>{b.activo ? 'Activo' : 'Inactivo'}</span>
                 </div>
               </div>
@@ -1246,8 +1246,8 @@ async function deleteSchedule(id) {
       {/* ── MODAL NUEVO BONO ── */}
       {showNewBono && (
         <div onClick={()=>setShowNewBono(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>🎟️ Nuevo bono</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:16}}>🎟️ Nuevo bono</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <input placeholder="Nombre (ej: Bono 10 horas, Abono mensual ilimitado...)" value={bonoForm.nombre}
                 onChange={e=>setBonoForm(p=>({...p,nombre:e.target.value}))} style={S.input} />
@@ -1257,7 +1257,7 @@ async function deleteSchedule(id) {
                   {[{v:'horas',l:'🕐 Por horas'},{v:'ilimitado',l:'♾️ Ilimitado'}].map(({v,l})=>(
                     <button key={v} onClick={()=>setBonoForm(p=>({...p,tipo:v}))}
                       style={{flex:1,padding:'10px',borderRadius:10,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
-                        background:bonoForm.tipo===v?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                        background:bonoForm.tipo===v?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':'rgba(255,255,255,0.08)',
                         color:bonoForm.tipo===v?'#000':'#fff'}}>
                       {l}
                     </button>
@@ -1285,7 +1285,7 @@ async function deleteSchedule(id) {
                   </select>
                 </div>
               </div>
-              <div style={{background:'rgba(116,184,0,0.05)',borderRadius:10,padding:12,border:'1px solid rgba(116,184,0,0.15)'}}>
+              <div style={{background:'rgba(var(--sport-color-rgb, 46,204,113),0.05)',borderRadius:10,padding:12,border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)'}}>
                 <div style={{fontSize:12,color:'rgba(255,255,255,0.5)',lineHeight:1.6}}>
                   📱 Los jugadores verán este bono en la página de tu club y podrán comprarlo directamente desde la app.
                 </div>
@@ -1308,12 +1308,12 @@ async function deleteSchedule(id) {
           <div style={{fontSize:15, fontWeight:900, marginBottom:12}}>⚙️ Configuración</div>
 
           <div style={S.card}>
-            <div style={{...S.card, marginBottom:12, background:'rgba(116,184,0,0.03)', border:'1px solid rgba(116,184,0,0.15)'}}>
-              <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🌐 Widget para tu web</div>
+            <div style={{...S.card, marginBottom:12, background:'rgba(var(--sport-color-rgb, 46,204,113),0.03)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)'}}>
+              <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:10}}>🌐 Widget para tu web</div>
               <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:10, lineHeight:1.6}}>
                 Pega este código en tu web y tus clientes podrán reservar sin salir de ella.
               </div>
-              <div style={{background:'#0a0a0a', borderRadius:8, padding:12, fontFamily:'monospace', fontSize:11, color:'#74B800', lineHeight:1.8, overflowX:'auto', marginBottom:8}}>
+              <div style={{background:'#0a0a0a', borderRadius:8, padding:12, fontFamily:'monospace', fontSize:11, color:'var(--sport-color)', lineHeight:1.8, overflowX:'auto', marginBottom:8}}>
                 {`<iframe src="https://monkeygorila.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`}
               </div>
               <button onClick={()=>{navigator.clipboard.writeText(`<iframe src="https://monkeygorila.vercel.app/widget/club/${clubAdmin.club_id}" width="100%" height="600" frameborder="0" style="border-radius:12px"></iframe>`); alert('✅ Copiado al portapapeles');}}
@@ -1322,7 +1322,7 @@ async function deleteSchedule(id) {
               </button>
             </div>
 
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🔗 Integración con plataformas externas</div>
+            <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:10}}>🔗 Integración con plataformas externas</div>
             <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:14, lineHeight:1.6}}>
               Si ya usas Playtomic, MATCHi u otra plataforma, configúralo aquí. Tus usuarios verán el enlace directo y podrán reservar sin confusión.
             </div>
@@ -1338,10 +1338,10 @@ async function deleteSchedule(id) {
                 ].map(p=>(
                   <div key={p.key} onClick={()=>setExternalProvider(p.key)}
                     style={{padding:'10px 6px', borderRadius:10, cursor:'pointer', textAlign:'center',
-                      background:externalProvider===p.key?'rgba(116,184,0,0.15)':'rgba(255,255,255,0.04)',
-                      border:externalProvider===p.key?'1px solid #74B800':'1px solid rgba(255,255,255,0.08)'}}>
+                      background:externalProvider===p.key?'rgba(var(--sport-color-rgb, 46,204,113),0.15)':'rgba(255,255,255,0.04)',
+                      border:externalProvider===p.key?'1px solid var(--sport-color)':'1px solid rgba(255,255,255,0.08)'}}>
                     <div style={{fontSize:18, marginBottom:4}}>{p.emoji}</div>
-                    <div style={{fontSize:10, fontWeight:900, color:externalProvider===p.key?'#74B800':'rgba(255,255,255,0.5)'}}>{p.label}</div>
+                    <div style={{fontSize:10, fontWeight:900, color:externalProvider===p.key?'var(--sport-color)':'rgba(255,255,255,0.5)'}}>{p.label}</div>
                   </div>
                 ))}
               </div>
@@ -1364,9 +1364,9 @@ async function deleteSchedule(id) {
                     ].map(m=>(
                       <div key={m.key} onClick={()=>setBookingMode(m.key)}
                         style={{padding:'10px 8px', borderRadius:10, cursor:'pointer', textAlign:'center',
-                          background:bookingMode===m.key?'rgba(116,184,0,0.15)':'rgba(255,255,255,0.04)',
-                          border:bookingMode===m.key?'1px solid #74B800':'1px solid rgba(255,255,255,0.08)'}}>
-                        <div style={{fontSize:12, fontWeight:900, color:bookingMode===m.key?'#74B800':'#fff'}}>{m.label}</div>
+                          background:bookingMode===m.key?'rgba(var(--sport-color-rgb, 46,204,113),0.15)':'rgba(255,255,255,0.04)',
+                          border:bookingMode===m.key?'1px solid var(--sport-color)':'1px solid rgba(255,255,255,0.08)'}}>
+                        <div style={{fontSize:12, fontWeight:900, color:bookingMode===m.key?'var(--sport-color)':'#fff'}}>{m.label}</div>
                         <div style={{fontSize:10, color:'rgba(255,255,255,0.4)', marginTop:2}}>{m.desc}</div>
                       </div>
                     ))}
@@ -1394,7 +1394,7 @@ async function deleteSchedule(id) {
           </div>
 
           <div style={S.card}>
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>🏟️ Mis pistas</div>
+            <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:10}}>🏟️ Mis pistas</div>
             {courts.map(c=>(
               <div key={c.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
                 <div>
@@ -1431,7 +1431,7 @@ async function deleteSchedule(id) {
                 </div>
                 {slotWaiters.map((w,i)=>(
                   <div key={w.id} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderTop:'1px solid rgba(255,255,255,0.05)'}}>
-                    <div style={{width:24, height:24, borderRadius:999, background:'rgba(116,184,0,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:900, color:'#74B800', flexShrink:0}}>
+                    <div style={{width:24, height:24, borderRadius:999, background:'rgba(var(--sport-color-rgb, 46,204,113),0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:900, color:'var(--sport-color)', flexShrink:0}}>
                       {i+1}
                     </div>
                     <div style={{flex:1}}>
@@ -1461,7 +1461,7 @@ async function deleteSchedule(id) {
             {courts.map(c=>(
               <button key={c.id} onClick={()=>setSelectedCourt(c.id)}
                 style={{padding:'6px 14px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:12, whiteSpace:'nowrap',
-                  background:selectedCourt===c.id?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                  background:selectedCourt===c.id?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':'rgba(255,255,255,0.08)',
                   color:selectedCourt===c.id?'#000':'#fff'}}>
                 {c.name}
               </button>
@@ -1471,12 +1471,12 @@ async function deleteSchedule(id) {
           {/* Tabla de precios */}
           {[{type:'weekday',label:'📅 Lunes – Viernes'},{type:'weekend',label:'🎉 Sábado – Domingo'}].map(({type,label})=>(
             <div key={type} style={{...S.card, marginBottom:12}}>
-              <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:10}}>{label}</div>
+              <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:10}}>{label}</div>
               {pricing.filter(p=>String(p.court_id)===String(selectedCourt)&&p.day_type===type).map(p=>(
                 <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid rgba(255,255,255,0.05)'}}>
                   <div style={{fontSize:13}}>{String(p.start_hour).padStart(2,'0')}:00 – {String(p.end_hour).padStart(2,'0')}:00</div>
                   <div style={{display:'flex', alignItems:'center', gap:8}}>
-                    <div style={{fontSize:16, fontWeight:900, color:'#74B800'}}>{p.price}€</div>
+                    <div style={{fontSize:16, fontWeight:900, color:'var(--sport-color)'}}>{p.price}€</div>
                     <button onClick={()=>{setEditingPrice(p); setPricingForm({day_type:p.day_type, start_hour:p.start_hour, end_hour:p.end_hour, price:p.price});}}
                       style={{...S.btn(''), padding:'4px 10px', fontSize:11}}>Editar</button>
                   </div>
@@ -1496,7 +1496,7 @@ async function deleteSchedule(id) {
           <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Envía un push a todos los jugadores que han jugado en tu club en los últimos 30 días. Máximo 2 mensajes por semana.</div>
 
           <div style={S.card}>
-            <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:12}}>✉️ Nuevo mensaje</div>
+            <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:12}}>✉️ Nuevo mensaje</div>
             <div style={{display:'flex', flexDirection:'column', gap:10}}>
               <input placeholder="Título (ej: Torneo flash esta tarde 🏆)" value={broadcastForm.title}
                 onChange={e=>setBroadcastForm(p=>({...p,title:e.target.value}))}
@@ -1522,7 +1522,7 @@ async function deleteSchedule(id) {
                     <div style={{fontSize:10, color:'rgba(255,255,255,0.3)'}}>{new Date(b.sent_at).toLocaleDateString('es')}</div>
                   </div>
                   <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', marginBottom:4}}>{b.body}</div>
-                  <div style={{fontSize:11, color:'#74B800', fontWeight:700}}>👥 {b.recipients_count} destinatarios</div>
+                  <div style={{fontSize:11, color:'var(--sport-color)', fontWeight:700}}>👥 {b.recipients_count} destinatarios</div>
                 </div>
               ))}
             </div>
@@ -1556,9 +1556,9 @@ async function deleteSchedule(id) {
                 </div>
                 <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
                   <div style={{flex:1, height:8, background:'rgba(255,255,255,0.06)', borderRadius:4, overflow:'hidden'}}>
-                    <div style={{height:'100%', width:`${enrolled/t.max_players*100}%`, background:isFull?'#ff6b6b':'linear-gradient(90deg,#74B800,#9BE800)', borderRadius:4}}/>
+                    <div style={{height:'100%', width:`${enrolled/t.max_players*100}%`, background:isFull?'#ff6b6b':'linear-gradient(90deg,var(--sport-color),var(--sport-color-dark))', borderRadius:4}}/>
                   </div>
-                  <div style={{fontSize:12, fontWeight:800, color:isFull?'#ff6b6b':'#74B800'}}>{enrolled}/{t.max_players}</div>
+                  <div style={{fontSize:12, fontWeight:800, color:isFull?'#ff6b6b':'var(--sport-color)'}}>{enrolled}/{t.max_players}</div>
                 </div>
                 {t.status==='open' && enrolled >= 4 && (
                   <button onClick={()=>generateBracket(t)} style={{...S.btn('green'), width:'100%', fontSize:12}}>
@@ -1588,8 +1588,8 @@ async function deleteSchedule(id) {
       {/* ── MODAL NUEVO TORNEO ── */}
       {showNewTournament && (
         <div onClick={()=>setShowNewTournament(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>🏆 Nuevo torneo flash</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:16}}>🏆 Nuevo torneo flash</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <input placeholder="Nombre (ej: Torneo Tarde Viernes)" value={tournamentForm.name}
                 onChange={e=>setTournamentForm(p=>({...p,name:e.target.value}))} style={S.input} />
@@ -1659,19 +1659,19 @@ async function deleteSchedule(id) {
                 ].map(({icon,label,value})=>(
                   <div key={label} style={{...S.card, textAlign:'center', padding:14}}>
                     <div style={{fontSize:22}}>{icon}</div>
-                    <div style={{fontSize:22, fontWeight:900, color:'#74B800'}}>{value}</div>
+                    <div style={{fontSize:22, fontWeight:900, color:'var(--sport-color)'}}>{value}</div>
                     <div style={{fontSize:10, color:'rgba(255,255,255,0.4)', fontWeight:700, marginTop:2}}>{label}</div>
                   </div>
                 ))}
               </div>
-              <div style={{...S.card, background:'rgba(116,184,0,0.05)', border:'1px solid rgba(116,184,0,0.15)'}}>
-                <div style={{fontSize:13, fontWeight:900, color:'#74B800', marginBottom:8}}>⏰ Hora pico del mes</div>
+              <div style={{...S.card, background:'rgba(var(--sport-color-rgb, 46,204,113),0.05)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)'}}>
+                <div style={{fontSize:13, fontWeight:900, color:'var(--sport-color)', marginBottom:8}}>⏰ Hora pico del mes</div>
                 <div style={{fontSize:28, fontWeight:900, color:'#fff', textAlign:'center', padding:'8px 0'}}>{monthReport.peakHour}</div>
                 <div style={{fontSize:11, color:'rgba(255,255,255,0.4)', textAlign:'center'}}>Hora con más partidos jugados</div>
               </div>
-              <div style={{...S.card, marginTop:10, background:'rgba(116,184,0,0.03)', border:'1px solid rgba(116,184,0,0.1)'}}>
+              <div style={{...S.card, marginTop:10, background:'rgba(var(--sport-color-rgb, 46,204,113),0.03)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.1)'}}>
                 <div style={{fontSize:12, color:'rgba(255,255,255,0.5)', lineHeight:1.8}}>
-                  📊 En <strong style={{color:'#fff'}}>{new Date(monthReport.month+'-01').toLocaleDateString('es',{month:'long',year:'numeric'})}</strong> tu club generó <strong style={{color:'#74B800'}}>{(monthReport.totalEarned/100).toFixed(2)}€</strong> en ingresos y donó <strong style={{color:'#4ade80'}}>{(monthReport.totalDonated/100).toFixed(2)}€</strong> a la fundación beneficiaria a través de <strong style={{color:'#fff'}}>{monthReport.totalMatches}</strong> partidos con <strong style={{color:'#fff'}}>{monthReport.totalPlayers}</strong> jugadores.
+                  📊 En <strong style={{color:'#fff'}}>{new Date(monthReport.month+'-01').toLocaleDateString('es',{month:'long',year:'numeric'})}</strong> tu club generó <strong style={{color:'var(--sport-color)'}}>{(monthReport.totalEarned/100).toFixed(2)}€</strong> en ingresos y donó <strong style={{color:'#4ade80'}}>{(monthReport.totalDonated/100).toFixed(2)}€</strong> a la fundación beneficiaria a través de <strong style={{color:'#fff'}}>{monthReport.totalMatches}</strong> partidos con <strong style={{color:'#fff'}}>{monthReport.totalPlayers}</strong> jugadores.
                 </div>
               </div>
             </>
@@ -1688,8 +1688,8 @@ async function deleteSchedule(id) {
           <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>⭐ Valoraciones del club</div>
           <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>Lo que dicen los jugadores sobre tu instalación.</div>
           {ratings.length > 0 && (
-            <div style={{...S.card, background:'rgba(116,184,0,0.05)', border:'1px solid rgba(116,184,0,0.2)', marginBottom:16, textAlign:'center'}}>
-              <div style={{fontSize:36, fontWeight:900, color:'#74B800'}}>
+            <div style={{...S.card, background:'rgba(var(--sport-color-rgb, 46,204,113),0.05)', border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)', marginBottom:16, textAlign:'center'}}>
+              <div style={{fontSize:36, fontWeight:900, color:'var(--sport-color)'}}>
                 {(ratings.reduce((s,r)=>s+r.rating,0)/ratings.length).toFixed(1)}
               </div>
               <div style={{fontSize:18, marginBottom:4}}>{'⭐'.repeat(Math.round(ratings.reduce((s,r)=>s+r.rating,0)/ratings.length))}</div>
@@ -1702,7 +1702,7 @@ async function deleteSchedule(id) {
                     <div key={star} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:2}}>
                       <div style={{fontSize:10, color:'rgba(255,255,255,0.4)'}}>{star}⭐</div>
                       <div style={{width:8, height:40, background:'rgba(255,255,255,0.06)', borderRadius:4, overflow:'hidden', position:'relative'}}>
-                        <div style={{position:'absolute', bottom:0, width:'100%', height:`${pct}%`, background:'#74B800', borderRadius:4}}/>
+                        <div style={{position:'absolute', bottom:0, width:'100%', height:`${pct}%`, background:'var(--sport-color)', borderRadius:4}}/>
                       </div>
                       <div style={{fontSize:9, color:'rgba(255,255,255,0.3)'}}>{count}</div>
                     </div>
@@ -1718,7 +1718,7 @@ async function deleteSchedule(id) {
                   {r.profiles?.avatar_url ? (
                     <img src={r.profiles.avatar_url} style={{width:32,height:32,borderRadius:999,objectFit:'cover'}} alt=""/>
                   ) : (
-                    <div style={{width:32,height:32,borderRadius:999,background:'rgba(116,184,0,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🦍</div>
+                    <div style={{width:32,height:32,borderRadius:999,background:'rgba(var(--sport-color-rgb, 46,204,113),0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🦍</div>
                   )}
                   <div>
                     <div style={{fontSize:13, fontWeight:800}}>{r.profiles?.name||'Jugador'}</div>
@@ -1742,8 +1742,8 @@ async function deleteSchedule(id) {
       {/* ── MODAL PRECIO ── */}
       {editingPrice && (
         <div onClick={()=>setEditingPrice(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>💶 {editingPrice==='new'?'Nueva franja de precio':'Editar precio'}</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:16}}>💶 {editingPrice==='new'?'Nueva franja de precio':'Editar precio'}</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <div style={{display:'flex',gap:8}}>
                 <div style={{flex:1}}>
@@ -1784,8 +1784,8 @@ async function deleteSchedule(id) {
       {/* ── MODAL SLOT ── */}
       {slotModal && (
         <div onClick={()=>setSlotModal(null)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:4}}>📅 Publicar slot</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:4}}>📅 Publicar slot</div>
             <div style={{fontSize:12,color:'rgba(255,255,255,0.4)',marginBottom:16}}>
               {slotModal.court.name} · {slotModal.date.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'})} · {slotModal.hour}
             </div>
@@ -1800,7 +1800,7 @@ async function deleteSchedule(id) {
                   ].map(({v,l,c})=>(
                     <button key={v} onClick={()=>setSlotForm(p=>({...p,status:v}))}
                       style={{flex:1,padding:'10px',borderRadius:10,cursor:'pointer',fontWeight:800,fontSize:12,
-                        background:slotForm.status===v?(c==='green'?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(220,38,38,0.3)'):'rgba(255,255,255,0.08)',
+                        background:slotForm.status===v?(c==='green'?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':'rgba(220,38,38,0.3)'):'rgba(255,255,255,0.08)',
                         color:slotForm.status===v?(c==='green'?'#000':'#ff6b6b'):'rgba(255,255,255,0.6)',
                         border:slotForm.status===v?(c==='red'?'1px solid rgba(220,38,38,0.5)':'none'):'1px solid transparent'}}>
                       {l}
@@ -1815,12 +1815,12 @@ async function deleteSchedule(id) {
                   <div>
                     <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',fontWeight:700,marginBottom:4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                       <span>PRECIO (€)</span>
-                      {slotForm.autoPriced && <span style={{fontSize:10,color:'#74B800',fontWeight:800}}>⚡ Precio automático</span>}
+                      {slotForm.autoPriced && <span style={{fontSize:10,color:'var(--sport-color)',fontWeight:800}}>⚡ Precio automático</span>}
                     </div>
                     <input type="number" min="0" step="0.5" placeholder="10" value={slotForm.price}
                       onChange={e=>setSlotForm(p=>({...p,price:e.target.value,autoPriced:false}))} style={S.input} />
                     {slotForm.autoPriced && (
-                      <div style={{fontSize:10,color:'rgba(116,184,0,0.6)',marginTop:4}}>
+                      <div style={{fontSize:10,color:'rgba(var(--sport-color-rgb, 46,204,113),0.6)',marginTop:4}}>
                         Calculado según tus franjas de precio — puedes cambiarlo manualmente
                       </div>
                     )}
@@ -1831,10 +1831,10 @@ async function deleteSchedule(id) {
                       {[60,90,120].map(d=>(
                         <button key={d} onClick={()=>setSlotForm(p=>({...p,duration:d}))}
                           style={{flex:1,padding:'8px',borderRadius:8,border:'none',cursor:'pointer',fontWeight:800,fontSize:12,
-                            background:slotForm.duration===d?'linear-gradient(135deg,#74B800,#9BE800)':'rgba(255,255,255,0.08)',
+                            background:slotForm.duration===d?'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))':'rgba(255,255,255,0.08)',
                             color:slotForm.duration===d?'#000':'#fff',
                             position:'relative'}}>
-                          {d}min{d===90&&<span style={{position:'absolute',top:-6,right:2,fontSize:8,background:'#74B800',color:'#000',borderRadius:4,padding:'1px 3px',fontWeight:900}}>partido</span>}
+                          {d}min{d===90&&<span style={{position:'absolute',top:-6,right:2,fontSize:8,background:'var(--sport-color)',color:'#000',borderRadius:4,padding:'1px 3px',fontWeight:900}}>partido</span>}
                         </button>
                       ))}
                     </div>
@@ -1881,8 +1881,8 @@ async function deleteSchedule(id) {
       {/* ── MODAL NUEVA PISTA ── */}
       {showNewCourt && (
         <div onClick={()=>setShowNewCourt(false)} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:50000,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(116,184,0,0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
-            <div style={{fontSize:15,fontWeight:900,color:'#74B800',marginBottom:16}}>🏟️ Nueva pista</div>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(640px,100%)',background:'#111',borderRadius:'20px 20px 0 0',border:'1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)',padding:20,paddingBottom:'max(20px,env(safe-area-inset-bottom))'}}>
+            <div style={{fontSize:15,fontWeight:900,color:'var(--sport-color)',marginBottom:16}}>🏟️ Nueva pista</div>
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               <input placeholder="Nombre (ej: Pista 1, Pista Central…)" value={courtForm.name}
                 onChange={e=>setCourtForm(p=>({...p,name:e.target.value}))} style={S.input} />

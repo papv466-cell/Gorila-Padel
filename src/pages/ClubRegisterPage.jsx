@@ -185,7 +185,7 @@ export default function ClubRegisterPage() {
             ← Volver
           </button>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>🏟️ Registra tu club</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)" }}>🏟️ Registra tu club</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Gratis · Revisión en 24h</div>
           </div>
         </div>
@@ -195,8 +195,8 @@ export default function ClubRegisterPage() {
             <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
               {stepTitles.map((t, i) => (
                 <div key={i} style={{ flex: 1, textAlign: "center" }}>
-                  <div style={{ height: 4, borderRadius: 2, background: i + 1 <= step ? "#74B800" : "rgba(255,255,255,0.1)", marginBottom: 6, transition: "background .3s" }} />
-                  <div style={{ fontSize: 10, fontWeight: 800, color: i + 1 <= step ? "#74B800" : "rgba(255,255,255,0.3)" }}>{t}</div>
+                  <div style={{ height: 4, borderRadius: 2, background: i + 1 <= step ? "var(--sport-color)" : "rgba(255,255,255,0.1)", marginBottom: 6, transition: "background .3s" }} />
+                  <div style={{ fontSize: 10, fontWeight: 800, color: i + 1 <= step ? "var(--sport-color)" : "rgba(255,255,255,0.3)" }}>{t}</div>
                 </div>
               ))}
             </div>
@@ -219,11 +219,11 @@ export default function ClubRegisterPage() {
                   style={{ ...IS, paddingRight: addressSearching ? 36 : 14 }} />
                 {addressSearching && <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>⏳</div>}
                 {addressSuggestions.length > 0 && (
-                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 99, background: "#1a1a1a", border: "1px solid rgba(116,184,0,0.25)", borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
+                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 99, background: "#1a1a1a", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}>
                     {addressSuggestions.map((item, i) => (
                       <div key={i} onClick={() => pickAddress(item)}
                         style={{ padding: "10px 12px", cursor: "pointer", borderBottom: i < addressSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", fontSize: 12, color: "#fff" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(116,184,0,0.08)"}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(var(--sport-color-rgb, 46,204,113),0.08)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                         <div style={{ fontWeight: 700 }}>{item.structured_formatting?.main_text || item.description}</div>
                         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{item.structured_formatting?.secondary_text || ""}</div>
@@ -233,7 +233,7 @@ export default function ClubRegisterPage() {
                 )}
               </div>
               {lat && (
-                <div style={{ marginTop: 6, fontSize: 11, color: "#74B800", fontWeight: 700 }}>
+                <div style={{ marginTop: 6, fontSize: 11, color: "var(--sport-color)", fontWeight: 700 }}>
                   ✅ Ubicación: {city} · {address} ({lat.toFixed(4)}, {lng.toFixed(4)})
                 </div>
               )}
@@ -257,8 +257,8 @@ export default function ClubRegisterPage() {
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>Logo o foto del club</label>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {logoUrl
-                  ? <img src={logoUrl} alt="logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(116,184,0,0.4)" }} />
-                  : <div style={{ width: 64, height: 64, borderRadius: 12, background: "rgba(116,184,0,0.1)", border: "2px dashed rgba(116,184,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🏟️</div>
+                  ? <img src={logoUrl} alt="logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)" }} />
+                  : <div style={{ width: 64, height: 64, borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", border: "2px dashed rgba(var(--sport-color-rgb, 46,204,113),0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🏟️</div>
                 }
                 <label style={{ padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 12, fontWeight: 800, cursor: logoUploading ? "not-allowed" : "pointer" }}>
                   {logoUploading ? "⏳ Subiendo…" : "📷 Subir imagen"}
@@ -270,7 +270,7 @@ export default function ClubRegisterPage() {
 
 
             <button onClick={() => { if (!name.trim() || !city.trim()) { setError("Nombre y ciudad son obligatorios"); return; } setError(null); setStep(2); }}
-              style={{ padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer", marginTop: 8 }}>
+              style={{ padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer", marginTop: 8 }}>
               Siguiente →
             </button>
           </div>
@@ -287,9 +287,9 @@ export default function ClubRegisterPage() {
                   return (
                     <button key={s.key} onClick={() => toggleService(s.key)}
                       style={{ padding: "7px 12px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 800,
-                        background: sel ? "linear-gradient(135deg,rgba(116,184,0,0.3),rgba(155,232,0,0.2))" : "rgba(255,255,255,0.06)",
-                        color: sel ? "#9BE800" : "rgba(255,255,255,0.5)",
-                        outline: sel ? "1px solid rgba(116,184,0,0.5)" : "1px solid rgba(255,255,255,0.08)" }}>
+                        background: sel ? "linear-gradient(135deg,rgba(var(--sport-color-rgb, 46,204,113),0.3),rgba(155,232,0,0.2))" : "rgba(255,255,255,0.06)",
+                        color: sel ? "var(--sport-color)" : "rgba(255,255,255,0.5)",
+                        outline: sel ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.5)" : "1px solid rgba(255,255,255,0.08)" }}>
                       {s.icon} {s.label}
                     </button>
                   );
@@ -299,7 +299,7 @@ export default function ClubRegisterPage() {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <label style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>Pistas deportivas</label>
-                <button onClick={addCourt} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: "rgba(116,184,0,0.15)", color: "#74B800" }}>+ Añadir pista</button>
+                <button onClick={addCourt} style={{ padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 900, background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", color: "var(--sport-color)" }}>+ Añadir pista</button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {courts.map((c, i) => (
@@ -319,7 +319,7 @@ export default function ClubRegisterPage() {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setStep(1)} style={{ padding: "13px 20px", borderRadius: 12, background: "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 900, fontSize: 14, border: "none", cursor: "pointer" }}>← Atrás</button>
-              <button onClick={() => { setError(null); setStep(3); }} style={{ flex: 1, padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer" }}>Siguiente →</button>
+              <button onClick={() => { setError(null); setStep(3); }} style={{ flex: 1, padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer" }}>Siguiente →</button>
             </div>
           </div>
         )}
@@ -355,8 +355,8 @@ export default function ClubRegisterPage() {
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Precio por hora (€)</label>
               <input type="number" value={pricePerHour} onChange={e => setPricePerHour(e.target.value)} placeholder="Ej: 12" min="0" step="0.5" style={{ ...IS, maxWidth: 160 }} />
             </div>
-            <div style={{ background: "rgba(116,184,0,0.06)", border: "1px solid rgba(116,184,0,0.2)", borderRadius: 12, padding: 14 }}>
-              <div style={{ fontSize: 12, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>📋 Resumen</div>
+            <div style={{ background: "rgba(var(--sport-color-rgb, 46,204,113),0.06)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: "var(--sport-color)", marginBottom: 8 }}>📋 Resumen</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", display: "flex", flexDirection: "column", gap: 4 }}>
                 <div>🏟️ <strong style={{ color: "#fff" }}>{name}</strong> — {city}</div>
                 <div>⏰ {openingTime} – {closingTime}</div>
@@ -368,7 +368,7 @@ export default function ClubRegisterPage() {
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setStep(2)} style={{ padding: "13px 20px", borderRadius: 12, background: "rgba(255,255,255,0.08)", color: "#fff", fontWeight: 900, fontSize: 14, border: "none", cursor: "pointer" }}>← Atrás</button>
               <button onClick={handleSubmit} disabled={saving}
-                style={{ flex: 1, padding: "14px", borderRadius: 12, background: saving ? "rgba(116,184,0,0.4)" : "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: saving ? "not-allowed" : "pointer" }}>
+                style={{ flex: 1, padding: "14px", borderRadius: 12, background: saving ? "rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: saving ? "not-allowed" : "pointer" }}>
                 {saving ? "⏳ Enviando…" : "✅ Enviar solicitud"}
               </button>
             </div>
@@ -378,11 +378,11 @@ export default function ClubRegisterPage() {
         {step === 4 && (
           <div style={{ textAlign: "center", padding: "40px 20px" }}>
             <div style={{ fontSize: 72, marginBottom: 16 }}>🦍</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¡Solicitud enviada!</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: "var(--sport-color)", marginBottom: 8 }}>¡Solicitud enviada!</div>
             <div style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", marginBottom: 8 }}>Hemos recibido los datos de <strong style={{ color: "#fff" }}>{name}</strong>.</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 32 }}>Revisaremos tu club en menos de 24h y te avisaremos cuando esté activo.</div>
-            <div style={{ background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.2)", borderRadius: 14, padding: 16, marginBottom: 24, textAlign: "left" }}>
-              <div style={{ fontSize: 12, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¿Qué pasa ahora?</div>
+            <div style={{ background: "rgba(var(--sport-color-rgb, 46,204,113),0.08)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", borderRadius: 14, padding: 16, marginBottom: 24, textAlign: "left" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: "var(--sport-color)", marginBottom: 8 }}>¿Qué pasa ahora?</div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", display: "flex", flexDirection: "column", gap: 6 }}>
                 <div>1️⃣ Verificamos que el club existe</div>
                 <div>2️⃣ Aprobamos y activamos tu perfil</div>
@@ -390,7 +390,7 @@ export default function ClubRegisterPage() {
                 <div>4️⃣ Publicas tus pistas y empiezas a recibir reservas</div>
               </div>
             </div>
-            <button onClick={() => navigate("/")} style={{ width: "100%", padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer" }}>
+            <button onClick={() => navigate("/")} style={{ width: "100%", padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 15, border: "none", cursor: "pointer" }}>
               Volver al inicio
             </button>
           </div>

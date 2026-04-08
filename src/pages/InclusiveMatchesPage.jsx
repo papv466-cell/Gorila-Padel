@@ -661,7 +661,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
               {/* BOTONES */}
               <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
                 <button onClick={onCreate} disabled={creating}
-                  style={{ flex: 1, minHeight: 56, borderRadius: 16, background: creating ? "rgba(116,184,0,0.30)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: creating ? "not-allowed" : "pointer", fontSize: 17 }}>
+                  style={{ flex: 1, minHeight: 56, borderRadius: 16, background: creating ? "rgba(var(--sport-color-rgb, 46,204,113),0.30)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: creating ? "not-allowed" : "pointer", fontSize: 17 }}>
                   {creating ? "⏳ Creando…" : "🤝 Crear partido"}
                 </button>
                 <button onClick={() => setOpenCreate(false)} disabled={creating}

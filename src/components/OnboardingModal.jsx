@@ -48,13 +48,13 @@ export default function OnboardingModal({ session, onClose }) {
 
   const S = {
     overlay: { position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:999999, display:"flex", alignItems:"center", justifyContent:"center", padding:20 },
-    modal: { width:"min(500px,100%)", background:"#111", borderRadius:24, border:"1px solid rgba(116,184,0,0.2)", padding:28, maxHeight:"90vh", overflowY:"auto" },
+    modal: { width:"min(500px,100%)", background:"#111", borderRadius:24, border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", padding:28, maxHeight:"90vh", overflowY:"auto" },
     progress: { display:"flex", gap:6, marginBottom:28 },
-    dot: (active, done) => ({ flex:1, height:3, borderRadius:999, background: done?"#74B800":active?"rgba(116,184,0,0.5)":"rgba(255,255,255,0.1)", transition:"background .3s" }),
+    dot: (active, done) => ({ flex:1, height:3, borderRadius:999, background: done?"var(--sport-color)":active?"rgba(var(--sport-color-rgb, 46,204,113),0.5)":"rgba(255,255,255,0.1)", transition:"background .3s" }),
     title: { fontSize:22, fontWeight:900, color:"#fff", marginBottom:6 },
     sub: { fontSize:13, color:"rgba(255,255,255,0.4)", marginBottom:24, lineHeight:1.5 },
     btn: (c) => ({ padding:"13px", borderRadius:12, border:"none", cursor:"pointer", fontWeight:900, fontSize:14, width:"100%",
-      background:c==="green"?"linear-gradient(135deg,#74B800,#9BE800)":c==="ghost"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)",
+      background:c==="green"?"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))":c==="ghost"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)",
       color:c==="green"?"#000":"#fff" }),
   };
 
@@ -74,7 +74,7 @@ export default function OnboardingModal({ session, onClose }) {
           <>
             <div style={{textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:64,marginBottom:12}}>🦍</div>
-              <div style={{...S.title, textAlign:"center"}}>¡Bienvenido a <span style={{color:"#74B800"}}>GorilaGo!</span>!</div>
+              <div style={{...S.title, textAlign:"center"}}>¡Bienvenido a <span style={{color:"var(--sport-color)"}}>GorilaGo!</span>!</div>
               <div style={{...S.sub, textAlign:"center"}}>La app para organizar partidos, reservar pistas y conectar con jugadores cerca de ti.</div>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
@@ -84,7 +84,7 @@ export default function OnboardingModal({ session, onClose }) {
                 {emoji:"🏆", text:"Sube en el ranking y gana badges"},
                 {emoji:"📸", text:"Comparte momentos en Gorilandia"},
               ].map((f,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:12,background:"rgba(116,184,0,0.06)",border:"1px solid rgba(116,184,0,0.12)"}}>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:12,background:"rgba(var(--sport-color-rgb, 46,204,113),0.06)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.12)"}}>
                   <span style={{fontSize:22}}>{f.emoji}</span>
                   <span style={{fontSize:13,color:"rgba(255,255,255,0.8)",fontWeight:600}}>{f.text}</span>
                 </div>
@@ -103,14 +103,14 @@ export default function OnboardingModal({ session, onClose }) {
               {LEVELS.map(l=>(
                 <div key={l.key} onClick={()=>setLevel(l.key)}
                   style={{padding:"14px 16px",borderRadius:14,cursor:"pointer",display:"flex",alignItems:"center",gap:14,
-                    background:level===l.key?"rgba(116,184,0,0.15)":"rgba(255,255,255,0.04)",
-                    border:level===l.key?"2px solid #74B800":"2px solid rgba(255,255,255,0.08)"}}>
+                    background:level===l.key?"rgba(var(--sport-color-rgb, 46,204,113),0.15)":"rgba(255,255,255,0.04)",
+                    border:level===l.key?"2px solid var(--sport-color)":"2px solid rgba(255,255,255,0.08)"}}>
                   <span style={{fontSize:28}}>{l.emoji}</span>
                   <div>
-                    <div style={{fontSize:15,fontWeight:900,color:level===l.key?"#74B800":"#fff"}}>{l.label}</div>
+                    <div style={{fontSize:15,fontWeight:900,color:level===l.key?"var(--sport-color)":"#fff"}}>{l.label}</div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginTop:2}}>{l.desc}</div>
                   </div>
-                  {level===l.key && <span style={{marginLeft:"auto",color:"#74B800",fontSize:18}}>✓</span>}
+                  {level===l.key && <span style={{marginLeft:"auto",color:"var(--sport-color)",fontSize:18}}>✓</span>}
                 </div>
               ))}
             </div>
@@ -130,10 +130,10 @@ export default function OnboardingModal({ session, onClose }) {
               {VIBES.map(v=>(
                 <div key={v.key} onClick={()=>setVibe(v.key===vibe?null:v.key)}
                   style={{padding:"18px 12px",borderRadius:14,cursor:"pointer",textAlign:"center",
-                    background:vibe===v.key?"rgba(116,184,0,0.15)":"rgba(255,255,255,0.04)",
-                    border:vibe===v.key?"2px solid #74B800":"2px solid rgba(255,255,255,0.08)"}}>
+                    background:vibe===v.key?"rgba(var(--sport-color-rgb, 46,204,113),0.15)":"rgba(255,255,255,0.04)",
+                    border:vibe===v.key?"2px solid var(--sport-color)":"2px solid rgba(255,255,255,0.08)"}}>
                   <div style={{fontSize:32,marginBottom:8}}>{v.emoji}</div>
-                  <div style={{fontSize:13,fontWeight:900,color:vibe===v.key?"#74B800":"#fff"}}>{v.label}</div>
+                  <div style={{fontSize:13,fontWeight:900,color:vibe===v.key?"var(--sport-color)":"#fff"}}>{v.label}</div>
                 </div>
               ))}
             </div>
@@ -155,7 +155,7 @@ export default function OnboardingModal({ session, onClose }) {
             {!notifGranted ? (
               <button onClick={requestNotifications} style={{...S.btn("green"),marginBottom:10}}>🔔 Activar notificaciones</button>
             ) : (
-              <div style={{padding:"12px",borderRadius:12,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",textAlign:"center",color:"#74B800",fontWeight:900,marginBottom:10}}>
+              <div style={{padding:"12px",borderRadius:12,background:"rgba(var(--sport-color-rgb, 46,204,113),0.1)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",textAlign:"center",color:"var(--sport-color)",fontWeight:900,marginBottom:10}}>
                 ✅ Notificaciones activadas
               </div>
             )}

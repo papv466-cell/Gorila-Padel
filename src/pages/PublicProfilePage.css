@@ -20,8 +20,8 @@
     margin: 0 auto 20px;
     border-radius: 50%;
     overflow: hidden;
-    border: 4px solid #74B800;
-    box-shadow: 0 8px 24px rgba(116, 184, 0, 0.3);
+    border: 4px solid var(--sport-color);
+    box-shadow: 0 8px 24px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .profileAvatar img {
@@ -33,7 +33,7 @@
   .profileAvatarPlaceholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #74B800 0%, #9BE800 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, var(--sport-color) 100%);
     display: grid;
     place-items: center;
     font-size: 48px;
@@ -74,7 +74,7 @@
   .profileStatValue {
     font-size: 32px;
     font-weight: 950;
-    color: #74B800;
+    color: var(--sport-color);
     margin-bottom: 4px;
   }
   
@@ -105,7 +105,7 @@
   
   .matchCardPublic:hover {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(116, 184, 0, 0.3);
+    border-color: rgba(var(--sport-color-rgb, 46,204,113), 0.3);
     transform: translateY(-2px);
   }
   
@@ -126,13 +126,13 @@
   }
   
   .matchCardSlots {
-    background: rgba(116, 184, 0, 0.15);
-    border: 1px solid rgba(116, 184, 0, 0.3);
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.15);
+    border: 1px solid rgba(var(--sport-color-rgb, 46,204,113), 0.3);
     padding: 4px 12px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 900;
-    color: #74B800;
+    color: var(--sport-color);
     white-space: nowrap;
   }
   
@@ -167,8 +167,8 @@
   }
   
   .matchCardPlayer.filled {
-    background: rgba(116, 184, 0, 0.15);
-    border-color: rgba(116, 184, 0, 0.3);
+    background: rgba(var(--sport-color-rgb, 46,204,113), 0.15);
+    border-color: rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .matchCardPlayer.empty {

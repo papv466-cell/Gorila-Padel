@@ -7,12 +7,12 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(116, 184, 0, 0.1);
+    border: 1px solid rgba(var(--sport-color-rgb, 46,204,113), 0.1);
     transition: all 0.3s ease;
   }
   
   .gorilandia-post:hover {
-    border-color: rgba(116, 184, 0, 0.3);
+    border-color: rgba(var(--sport-color-rgb, 46,204,113), 0.3);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
   }
   
@@ -37,14 +37,14 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 16px;
-    box-shadow: 0 0 20px rgba(116, 184, 0, 0.3);
+    box-shadow: 0 0 20px rgba(var(--sport-color-rgb, 46,204,113), 0.3);
   }
   
   .user-info {
@@ -144,7 +144,7 @@
   }
   
   .dot.active {
-    background: #74B800;
+    background: var(--sport-color);
     width: 24px;
     border-radius: 4px;
   }
@@ -205,16 +205,16 @@
   }
   
   .reaction-btn.active {
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
-    border-color: #74B800;
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
+    border-color: var(--sport-color);
     color: white;
-    box-shadow: 0 0 20px rgba(116, 184, 0, 0.4);
+    box-shadow: 0 0 20px rgba(var(--sport-color-rgb, 46,204,113), 0.4);
   }
   
   .comments-toggle {
     background: none;
     border: none;
-    color: #74B800;
+    color: var(--sport-color);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -244,7 +244,7 @@
     
     /* Scrollbar personalizado para webkit (Chrome, Safari) */
     scrollbar-width: thin;
-    scrollbar-color: #74B800 rgba(255, 255, 255, 0.1);
+    scrollbar-color: var(--sport-color) rgba(255, 255, 255, 0.1);
   }
   
   .comments-list::-webkit-scrollbar {
@@ -257,7 +257,7 @@
   }
   
   .comments-list::-webkit-scrollbar-thumb {
-    background: #74B800;
+    background: var(--sport-color);
     border-radius: 3px;
   }
   
@@ -275,7 +275,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -322,7 +322,7 @@
   
   .comment-input:focus {
     background: rgba(255, 255, 255, 0.08);
-    border-color: #74B800;
+    border-color: var(--sport-color);
   }
   
   .comment-input::placeholder {
@@ -330,7 +330,7 @@
   }
   
   .comment-submit {
-    background: linear-gradient(135deg, #74B800 0%, #5a9000 100%);
+    background: linear-gradient(135deg, var(--sport-color) 0%, #5a9000 100%);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -343,7 +343,7 @@
   
   .comment-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(116, 184, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(var(--sport-color-rgb, 46,204,113), 0.4);
   }
   
   /* ============================================
@@ -360,7 +360,7 @@
   }
   
   .comments-list::-webkit-scrollbar-thumb {
-    background: #74B800;
+    background: var(--sport-color);
     border-radius: 3px;
   }
   
@@ -400,5 +400,5 @@
   }
   
   .user-name:hover {
-    color: #74B800;
+    color: var(--sport-color);
   }

@@ -732,7 +732,7 @@ export default function SellerProductForm() {
             disabled={loading || uploading}
             style={{
               flex: 1,
-              background: '#74B800'
+              background: 'var(--sport-color)'
             }}
           >
             {loading ? '⏳ Guardando...' : (isEdit ? '✓ Actualizar Producto' : '✓ Crear Producto')}

@@ -34,11 +34,11 @@ function calcElo(players, results) {
   return elo;
 }
 
-function GorilaBar({ value, max, color = "#74B800" }) {
+function GorilaBar({ value, max, color = "var(--sport-color)" }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div style={{ height: 4, borderRadius: 999, background: "rgba(255,255,255,0.07)", overflow: "hidden", marginTop: 4 }}>
-      <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${color}, #9BE800)`, borderRadius: 999, transition: "width 0.8s cubic-bezier(.4,0,.2,1)" }} />
+      <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${color}, var(--sport-color))`, borderRadius: 999, transition: "width 0.8s cubic-bezier(.4,0,.2,1)" }} />
     </div>
   );
 }
@@ -140,9 +140,9 @@ export default function RankingPage({ session: sessionProp }) {
         @keyframes gpRowIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:translateX(0)} }
         @keyframes gpShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
         .gpRankTab { transition: all .18s; }
-        .gpRankTab:hover { background: rgba(116,184,0,0.12) !important; }
+        .gpRankTab:hover { background: rgba(var(--sport-color-rgb, 46,204,113),0.12) !important; }
         .gpRankRow { transition: background .15s; }
-        .gpRankRow:hover { background: rgba(116,184,0,0.06) !important; }
+        .gpRankRow:hover { background: rgba(var(--sport-color-rgb, 46,204,113),0.06) !important; }
         .gpAvatarRing { transition: transform .2s; }
         .gpAvatarRing:hover { transform: scale(1.06); }
         .gpGoldShimmer { background: linear-gradient(90deg,#FFD700 0%,#FFF3A0 40%,#FFD700 60%,#B8860B 100%); background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:gpShimmer 2.5s linear infinite; }
@@ -154,7 +154,7 @@ export default function RankingPage({ session: sessionProp }) {
           <div style={{ padding: "14px 0 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.5 }}>
-                🏆 <span style={{ color: "#74B800" }}>Ranking</span> Gorila
+                🏆 <span style={{ color: "var(--sport-color)" }}>Ranking</span> Gorila
               </h1>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
                 {loading ? "Cargando…" : `${sorted.length} jugadores`}
@@ -162,9 +162,9 @@ export default function RankingPage({ session: sessionProp }) {
               </div>
             </div>
             {myRank && (
-              <div style={{ textAlign: "center", background: "rgba(116,184,0,0.12)", border: "1px solid rgba(116,184,0,0.3)", borderRadius: 12, padding: "8px 14px" }}>
-                <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(116,184,0,0.7)", textTransform: "uppercase", letterSpacing: 1 }}>Tu rank</div>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#74B800", lineHeight: 1.1 }}>#{myRank}</div>
+              <div style={{ textAlign: "center", background: "rgba(var(--sport-color-rgb, 46,204,113),0.12)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", borderRadius: 12, padding: "8px 14px" }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(var(--sport-color-rgb, 46,204,113),0.7)", textTransform: "uppercase", letterSpacing: 1 }}>Tu rank</div>
+                <div style={{ fontSize: 22, fontWeight: 900, color: "var(--sport-color)", lineHeight: 1.1 }}>#{myRank}</div>
               </div>
             )}
           </div>
@@ -172,7 +172,7 @@ export default function RankingPage({ session: sessionProp }) {
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {TABS.map(t => (
               <button key={t.key} className="gpRankTab" onClick={() => setTab(t.key)}
-                style={{ flex: 1, padding: "8px 4px", borderRadius: 10, border: tab === t.key ? "1px solid #74B800" : "1px solid transparent", cursor: "pointer", fontSize: 11, fontWeight: 900, background: tab === t.key ? "rgba(116,184,0,0.15)" : "rgba(255,255,255,0.06)", color: tab === t.key ? "#74B800" : "rgba(255,255,255,0.6)", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                style={{ flex: 1, padding: "8px 4px", borderRadius: 10, border: tab === t.key ? "1px solid var(--sport-color)" : "1px solid transparent", cursor: "pointer", fontSize: 11, fontWeight: 900, background: tab === t.key ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.06)", color: tab === t.key ? "var(--sport-color)" : "rgba(255,255,255,0.6)", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                 <span style={{ fontSize: 18 }}>{t.emoji}</span>
                 <span>{t.label}</span>
               </button>
@@ -238,23 +238,23 @@ export default function RankingPage({ session: sessionProp }) {
                   return (
                     <div key={p.id} className="gpRankRow"
                       onClick={() => navigate(`/profile/${p.id}`)}
-                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: idx < rest.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", cursor: "pointer", background: isMe ? "rgba(116,184,0,0.07)" : "transparent", animation: `gpRowIn 0.3s ease ${(idx * 0.04).toFixed(2)}s both` }}>
-                      <div style={{ width: 28, textAlign: "center", fontSize: 12, fontWeight: 900, color: isMe ? "#74B800" : "rgba(255,255,255,0.3)", flexShrink: 0 }}>#{rank}</div>
-                      <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: isMe ? "2px solid #74B800" : "2px solid rgba(255,255,255,0.08)" }}>
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: idx < rest.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none", cursor: "pointer", background: isMe ? "rgba(var(--sport-color-rgb, 46,204,113),0.07)" : "transparent", animation: `gpRowIn 0.3s ease ${(idx * 0.04).toFixed(2)}s both` }}>
+                      <div style={{ width: 28, textAlign: "center", fontSize: 12, fontWeight: 900, color: isMe ? "var(--sport-color)" : "rgba(255,255,255,0.3)", flexShrink: 0 }}>#{rank}</div>
+                      <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", flexShrink: 0, border: isMe ? "2px solid var(--sport-color)" : "2px solid rgba(255,255,255,0.08)" }}>
                         {p.avatar_url ? <img src={p.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🦍</div>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: isMe ? "#74B800" : "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: isMe ? "var(--sport-color)" : "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {p.name || p.handle || "Jugador"}
-                          {isMe && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 900, color: "#74B800", background: "rgba(116,184,0,0.15)", padding: "1px 5px", borderRadius: 4 }}>TÚ</span>}
+                          {isMe && <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 900, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "1px 5px", borderRadius: 4 }}>TÚ</span>}
                         </div>
-                        <GorilaBar value={val} max={maxVal} color={isMe ? "#74B800" : "#4a7a00"} />
+                        <GorilaBar value={val} max={maxVal} color={isMe ? "var(--sport-color)" : "#4a7a00"} />
                       </div>
-                      <div style={{ fontSize: 12, fontWeight: 900, color: isMe ? "#74B800" : "rgba(255,255,255,0.6)", flexShrink: 0, textAlign: "right" }}>
-                        {tab === "elo" && <div style={{ textAlign: "right" }}><div style={{ fontSize: 15, fontWeight: 900, color: isMe ? "#74B800" : "#fff" }}>{p.elo}</div><div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontWeight: 700 }}>pts ELO</div></div>}
+                      <div style={{ fontSize: 12, fontWeight: 900, color: isMe ? "var(--sport-color)" : "rgba(255,255,255,0.6)", flexShrink: 0, textAlign: "right" }}>
+                        {tab === "elo" && <div style={{ textAlign: "right" }}><div style={{ fontSize: 15, fontWeight: 900, color: isMe ? "var(--sport-color)" : "#fff" }}>{p.elo}</div><div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", fontWeight: 700 }}>pts ELO</div></div>}
                         {tab === "partidos" && <><span style={{ color: "#fff" }}>{p.matches_played}</span> 🏓</>}
                         {tab === "valoracion" && (p.rating_count > 0 ? <><span style={{ color: "#fff" }}>{p.avg_rating}</span> ⭐</> : <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>–</span>)}
-                        {tab === "limpio" && <span style={{ color: (p.red_cards || 0) === 0 ? "#74B800" : "rgba(255,255,255,0.6)" }}>{p.matches_played}🏓 {(p.red_cards || 0) > 0 && <span style={{ color: "#ff6b6b" }}>{p.red_cards}🟥</span>}</span>}
+                        {tab === "limpio" && <span style={{ color: (p.red_cards || 0) === 0 ? "var(--sport-color)" : "rgba(255,255,255,0.6)" }}>{p.matches_played}🏓 {(p.red_cards || 0) > 0 && <span style={{ color: "#ff6b6b" }}>{p.red_cards}🟥</span>}</span>}
                       </div>
                     </div>
                   );
@@ -265,8 +265,8 @@ export default function RankingPage({ session: sessionProp }) {
               </div>
 
               {session && myRank && myRank > 53 && (
-                <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 12, background: "rgba(116,184,0,0.08)", border: "1px solid rgba(116,184,0,0.25)", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: "#74B800" }}>#{myRank}</div>
+                <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.08)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: "var(--sport-color)" }}>#{myRank}</div>
                   <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Tu posición actual · ¡Juega más para subir!</div>
                 </div>
               )}

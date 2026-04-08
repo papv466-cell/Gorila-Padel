@@ -35,7 +35,7 @@ function makeCountIcon(count) {
   const fontSize = count > 20 ? 20 : count > 10 ? 18 : 16;
   return L.divIcon({
     className: "gpClusterIcon",
-    html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:linear-gradient(135deg,#9BEF00,#74B800);border:3px solid #111;display:grid;place-items:center;box-shadow:0 12px 30px rgba(0,0,0,0.35);"><div style="font-weight:950;font-size:${fontSize}px;color:#111;">${count}</div></div>`,
+    html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:linear-gradient(135deg,#9BEF00,var(--sport-color));border:3px solid #111;display:grid;place-items:center;box-shadow:0 12px 30px rgba(0,0,0,0.35);"><div style="font-weight:950;font-size:${fontSize}px;color:#111;">${count}</div></div>`,
     iconSize: [size, size],
     iconAnchor: [size/2, size/2],
     popupAnchor: [0, -(size/2)],
@@ -71,8 +71,8 @@ function makeClubIcon({ isFav, isSelected, accessibilityLevel }) {
   }
 
   // Club sin medalla: círculo verde simple con gorila
-  const bg = isSelected ? "#9BE800" : "#2ECC71";
-  const border = isSelected ? "#74B800" : "#111";
+  const bg = isSelected ? "var(--sport-color)" : "#2ECC71";
+  const border = isSelected ? "var(--sport-color)" : "#111";
   return L.divIcon({
     className: "gpClubIcon",
     html: `<div style="width:${size}px;height:${size+8}px;position:relative;display:flex;flex-direction:column;align-items:center;">
@@ -90,7 +90,7 @@ function makeClubIcon({ isFav, isSelected, accessibilityLevel }) {
 
 const userIcon = L.divIcon({
   className: "gpUserIcon",
-  html: `<div style="width:38px;height:38px;border-radius:999px;background:#fff;border:3px solid #74B800;display:grid;place-items:center;font-size:20px;box-shadow:0 0 0 6px rgba(116,184,0,0.2),0 8px 24px rgba(0,0,0,0.3);">🍌</div>`,
+  html: `<div style="width:38px;height:38px;border-radius:999px;background:#fff;border:3px solid var(--sport-color);display:grid;place-items:center;font-size:20px;box-shadow:0 0 0 6px rgba(var(--sport-color-rgb, 46,204,113),0.2),0 8px 24px rgba(0,0,0,0.3);">🍌</div>`,
   iconSize: [38, 38],
   iconAnchor: [19, 19],
 });
@@ -119,7 +119,7 @@ function SetMapRef({ mapRef }) {
 }
 
 function makeCourtIcon(isSelected) {
-  const bg = isSelected ? "#9BE800" : "#f59e0b";
+  const bg = isSelected ? "var(--sport-color)" : "#f59e0b";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
     <ellipse cx="18" cy="40" rx="8" ry="3" fill="rgba(0,0,0,0.3)"/>
     <path d="M18 2 C10 2 4 8 4 16 C4 28 18 42 18 42 C18 42 32 28 32 16 C32 8 26 2 18 2Z" fill="${bg}" stroke="#000" stroke-width="1.5"/>
@@ -318,20 +318,20 @@ export default function MapPage({ session: sessionProp }) {
         @keyframes gpCardIn  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         .gpMapPage { background:#0a0a0a; }
         .gpFilterPill { transition:all .15s; border:none; cursor:pointer; padding:7px 14px; border-radius:20px; font-size:11px; font-weight:800; white-space:nowrap; }
-        .gpFilterPill.active { background:#74B800; color:#000; box-shadow:0 4px 12px rgba(116,184,0,0.3); }
+        .gpFilterPill.active { background:var(--sport-color); color:#000; box-shadow:0 4px 12px rgba(var(--sport-color-rgb, 46,204,113),0.3); }
         .gpFilterPill:not(.active) { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); }
         .gpFilterPill:not(.active):hover { background:rgba(255,255,255,0.15); }
         .gpClubCardH { transition:all .2s; cursor:pointer; flex-shrink:0; }
         .gpClubCardH:hover { transform:translateY(-2px); }
-        .gpClubCardH.selected { border-color:#74B800 !important; box-shadow:0 0 0 1px #74B800 !important; }
+        .gpClubCardH.selected { border-color:var(--sport-color) !important; box-shadow:0 0 0 1px var(--sport-color) !important; }
         .gpListCard { transition:background .15s; cursor:pointer; }
-        .gpListCard:hover { background:rgba(116,184,0,0.05) !important; }
+        .gpListCard:hover { background:rgba(var(--sport-color-rgb, 46,204,113),0.05) !important; }
         .gpSheetHandle { width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);margin:0 auto 14px; }
-        .gpSuggest { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:999;background:#1a1a1a;border:1px solid rgba(116,184,0,0.25);border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.6); }
+        .gpSuggest { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:999;background:#1a1a1a;border:1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25);border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.6); }
         .gpSuggestItem { width:100%;text-align:left;padding:11px 14px;border:none;background:transparent;color:#fff;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05); }
-        .gpSuggestItem:hover { background:rgba(116,184,0,0.1); }
+        .gpSuggestItem:hover { background:rgba(var(--sport-color-rgb, 46,204,113),0.1); }
         .gpSearchInput::placeholder { color:rgba(255,255,255,0.7); }
-        .gpSearchInput:focus { outline:none; box-shadow:0 0 0 3px rgba(116,184,0,0.3); }
+        .gpSearchInput:focus { outline:none; box-shadow:0 0 0 3px rgba(var(--sport-color-rgb, 46,204,113),0.3); }
       `}</style>
 
       <div className="pageWrap">
@@ -349,7 +349,7 @@ export default function MapPage({ session: sessionProp }) {
                 onChange={e => { setQuery(e.target.value); setShowSuggest(true); }}
                 onFocus={() => setShowSuggest(true)}
                 onBlur={() => setTimeout(() => setShowSuggest(false), 160)}
-                style={{ width:"100%", padding:"13px 16px 13px 14px", borderRadius:14, border:"1.5px solid rgba(116,184,0,0.3)", background:"rgba(20,20,20,0.96)", color:"#fff", fontSize:14, fontWeight:700, boxSizing:"border-box", backdropFilter:"blur(12px)" }}
+                style={{ width:"100%", padding:"13px 16px 13px 14px", borderRadius:14, border:"1.5px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", background:"rgba(20,20,20,0.96)", color:"#fff", fontSize:14, fontWeight:700, boxSizing:"border-box", backdropFilter:"blur(12px)" }}
               />
               {query && (
                 <button onClick={() => { setQuery(""); setShowSuggest(false); }}
@@ -396,7 +396,7 @@ export default function MapPage({ session: sessionProp }) {
 
           {/* ── MAPA ── */}
           {viewMode !== "list" && (
-            <div style={{ flex:1, position:"relative", margin:"0 12px", borderRadius:16, overflow:"hidden", border:"1px solid rgba(116,184,0,0.15)" }}>
+            <div style={{ flex:1, position:"relative", margin:"0 12px", borderRadius:16, overflow:"hidden", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.15)" }}>
               <MapContainer
                 center={defaultCenter} zoom={9}
                 style={{ height:"100%", width:"100%" }}
@@ -445,7 +445,7 @@ export default function MapPage({ session: sessionProp }) {
 
               {/* Botón ubicación */}
               <button onClick={() => requestMyLocation()} disabled={locBusy}
-                style={{ position:"absolute", bottom: selectedClub ? 200 : 16, right:12, zIndex:500, width:44, height:44, borderRadius:12, background:"rgba(20,20,20,0.95)", border:"1px solid rgba(116,184,0,0.3)", fontSize:20, cursor:"pointer", display:"grid", placeItems:"center", backdropFilter:"blur(8px)", transition:"bottom .3s" }}>
+                style={{ position:"absolute", bottom: selectedClub ? 200 : 16, right:12, zIndex:500, width:44, height:44, borderRadius:12, background:"rgba(20,20,20,0.95)", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", fontSize:20, cursor:"pointer", display:"grid", placeItems:"center", backdropFilter:"blur(8px)", transition:"bottom .3s" }}>
                 {locBusy ? "⏳" : "🍌"}
               </button>
 
@@ -458,7 +458,7 @@ export default function MapPage({ session: sessionProp }) {
               )}
 
               {/* Contador */}
-              <div style={{ position:"absolute", top:12, right:12, zIndex:400, background:"rgba(20,20,20,0.9)", border:"1px solid rgba(116,184,0,0.2)", borderRadius:20, padding:"4px 10px", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", backdropFilter:"blur(8px)" }}>
+              <div style={{ position:"absolute", top:12, right:12, zIndex:400, background:"rgba(20,20,20,0.9)", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", borderRadius:20, padding:"4px 10px", fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.7)", backdropFilter:"blur(8px)" }}>
                 {filteredList.length} clubs
               </div>
             </div>
@@ -537,7 +537,7 @@ export default function MapPage({ session: sessionProp }) {
                               </div>
                               <div style={{ display:"flex", gap:6, marginTop:8 }}>
                                 <button onClick={e => { e.stopPropagation(); navigate(`/partidos?clubId=${c.id}`); }}
-                                  style={{ padding:"5px 10px", borderRadius:8, background:"rgba(116,184,0,0.15)", border:"1px solid rgba(116,184,0,0.3)", color:"#74B800", fontSize:10, fontWeight:800, cursor:"pointer" }}>
+                                  style={{ padding:"5px 10px", borderRadius:8, background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", color:"var(--sport-color)", fontSize:10, fontWeight:800, cursor:"pointer" }}>
                                   🏓 Partidos
                                 </button>
                                 <button onClick={e => { e.stopPropagation(); navigate(`/club/${c.id}?name=${encodeURIComponent(c.name)}`); }}
@@ -572,7 +572,7 @@ export default function MapPage({ session: sessionProp }) {
           <div style={{
             position:"fixed", bottom:0, left:0, right:0, zIndex:900,
             background:"#161616", borderRadius:"20px 20px 0 0",
-            border:"1px solid rgba(116,184,0,0.2)", borderBottom:"none",
+            border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", borderBottom:"none",
             boxShadow:"0 -12px 40px rgba(0,0,0,0.6)",
             animation:"gpSheetIn 0.3s cubic-bezier(.32,0,.67,0)",
             maxHeight: sheetSnap==="full" ? "85vh" : "auto",
@@ -607,12 +607,12 @@ export default function MapPage({ session: sessionProp }) {
               {/* CTAs principales — los 3 más importantes */}
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
                 <button onClick={() => navigate(`/club/${selectedClub.id}?name=${encodeURIComponent(selectedClub.name)}`)}
-                  style={{ padding:"12px 6px", borderRadius:12, background:"linear-gradient(135deg,#74B800,#9BE800)", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+                  style={{ padding:"12px 6px", borderRadius:12, background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color:"#000", fontWeight:900, border:"none", cursor:"pointer", fontSize:12, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
                   <span style={{ fontSize:18 }}>🏟️</span>
                   <span>Ver Club</span>
                 </button>
                 <button onClick={() => navigate(`/partidos?clubId=${selectedClub.id}&clubName=${encodeURIComponent(selectedClub.name)}`)}
-                  style={{ padding:"12px 6px", borderRadius:12, background:"rgba(116,184,0,0.15)", border:"1px solid rgba(116,184,0,0.3)", color:"#74B800", fontWeight:900, cursor:"pointer", fontSize:12, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
+                  style={{ padding:"12px 6px", borderRadius:12, background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)", border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)", color:"var(--sport-color)", fontWeight:900, cursor:"pointer", fontSize:12, display:"flex", flexDirection:"column", alignItems:"center", gap:3 }}>
                   <span style={{ fontSize:18 }}>🏓</span>
                   <span>Partidos</span>
                 </button>
@@ -635,7 +635,7 @@ export default function MapPage({ session: sessionProp }) {
                   {selectedClub.phone && (
                     <div style={{ display:"flex", gap:10, alignItems:"center" }}>
                       <span style={{ fontSize:16 }}>📞</span>
-                      <a href={`tel:${selectedClub.phone}`} style={{ fontSize:12, color:"#74B800" }}>{selectedClub.phone}</a>
+                      <a href={`tel:${selectedClub.phone}`} style={{ fontSize:12, color:"var(--sport-color)" }}>{selectedClub.phone}</a>
                     </div>
                   )}
                   {selectedClub.lat && selectedClub.lng && (
@@ -643,7 +643,7 @@ export default function MapPage({ session: sessionProp }) {
                       target="_blank" rel="noopener noreferrer"
                       style={{ display:"flex", gap:10, alignItems:"center", padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", textDecoration:"none" }}>
                       <span style={{ fontSize:16 }}>🗺️</span>
-                      <span style={{ fontSize:12, color:"#74B800", fontWeight:700 }}>Cómo llegar</span>
+                      <span style={{ fontSize:12, color:"var(--sport-color)", fontWeight:700 }}>Cómo llegar</span>
                       <span style={{ marginLeft:"auto", color:"rgba(255,255,255,0.3)" }}>›</span>
                     </a>
                   )}
@@ -679,7 +679,7 @@ export default function MapPage({ session: sessionProp }) {
                 navigator.geolocation.getCurrentPosition(pos=>{
                   setCourtForm(p=>({...p,lat:pos.coords.latitude,lng:pos.coords.longitude,addressLabel:"Mi ubicación actual",addressQuery:"Mi ubicación actual",geoResults:[]}));
                 },()=>alert("No se pudo obtener tu ubicación"));
-              }} style={{padding:"10px 12px",borderRadius:10,background:"rgba(116,184,0,0.1)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:800,fontSize:13,cursor:"pointer",textAlign:"left"}}>
+              }} style={{padding:"10px 12px",borderRadius:10,background:"rgba(var(--sport-color-rgb, 46,204,113),0.1)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",color:"var(--sport-color)",fontWeight:800,fontSize:13,cursor:"pointer",textAlign:"left"}}>
                 📍 Usar mi ubicación actual
               </button>
 
@@ -709,7 +709,7 @@ export default function MapPage({ session: sessionProp }) {
                   }}
                   style={{width:"100%",padding:"11px 12px",borderRadius:10,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"#fff",fontSize:13,outline:"none",boxSizing:"border-box"}} />
                 {(courtForm.geoResults||[]).length>0 && (
-                  <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99999,background:"#1a1a1a",border:"1px solid rgba(116,184,0,0.3)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.6)"}}>
+                  <div style={{position:"absolute",top:"calc(100% + 4px)",left:0,right:0,zIndex:99999,background:"#1a1a1a",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",borderRadius:10,overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.6)"}}>
                     {(courtForm.geoResults||[]).slice(0,6).map((r,i)=>(
                       <div key={i} onClick={()=>{
                         const lat=parseFloat(r.lat), lng=parseFloat(r.lon);
@@ -717,7 +717,7 @@ export default function MapPage({ session: sessionProp }) {
                         setCourtForm(p=>({...p,lat,lng,addressLabel:label,addressQuery:label,geoResults:[]}));
                       }}
                         style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,0.05)",fontSize:12,color:"#fff",lineHeight:1.4}}>
-                        <div style={{color:"#74B800",fontWeight:800,fontSize:11}}>📍</div>
+                        <div style={{color:"var(--sport-color)",fontWeight:800,fontSize:11}}>📍</div>
                         <div>{r.display_name}</div>
                       </div>
                     ))}
@@ -726,7 +726,7 @@ export default function MapPage({ session: sessionProp }) {
               </div>
 
               {courtForm.lat && (
-                <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(116,184,0,0.08)",border:"1px solid rgba(116,184,0,0.3)",fontSize:12,color:"#74B800",fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
+                <div style={{padding:"10px 12px",borderRadius:10,background:"rgba(var(--sport-color-rgb, 46,204,113),0.08)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",fontSize:12,color:"var(--sport-color)",fontWeight:700,display:"flex",alignItems:"center",gap:8}}>
                   <span>✅</span>
                   <span>{(courtForm.addressLabel||"").slice(0,70)}{(courtForm.addressLabel||"").length>70?"…":""}</span>
                   <button onClick={()=>setCourtForm(p=>({...p,lat:null,lng:null,addressLabel:"",addressQuery:"",geoResults:[]}))}
@@ -783,12 +783,12 @@ export default function MapPage({ session: sessionProp }) {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
               <button onClick={()=>navigate(`/partidos?create=1&courtId=${selectedCourt.id}&courtName=${encodeURIComponent(selectedCourt.name)}&lat=${selectedCourt.lat}&lng=${selectedCourt.lng}`)}
-                style={{padding:"12px 6px",borderRadius:12,background:"linear-gradient(135deg,#74B800,#9BE800)",border:"none",color:"#000",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                style={{padding:"12px 6px",borderRadius:12,background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",border:"none",color:"#000",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <span style={{fontSize:20}}>➕</span>
                 <span>Crear partido</span>
               </button>
               <button onClick={()=>navigate(`/partidos?courtId=${selectedCourt.id}&courtName=${encodeURIComponent(selectedCourt.name)}`)}
-                style={{padding:"12px 6px",borderRadius:12,background:"rgba(116,184,0,0.15)",border:"1px solid rgba(116,184,0,0.3)",color:"#74B800",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                style={{padding:"12px 6px",borderRadius:12,background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",border:"1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)",color:"var(--sport-color)",fontWeight:900,cursor:"pointer",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
                 <span style={{fontSize:20}}>🏓</span>
                 <span>Ver partidos</span>
               </button>

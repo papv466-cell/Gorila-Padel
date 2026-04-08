@@ -87,7 +87,7 @@ function CheckoutForm({ total, orderData }) {
         </div>
       )}
       <button type="submit" disabled={!stripe || loading}
-        style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', background: loading ? 'rgba(116,184,0,0.4)' : 'linear-gradient(135deg,#74B800,#9BE800)', color: '#000', fontWeight: 900, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all .2s' }}>
+        style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', background: loading ? 'rgba(var(--sport-color-rgb, 46,204,113),0.4)' : 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))', color: '#000', fontWeight: 900, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer', transition: 'all .2s' }}>
         {loading ? '⏳ Procesando...' : `💳 Pagar €${total}`}
       </button>
       <div style={{ marginTop: 10, padding: '9px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
@@ -155,7 +155,7 @@ export default function CheckoutPage() {
         <div style={{ textAlign: 'center', paddingTop: 60 }}>
           <div style={{ fontSize: 60, marginBottom: 16 }}>🛒</div>
           <h1 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 16 }}>Tu carrito está vacío</h1>
-          <Link to="/tienda" style={{ padding: '11px 22px', borderRadius: 12, background: '#74B800', color: '#000', fontWeight: 900, textDecoration: 'none' }}>Ver productos</Link>
+          <Link to="/tienda" style={{ padding: '11px 22px', borderRadius: 12, background: 'var(--sport-color)', color: '#000', fontWeight: 900, textDecoration: 'none' }}>Ver productos</Link>
         </div>
       </div>
     </div>
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
   return (
     <div className="page pageWithHeader" style={{ background: '#0a0a0a', minHeight: '100vh' }}>
       <style>{`
-        .gcInput:focus { border-color: rgba(116,184,0,0.5) !important; box-shadow: 0 0 0 3px rgba(116,184,0,0.1) !important; }
+        .gcInput:focus { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.5) !important; box-shadow: 0 0 0 3px rgba(var(--sport-color-rgb, 46,204,113),0.1) !important; }
       `}</style>
       <div className="pageWrap">
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: isMobile ? '0 12px 40px' : '0 24px 60px' }}>
@@ -187,20 +187,20 @@ export default function CheckoutPage() {
                     {item.product?.images?.[0]
                       ? <img src={item.product.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 16, opacity: 0.2 }}>📦</div>}
-                    <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 999, background: '#74B800', color: '#000', fontSize: 9, fontWeight: 900, display: 'grid', placeItems: 'center' }}>{item.quantity}</div>
+                    <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 999, background: 'var(--sport-color)', color: '#000', fontSize: 9, fontWeight: 900, display: 'grid', placeItems: 'center' }}>{item.quantity}</div>
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{item.product?.title}</div>
-                  <div style={{ fontSize: 13, fontWeight: 900, color: '#74B800' }}>€{(item.product?.price * item.quantity).toFixed(2)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--sport-color)' }}>€{(item.product?.price * item.quantity).toFixed(2)}</div>
                 </div>
               ))}
               <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '10px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
                 <span style={{ color: 'rgba(255,255,255,0.5)' }}>Envío</span>
-                <span style={{ fontWeight: 800, color: shipping === 0 ? '#74B800' : '#fff' }}>{shipping === 0 ? '🎉 GRATIS' : `€${shipping.toFixed(2)}`}</span>
+                <span style={{ fontWeight: 800, color: shipping === 0 ? 'var(--sport-color)' : '#fff' }}>{shipping === 0 ? '🎉 GRATIS' : `€${shipping.toFixed(2)}`}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontWeight: 900 }}>Total</span>
-                <span style={{ fontWeight: 900, fontSize: 18, color: '#74B800' }}>€{total}</span>
+                <span style={{ fontWeight: 900, fontSize: 18, color: 'var(--sport-color)' }}>€{total}</span>
               </div>
             </div>
           )}
@@ -263,7 +263,7 @@ export default function CheckoutPage() {
                     <div style={{ marginTop: 8, fontWeight: 800, fontSize: 13 }}>Preparando pago seguro...</div>
                   </div>
                 ) : clientSecret && stripePromise ? (
-                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#74B800', colorBackground: '#111', colorText: '#ffffff', colorDanger: '#ef4444', fontFamily: 'system-ui, sans-serif', borderRadius: '10px' } } }}>
+                  <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: 'var(--sport-color)', colorBackground: '#111', colorText: '#ffffff', colorDanger: '#ef4444', fontFamily: 'system-ui, sans-serif', borderRadius: '10px' } } }}>
                     <CheckoutForm total={total} orderData={{ email: profile?.email, orderNumber, items: items.map(i => ({ title: i.product?.title, price: i.product?.price, quantity: i.quantity })), total, address }} />
                   </Elements>
                 ) : (
@@ -280,10 +280,10 @@ export default function CheckoutPage() {
                 <div style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>Resumen</div>
 
                 {profile && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'rgba(116,184,0,0.07)', border: '1px solid rgba(116,184,0,0.12)', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'rgba(var(--sport-color-rgb, 46,204,113),0.07)', border: '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.12)', marginBottom: 16 }}>
                     {profile.avatar_url
                       ? <img src={profile.avatar_url} alt="" style={{ width: 34, height: 34, borderRadius: 999, objectFit: 'cover' }} />
-                      : <div style={{ width: 34, height: 34, borderRadius: 999, background: '#74B800', color: '#000', display: 'grid', placeItems: 'center', fontSize: 14, fontWeight: 900 }}>{(profile.name || profile.email || '?')[0].toUpperCase()}</div>}
+                      : <div style={{ width: 34, height: 34, borderRadius: 999, background: 'var(--sport-color)', color: '#000', display: 'grid', placeItems: 'center', fontSize: 14, fontWeight: 900 }}>{(profile.name || profile.email || '?')[0].toUpperCase()}</div>}
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{profile.name || 'Usuario'}</div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{profile.email}</div>
@@ -298,10 +298,10 @@ export default function CheckoutPage() {
                         {item.product?.images?.[0]
                           ? <img src={item.product.images[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', fontSize: 18, opacity: 0.2 }}>📦</div>}
-                        <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 999, background: '#74B800', color: '#000', fontSize: 9, fontWeight: 900, display: 'grid', placeItems: 'center' }}>{item.quantity}</div>
+                        <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: 999, background: 'var(--sport-color)', color: '#000', fontSize: 9, fontWeight: 900, display: 'grid', placeItems: 'center' }}>{item.quantity}</div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 800, color: '#fff', lineHeight: 1.3 }}>{item.product?.title}</div>
-                      <div style={{ fontSize: 13, fontWeight: 900, color: '#74B800' }}>€{(item.product?.price * item.quantity).toFixed(2)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: 'var(--sport-color)' }}>€{(item.product?.price * item.quantity).toFixed(2)}</div>
                     </div>
                   ))}
                 </div>
@@ -313,12 +313,12 @@ export default function CheckoutPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 10 }}>
                   <span style={{ color: 'rgba(255,255,255,0.5)' }}>Envío</span>
-                  <span style={{ fontWeight: 800, color: shipping === 0 ? '#74B800' : '#fff' }}>{shipping === 0 ? '🎉 GRATIS' : `€${shipping.toFixed(2)}`}</span>
+                  <span style={{ fontWeight: 800, color: shipping === 0 ? 'var(--sport-color)' : '#fff' }}>{shipping === 0 ? '🎉 GRATIS' : `€${shipping.toFixed(2)}`}</span>
                 </div>
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', marginBottom: 10 }} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
                   <span style={{ fontWeight: 900, fontSize: 16 }}>Total</span>
-                  <span style={{ fontWeight: 900, fontSize: 20, color: '#74B800' }}>€{total}</span>
+                  <span style={{ fontWeight: 900, fontSize: 20, color: 'var(--sport-color)' }}>€{total}</span>
                 </div>
                 <div style={{ padding: '9px 12px', borderRadius: 8, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.12)', fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'flex', gap: 6 }}>
                   🔒 Pago 100% seguro con Stripe

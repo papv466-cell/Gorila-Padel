@@ -1064,7 +1064,7 @@ img { max-width: 100%; height: auto; }
 
 /* Ring según disponibilidad */
 .gpClubIconWrap.free{
-  outline: 3px solid #74B800; /* verde más oscuro “gorila” */
+  outline: 3px solid var(--sport-color); /* verde más oscuro “gorila” */
   outline-offset: 2px;
 }
 .gpClubIconWrap.nofree{
@@ -1107,7 +1107,7 @@ img { max-width: 100%; height: auto; }
   position:absolute;
   inset:-6px;
   border-radius:999px;
-  border:2px solid rgba(116,184,0,0.55);
+  border:2px solid rgba(var(--sport-color-rgb, 46,204,113),0.55);
   animation: gpPulse 1.6s ease-out infinite;
 }
 
@@ -1161,7 +1161,7 @@ img { max-width: 100%; height: auto; }
 
 .gpChipBtn.isOn {
   border-color: rgba(0,0,0,0.22);
-  background: rgba(116, 184, 0, 0.20); /* verde gorila suave */
+  background: rgba(var(--sport-color-rgb, 46,204,113), 0.20); /* verde gorila suave */
 }
 
 .gpChipIcon {
@@ -1382,7 +1382,7 @@ img { max-width: 100%; height: auto; }
   background: var(--sport-color);
 }
 .gpChipBtn.isOn{
-  background: rgba(116,184,0,0.22);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.22);
   border-color: rgba(0,0,0,0.22);
 }
 /* =========================
@@ -1508,7 +1508,7 @@ img { max-width: 100%; height: auto; }
   padding: 12px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.10);
-  color: rgba#74B800;
+  color: rgbavar(--sport-color);
   font-weight: 800;
 }
 .navMobileLink.active{
@@ -2160,8 +2160,8 @@ button.navMobileLink.navLinkBtn{
   justify-content: center;
   width: 54px; height: 54px;
   border-radius: 16px;
-  background: rgba(116,184,0,0.18);
-  border: 1px solid rgba(116,184,0,0.22);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.18);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.22);
   font-size: 22px;
   margin-bottom: 12px;
 }
@@ -2190,16 +2190,16 @@ button.navMobileLink.navLinkBtn{
   width: 56px; height: 56px;
   border-radius: 16px;
   display: grid; place-items: center;
-  background: rgba(116,184,0,0.18);
-  border: 1px solid rgba(116,184,0,0.22);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.18);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.22);
   font-size: 24px;
 }
 .gpBigCtaTitle { font-weight: 950; font-size: 18px; }
 .gpBigCtaMeta { opacity: .78; font-size: 13px; margin-top: 2px; }
 .gpBigCtaArrow { opacity: .75; font-weight: 900; font-size: 18px; text-align: right; }
 
-.gpBigCtaPlay { border-color: rgba(116,184,0,0.25); }
-.gpBigCtaLearn { border-color: rgba(116,184,0,0.18); }
+.gpBigCtaPlay { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.25); }
+.gpBigCtaLearn { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.18); }
 
 .gpHomeFooter { margin-top: 18px; opacity: .75; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
 .gpHomeFooterDot { opacity: .45; }
@@ -2210,8 +2210,8 @@ button.navMobileLink.navLinkBtn{
   display: inline-flex;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(116,184,0,0.16);
-  border: 1px solid rgba(116,184,0,0.22);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.16);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.22);
   font-weight: 900;
   font-size: 12px;
   opacity: .95;
@@ -2232,7 +2232,7 @@ button.navMobileLink.navLinkBtn{
   cursor: pointer;
 }
 .gpHubCard:active { transform: scale(0.99); }
-.gpHubCardPrimary { border-color: rgba(116,184,0,0.28); background: rgba(116,184,0,0.10); }
+.gpHubCardPrimary { border-color: rgba(var(--sport-color-rgb, 46,204,113),0.28); background: rgba(var(--sport-color-rgb, 46,204,113),0.10); }
 .gpHubIcon { font-size: 24px; margin-bottom: 8px; }
 .gpHubCardTitle { font-size: 16px; font-weight: 950; }
 .gpHubCardMeta { margin-top: 4px; font-size: 13px; opacity: .78; }
@@ -2246,8 +2246,8 @@ button.navMobileLink.navLinkBtn{
   justify-content: center;
   border-radius: 16px;
   padding: 10px 12px;
-  background: rgba(116,184,0,0.16);
-  border: 1px solid rgba(116,184,0,0.22);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.16);
+  border: 1px solid rgba(var(--sport-color-rgb, 46,204,113),0.22);
   font-size: 18px;
 }
 .gpInclusiveTitle { margin: 10px 0 0; font-size: 24px; font-weight: 950; }
@@ -2282,7 +2282,7 @@ button.navMobileLink.navLinkBtn{
   --gp-text: rgba(255,255,255,0.92);
   --gp-muted: rgba(255,255,255,0.65);
 
-  --gp-green: #74B800;   /* tu verde */
+  --gp-green: var(--sport-color);   /* tu verde */
   --gp-green2:#5da100;   /* hover */
   --gp-danger:#ef4444;
 }
@@ -2416,8 +2416,8 @@ input::placeholder, textarea::placeholder{
   box-shadow: 0 10px 22px rgba(0,0,0,0.14);
 }
 .gpChipBtn.isOn{
-  background: rgba(116,184,0,0.22);
-  border-color: rgba(116,184,0,0.35);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.22);
+  border-color: rgba(var(--sport-color-rgb, 46,204,113),0.35);
 }
 .gpChipIcon{
   background: rgba(255,255,255,0.06);
@@ -2477,7 +2477,7 @@ html, body{ overflow-x: hidden; }
     --gp-bg:#050505;
     --gp-text:rgba(255,255,255,0.92);
     --gp-muted:rgba(255,255,255,0.65);
-    --gp-green:#74B800;
+    --gp-green:var(--sport-color);
     --gp-green2:#5da100;
     --gp-border:rgba(255,255,255,0.12);
     --gp-card:rgba(255,255,255,0.06);
@@ -2599,10 +2599,10 @@ html, body{ overflow-x: hidden; }
 
 /* Activo (cuando lleva isOn) bien visible */
 .gpChipBtn.isOn{
-  background: rgba(116,184,0,0.92);
-  border-color: rgba(116,184,0,0.95);
+  background: rgba(var(--sport-color-rgb, 46,204,113),0.92);
+  border-color: rgba(var(--sport-color-rgb, 46,204,113),0.95);
   color: #111;
-  box-shadow: 0 12px 26px rgba(116,184,0,0.25);
+  box-shadow: 0 12px 26px rgba(var(--sport-color-rgb, 46,204,113),0.25);
 }
 
 /* Oculta “decoraciones” del chip si no quieres que cante */
@@ -2668,7 +2668,7 @@ html, body{ overflow-x: hidden; }
   background: var(--sport-color) !important;
   border-color: rgba(0,0,0,0.10) !important;
   color: #111 !important;
-  box-shadow: 0 16px 40px rgba(116,184,0,0.25);
+  box-shadow: 0 16px 40px rgba(var(--sport-color-rgb, 46,204,113),0.25);
 }
 
 .gpChipBtn.isOn .gpChipDot {
@@ -2772,7 +2772,7 @@ button.gpChipBtn.isOn {
   background: var(--sport-color) !important;
   border-color: rgba(0,0,0,0.12) !important;
   color: #111 !important;
-  box-shadow: 0 16px 40px rgba(116,184,0,0.22) !important;
+  box-shadow: 0 16px 40px rgba(var(--sport-color-rgb, 46,204,113),0.22) !important;
 }
 
 button.gpChipBtn.isOn .gpChipDot {
@@ -2921,7 +2921,7 @@ button.gpChipBtn.isOn .gpChipText {
     background: var(--sport-color) !important;
     border-color: rgba(0,0,0,0.15) !important;
     color: #111 !important;
-    box-shadow: 0 12px 30px rgba(116,184,0,0.30);
+    box-shadow: 0 12px 30px rgba(var(--sport-color-rgb, 46,204,113),0.30);
   }
   
   button.gpChipBtn.isOn * {
@@ -3513,7 +3513,7 @@ html, body{
   flex: 0 0 auto;
 }
 .gpMatchesPage .gpDayPill.isActive{
-  border-color: rgba(116,184,0,0.55);
+  border-color: rgba(var(--sport-color-rgb, 46,204,113),0.55);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
   transform: translateY(-1px);
 }
@@ -3536,7 +3536,7 @@ html, body{
   border-radius: 999px;
   background: var(--sport-color);
   margin-top: 4px;
-  box-shadow: 0 0 0 6px rgba(116,184,0,0.10);
+  box-shadow: 0 0 0 6px rgba(var(--sport-color-rgb, 46,204,113),0.10);
 }
 .gpMatchesPage .gpDot.isOff{
   background: rgba(255,255,255,0.18);
@@ -4826,7 +4826,7 @@ input[type="date"].gpInput::-webkit-calendar-picker-indicator {
 }
 
 .gpMapPage input[placeholder*="Buscar"]:focus {
-  outline: 2px solid rgba(116,184,0,0.3);
+  outline: 2px solid rgba(var(--sport-color-rgb, 46,204,113),0.3);
   box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
 }
 

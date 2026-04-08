@@ -85,7 +85,7 @@ export default function SellerDashboard() {
         <h2 style={{ fontSize: isMobile ? 16 : 18, fontWeight: 950, marginBottom: 14 }}>Acciones Rápidas</h2>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button className="btn" onClick={() => navigate('/vendedor/productos/nuevo')}
-            style={{ background: '#74B800', display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 13 : 15, padding: isMobile ? '10px 14px' : '12px 18px' }}>
+            style={{ background: 'var(--sport-color)', display: 'flex', alignItems: 'center', gap: 6, fontSize: isMobile ? 13 : 15, padding: isMobile ? '10px 14px' : '12px 18px' }}>
             ➕ Añadir Producto
           </button>
           <button className="btn ghost" onClick={() => navigate('/vendedor/productos')}
@@ -132,12 +132,12 @@ export default function SellerDashboard() {
                     €{product.price} · Stock: {product.stock_quantity} · {product.sales || 0} vendidos
                   </div>
                   {isMobile && (
-                    <div style={{ fontSize: 13, fontWeight: 950, color: '#74B800', marginTop: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 950, color: 'var(--sport-color)', marginTop: 4 }}>
                       €{((product.sales || 0) * product.price).toFixed(0)}
                     </div>
                   )}
                 </div>
-                {!isMobile && <div style={{ fontSize: 16, fontWeight: 950, color: '#74B800' }}>€{((product.sales || 0) * product.price).toFixed(0)}</div>}
+                {!isMobile && <div style={{ fontSize: 16, fontWeight: 950, color: 'var(--sport-color)' }}>€{((product.sales || 0) * product.price).toFixed(0)}</div>}
                 {!isMobile && (
                   <span style={{ padding: '6px 12px', borderRadius: 999, fontSize: 11, fontWeight: 900, background: product.is_active ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', color: product.is_active ? '#22c55e' : '#9ca3af', border: `1px solid ${product.is_active ? 'rgba(34,197,94,0.25)' : 'rgba(156,163,175,0.25)'}` }}>
                     {product.is_active ? 'ACTIVO' : 'INACTIVO'}
@@ -172,12 +172,12 @@ export default function SellerDashboard() {
                 </div>
                 {isMobile ? (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                    <div style={{ fontWeight: 950, color: '#74B800', fontSize: 15 }}>+€{(item.price * item.quantity).toFixed(2)}</div>
+                    <div style={{ fontWeight: 950, color: 'var(--sport-color)', fontSize: 15 }}>+€{(item.price * item.quantity).toFixed(2)}</div>
                     <StatusBadge status={item.order?.status} />
                   </div>
                 ) : (
                   <>
-                    <div style={{ fontWeight: 950, color: '#74B800', fontSize: 16 }}>+€{(item.price * item.quantity).toFixed(2)}</div>
+                    <div style={{ fontWeight: 950, color: 'var(--sport-color)', fontSize: 16 }}>+€{(item.price * item.quantity).toFixed(2)}</div>
                     <StatusBadge status={item.order?.status} />
                   </>
                 )}
@@ -193,14 +193,14 @@ export default function SellerDashboard() {
 function StatCard({ emoji, label, value, green, mobile }) {
   return (
     <div style={{
-      background: green ? 'rgba(116,184,0,0.12)' : 'rgba(255,255,255,0.04)',
-      border: green ? '1px solid rgba(116,184,0,0.25)' : '1px solid rgba(255,255,255,0.08)',
+      background: green ? 'rgba(var(--sport-color-rgb, 46,204,113),0.12)' : 'rgba(255,255,255,0.04)',
+      border: green ? '1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)' : '1px solid rgba(255,255,255,0.08)',
       borderRadius: 14, padding: mobile ? 12 : 18
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div style={{ fontSize: mobile ? 9 : 11, fontWeight: 900, marginBottom: mobile ? 4 : 6, color: green ? '#74B800' : undefined, opacity: green ? 1 : 0.7 }}>{label}</div>
-          <div style={{ fontSize: mobile ? 24 : 28, fontWeight: 950, color: green ? '#74B800' : undefined }}>{value}</div>
+          <div style={{ fontSize: mobile ? 9 : 11, fontWeight: 900, marginBottom: mobile ? 4 : 6, color: green ? 'var(--sport-color)' : undefined, opacity: green ? 1 : 0.7 }}>{label}</div>
+          <div style={{ fontSize: mobile ? 24 : 28, fontWeight: 950, color: green ? 'var(--sport-color)' : undefined }}>{value}</div>
         </div>
         <div style={{ fontSize: mobile ? 22 : 26 }}>{emoji}</div>
       </div>

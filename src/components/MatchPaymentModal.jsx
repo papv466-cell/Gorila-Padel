@@ -7,7 +7,7 @@ import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-
 import { supabase } from "../services/supabaseClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-const LEVEL_COLORS = { iniciacion: "#74B800", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
+const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
 // ── Formulario Stripe interno ────────────────────────────────────────────────
 function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraProjectDonation = 0.10, setExtraProjectDonation }) {
@@ -53,7 +53,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraP
 
       <button onClick={handlePay} disabled={!stripe || loading} style={{
         width: "100%", marginTop: 14, padding: "15px", borderRadius: 12, border: "none",
-        background: loading ? "rgba(116,184,0,0.4)" : "linear-gradient(135deg,#74B800,#9BE800)",
+        background: loading ? "rgba(var(--sport-color-rgb, 46,204,113),0.4)" : "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",
         color: "#000", fontWeight: 900, fontSize: 16, cursor: loading ? "not-allowed" : "pointer",
       }}>
         {loading ? "⏳ Procesando..." : `💳 Pagar €${(parseFloat(total) + 0.10 + extraProjectDonation + 0.10).toFixed(2)} y unirme`}
@@ -86,7 +86,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   const pricePerPlayer = parseFloat(match.price_per_player || 0);
   const serviceFeeCents = isPrivateCourt || pricePerPlayer === 0 ? 50 : 30;
   const totalPreview = (pricePerPlayer + serviceFeeCents / 100).toFixed(2);
-  const levelColor = LEVEL_COLORS[match.level] || "#74B800";
+  const levelColor = LEVEL_COLORS[match.level] || "var(--sport-color)";
 
   async function handleCreatorAuth() {
   setStep("paying");
@@ -156,7 +156,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 40000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", backdropFilter: "blur(4px)" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1a1a1a", borderRadius: 20, padding: "24px 20px 32px", border: "1px solid rgba(116,184,0,0.2)", maxHeight: "90vh", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#1a1a1a", borderRadius: 20, padding: "24px 20px 32px", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", maxHeight: "90vh", overflowY: "auto" }}>
 
         <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 999, margin: "0 auto 20px" }} />
 
@@ -178,7 +178,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       <div style={{ fontSize: 28, marginBottom: 6 }}>🔒</div>
       <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>Reserva tu plaza</div>
       <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4, lineHeight: 1.5 }}>
-        Se retendrán <strong style={{ color: "#74B800" }}>€{pricePerPlayer.toFixed(2)}</strong> en tu tarjeta.<br/>
+        Se retendrán <strong style={{ color: "var(--sport-color)" }}>€{pricePerPlayer.toFixed(2)}</strong> en tu tarjeta.<br/>
         El cobro se hará efectivo 24h antes del partido.
       </div>
     </div>
@@ -187,7 +187,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         ⚠️ {error}
       </div>
     )}
-    <button onClick={handleCreatorAuth} style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,#74B800,#9BE800)", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
+    <button onClick={handleCreatorAuth} style={{ width: "100%", padding: "15px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
       🔒 Añadir tarjeta y reservar
     </button>
     <button onClick={onClose} style={{ width: "100%", marginTop: 10, padding: "11px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
@@ -231,7 +231,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         {step === "paying" && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <button onClick={() => setStep("mood")} style={{ background: "none", border: "none", color: "#74B800", fontSize: 20, cursor: "pointer", padding: 0 }}>←</button>
+              <button onClick={() => setStep("mood")} style={{ background: "none", border: "none", color: "var(--sport-color)", fontSize: 20, cursor: "pointer", padding: 0 }}>←</button>
               <div style={{ fontSize: 17, fontWeight: 900, color: "#fff" }}>💳 Pago seguro</div>
             </div>
 
@@ -293,7 +293,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   </div>
                   <div style={{ paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 12, color: "rgba(255,255,255,0.40)" }}>Total a pagar</span>
-                    <span style={{ fontSize: 16, fontWeight: 900, color: "#74B800" }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: "var(--sport-color)" }}>
                       €{(((paymentData?.pricePerPlayerCents||0)/100 || pricePerPlayer) + 0.10 + extraProjectDonation + 0.10).toFixed(2)}
                     </span>
                   </div>
@@ -309,7 +309,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   appearance: {
                     theme: "night",
                     variables: {
-                      colorPrimary: "#74B800",
+                      colorPrimary: "var(--sport-color)",
                       colorBackground: "#1a1a1a",
                       colorText: "#ffffff",
                       colorDanger: "#ef4444",
@@ -338,12 +338,12 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         {step === "success" && (
           <div style={{ textAlign: "center", padding: "20px 0 10px" }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>🦍</div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800", marginBottom: 8 }}>¡Pago confirmado!</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "var(--sport-color)", marginBottom: 8 }}>¡Pago confirmado!</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
               Ya estás dentro del partido en {match.club_name || "pista privada"}
             </div>
             {paymentData?.matchData?.foundationName && (
-              <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12, background: "rgba(116,184,0,0.1)", border: "1px solid rgba(116,184,0,0.25)", fontSize: 13, color: "#9BE800" }}>
+              <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12, background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.25)", fontSize: 13, color: "var(--sport-color)" }}>
                 🤝 0,10€ donados a <strong>{paymentData.matchData.foundationName}</strong>
               </div>
             )}

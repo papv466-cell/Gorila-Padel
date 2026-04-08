@@ -66,7 +66,7 @@ export default function SellerProducts() {
           className="btn"
           onClick={() => navigate('/vendedor/productos/nuevo')}
           style={{
-            background: '#74B800',
+            background: 'var(--sport-color)',
             display: 'flex',
             alignItems: 'center',
             gap: 8
@@ -154,7 +154,7 @@ export default function SellerProducts() {
           <button
             className="btn"
             onClick={() => navigate('/vendedor/productos/nuevo')}
-            style={{ background: '#74B800' }}
+            style={{ background: 'var(--sport-color)' }}
           >
             Añadir Producto
           </button>
@@ -210,7 +210,7 @@ export default function SellerProducts() {
                     {product.category}
                   </div>
                   <div style={{ display: 'flex', gap: 16, fontSize: 14, fontWeight: 800 }}>
-                    <span style={{ color: '#74B800' }}>€{product.price}</span>
+                    <span style={{ color: 'var(--sport-color)' }}>€{product.price}</span>
                     <span style={{ opacity: 0.7 }}>Stock: {product.stock_quantity}</span>
                     <span style={{ opacity: 0.7 }}>Ventas: {product.sales || 0}</span>
                   </div>

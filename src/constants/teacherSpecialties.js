@@ -89,7 +89,7 @@ export const INCLUSION = [
   { key: "movilidad_red",    label: "Movilidad reducida (sin silla)",   emoji: "🚶",  color: "#64748B" },
   { key: "lesion_retorno",   label: "Vuelta tras lesión",               emoji: "❤️",  color: "#EF4444" },
   { key: "ritmo_suave",      label: "Ritmo suave / baja intensidad",    emoji: "🐢",  color: "#84CC16" },
-  { key: "mixto_inclusivo",  label: "Clases mixtas (con/sin diversidad)",emoji: "🤝", color: "#74B800" },
+  { key: "mixto_inclusivo",  label: "Clases mixtas (con/sin diversidad)",emoji: "🤝", color: "var(--sport-color)" },
 ];
 
 export const CLASS_FORMATS = [

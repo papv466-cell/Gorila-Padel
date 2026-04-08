@@ -112,7 +112,7 @@ export default function AppTour({ session, onClose }) {
     zIndex: 1000001,
     width: "min(320px, 90vw)",
     background: "#1a1a2e",
-    border: "2px solid #74B800",
+    border: "2px solid var(--sport-color)",
     borderRadius: 18,
     padding: "20px 22px",
     boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
@@ -158,8 +158,8 @@ export default function AppTour({ session, onClose }) {
           width: targetRect.width + 12,
           height: targetRect.height + 12,
           borderRadius: 12,
-          border: "3px solid #74B800",
-          boxShadow: "0 0 0 4px rgba(116,184,0,0.3), 0 0 30px rgba(116,184,0,0.4)",
+          border: "3px solid var(--sport-color)",
+          boxShadow: "0 0 0 4px rgba(var(--sport-color-rgb, 46,204,113),0.3), 0 0 30px rgba(var(--sport-color-rgb, 46,204,113),0.4)",
           pointerEvents:"none",
           animation: "tour-pulse 1.5s ease-in-out infinite",
           zIndex: 1000001,
@@ -173,7 +173,7 @@ export default function AppTour({ session, onClose }) {
           {STEPS.map((_,i) => (
             <div key={i} style={{
               flex:1, height:3, borderRadius:999,
-              background: i <= step ? "#74B800" : "rgba(255,255,255,0.1)",
+              background: i <= step ? "var(--sport-color)" : "rgba(255,255,255,0.1)",
               transition:"background 0.3s",
             }}/>
           ))}
@@ -204,7 +204,7 @@ export default function AppTour({ session, onClose }) {
           {isLast ? (
             <button onClick={finish} style={{
               flex:1, padding:"12px", borderRadius:12,
-              background:"linear-gradient(135deg,#74B800,#9BE800)",
+              background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",
               border:"none", color:"#000", fontWeight:900, fontSize:15, cursor:"pointer",
             }}>
               ¡A jugar! 🦍
@@ -213,7 +213,7 @@ export default function AppTour({ session, onClose }) {
             <>
               <button onClick={() => setStep(s=>s+1)} style={{
                 flex:1, padding:"12px", borderRadius:12,
-                background:"linear-gradient(135deg,#74B800,#9BE800)",
+                background:"linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))",
                 border:"none", color:"#000", fontWeight:900, fontSize:14, cursor:"pointer",
               }}>
                 Siguiente →
@@ -242,8 +242,8 @@ export default function AppTour({ session, onClose }) {
 
       <style>{`
         @keyframes tour-pulse {
-          0%,100% { box-shadow: 0 0 0 4px rgba(116,184,0,0.3), 0 0 20px rgba(116,184,0,0.3); }
-          50% { box-shadow: 0 0 0 8px rgba(116,184,0,0.15), 0 0 40px rgba(116,184,0,0.5); }
+          0%,100% { box-shadow: 0 0 0 4px rgba(var(--sport-color-rgb, 46,204,113),0.3), 0 0 20px rgba(var(--sport-color-rgb, 46,204,113),0.3); }
+          50% { box-shadow: 0 0 0 8px rgba(var(--sport-color-rgb, 46,204,113),0.15), 0 0 40px rgba(var(--sport-color-rgb, 46,204,113),0.5); }
         }
       `}</style>
     </div>
