@@ -55,7 +55,7 @@ img { max-width: 100%; height: auto; }
   
     border-bottom: 1px solid rgba(255,255,255,0.08);
     background: #0b0f14;
-    color: #74B800;
+    color: var(--sport-color);
     flex: 0 0 56px;
   }
   
@@ -86,7 +86,7 @@ img { max-width: 100%; height: auto; }
   padding: 7px 10px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12);
-  color: #74B800;
+  color: var(--sport-color);
   font-size: 13px;
 }
 .navLink:hover { background: rgba(255,255,255,0.06); }
@@ -107,12 +107,12 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.14);
   border-radius: 12px;
-  background: #74B800;
+  background: var(--sport-color);
   cursor: pointer;
   font: inherit;
   font-weight: 600;
 }
-.btn:hover { background: #74B800; }
+.btn:hover { background: var(--sport-color); }
 .btn:disabled { opacity: .6; cursor: not-allowed; }
 .btn.ghost { background: transparent; border-style: dashed; }
 
@@ -193,7 +193,7 @@ img { max-width: 100%; height: auto; }
   border: 1px solid rgba(0,0,0,0.14);
   padding: 10px 12px;
   font: inherit;
-  background: #74B800;
+  background: var(--sport-color);
 }
 
 /* =========================
@@ -231,7 +231,7 @@ img { max-width: 100%; height: auto; }
   padding: 12px;
   border-radius: 14px;
   border: 1px solid rgba(0,0,0,0.10);
-  background: #74B800;
+  background: var(--sport-color);
   cursor: pointer;
   box-shadow: 0 1px 0 rgba(0,0,0,0.03);
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
@@ -265,7 +265,7 @@ img { max-width: 100%; height: auto; }
   width: 44px;
   border-radius: 14px;
   border: 1px solid rgba(0,0,0,0.10);
-  background: #74B800;
+  background: var(--sport-color);
   cursor: pointer;
   font-size: 18px;
   display: grid;
@@ -301,7 +301,7 @@ img { max-width: 100%; height: auto; }
 
 .authCard {
   width: min(420px, 92vw);
-  background: #74B800;
+  background: var(--sport-color);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 30px 80px rgba(0,0,0,0.35);
@@ -358,7 +358,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.14);
   background: #0b0f14;
-  color: #74B800;
+  color: var(--sport-color);
   font-weight: 800;
   cursor: pointer;
 }
@@ -384,7 +384,7 @@ img { max-width: 100%; height: auto; }
   display: grid;
   place-items: center;
   background: #0b0f14;
-  color: #74B800;
+  color: var(--sport-color);
   z-index: 999999;
   text-align: center;
   padding: 24px;
@@ -514,7 +514,7 @@ img { max-width: 100%; height: auto; }
 
 .gpModalCard {
   width: min(620px, 100%);
-  background: #74B800;
+  background: var(--sport-color);
   border-radius: 14px;
   padding: 14px;
   border: 1px solid rgba(0,0,0,0.12);
@@ -568,7 +568,7 @@ img { max-width: 100%; height: auto; }
   width: 100%;
   text-align: left;
   padding: 10px 12px;
-  background: #74B800;
+  background: var(--sport-color);
   border: none;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   cursor: pointer;
@@ -588,7 +588,7 @@ img { max-width: 100%; height: auto; }
 .gpChatMsg {
   padding: 8px 10px;
   border-radius: 10px;
-  background: #74B800;
+  background: var(--sport-color);
   border: 1px solid rgba(0,0,0,0.06);
   margin-bottom: 8px;
 }
@@ -610,14 +610,14 @@ img { max-width: 100%; height: auto; }
   padding:12px;
   height:320px;
   overflow:auto;
-  background:#74B800;
+  background:var(--sport-color);
 }
 
 .gpChatMsg{
   border:1px solid rgba(0,0,0,.08);
   border-radius:12px;
   padding:10px 12px;
-  background:#74B800;
+  background:var(--sport-color);
 }
 
 
@@ -641,7 +641,7 @@ img { max-width: 100%; height: auto; }
 .card {
   border: 1px solid rgba(0,0,0,0.08);
   border-radius: 16px;
-  background: #74B800;
+  background: var(--sport-color);
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
   padding: 14px;
 }
@@ -696,18 +696,18 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.12);
   background: #111;
-  color: #74B800;
+  color: var(--sport-color);
   font-weight: 800;
   cursor: pointer;
 }
 .btn.ghost {
-  background: #74B800;
+  background: var(--sport-color);
   color: #111;
 }
 .btn.danger {
   background: #b00020;
   border-color: rgba(176,0,32,0.4);
-  color: #74B800;
+  color: var(--sport-color);
 }
 
 /* Badges */
@@ -799,7 +799,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,0.85);
   box-shadow: 0 12px 28px rgba(0,0,0,0.22);
-  background: #74B800;                 /* por si el PNG trae transparencias */
+  background: var(--sport-color);                 /* por si el PNG trae transparencias */
 }
 
 /* BOTONES SOLO MAPA */
@@ -810,7 +810,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .btn.ghost.gpMapBtn {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   border-style: solid !important; /* adiós punteado si existiera */
 }
 
@@ -829,7 +829,7 @@ img { max-width: 100%; height: auto; }
   border: 2px solid rgba(0,0,0,0.85) !important;
   box-shadow: 0 12px 28px rgba(0,0,0,0.22) !important;
 
-  background: #74B800 !important; /* por si hay transparencia */
+  background: var(--sport-color) !important; /* por si hay transparencia */
   object-fit: cover !important; /* para que recorte bien */
 }
 .gpChipBtn{
@@ -841,7 +841,7 @@ img { max-width: 100%; height: auto; }
   border-radius:999px;
 
   border:1px solid rgba(0,0,0,0.14);
-  background:#74B800;
+  background:var(--sport-color);
   color:#111;
 
   font-weight:900;
@@ -916,7 +916,7 @@ img { max-width: 100%; height: auto; }
 .gpBtn{
   appearance:none;
   border:1px solid rgba(0,0,0,0.14);
-  background:#74B800;
+  background:var(--sport-color);
   color:#111;
   font-weight:900;
   font-size:13px;
@@ -939,7 +939,7 @@ img { max-width: 100%; height: auto; }
 
 .gpBtnPrimary{
   background:#111;
-  color:#74B800;
+  color:var(--sport-color);
   border-color:#111;
 }
 
@@ -972,7 +972,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#74B800;
+  background:var(--sport-color);
   border:2px solid rgba(0,0,0,0.85);
   box-shadow:0 12px 28px rgba(0,0,0,0.22);
   position:relative;
@@ -1006,7 +1006,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#74B800;
+  background:var(--sport-color);
   border:2px solid rgba(0,0,0,0.9);
   box-shadow:0 14px 30px rgba(0,0,0,0.28);
   position:relative;
@@ -1047,7 +1047,7 @@ img { max-width: 100%; height: auto; }
   height:44px;
   border-radius:999px;
   overflow:hidden;
-  background:#74B800;
+  background:var(--sport-color);
   border:2px solid rgba(0,0,0,0.92);
   box-shadow:0 14px 30px rgba(0,0,0,0.28);
   position:relative;
@@ -1080,7 +1080,7 @@ img { max-width: 100%; height: auto; }
   width:18px;
   height:18px;
   border-radius:999px;
-  background:#74B800; /* verde más oscuro */
+  background:var(--sport-color); /* verde más oscuro */
   border:2px solid #111;
   box-shadow:0 10px 20px rgba(0,0,0,0.20);
 }
@@ -1095,7 +1095,7 @@ img { max-width: 100%; height: auto; }
   border-radius:999px;
   display:grid;
   place-items:center;
-  background:#74B800; /* verde más oscuro */
+  background:var(--sport-color); /* verde más oscuro */
   border:2px solid #111;
   font-size:12px;
   box-shadow:0 10px 22px rgba(0,0,0,0.25);
@@ -1153,7 +1153,7 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border-radius: 999px;
   border: 1px solid rgba(0,0,0,0.12);
-  background: #74B800;
+  background: var(--sport-color);
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0,0,0,0.06);
@@ -1199,7 +1199,7 @@ img { max-width: 100%; height: auto; }
   font-weight: 950;
   cursor: pointer;
   background: #111;
-  color: #74B800;
+  color: var(--sport-color);
 }
 
 .gpBtnSoft {
@@ -1210,7 +1210,7 @@ img { max-width: 100%; height: auto; }
 
 .gpBtnPrimary {
   background: #111;
-  color: #74B800;
+  color: var(--sport-color);
 }
 /* =========================
    MAP UI — DEFINITIVO (último bloque manda)
@@ -1222,7 +1222,7 @@ img { max-width: 100%; height: auto; }
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.12);
   background: #111;
-  color: #74B800;
+  color: var(--sport-color);
   font-weight: 900;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0,0,0,0.10);
@@ -1235,7 +1235,7 @@ img { max-width: 100%; height: auto; }
 .btn:disabled{ opacity: .6; cursor: not-allowed; transform:none; }
 
 .btn.ghost{
-  background:#74B800;
+  background:var(--sport-color);
   color:#111;
   box-shadow: 0 10px 22px rgba(0,0,0,0.06);
 }
@@ -1249,7 +1249,7 @@ img { max-width: 100%; height: auto; }
   padding:0 14px;
   border-radius:999px;
   border:1px solid rgba(0,0,0,0.14);
-  background:#74B800;
+  background:var(--sport-color);
   color:#111;
   font-weight:950;
   box-shadow:0 10px 24px rgba(0,0,0,0.08);
@@ -1259,7 +1259,7 @@ img { max-width: 100%; height: auto; }
 }
 .gpChipBtn:hover{ transform:translateY(-1px); box-shadow:0 14px 30px rgba(0,0,0,0.12); border-color:rgba(0,0,0,0.22); }
 .gpChipBtn.isOn{
-  background:#74B800; /* verde gorila más oscuro */
+  background:var(--sport-color); /* verde gorila más oscuro */
   border-color:rgba(0,0,0,0.55);
 }
 .gpChipBtn.isOn .gpChipText{ color:#111; }
@@ -1278,7 +1278,7 @@ img { max-width: 100%; height: auto; }
   overflow:hidden !important;
   border:2px solid rgba(0,0,0,0.90) !important;
   box-shadow:0 14px 30px rgba(0,0,0,0.28) !important;
-  background:#74B800 !important;
+  background:var(--sport-color) !important;
 }
 /* =========================
    MAP — layout tipo app (mapa + bottom sheet)
@@ -1295,7 +1295,7 @@ img { max-width: 100%; height: auto; }
   /* barra superior “sticky” */
   .gpMapTop{
     padding: 12px 16px 10px;
-    background: #74B800;
+    background: var(--sport-color);
     border-bottom: 1px solid rgba(0,0,0,0.08);
     position: sticky;
     top: 0;
@@ -1319,7 +1319,7 @@ img { max-width: 100%; height: auto; }
     left:0;
     right:0;
     top: calc(100% + 6px);
-    background:#74B800;
+    background:var(--sport-color);
     border:1px solid rgba(0,0,0,0.12);
     border-radius:12px;
     overflow:hidden;
@@ -1337,7 +1337,7 @@ img { max-width: 100%; height: auto; }
   /* bottom sheet fijo */
   .gpMapSheet{
     flex: 0 0 auto;
-    background:#74B800;
+    background:var(--sport-color);
     border-top: 1px solid rgba(0,0,0,0.10);
     box-shadow: 0 -18px 40px rgba(0,0,0,0.10);
     border-top-left-radius: 18px;
@@ -1379,7 +1379,7 @@ img { max-width: 100%; height: auto; }
   /* Chip “Favoritos” más premium */
 .gpChipBtn{
   border: 1px solid rgba(0,0,0,0.12);
-  background: #74B800;
+  background: var(--sport-color);
 }
 .gpChipBtn.isOn{
   background: rgba(116,184,0,0.22);
@@ -1393,7 +1393,7 @@ img { max-width: 100%; height: auto; }
     position: sticky;
     top: 0;
     z-index: 20;
-    background: #74B800;
+    background: var(--sport-color);
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(0,0,0,0.06);
   }
@@ -1410,7 +1410,7 @@ img { max-width: 100%; height: auto; }
     margin-top: 14px;
     border-radius: 16px;
     border: 1px solid rgba(0,0,0,0.08);
-    background: #74B800;
+    background: var(--sport-color);
     box-shadow: 0 10px 25px rgba(0,0,0,0.06);
     overflow: hidden;
   }
@@ -1453,7 +1453,7 @@ img { max-width: 100%; height: auto; }
     .gpMapListHeader{
       position: sticky;
       top: 0;
-      background: #74B800;
+      background: var(--sport-color);
       z-index: 2;
     }
   
@@ -1481,7 +1481,7 @@ img { max-width: 100%; height: auto; }
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.06);
-  color: #74B800;
+  color: var(--sport-color);
   font-weight: 900;
   cursor: pointer;
 }
@@ -1583,7 +1583,7 @@ img { max-width: 100%; height: auto; }
   margin-top: 14px;
   border-radius: 16px;
   border: 1px solid rgba(0,0,0,0.08);
-  background: #74B800;
+  background: var(--sport-color);
   box-shadow: 0 10px 25px rgba(0,0,0,0.06);
   overflow: hidden;
 }
@@ -1673,7 +1673,7 @@ img { max-width: 100%; height: auto; }
   .gpMapListHeader{
     position: sticky;
     top: 0;
-    background: #74B800;
+    background: var(--sport-color);
     z-index: 2;
   }
 }
@@ -1825,7 +1825,7 @@ img { max-width: 100%; height: auto; }
    ========================= */
 
 .gpMapListPanel{
-  background: #74B800;
+  background: var(--sport-color);
   position: relative;
   z-index: 5;
 }
@@ -1869,7 +1869,7 @@ html, body, #root {
 body{
   overflow: hidden;                 /* clave */
   -webkit-text-size-adjust: 100%;
-  background:#74B800;
+  background:var(--sport-color);
   color:#111827;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
 }
@@ -2106,7 +2106,7 @@ button.navMobileLink.navLinkBtn{
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 22px 60px rgba(0,0,0,0.18);
-      background: #74B800;
+      background: var(--sport-color);
     }
   
     /* header clicable */
@@ -2151,7 +2151,7 @@ button.navMobileLink.navLinkBtn{
    pegar al FINAL del CSS
    ========================= */
 
-.gpHome { background: #0b0f0c; color: #74B800; }
+.gpHome { background: #0b0f0c; color: var(--sport-color); }
 .gpHomeInner { padding-top: 26px; padding-bottom: 26px; }
 .gpHomeHero { text-align: left; margin-bottom: 18px; }
 .gpHomeBadge {
@@ -2181,7 +2181,7 @@ button.navMobileLink.navLinkBtn{
   cursor: pointer;
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
-  color: #74B800;
+  color: var(--sport-color);
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   transform: translateZ(0);
 }
@@ -2204,7 +2204,7 @@ button.navMobileLink.navLinkBtn{
 .gpHomeFooter { margin-top: 18px; opacity: .75; font-size: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
 .gpHomeFooterDot { opacity: .45; }
 
-.gpHub { background: #0b0f0c; color: #74B800; }
+.gpHub { background: #0b0f0c; color: var(--sport-color); }
 .gpHubHeader { padding-top: 16px; padding-bottom: 8px; }
 .gpHubKicker {
   display: inline-flex;
@@ -2227,7 +2227,7 @@ button.navMobileLink.navLinkBtn{
   padding: 14px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #74B800;
+  color: var(--sport-color);
   box-shadow: 0 18px 40px rgba(0,0,0,.35);
   cursor: pointer;
 }
@@ -2238,7 +2238,7 @@ button.navMobileLink.navLinkBtn{
 .gpHubCardMeta { margin-top: 4px; font-size: 13px; opacity: .78; }
 .gpHubBottom { margin-top: 16px; display: flex; justify-content: flex-start; }
 
-.gpInclusive { background: #0b0f0c; color: #74B800 }
+.gpInclusive { background: #0b0f0c; color: var(--sport-color) }
 .gpInclusiveInner { padding-top: 18px; padding-bottom: 26px; }
 .gpInclusiveBadge {
   display: inline-flex;
@@ -2665,7 +2665,7 @@ html, body{ overflow-x: hidden; }
 
 /* ✅ ACTIVO = VERDE */
 .gpChipBtn.isOn {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   border-color: rgba(0,0,0,0.10) !important;
   color: #111 !important;
   box-shadow: 0 16px 40px rgba(116,184,0,0.25);
@@ -2722,7 +2722,7 @@ svg * {
 /* ✅ activo = verde */
 .gpTabs button.isActive,
 .gpSegmented button.isActive {
-  background: #74B800;
+  background: var(--sport-color);
   color: #111;
 }
 .gpMatchesPage img.gpIcon,
@@ -2769,7 +2769,7 @@ button.gpChipBtn .gpChipDot {
 
 /* ✅ ACTIVO */
 button.gpChipBtn.isOn {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   border-color: rgba(0,0,0,0.12) !important;
   color: #111 !important;
   box-shadow: 0 16px 40px rgba(116,184,0,0.22) !important;
@@ -2811,7 +2811,7 @@ button.gpChipBtn.isOn .gpChipText {
 
 /* ✅ activo verde */
 .gpSegmented button.isActive {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   color: #111 !important;
 }
 
@@ -2918,7 +2918,7 @@ button.gpChipBtn.isOn .gpChipText {
   
   /* ✅ ACTIVO = VERDE GORILA */
   button.gpChipBtn.isOn {
-    background: #74B800 !important;
+    background: var(--sport-color) !important;
     border-color: rgba(0,0,0,0.15) !important;
     color: #111 !important;
     box-shadow: 0 12px 30px rgba(116,184,0,0.30);
@@ -2957,7 +2957,7 @@ button.gpChipBtn.isOn .gpChipText {
   
   /* ✅ ACTIVO = VERDE */
   .gpSegmented button.isActive {
-    background: #74B800;
+    background: var(--sport-color);
     color: #111;
   }
   
@@ -3038,7 +3038,7 @@ button.gpChipBtn.isOn .gpChipText {
 
 /* 1) Botones del mapa: ghost oscuro vs activo verde */
 .btn.gpMapBtn {
-  background: #74B800;
+  background: var(--sport-color);
   color: #111;
   border: 1px solid rgba(0,0,0,0.14);
 }
@@ -3054,7 +3054,7 @@ button.gpChipBtn.isOn .gpChipText {
 }
 
 .btn.gpMapBtn.isOn {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   color: #111 !important;
   border-color: rgba(0,0,0,0.14) !important;
 }
@@ -3098,7 +3098,7 @@ button img.gpIcon {
 
 /* A) Botones Mapa: ghost oscuro vs activo verde */
 .btn.gpMapBtn {
-  background: #74B800;
+  background: var(--sport-color);
   color: #111;
   border: 1px solid rgba(0,0,0,0.14);
 }
@@ -3114,7 +3114,7 @@ button img.gpIcon {
 }
 
 .btn.gpMapBtn.isOn {
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   color: #111 !important;
   border-color: rgba(0,0,0,0.14) !important;
 }
@@ -3143,7 +3143,7 @@ button img.gpIcon {
 
 .gpTabs button.isActive,
 .gpSegmented button.isActive {
-  background: #74B800;
+  background: var(--sport-color);
   color: #111;
 }
 
@@ -3290,7 +3290,7 @@ html, body{
 
 /* Botones: base verde (coherente) */
 .gpMatchesPage .btn{
-  background:#74B800 !important;
+  background:var(--sport-color) !important;
   color:#fff !important;
   border: 1px solid rgba(0,0,0,0.25) !important;
   border-radius: 14px !important;
@@ -3326,7 +3326,7 @@ html, body{
   color: rgba(255,255,255,0.88) !important;
 }
 .gpMatchesPage .gpSegmented button.isActive{
-  background: #74B800 !important;
+  background: var(--sport-color) !important;
   color: #111 !important;
 }
 
@@ -3451,7 +3451,7 @@ html, body{
    
    /* Botones en Partidos: verdes + ghost pro */
    .gpMatchesPage .btn{
-     background:#74B800 !important;
+     background:var(--sport-color) !important;
      color:#fff !important;
      border: 1px solid rgba(0,0,0,0.25) !important;
      border-radius: 14px !important;
@@ -3534,7 +3534,7 @@ html, body{
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #74B800;
+  background: var(--sport-color);
   margin-top: 4px;
   box-shadow: 0 0 0 6px rgba(116,184,0,0.10);
 }
@@ -5666,7 +5666,7 @@ html, body {
   width: 60px;
   height: 60px;
   border-radius: 999px;
-  background: #74B800;
+  background: var(--sport-color);
   border: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   display: grid;
@@ -5705,7 +5705,7 @@ html, body {
   width: 60px;
   height: 60px;
   border-radius: 999px;
-  background: #74B800;
+  background: var(--sport-color);
   border: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   display: grid;
