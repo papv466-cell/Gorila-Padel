@@ -301,7 +301,16 @@ export default function MatchesPage({ session: sessionProp }) {
   async function load(silent=false) {
     try {
       if (!silent) setStatus({loading:true,error:null});
-      const list = await fetchMatches({limit:400});
+      let list;
+      if (sport === "tenis") {
+        const { data } = await supabase.from("tennis_matches").select("*").eq("status","active").order("start_at");
+        list = data || [];
+      } else if (sport === "pickleball") {
+        const { data } = await supabase.from("pickleball_matches").select("*").eq("status","active").order("start_at");
+        list = data || [];
+      } else {
+        list = await fetchMatches({limit:400});
+      }
       if (!aliveRef.current) return;
       const unique = uniqById(list);
       setItems(sortByStartAtAsc(unique));
@@ -336,7 +345,7 @@ export default function MatchesPage({ session: sessionProp }) {
 
   const itemsRef = useRef([]);
   useEffect(() => { itemsRef.current = items; }, [items]);
-  useEffect(() => { if(session?.user?.id) load(itemsRef.current.length > 0); }, [session?.user?.id]);
+  useEffect(() => { if(session?.user?.id) load(false); }, [session?.user?.id, sport]);
   useEffect(() => {
     fetchClubsFromSupabase().then(r=>setClubsSheet(Array.isArray(r)?r:[])).catch(()=>setClubsSheet([]));
   }, []);
