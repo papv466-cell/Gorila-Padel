@@ -187,6 +187,7 @@ export default function MatchesPage({ session: sessionProp }) {
 
   /* ─── Crear ─── */
   const [openCreate, setOpenCreate] = useState(false);
+  const [sportForm, setSportForm] = useState({ format: "dobles", sets: 3, rallyScoring: true, points: 11 });
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState(null);
@@ -481,7 +482,42 @@ export default function MatchesPage({ session: sessionProp }) {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
-      const matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      let matchResult;
+      if (sport === "tenis") {
+        const { data, error } = await supabase.from("tennis_matches").insert([{
+          created_by_user: session.user.id,
+          club_id: form.clubId || null,
+          club_name: form.clubName,
+          start_at: combineDateTimeToISO(form.date, form.time),
+          duration_min: Number(form.durationMin) || 90,
+          level: form.level,
+          price_per_player: form.pricePerPlayer ? Number(form.pricePerPlayer) : null,
+          max_players: sportForm.format === "singles" ? 2 : 4,
+          format: sportForm.format,
+          sets: sportForm.sets,
+          status: "active",
+        }]).select().single();
+        if (error) throw error;
+        matchResult = data;
+      } else if (sport === "pickleball") {
+        const { data, error } = await supabase.from("pickleball_matches").insert([{
+          created_by_user: session.user.id,
+          club_id: form.clubId || null,
+          club_name: form.clubName,
+          start_at: combineDateTimeToISO(form.date, form.time),
+          duration_min: Number(form.durationMin) || 60,
+          level: form.level,
+          price_per_player: form.pricePerPlayer ? Number(form.pricePerPlayer) : null,
+          max_players: sportForm.format === "singles" ? 2 : 4,
+          format: sportForm.format,
+          rally_scoring: sportForm.rallyScoring,
+          status: "active",
+        }]).select().single();
+        if (error) throw error;
+        matchResult = data;
+      } else {
+        matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
+      }
       if (form.selectedSlotId) {
         try {
           await supabase.from('court_slots').update({ status: 'booked', booked_by_match_id: matchResult?.id || null }).eq('id', form.selectedSlotId);
@@ -1168,7 +1204,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
       {openCreate && (
         <div onClick={()=>setOpenCreate(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:10000,padding:20,backdropFilter:"blur(4px)"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:"#1a1a1a",borderRadius:20,padding:24,maxWidth:500,width:"100%",maxHeight:"85vh",overflowY:"auto",border:"1px solid rgba(116,184,0,0.25)"}}>
-            <h2 style={{color:"#74B800",marginBottom:20,fontSize:20,fontWeight:900}}>➕ Crear Partido</h2>
+            <h2 style={{color:"#74B800",marginBottom:20,fontSize:20,fontWeight:900}}>{sport === "pickleball" ? "🏓" : "🎾"} Crear Partido de {sportInfo?.label || "Pádel"}</h2>
             {saveError && <div style={{background:"rgba(220,38,38,0.2)",padding:10,borderRadius:8,color:"#ff6b6b",marginBottom:12,fontSize:12,fontWeight:700}}>{saveError}</div>}
             <div style={{display:"flex",flexDirection:"column",gap:14}}>
               <div>
@@ -1254,6 +1290,63 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
                   )}
                 </div>
               </div>
+              {/* Campos específicos por deporte */}
+              {sport === "tenis" && (
+                <div style={{display:"flex",flexDirection:"column",gap:10,padding:"12px 14px",borderRadius:12,background:"rgba(243,156,18,0.08)",border:"1px solid rgba(243,156,18,0.20)"}}>
+                  <div style={{fontSize:12,fontWeight:900,color:"#F39C12",marginBottom:2}}>🎾 Opciones de tenis</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    <div>
+                      <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Formato</label>
+                      <select value={sportForm.format} onChange={e=>setSportForm({...sportForm,format:e.target.value})} style={IS}>
+                        <option value="singles" style={{background:"#1a1a1a"}}>Singles (1 vs 1)</option>
+                        <option value="dobles" style={{background:"#1a1a1a"}}>Dobles (2 vs 2)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Sets</label>
+                      <select value={sportForm.sets} onChange={e=>setSportForm({...sportForm,sets:parseInt(e.target.value)})} style={IS}>
+                        <option value={1} style={{background:"#1a1a1a"}}>1 set</option>
+                        <option value={3} style={{background:"#1a1a1a"}}>Al mejor de 3</option>
+                        <option value={5} style={{background:"#1a1a1a"}}>Al mejor de 5</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>
+                    Sistema de puntuación: 15 · 30 · 40 · Juego. Tie-break a 7 puntos.
+                  </div>
+                </div>
+              )}
+
+              {sport === "pickleball" && (
+                <div style={{display:"flex",flexDirection:"column",gap:10,padding:"12px 14px",borderRadius:12,background:"rgba(52,152,219,0.08)",border:"1px solid rgba(52,152,219,0.20)"}}>
+                  <div style={{fontSize:12,fontWeight:900,color:"#3498DB",marginBottom:2}}>🏓 Opciones de pickleball</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    <div>
+                      <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Formato</label>
+                      <select value={sportForm.format} onChange={e=>setSportForm({...sportForm,format:e.target.value})} style={IS}>
+                        <option value="dobles" style={{background:"#1a1a1a"}}>Dobles (2 vs 2)</option>
+                        <option value="singles" style={{background:"#1a1a1a"}}>Singles (1 vs 1)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{color:"#fff",display:"block",marginBottom:6,fontSize:12,fontWeight:700}}>Puntos por juego</label>
+                      <select value={sportForm.points} onChange={e=>setSportForm({...sportForm,points:parseInt(e.target.value)})} style={IS}>
+                        <option value={11} style={{background:"#1a1a1a"}}>11 puntos</option>
+                        <option value={15} style={{background:"#1a1a1a"}}>15 puntos</option>
+                        <option value={21} style={{background:"#1a1a1a"}}>21 puntos</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <input type="checkbox" checked={sportForm.rallyScoring} onChange={e=>setSportForm({...sportForm,rallyScoring:e.target.checked})} style={{width:18,height:18,accentColor:"#3498DB"}} />
+                    <label style={{color:"#fff",fontSize:13,fontWeight:700}}>Rally scoring (puntúa siempre)</label>
+                  </div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",lineHeight:1.5}}>
+                    Al mejor de 3 juegos. La cocina (zona de no volea) es obligatoria.
+                  </div>
+                </div>
+              )}
+
               <div style={{display:"flex",gap:10,marginTop:6}}>
                 <button onClick={handleCreate} disabled={saving}
                   style={{flex:1,padding:14,borderRadius:12,background:saving?"rgba(116,184,0,0.4)":"linear-gradient(135deg,#74B800,#9BE800)",color:"#000",fontWeight:900,border:"none",cursor:saving?"not-allowed":"pointer",fontSize:14,boxShadow:"0 4px 12px rgba(116,184,0,0.3)"}}>
