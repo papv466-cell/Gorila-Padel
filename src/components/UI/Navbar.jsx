@@ -48,6 +48,27 @@ export default function Navbar({ showBack = false, onBack }) {
             <div className="headerLogoText">GorilaGo<span>!</span></div>
           </NavLink>
 
+          {/* Selector de deporte */}
+          <div style={{ display: "flex", gap: 2, padding: "3px", background: "rgba(255,255,255,0.06)", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)" }}>
+            {[
+              { key: "padel",      emoji: "🎾", label: "Pádel" },
+              { key: "tenis",      emoji: "🎾", label: "Tenis" },
+              { key: "pickleball", emoji: "🏓", label: "Pickle" },
+            ].map(s => (
+              <button key={s.key} onClick={() => setSport(s.key)}
+                title={s.label}
+                style={{
+                  padding: "5px 8px", borderRadius: 999, border: "none", cursor: "pointer",
+                  background: sport === s.key ? "rgba(255,255,255,0.18)" : "transparent",
+                  color: sport === s.key ? "#fff" : "rgba(255,255,255,0.40)",
+                  fontSize: 12, fontWeight: sport === s.key ? 900 : 400,
+                  transition: "all 0.15s",
+                }}>
+                {s.emoji} {s.label}
+              </button>
+            ))}
+          </div>
+
           {showBack && (
             <button type="button" className="headerButton" onClick={onBack} style={{ marginLeft: "auto", marginRight: 8 }}>
               Atras
