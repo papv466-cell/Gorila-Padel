@@ -532,15 +532,23 @@ export default function MatchesPage({ session: sessionProp }) {
           await supabase.from('court_slots').update({ status: 'booked', booked_by_match_id: matchResult?.id || null }).eq('id', form.selectedSlotId);
         } catch(slotErr) { console.warn('No se pudo marcar slot:', slotErr); }
       }
+      // Guardar precio ANTES de resetear el form
+      const savedPrice = form.pricePerPlayer;
+      const savedSlotId = form.selectedSlotId;
       setSelectedDay(form.date); setOpenCreate(false);
       setSelectedSlotId(null);
       setAvailableSlots([]);
       setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
-// Si hay precio, insertar también al creador en match_join_requests con autorización pendiente
-toast.success("Partido creado ✅"); await load(); setViewMode("mine");
-if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.id) {
-  setCreatorAuthMatch({ ...matchResult, price_per_player: form.pricePerPlayer });
-}    try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
+      toast.success("Partido creado ✅"); await load(); setViewMode("mine");
+      // Abrir modal de pago si hay precio O siempre (comisión mínima 0.30€)
+      if (matchResult?.id) {
+        if (savedPrice && parseFloat(savedPrice) > 0) {
+          setCreatorAuthMatch({ ...matchResult, price_per_player: savedPrice, _sport: sport });
+        } else {
+          // Sin precio — cobrar comisión mínima 0.30€
+          setCreatorAuthMatch({ ...matchResult, price_per_player: "0", _onlyFee: true, _sport: sport });
+        }
+      }    try { const {data:p}=await supabase.from("profiles_public").select("id,name,handle,avatar_url").eq("id",session.user.id).single(); if(p&&aliveRef.current) setRosterProfilesById(prev=>({...prev,[String(session.user.id)]:p})); } catch {}
     } catch(e) { setSaveError(e?.message||"No se pudo crear"); toast.error(e?.message||"Error"); } finally { setSaving(false); }
   }
 
