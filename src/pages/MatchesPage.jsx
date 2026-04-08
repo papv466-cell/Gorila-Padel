@@ -1,5 +1,6 @@
 // src/pages/MatchesPage.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSport } from "../contexts/SportContext";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
@@ -107,6 +108,7 @@ const IS = {
 
 export default function MatchesPage({ session: sessionProp }) {
   const toast = useToast();
+  const { sport, sportInfo } = useSport();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -755,11 +757,18 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         <div className="container">
 
           {/* ── HEADER ── */}
-          <div style={{padding:"10px 0 6px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{padding:"10px 0 6px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
             <div>
-              <h1 style={{margin:0,fontSize:22,fontWeight:900,color:"#fff"}}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="22" height="22" style={{marginRight:6,verticalAlign:"middle"}}><rect x="29" y="42" width="6" height="14" rx="3" fill="#fff"/><ellipse cx="32" cy="28" rx="13" ry="16" fill="#74B800" stroke="#111" strokeWidth="2"/><circle cx="28" cy="24" r="2" fill="#9BE800"/><circle cx="36" cy="24" r="2" fill="#9BE800"/><circle cx="32" cy="30" r="2" fill="#9BE800"/></svg><span style={{color:"#74B800"}}>Partidos</span>
+              <h1 style={{margin:0,fontSize:22,fontWeight:900,color:"#fff",display:"flex",alignItems:"center",gap:8}}>
+                <span style={{color:"#74B800"}}>
+                  {sport === "pickleball" ? "🏓" : "🎾"} {sportInfo?.label || "Juega"}
+                </span>
               </h1>
+              {sport !== "padel" && (
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",marginTop:2,fontStyle:"italic"}}>
+                  {sportInfo?.description}
+                </div>
+              )}
               <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:2}}>
                 {status.loading ? "Cargando…" : `${visibleList.length} partido(s)`}
                 {isClubFilter ? ` · ${clubNameParam||clubIdParam}` : ""}
