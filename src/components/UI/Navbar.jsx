@@ -16,7 +16,7 @@ export default function Navbar({ showBack = false, onBack }) {
   const { totalItems } = useCart();
   const { session } = useSession();
   const { isEnabled } = useFeatures();
-  const { sport, setSport } = useSport();
+  const { sport, setSport, sportInfo } = useSport();
 
   const allLinks = useMemo(() => [
     { to: "/mapa",       label: "Mapa",       icon: "🗺️", key: "mapa" },
