@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSession } from "../contexts/SessionContext";
+import { useSport } from "../contexts/SportContext";
 import { supabase } from "../services/supabaseClient";
 import { useToast } from "../components/ToastProvider";
 import "./InclusiveMatchesPage.css";
@@ -59,6 +60,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
   /* ─── Auth ─── */
   const { session: sessionCtx } = useSession();
+  const { sport, sportInfo } = useSport();
   const [session, setSession] = useState(sessionProp ?? null);
   const authReady = !!sessionProp;
   useEffect(() => { if (sessionProp) setSession(sessionProp); }, [sessionProp?.user?.id]);
@@ -155,6 +157,9 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
     } catch { setAvailableSlots([]); }
     finally { setSlotsLoading(false); }
   }
+
+  // Cargar partidos según deporte
+  useEffect(() => { load(); }, [sport]);
 
   async function load() {
     try {

@@ -41,7 +41,7 @@ export default function Navbar({ showBack = false, onBack }) {
 
   return (
     <>
-      <header className="siteHeader">
+      <header className="siteHeader" style={{ borderBottom: `1px solid ${sportInfo?.colorBorder || "rgba(116,184,0,0.2)"}` }}>
         <div className="headerInner">
           <NavLink to="/" className="headerLogo">
             <img className="headerLogoImg" src="/imglogog.png" alt="Gorila" />
@@ -49,20 +49,21 @@ export default function Navbar({ showBack = false, onBack }) {
           </NavLink>
 
           {/* Selector de deporte */}
-          <div style={{ display: "flex", gap: 2, padding: "3px", background: "rgba(255,255,255,0.06)", borderRadius: 999, border: "1px solid rgba(255,255,255,0.10)" }}>
+          <div style={{ display: "flex", gap: 2, padding: "3px", background: "rgba(255,255,255,0.06)", borderRadius: 999, border: `1px solid ${sportInfo?.colorBorder || "rgba(255,255,255,0.10)"}` }}>
             {[
-              { key: "padel",      emoji: "🎾", label: "Pádel" },
-              { key: "tenis",      emoji: "🎾", label: "Tenis" },
-              { key: "pickleball", emoji: "🏓", label: "Pickle" },
+              { key: "padel",      emoji: "🎾", label: "Pádel",      color: "#2ECC71" },
+              { key: "tenis",      emoji: "🎾", label: "Tenis",      color: "#F39C12" },
+              { key: "pickleball", emoji: "🏓", label: "Pickle",     color: "#3498DB" },
             ].map(s => (
               <button key={s.key} onClick={() => setSport(s.key)}
                 title={s.label}
                 style={{
-                  padding: "5px 8px", borderRadius: 999, border: "none", cursor: "pointer",
-                  background: sport === s.key ? "rgba(255,255,255,0.18)" : "transparent",
-                  color: sport === s.key ? "#fff" : "rgba(255,255,255,0.40)",
-                  fontSize: 12, fontWeight: sport === s.key ? 900 : 400,
-                  transition: "all 0.15s",
+                  padding: "6px 10px", borderRadius: 999, border: "none", cursor: "pointer",
+                  background: sport === s.key ? s.color : "transparent",
+                  color: sport === s.key ? "#000" : "rgba(255,255,255,0.50)",
+                  fontSize: 12, fontWeight: sport === s.key ? 900 : 500,
+                  transition: "all 0.2s",
+                  minHeight: 32,
                 }}>
                 {s.emoji} {s.label}
               </button>

@@ -481,7 +481,7 @@ export default function MatchesPage({ session: sessionProp }) {
     try {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
-      if (!form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
+      if (sport === "padel" && !form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
       let matchResult;
       if (sport === "tenis") {
         const { data, error } = await supabase.from("tennis_matches").insert([{
