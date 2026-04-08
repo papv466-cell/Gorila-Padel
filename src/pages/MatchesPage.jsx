@@ -496,10 +496,10 @@ export default function MatchesPage({ session: sessionProp }) {
       // Para tenis/pickleball — guardar datos y crear DESPUÉS del pago
       let matchResult;
       if (sport === "tenis" || sport === "pickleball") {
-        // No crear todavía — guardar datos para crear tras el pago
-        const pendingData = {
-          _pending: true,
-          _sport: sport,
+        // Crear partido y abrir pasarela de pago directamente
+        const table = sport === "tenis" ? "tennis_matches" : "pickleball_matches";
+        const insertData = {
+          created_by_user: session.user.id,
           club_id: form.clubId || null,
           club_name: form.clubName,
           start_at: combineDateTimeToISO(form.date, form.time),
@@ -510,13 +510,15 @@ export default function MatchesPage({ session: sessionProp }) {
           format: sportForm.format,
           ...(sport === "tenis" ? { sets: sportForm.sets } : { rally_scoring: sportForm.rallyScoring }),
           status: "active",
-          created_by_user: session.user.id,
         };
-        // Abrir modal de pago con datos pendientes
+        const { data: created, error: insertErr } = await supabase.from(table).insert([insertData]).select().single();
+        if (insertErr) throw insertErr;
         const savedPrice = form.pricePerPlayer;
         setOpenCreate(false);
         setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
-        setPendingMatchData({ ...pendingData, price_per_player: savedPrice || "0", _sport: sport });
+        await load(); setViewMode("mine");
+        // Abrir pasarela de pago directamente
+        setCreatorAuthMatch({ ...created, price_per_player: savedPrice || "0", _sport: sport });
         return;
       } else {
         matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
@@ -1747,11 +1749,15 @@ export default function MatchesPage({ session: sessionProp }) {
               <button onClick={async () => {
                 try {
                   const table = pendingMatchData._sport === "tenis" ? "tennis_matches" : "pickleball_matches";
-                  const { _pending, _sport, ...insertData } = pendingMatchData;
-                  const { error } = await supabase.from(table).insert([insertData]);
+                  const { _pending, _sport, price_per_player, ...insertData } = pendingMatchData;
+                  const { data: created, error } = await supabase.from(table).insert([{
+                    ...insertData,
+                    price_per_player: price_per_player ? Number(price_per_player) : null,
+                  }]).select().single();
                   if (error) throw error;
-                  toast.success("¡Partido creado! ✅");
                   setPendingMatchData(null);
+                  // Abrir modal de pago real con el partido creado
+                  setCreatorAuthMatch({ ...created, price_per_player, _sport });
                   await load();
                   setViewMode("mine");
                 } catch(e) {
@@ -1759,7 +1765,7 @@ export default function MatchesPage({ session: sessionProp }) {
                 }
               }}
                 style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
-                ✅ Crear partido
+                ✅ Confirmar y pagar
               </button>
               <button onClick={() => setPendingMatchData(null)}
                 style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.07)", color: "#fff", fontWeight: 700, border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>

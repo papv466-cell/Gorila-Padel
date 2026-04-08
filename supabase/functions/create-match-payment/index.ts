@@ -1,0 +1,49 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@13.3.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY"), { apiVersion: "2023-10-16" });
+const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  try {
+    const { matchId, userId, sport, pricePerPlayer } = await req.json();
+    if (!matchId || !userId) throw new Error("matchId y userId requeridos");
+
+    const { data: { user } } = await supabase.auth.admin.getUserById(userId);
+
+    const inclusiveFee = 0.30;
+    const price = parseFloat(pricePerPlayer || 0);
+    const total = price + inclusiveFee;
+    const amount = Math.max(50, Math.round(total * 100));
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "eur",
+      metadata: { matchId, userId, sport: sport || "padel", pricePerPlayer: String(price) },
+      receipt_email: user?.email,
+      description: `Partido ${sport || "padel"} — GorilaGo!`,
+    });
+
+    return new Response(
+      JSON.stringify({
+        clientSecret: paymentIntent.client_secret,
+        amount,
+        totalCents: amount,
+        pricePerPlayer: price,
+        inclusiveFee,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ error: e.message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
