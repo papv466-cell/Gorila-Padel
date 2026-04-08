@@ -1,5 +1,6 @@
 // src/App.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSport } from "./contexts/SportContext";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import ClubAdminPage from "./pages/ClubAdminPage";
 import ProjectsPage from "./pages/ProjectsPage";
