@@ -231,7 +231,7 @@ export default function ProjectsPage() {
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 24 }}>
           <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 8 }}>💡 ¿Tienes una idea?</div>
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, marginBottom: 20 }}>
-            Si conoces un proyecto que ayudaría a personas con discapacidad a practicar deporte, cuéntanoslo. Lo revisamos y si encaja, lo lanzamos juntos.
+            Si conoces un proyecto que ayudaría a personas con capacidades especiales a practicar deporte, cuéntanoslo. Lo revisamos y si encaja, lo lanzamos juntos.
           </div>
           <button onClick={() => setShowProposal(true)}
             style={{ minHeight: 52, padding: "14px 24px", borderRadius: 14, background: "#1A2744", color: "#fff", fontWeight: 700, fontSize: 15, border: "1px solid rgba(255,255,255,0.15)", cursor: "pointer", width: "100%" }}>
@@ -307,7 +307,7 @@ export default function ProjectsPage() {
               <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
               <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 6 }}>💡 Proponer un proyecto</div>
               <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", marginBottom: 24, lineHeight: 1.6 }}>
-                Cuéntanos tu idea para ayudar a personas con discapacidad a practicar deporte. Revisamos todas las propuestas.
+                Cuéntanos tu idea para ayudar a personas con capacidades especiales a practicar deporte. Revisamos todas las propuestas.
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[

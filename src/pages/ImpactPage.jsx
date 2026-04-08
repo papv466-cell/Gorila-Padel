@@ -59,7 +59,7 @@ export default function ImpactPage() {
             Jugando se ayuda —<br/>y se ve
           </div>
           <div style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
-            Cada vez que juegas, reservas o donas, ayudas a que más personas con discapacidad puedan practicar deporte.
+            Cada vez que juegas, reservas o donas, ayudas a que más personas con capacidades especiales puedan practicar deporte.
           </div>
         </div>
 

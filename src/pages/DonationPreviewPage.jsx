@@ -9,7 +9,7 @@ export default function DonationPreviewPage() {
 
   const activeProjects = [
     { id: "1", title: "Pistas adaptadas en Madrid" },
-    { id: "2", title: "Becas para jugadores con discapacidad" },
+    { id: "2", title: "Becas para jugadores con capacidades especiales" },
     { id: "3", title: "Torneo inclusivo nacional" },
   ];
 
@@ -38,7 +38,7 @@ export default function DonationPreviewPage() {
         <div style={{ fontSize: 48, marginBottom: 8, textAlign: "center" }}>🍺</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 6, textAlign: "center" }}>Dona una cerveza</div>
         <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 24, lineHeight: 1.6, textAlign: "center" }}>
-          Con el precio de una cerveza ayudas a que más personas con discapacidad puedan jugar.
+          Con el precio de una cerveza ayudas a que más personas con capacidades especiales puedan jugar.
         </div>
 
         {/* Cantidades */}

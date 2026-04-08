@@ -182,7 +182,7 @@ export default function InclusiveMatchesPage() {
               </button>
 
               <div className="pageMeta gpIncMeta">
-                Encuentra o crea partidos pensados para personas con discapacidad y también mixtos.
+                Encuentra o crea partidos pensados para personas con capacidades especiales y también mixtos.
               </div>
 
               <button className="btn gpIncBtnCreate" type="button" onClick={() => setOpenCreate(true)}>

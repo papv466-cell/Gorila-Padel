@@ -194,7 +194,7 @@ export default function HomePage({ session: sessionProp }) {
             MONKEY<br /><span style={{ color: "#2ECC71" }}>GORILA</span>
           </h1>
           <p style={{ fontSize: 17, color: "rgba(255,255,255,0.80)", margin: "0 0 6px", fontWeight: 700 }}>Jugando se ayuda — y se ve</p>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Cada partido que juegas ayuda a personas con discapacidad a practicar deporte</p>
+          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Cada partido que juegas ayuda a personas con capacidades especiales a practicar deporte</p>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32, animation: "ghHeroIn .6s ease .2s both" }}>
           <button className="ghCtaBtn" onClick={() => navigate("/register")}

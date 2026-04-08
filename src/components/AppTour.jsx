@@ -6,7 +6,7 @@ const STEPS = [
   {
     id: "welcome",
     title: "Bienvenido a GorilaGo! 🦍",
-    body: "La app donde jugar ayuda a personas con discapacidad a practicar deporte. Jugando se ayuda — y se ve.",
+    body: "La app donde jugar ayuda a personas con capacidades especiales a practicar deporte. Jugando se ayuda — y se ve.",
     target: null,
     position: "center",
   },
@@ -23,8 +23,8 @@ const STEPS = [
   },
   {
     id: "proyecto2",
-    title: "🎓 Becas para jugadores con discapacidad",
-    body: "Cubrimos cuotas de club y clases para jugadores con discapacidad durante un año entero. Con tus donaciones post-partido hacemos esto posible.",
+    title: "🎓 Becas para jugadores con capacidades especiales",
+    body: "Cubrimos cuotas de club y clases para jugadores con capacidades especiales durante un año entero. Con tus donaciones post-partido hacemos esto posible.",
     target: null,
     position: "center",
     project: true,
@@ -35,7 +35,7 @@ const STEPS = [
   {
     id: "proyecto3",
     title: "🏆 Torneo inclusivo nacional",
-    body: "El primer torneo nacional inclusivo de pádel, tenis y pickleball con categorías para todos los niveles y discapacidades. ¿Nos ayudas a organizarlo?",
+    body: "El primer torneo nacional inclusivo de pádel, tenis y pickleball con categorías para todos los niveles y capacidades especiales. ¿Nos ayudas a organizarlo?",
     target: null,
     position: "center",
     project: true,
@@ -53,7 +53,7 @@ const STEPS = [
   {
     id: "juntos",
     title: "♿ Partidos Juntos",
-    body: "Partidos adaptados para todos. Aquí encontrarás partidos inclusivos donde juegan juntos personas con y sin discapacidad.",
+    body: "Partidos adaptados para todos. Aquí encontrarás partidos inclusivos donde juegan juntos personas con y sin capacidades especiales.",
     target: "nav-juntos",
     position: "top",
   },
