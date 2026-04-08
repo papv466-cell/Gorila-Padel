@@ -5,6 +5,7 @@ import { supabase } from "../../services/supabaseClient";
 import { useCart } from "../../contexts/CartContext";
 import { useSession } from "../../contexts/SessionContext";
 import { useFeatures } from "../../contexts/FeaturesContext";
+import { useSport, SPORTS } from "../../contexts/SportContext";
 import "../../styles/Header.css";
 import NotificationBell from "../NotificationBell";
 
@@ -15,6 +16,7 @@ export default function Navbar({ showBack = false, onBack }) {
   const { totalItems } = useCart();
   const { session } = useSession();
   const { isEnabled } = useFeatures();
+  const { sport, setSport } = useSport();
 
   const allLinks = useMemo(() => [
     { to: "/mapa",       label: "Mapa",       icon: "🗺️", key: "mapa" },
