@@ -189,7 +189,7 @@ export default function HomePage({ session: sessionProp }) {
       `}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 20px 60px", textAlign: "center" }}>
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
-          <img src="/imglogog.png" alt="MonkeyGorila" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(116,184,0,0.1)", padding: 12, border: "1px solid rgba(116,184,0,0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
+          <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(116,184,0,0.1)", padding: 12, border: "1px solid rgba(116,184,0,0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
           <h1 style={{ fontSize: 34, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.15 }}>
             MONKEY<br /><span style={{ color: "#2ECC71" }}>GORILA</span>
           </h1>

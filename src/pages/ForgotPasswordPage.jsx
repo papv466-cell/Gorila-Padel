@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
       <div className="authCard">
         <img
           src="/imglogog.png"
-          alt="MonkeyGorila"
+          alt="GorilaGo!"
           className="authLogo"
           style={{ margin: "0 auto", display: "block" }}
         />

@@ -74,7 +74,7 @@ export default function DonationPreviewPage() {
         <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, fontSize: 14 }}>
           <div style={{ fontWeight: 700, marginBottom: 10, color: "rgba(255,255,255,0.80)" }}>Tu donación se reparte así:</div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 MonkeyGorila (plataforma)</span>
+            <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 GorilaGo! (plataforma)</span>
             <span style={{ fontWeight: 700 }}>0,10 €</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>

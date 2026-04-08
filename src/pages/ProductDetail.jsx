@@ -192,7 +192,7 @@ export default function ProductDetail() {
                   </button>
                   <button onClick={() => {
                     const url = `https://www.gorilapadel.com/tienda/producto/${product.slug}`;
-                    const text = `🦍 Mira este producto en MonkeyGorila:\n*${product.title}* — €${product.price}\n${url}`;
+                    const text = `🦍 Mira este producto en GorilaGo!:\n*${product.title}* — €${product.price}\n${url}`;
                     if (navigator.share) navigator.share({ title: product.title, text, url });
                     else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                   }} style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid rgba(116,184,0,0.3)', background: 'rgba(116,184,0,0.08)', color: '#74B800', fontSize: 22, cursor: 'pointer', display: 'grid', placeItems: 'center', flexShrink: 0 }}>

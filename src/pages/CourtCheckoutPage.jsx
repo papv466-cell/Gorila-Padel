@@ -115,9 +115,9 @@ export default function CourtCheckoutPage() {
             <div style={{marginTop:14,padding:"14px",borderRadius:12,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)"}}>
               <div style={{fontSize:11,fontWeight:900,color:"rgba(255,255,255,0.40)",marginBottom:12,letterSpacing:"0.05em"}}>💛 JUGANDO AYUDAS A:</div>
 
-              {/* Fila MonkeyGorila — fija */}
+              {/* Fila GorilaGo! — fija */}
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>🦍 MonkeyGorila <span style={{fontSize:11,color:"rgba(255,255,255,0.30)"}}>(fijo)</span></span>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.60)",display:"flex",alignItems:"center",gap:6}}>🦍 GorilaGo! <span style={{fontSize:11,color:"rgba(255,255,255,0.30)"}}>(fijo)</span></span>
                 <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>0,10 €</span>
               </div>
 

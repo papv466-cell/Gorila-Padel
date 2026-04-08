@@ -71,7 +71,7 @@ export default function ImpactGlobalPage() {
             El impacto de<br/><span style={{ color: "#2ECC71" }}>toda la comunidad</span>
           </div>
           <div style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.7 }}>
-            Cada persona que juega en MonkeyGorila contribuye a hacer el deporte más inclusivo. Aquí ves el resultado en tiempo real.
+            Cada persona que juega en GorilaGo! contribuye a hacer el deporte más inclusivo. Aquí ves el resultado en tiempo real.
           </div>
         </div>
 
@@ -84,7 +84,7 @@ export default function ImpactGlobalPage() {
             {stats.totalDonated.toFixed(2)} €
           </div>
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.45)" }}>
-            entre toda la comunidad MonkeyGorila
+            entre toda la comunidad GorilaGo!
           </div>
         </div>
 

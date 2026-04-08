@@ -5,7 +5,7 @@ import { supabase } from "../services/supabaseClient";
 const STEPS = [
   {
     id: "welcome",
-    title: "Bienvenido a MonkeyGorila 🦍",
+    title: "Bienvenido a GorilaGo! 🦍",
     body: "La app donde jugar al pádel ayuda a personas con discapacidad a practicar deporte. Jugando se ayuda — y se ve.",
     target: null,
     position: "center",
@@ -46,7 +46,7 @@ const STEPS = [
   {
     id: "how",
     title: "💛 ¿Cómo ayudas jugando?",
-    body: "Cada reserva incluye 0,10€ para MonkeyGorila + 0,10€ al proyecto activo + 0,10€ a la asociación del club. Puedes ampliar tu donación cuando quieras.",
+    body: "Cada reserva incluye 0,10€ para GorilaGo! + 0,10€ al proyecto activo + 0,10€ a la asociación del club. Puedes ampliar tu donación cuando quieras.",
     target: null,
     position: "center",
   },
@@ -66,7 +66,7 @@ const STEPS = [
   },
   {
     id: "done",
-    title: "¡Ya eres parte de MonkeyGorila! 🎉",
+    title: "¡Ya eres parte de GorilaGo!! 🎉",
     body: "Cada partido que juegues ayuda a alguien a practicar deporte. Ve a Proyectos para ver el impacto en tiempo real.",
     target: null,
     position: "center",

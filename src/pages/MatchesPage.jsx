@@ -353,7 +353,7 @@ export default function MatchesPage({ session: sessionProp }) {
     ensurePushSubscription().catch(()=>{});
   }, [session?.user?.id]);
   useEffect(() => {
-    const onPush = e => { const p=e?.detail||{}; const t=String(p.title||"MonkeyGorila"); const b=String(p.body||""); toast.success(b?`${t}: ${b}`:t); };
+    const onPush = e => { const p=e?.detail||{}; const t=String(p.title||"GorilaGo!"); const b=String(p.body||""); toast.success(b?`${t}: ${b}`:t); };
     if (typeof window!=="undefined") { window.addEventListener("gp:push",onPush); return ()=>window.removeEventListener("gp:push",onPush); }
   }, []); // eslint-disable-line
 
@@ -625,7 +625,7 @@ if (form.pricePerPlayer && parseFloat(form.pricePerPlayer) > 0 && matchResult?.i
         .gpMatchesPage .gpDayPill.isActive.hasMatches .gpDayNum::after{color:#000;}
         .gpMatchesPage .gpDayLbl{font-size:9px;font-weight:700;text-transform:uppercase;opacity:.8;}
         .gpMatchesPage .gpDayNum{font-size:14px;font-weight:900;margin-top:1px;}
-        /* ── CARDS ACCESIBLES MonkeyGorila ──
+        /* ── CARDS ACCESIBLES GorilaGo! ──
            Fuentes ≥14px · Botones ≥52px · Contraste WCAG AA
            Espaciado generoso para usuarios con movilidad reducida */
 

@@ -209,7 +209,7 @@ export default function SuperAdminPage() {
           user_id: club.owner_user_id,
           type: "club_approved",
           title: "🎉 ¡Tu club ha sido aprobado!",
-          body: `${club.name} ya está activo en MonkeyGorila. Entra al panel de administración para configurar tus pistas.`,
+          body: `${club.name} ya está activo en GorilaGo!. Entra al panel de administración para configurar tus pistas.`,
           data: { club_id: club.id },
         });
       }
@@ -266,7 +266,7 @@ export default function SuperAdminPage() {
           </button>
           <div>
             <div style={{ fontSize: 20, fontWeight: 900, color: "#74B800" }}>🔐 Super Admin</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Panel de administración MonkeyGorila</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Panel de administración GorilaGo!</div>
           </div>
         </div>
 

@@ -275,7 +275,7 @@ export default function ProjectsPage() {
                   <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
                     <div style={{ fontWeight: 700, marginBottom: 10, fontSize: 13, color: "rgba(255,255,255,0.70)" }}>Tu donación se reparte:</div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 14 }}>
-                      <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 MonkeyGorila</span>
+                      <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 GorilaGo!</span>
                       <span style={{ fontWeight: 700 }}>0,10 €</span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.06)", fontSize: 14 }}>

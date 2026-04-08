@@ -1079,7 +1079,7 @@ async function deleteSchedule(id) {
       {tab === 'donaciones' && (
         <div style={{padding:'12px'}}>
           <div style={{fontSize:15, fontWeight:900, marginBottom:4}}>💚 Donaciones</div>
-          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. MonkeyGorila gestiona la transferencia mensual.</div>
+          <div style={{fontSize:12, color:'rgba(255,255,255,0.4)', marginBottom:16}}>10cts de cada pago se destinan a la asociación que elijas. GorilaGo! gestiona la transferencia mensual.</div>
 
           {/* Saldo acumulado */}
           <div style={{...S.card, background:'linear-gradient(135deg,rgba(74,222,128,0.1),rgba(116,184,0,0.08))', border:'1px solid rgba(74,222,128,0.25)', marginBottom:16}}>

@@ -214,7 +214,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   <div style={{ fontSize: 14, fontWeight: 900, color: "#E67E22" }}>Mientras juegas, ayudas</div>
                 </div>
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, marginBottom: 10 }}>
-                  0,10€ de tu reserva va a MonkeyGorila · 0,10€ al proyecto inclusivo activo · 0,10€ a la asociación del club
+                  0,10€ de tu reserva va a GorilaGo! · 0,10€ al proyecto inclusivo activo · 0,10€ a la asociación del club
                 </div>
                 <a href="/proyectos" style={{ fontSize: 12, fontWeight: 700, color: "#E67E22", textDecoration: "none" }}>
                   Ver proyectos activos →
@@ -266,7 +266,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                     </div>
                   )}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)" }}>🦍 MonkeyGorila <span style={{ fontSize: 11, color: "rgba(255,255,255,0.30)" }}>(fijo)</span></span>
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.60)" }}>🦍 GorilaGo! <span style={{ fontSize: 11, color: "rgba(255,255,255,0.30)" }}>(fijo)</span></span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>0,10 €</span>
                   </div>
                   <div style={{ marginBottom: 8 }}>

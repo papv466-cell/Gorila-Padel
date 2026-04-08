@@ -192,7 +192,7 @@ export default function App() {
         return;
       }
       if (type === "PUSH_RECEIVED") {
-        const title = data.title || "MonkeyGorila 🦍";
+        const title = data.title || "GorilaGo! 🦍";
         const body = data.body || "";
         const url = data.url || "/partidos";
         toast(

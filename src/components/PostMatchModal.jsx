@@ -85,7 +85,7 @@ async function generarImagenStory({ sets, match, players, gorilasinlimitesIds = 
   ctx.textAlign = "center";
   ctx.fillStyle = "#74B800";
   ctx.font = "bold 64px Arial";
-  ctx.fillText("GORILA PÁDEL", W / 2, 140);
+  ctx.fillText("GORILA GO!", W / 2, 140);
   ctx.font = "80px Arial";
   ctx.fillText("🦍", W / 2, 240);
 
@@ -302,7 +302,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
         setPreviewUrl(url);
         const file = new File([blob], "gorila-resultado.png", { type: "image/png" });
         if (navigator.share && navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: "Mi partido en MonkeyGorila 🦍", text: `¡Resultado! 🦍 #GorilaoPadel` }); } catch {}
+          try { await navigator.share({ files: [file], title: "Mi partido en GorilaGo! 🦍", text: `¡Resultado! 🦍 #GorilaoPadel` }); } catch {}
         } else {
           const a = document.createElement("a");
           a.href = url; a.download = "gorila-resultado.png"; a.click();
@@ -520,7 +520,7 @@ export default function PostMatchModal({ match, players, session, onClose }) {
             <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px", marginBottom: 20, textAlign: "left", fontSize: 14 }}>
               <div style={{ fontWeight: 700, marginBottom: 10, color: "rgba(255,255,255,0.80)" }}>Tu donación se reparte:</div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 MonkeyGorila</span>
+                <span style={{ color: "rgba(255,255,255,0.55)" }}>🦍 GorilaGo!</span>
                 <span style={{ fontWeight: 700 }}>0,10 €</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
