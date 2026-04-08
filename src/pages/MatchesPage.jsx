@@ -200,6 +200,7 @@ export default function MatchesPage({ session: sessionProp }) {
   // CAMBIO 2: Reemplazar moodOpenFor por payModalMatch
   const [payModalMatch, setPayModalMatch] = useState(null);
   const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
+  const [pendingMatchData, setPendingMatchData] = useState(null);
 
   const [postOpenFor, setPostOpenFor] = useState(null);
   const [postResult, setPostResult] = useState(null);
@@ -491,39 +492,32 @@ export default function MatchesPage({ session: sessionProp }) {
       setSaveError(null); setSaving(true);
       if (!String(form.clubName||"").trim()) throw new Error("Pon el nombre del club.");
       if (sport === "padel" && !form.isPrivateCourt && !String(form.clubId||"").trim()) throw new Error("Selecciona el club de la lista.");
+      // Para pádel — crear el partido normalmente (flujo existente con auth)
+      // Para tenis/pickleball — guardar datos y crear DESPUÉS del pago
       let matchResult;
-      if (sport === "tenis") {
-        const { data, error } = await supabase.from("tennis_matches").insert([{
-          created_by_user: session.user.id,
+      if (sport === "tenis" || sport === "pickleball") {
+        // No crear todavía — guardar datos para crear tras el pago
+        const pendingData = {
+          _pending: true,
+          _sport: sport,
           club_id: form.clubId || null,
           club_name: form.clubName,
           start_at: combineDateTimeToISO(form.date, form.time),
-          duration_min: Number(form.durationMin) || 90,
+          duration_min: sport === "pickleball" ? Number(form.durationMin) || 60 : Number(form.durationMin) || 90,
           level: form.level,
           price_per_player: form.pricePerPlayer ? Number(form.pricePerPlayer) : null,
           max_players: sportForm.format === "singles" ? 2 : 4,
           format: sportForm.format,
-          sets: sportForm.sets,
+          ...(sport === "tenis" ? { sets: sportForm.sets } : { rally_scoring: sportForm.rallyScoring }),
           status: "active",
-        }]).select().single();
-        if (error) throw error;
-        matchResult = data;
-      } else if (sport === "pickleball") {
-        const { data, error } = await supabase.from("pickleball_matches").insert([{
           created_by_user: session.user.id,
-          club_id: form.clubId || null,
-          club_name: form.clubName,
-          start_at: combineDateTimeToISO(form.date, form.time),
-          duration_min: Number(form.durationMin) || 60,
-          level: form.level,
-          price_per_player: form.pricePerPlayer ? Number(form.pricePerPlayer) : null,
-          max_players: sportForm.format === "singles" ? 2 : 4,
-          format: sportForm.format,
-          rally_scoring: sportForm.rallyScoring,
-          status: "active",
-        }]).select().single();
-        if (error) throw error;
-        matchResult = data;
+        };
+        // Abrir modal de pago con datos pendientes
+        const savedPrice = form.pricePerPlayer;
+        setOpenCreate(false);
+        setForm({clubName:"",clubId:"",date:todayISO,time:"19:00",durationMin:90,level:"medio",alreadyPlayers:1,pricePerPlayer:""}); setClubQuery("");
+        setPendingMatchData({ ...pendingData, price_per_player: savedPrice || "0", _sport: sport });
+        return;
       } else {
         matchResult = await createMatch({clubId:form.clubId,clubName:form.clubName,startAtISO:combineDateTimeToISO(form.date,form.time),durationMin:Number(form.durationMin)||90,level:form.level,alreadyPlayers:Number(form.alreadyPlayers)||1,pricePerPlayer:form.pricePerPlayer,userId:session.user.id,lat:form.lat||null,lng:form.lng||null});
       }
@@ -1737,6 +1731,47 @@ export default function MatchesPage({ session: sessionProp }) {
     }}
   />
 )}
+
+      {pendingMatchData && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 50000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: "#1a1a1a", borderRadius: 20, padding: 28, maxWidth: 420, width: "100%", border: "1px solid rgba(var(--sport-color-rgb,46,204,113),0.3)", textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>{pendingMatchData._sport === "pickleball" ? "🏓" : "🎾"}</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 8 }}>Confirmar partido</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 6 }}>{pendingMatchData.club_name}</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 20 }}>
+              {pendingMatchData.price_per_player && parseFloat(pendingMatchData.price_per_player) > 0
+                ? `${pendingMatchData.price_per_player}€/jugador + 0,30€ GorilaGo!`
+                : "Gratis + 0,30€ comisión GorilaGo!"}
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={async () => {
+                try {
+                  const table = pendingMatchData._sport === "tenis" ? "tennis_matches" : "pickleball_matches";
+                  const { _pending, _sport, ...insertData } = pendingMatchData;
+                  const { error } = await supabase.from(table).insert([insertData]);
+                  if (error) throw error;
+                  toast.success("¡Partido creado! ✅");
+                  setPendingMatchData(null);
+                  await load();
+                  setViewMode("mine");
+                } catch(e) {
+                  toast.error(e.message || "Error al crear partido");
+                }
+              }}
+                style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
+                ✅ Crear partido
+              </button>
+              <button onClick={() => setPendingMatchData(null)}
+                style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.07)", color: "#fff", fontWeight: 700, border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+                Cancelar
+              </button>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+              El pago de la comisión se procesará al confirmar
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL JUGAR AHORA ── */}
       {jugarAhora && (

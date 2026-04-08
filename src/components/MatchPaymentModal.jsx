@@ -7,7 +7,7 @@ import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-
 import { supabase } from "../services/supabaseClient";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
+const LEVEL_COLORS = { iniciacion: "#2ECC71", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
 
 // ── Formulario Stripe interno ────────────────────────────────────────────────
 function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraProjectDonation = 0.10, setExtraProjectDonation }) {
@@ -314,7 +314,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                   appearance: {
                     theme: "night",
                     variables: {
-                      colorPrimary: "var(--sport-color)",
+                      colorPrimary: getComputedStyle(document.documentElement).getPropertyValue("--sport-color").trim() || "#2ECC71",
                       colorBackground: "#1a1a1a",
                       colorText: "#ffffff",
                       colorDanger: "#ef4444",
