@@ -307,7 +307,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/mapa" element={<RequireAuth session={session} sessionReady={sessionReady}><MapPage session={session} /></RequireAuth>} />
           <Route path="/juega" element={<RequireAuth session={session} sessionReady={sessionReady}><MatchesPage session={session} /></RequireAuth>} />
-          <Route path="/aprende" element={<RequireAuth session={session} sessionReady={sessionReady}><ClassesPage session={session} /></RequireAuth>} />
+          <Route path="/aprende" element={<TeachersPage />} />
           <Route path="/juntos" element={<RequireAuth session={session} sessionReady={sessionReady}><InclusiveMatchesPage session={session} /></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth session={session} sessionReady={sessionReady}><ProfilePage session={session} /></RequireAuth>} />
           <Route path="/club-admin" element={<RequireAuth session={session} sessionReady={sessionReady}><ClubAdminPage /></RequireAuth>} />
