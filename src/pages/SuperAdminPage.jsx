@@ -812,7 +812,7 @@ export default function SuperAdminPage() {
                       )}
                       <button onClick={() => deleteTeacher(t.id)}
                         style={{ minHeight: 44, padding: "10px 16px", borderRadius: 12, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.20)", color: "#ff6b6b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-                        🗑️ Eliminar
+                        Eliminar
                       </button>
                     </div>
                   </div>
