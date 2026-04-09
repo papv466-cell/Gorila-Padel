@@ -715,24 +715,6 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
               {/* NOTAS */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>💬 Notas para los participantes</label>
-                <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                  placeholder="Info extra, qué traer, cómo llegar…"
-                  style={{ ...IS, minHeight: 80, resize: "vertical" }} />
-              </div>
-
-              {/* BOTONES */}
-              <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-                <button onClick={onCreate} disabled={creating}
-                  style={{ flex: 1, minHeight: 56, borderRadius: 16, background: creating ? "rgba(var(--sport-color-rgb, 46,204,113),0.30)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: creating ? "not-allowed" : "pointer", fontSize: 17 }}>
-                  {creating ? "⏳ Creando…" : "🤝 Crear partido"}
-                </button>
-                <button onClick={() => setOpenCreate(false)} disabled={creating}
-                  style={{ minHeight: 56, padding: "14px 20px", borderRadius: 16, background: "rgba(255,255,255,0.07)", color: "#fff", fontWeight: 700, border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer", fontSize: 15 }}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
