@@ -275,7 +275,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos'],['profesores','👨‍🏫 Profesores']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos'],['profesores','📚 Profesores']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))' : 'rgba(255,255,255,0.08)',
@@ -720,7 +720,7 @@ export default function SuperAdminPage() {
         {tab === 'profesores' && (
           <div>
             <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>
-              👨‍🏫 Profesores
+              📚 Profesores
               <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
                 {teachers.length} total · {teachers.filter(t => t.verification_status === "pending").length} pendientes
               </span>
