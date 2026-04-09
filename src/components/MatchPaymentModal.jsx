@@ -105,7 +105,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       : JSON.stringify({ matchId: match.id, userId: session.user.id, paymentMethodId: null });
     const res = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY },
       body,
     });
     const data = await res.json();
