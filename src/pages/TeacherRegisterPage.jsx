@@ -270,7 +270,7 @@ export default function TeacherRegisterPage() {
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 10, lineHeight: 1.5 }}>
                 Obligatorio. Solo visible para el equipo de GorilaGo! y nunca compartido con alumnos.
               </div>
-              <label style={{ display: "block", minHeight: 64, padding: "16px 20px", borderRadius: 14, background: dniFile ? `${sportColor}15` : "rgba(255,255,255,0.06)", border: dniFile ? `2px solid ${sportColor}` : "2px dashed rgba(255,255,255,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+              <label style={{ minHeight: 64, padding: "16px 20px", borderRadius: 14, background: dniFile ? `${sportColor}15` : "rgba(255,255,255,0.06)", border: dniFile ? `2px solid ${sportColor}` : "2px dashed rgba(255,255,255,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 28 }}>{dniFile ? "✅" : "📄"}</span>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{dniFile ? dniFile.name : "Adjuntar DNI o pasaporte"}</div>
@@ -288,7 +288,7 @@ export default function TeacherRegisterPage() {
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 10, lineHeight: 1.5 }}>
                 Titulación federativa, certificado de monitor deportivo, o cualquier acreditación como entrenador de pádel, tenis o pickleball.
               </div>
-              <label style={{ display: "block", minHeight: 64, padding: "16px 20px", borderRadius: 14, background: certFile ? `${sportColor}15` : "rgba(255,255,255,0.06)", border: certFile ? `2px solid ${sportColor}` : "2px dashed rgba(255,255,255,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
+              <label style={{ minHeight: 64, padding: "16px 20px", borderRadius: 14, background: certFile ? `${sportColor}15` : "rgba(255,255,255,0.06)", border: certFile ? `2px solid ${sportColor}` : "2px dashed rgba(255,255,255,0.20)", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontSize: 28 }}>{certFile ? "✅" : "🏅"}</span>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{certFile ? certFile.name : "Adjuntar certificado (opcional)"}</div>
