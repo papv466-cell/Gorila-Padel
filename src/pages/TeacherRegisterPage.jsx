@@ -13,6 +13,11 @@ const SPECIALTIES = [
   { key: "senior",     label: "Mayores",               emoji: "👴" },
   { key: "kids",       label: "Niños",                 emoji: "👦" },
   { key: "beginner",   label: "Iniciación",            emoji: "🌱" },
+  { key: "reves",      label: "Revés",                  emoji: "🎾" },
+  { key: "volea",      label: "Volea",                  emoji: "🏓" },
+  { key: "saque",      label: "Saque",                  emoji: "💥" },
+  { key: "competicion",label: "Competición",            emoji: "🏆" },
+  { key: "fisico",     label: "Preparación física",     emoji: "💪" },
 ];
 
 const SPORTS = [
