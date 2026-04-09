@@ -1302,7 +1302,7 @@ export default function ClubPage({ session: sessionProp }) {
           </div>
         </div>
       )}
-    </div>
+
       {creatorAuthMatch && (
         <MatchPaymentModal
           match={creatorAuthMatch}
