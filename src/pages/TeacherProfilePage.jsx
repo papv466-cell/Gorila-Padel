@@ -9,7 +9,6 @@ const SPECIALTIES = [
   { key: "wheelchair", label: "Silla de ruedas", emoji: "♿" },
   { key: "blind",      label: "Ceguera / baja visión", emoji: "🦯" },
   { key: "down",       label: "Síndrome de Down", emoji: "💙" },
-  { key: "parkinson",  label: "Parkinson", emoji: "🤲" },
   { key: "autism",     label: "Autismo", emoji: "🌟" },
   { key: "senior",     label: "Mayores", emoji: "👴" },
   { key: "kids",       label: "Niños", emoji: "👦" },
@@ -45,6 +44,12 @@ export default function TeacherProfilePage() {
   const [paymentOption, setPaymentOption] = useState("fee_only"); // fee_only | full
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+  const [reviewDone, setReviewDone] = useState(false);
 
   const sportColor = sportInfo?.color || "#2ECC71";
   const days = getNextDays(14);
@@ -53,14 +58,16 @@ export default function TeacherProfilePage() {
 
   async function loadData() {
     setLoading(true);
-    const [{ data: t }, { data: av }, { data: bk }] = await Promise.all([
+    const [{ data: t }, { data: av }, { data: bk }, { data: rv }] = await Promise.all([
       supabase.from("teachers").select("*").eq("id", id).single(),
       supabase.from("teacher_availability").select("*").eq("teacher_id", id),
       supabase.from("class_bookings").select("date, start_time, end_time, status").eq("teacher_id", id).neq("status", "cancelled"),
+      supabase.from("teacher_reviews").select("*, profiles(name, avatar_url)").eq("teacher_id", id).order("created_at", { ascending: false }).limit(20),
     ]);
     setTeacher(t);
     setAvailability(av || []);
     setBookings(bk || []);
+    setReviews(rv || []);
     setLoading(false);
   }
 
@@ -93,6 +100,27 @@ export default function TeacherProfilePage() {
       }
     }
     return slots;
+  }
+
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
+
+  async function submitReview() {
+    if (!session) { navigate("/login"); return; }
+    setSavingReview(true);
+    try {
+      await supabase.from("teacher_reviews").insert({
+        teacher_id: teacher.id,
+        student_id: session.user.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      setReviewDone(true);
+      setShowReviewModal(false);
+      setReviewComment("");
+      setReviewRating(5);
+      await loadData();
+    } catch (e) { alert(e.message); }
+    finally { setSavingReview(false); }
   }
 
   async function confirmBooking() {
@@ -163,6 +191,17 @@ export default function TeacherProfilePage() {
             <div style={{ fontSize: 20, fontWeight: 900, color: sportColor }}>
               {teacher.price_per_hour ? `${teacher.price_per_hour}€/hora` : "Precio a consultar"}
             </div>
+            {avgRating && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <div style={{ display: "flex", gap: 2 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <span key={s} style={{ fontSize: 18, color: s <= Math.round(avgRating) ? "#F59E0B" : "rgba(255,255,255,0.20)" }}>★</span>
+                  ))}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B" }}>{avgRating}</span>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>({reviews.length} valoraciones)</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -199,6 +238,41 @@ export default function TeacherProfilePage() {
                 <span key={s} style={{ fontSize: 14, fontWeight: 700, padding: "8px 14px", borderRadius: 999, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", textTransform: "capitalize" }}>
                   {s === "padel" ? "🎾 Pádel" : s === "tenis" ? "🎾 Tenis" : "🏓 Pickleball"}
                 </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Botón valorar */}
+        {session && (
+          <button onClick={() => setShowReviewModal(true)}
+            style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.30)", color: "#F59E0B", fontWeight: 900, fontSize: 15, cursor: "pointer", marginBottom: 24 }}>
+            ⭐ Valorar a este profesor
+          </button>
+        )}
+
+        {/* Reviews */}
+        {reviews.length > 0 && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>⭐ Valoraciones</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {reviews.map(r => (
+                <div key={r.id} style={{ background: "#111827", borderRadius: 16, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 999, background: `${sportColor}20`, display: "grid", placeItems: "center", fontSize: 14, fontWeight: 900, color: sportColor }}>
+                        {r.profiles?.name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{r.profiles?.name || "Usuario"}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 2 }}>
+                      {[1,2,3,4,5].map(s => (
+                        <span key={s} style={{ fontSize: 16, color: s <= r.rating ? "#F59E0B" : "rgba(255,255,255,0.20)" }}>★</span>
+                      ))}
+                    </div>
+                  </div>
+                  {r.comment && <div style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{r.comment}</div>}
+                </div>
               ))}
             </div>
           </div>
@@ -322,6 +396,46 @@ export default function TeacherProfilePage() {
         )}
 
       </div>
+
+      {/* Modal valorar */}
+      {showReviewModal && (
+        <div onClick={() => setShowReviewModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.90)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f172a", borderRadius: "24px 24px 0 0", padding: "24px 20px", paddingBottom: "max(24px,env(safe-area-inset-bottom))", border: "1px solid rgba(245,158,11,0.25)" }}>
+            <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>⭐ Valorar a {teacher.name}</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.50)", marginBottom: 20 }}>Tu opinión ayuda a otros alumnos</div>
+
+            {/* Estrellas */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 24 }}>
+              {[1,2,3,4,5].map(s => (
+                <button key={s} onClick={() => setReviewRating(s)}
+                  style={{ fontSize: 40, background: "none", border: "none", cursor: "pointer", color: s <= reviewRating ? "#F59E0B" : "rgba(255,255,255,0.20)", transition: "color 0.15s, transform 0.1s", transform: s <= reviewRating ? "scale(1.1)" : "scale(1)" }}>
+                  ★
+                </button>
+              ))}
+            </div>
+
+            {/* Comentario */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 15, fontWeight: 700, display: "block", marginBottom: 8, color: "rgba(255,255,255,0.80)" }}>💬 Comentario (opcional)</label>
+              <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)}
+                placeholder="Cuéntanos tu experiencia con este profesor…"
+                style={{ width: "100%", minHeight: 90, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 15, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={submitReview} disabled={savingReview}
+                style={{ width: "100%", minHeight: 56, borderRadius: 16, background: savingReview ? "rgba(245,158,11,0.20)" : "linear-gradient(135deg,#F59E0B,#D97706)", color: "#000", fontWeight: 900, border: "none", cursor: savingReview ? "not-allowed" : "pointer", fontSize: 17 }}>
+                {savingReview ? "⏳ Enviando…" : "⭐ Enviar valoración"}
+              </button>
+              <button onClick={() => setShowReviewModal(false)}
+                style={{ width: "100%", minHeight: 52, borderRadius: 16, background: "transparent", color: "rgba(255,255,255,0.55)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", fontSize: 15 }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

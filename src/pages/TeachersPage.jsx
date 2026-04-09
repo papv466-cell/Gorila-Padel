@@ -9,7 +9,6 @@ const SPECIALTIES = [
   { key: "wheelchair", label: "Silla de ruedas", emoji: "♿" },
   { key: "blind",      label: "Ceguera / baja visión", emoji: "🦯" },
   { key: "down",       label: "Síndrome de Down", emoji: "💙" },
-  { key: "parkinson",  label: "Parkinson", emoji: "🤲" },
   { key: "autism",     label: "Autismo", emoji: "🌟" },
   { key: "senior",     label: "Mayores", emoji: "👴" },
   { key: "kids",       label: "Niños", emoji: "👦" },
