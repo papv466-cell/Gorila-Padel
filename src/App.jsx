@@ -7,7 +7,6 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ImpactPage from "./pages/ImpactPage";
 import ImpactGlobalPage from "./pages/ImpactGlobalPage";
 import TeachersPage from "./pages/TeachersPage";
-import TeacherProfilePage from "./pages/TeacherProfilePage";
 import TeacherRegisterPage from "./pages/TeacherRegisterPage";
 import DonationPreviewPage from "./pages/DonationPreviewPage";
 import MoodPreviewPage from "./pages/MoodPreviewPage";
