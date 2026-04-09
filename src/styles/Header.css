@@ -280,7 +280,7 @@
     }
   
     .menuToggle {
-      display: none;
+      display: flex;
     }
   
     .headerNav {
@@ -308,7 +308,6 @@
       color: var(--sport-color);
     }
   
-    .mobileMenu,
     .mobileMenuOverlay {
       display: none;
     }

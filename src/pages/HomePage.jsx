@@ -191,7 +191,7 @@ export default function HomePage({ session: sessionProp }) {
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
           <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", padding: 12, border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
           <h1 style={{ fontSize: 34, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.15 }}>
-            MONKEY<br /><span style={{ color: "#2ECC71" }}>GORILA</span>
+            Gorila<span style={{ color: "#2ECC71" }}>Go!</span>
           </h1>
           <p style={{ fontSize: 17, color: "rgba(255,255,255,0.80)", margin: "0 0 6px", fontWeight: 700 }}>Jugando se ayuda — y se ve</p>
           <p style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Cada partido que juegas ayuda a personas con capacidades especiales a practicar deporte</p>
