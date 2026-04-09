@@ -23,7 +23,6 @@ export default function Navbar({ showBack = false, onBack }) {
     { to: "/juega",      label: "Juega",      icon: "🎾", key: "partidos" },
     { to: "/juntos",     label: "Juntos",     icon: "♿", key: "inclusivos" },
     { to: "/proyectos",  label: "Proyectos",  icon: "🏗️", key: "proyectos" },
-    { to: "/perfil",     label: "Perfil",     icon: "👤", key: "perfil" },
   ], []);
 
   const links = useMemo(() => allLinks.filter(l => isEnabled(l.key)), [allLinks, isEnabled]);
@@ -92,7 +91,6 @@ export default function Navbar({ showBack = false, onBack }) {
                 {totalItems > 0 && <div style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: 999, background: "var(--sport-color)", color: "#111", fontSize: 11, fontWeight: 950, display: "grid", placeItems: "center", border: "2px solid #000" }}>{totalItems > 9 ? "9+" : totalItems}</div>}
               </Link>
             )}
-            <button className="headerButton" onClick={onLogout}>Salir</button>
             <button className={`menuToggle ${open ? "isOpen" : ""}`} onClick={() => setOpen(!open)} aria-label="Menu">
               <span></span><span></span><span></span>
             </button>
@@ -120,6 +118,13 @@ export default function Navbar({ showBack = false, onBack }) {
             </li>
           )}
           <div className="mobileMenuDivider" />
+          {session && (
+            <li className="mobileMenuItem">
+              <NavLink to="/perfil" className={({ isActive }) => `mobileMenuLink ${isActive ? "isActive" : ""}`} onClick={() => setOpen(false)}>
+                <span className="mobileMenuIcon">👤</span>Mi perfil
+              </NavLink>
+            </li>
+          )}
           <li className="mobileMenuItem">
             <button type="button" className="mobileMenuLink" onClick={onLogout} style={{ width: "100%", textAlign: "left", border: "none", background: "transparent", cursor: "pointer" }}>
               <span className="mobileMenuIcon">🚪</span>Salir
