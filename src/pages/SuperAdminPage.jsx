@@ -715,7 +715,6 @@ export default function SuperAdminPage() {
           </div>
         )}
 
-      </div>
 
         {tab === 'profesores' && (
           <div>
