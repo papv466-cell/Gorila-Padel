@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import MatchPaymentModal from "../components/MatchPaymentModal";
 import { createNotification } from "../services/notifications";
 import { fetchClubsFromGoogleSheet } from "../services/sheets";
 import { useToast } from "../components/ToastProvider";
@@ -94,6 +95,7 @@ export default function ClubPage({ session: sessionProp }) {
   const [myBonos, setMyBonos] = useState([]);
   const [buyingBono, setBuyingBono] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
   const todayISO = toDateInputValue(new Date());
   const [form, setForm] = useState({
     date: todayISO, time: "19:00", durationMin: 90,
@@ -272,11 +274,16 @@ export default function ClubPage({ session: sessionProp }) {
           });
         } catch(e) { console.error('Error bloqueando slot:', e); }
       }
-      toast.success(createSelectedSlot ? "Partido creado y pista reservada ✅" : "Partido creado ✅");
       setOpenCreate(false);
       setCreateSlots([]); setCreateSelectedSlot(null); setCreateSelectedCourt(null);
       await load();
       setTab("partidos");
+      // Abrir pasarela de pago siempre
+      if (match?.id) {
+        setCreatorAuthMatch({ ...match, _sport: "padel" });
+      } else {
+        toast.success(createSelectedSlot ? "Partido creado y pista reservada ✅" : "Partido creado ✅");
+      }
     } catch (e) {
       setSaveError(e?.message || "Error al crear");
     } finally {
@@ -1296,5 +1303,18 @@ export default function ClubPage({ session: sessionProp }) {
         </div>
       )}
     </div>
+
+      {creatorAuthMatch && (
+        <MatchPaymentModal
+          match={creatorAuthMatch}
+          session={session}
+          isCreatorAuth={true}
+          onClose={() => setCreatorAuthMatch(null)}
+          onJoined={async () => {
+            setCreatorAuthMatch(null);
+            toast.success("Partido creado y pago completado ✅");
+          }}
+        />
+      )}
   );
 }
