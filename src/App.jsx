@@ -6,6 +6,9 @@ import ClubAdminPage from "./pages/ClubAdminPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ImpactPage from "./pages/ImpactPage";
 import ImpactGlobalPage from "./pages/ImpactGlobalPage";
+import TeachersPage from "./pages/TeachersPage";
+import TeacherProfilePage from "./pages/TeacherProfilePage";
+import TeacherRegisterPage from "./pages/TeacherRegisterPage";
 import DonationPreviewPage from "./pages/DonationPreviewPage";
 import MoodPreviewPage from "./pages/MoodPreviewPage";
 import ClubRegisterPage from "./pages/ClubRegisterPage";
@@ -322,6 +325,9 @@ export default function App() {
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/proyectos" element={<ProjectsPage />} />
           <Route path="/impacto-global" element={<ImpactGlobalPage />} />
+          <Route path="/aprende" element={<TeachersPage />} />
+          <Route path="/profesores/registro" element={<RequireAuth session={session} sessionReady={sessionReady}><TeacherRegisterPage /></RequireAuth>} />
+          <Route path="/profesores/:id" element={<TeacherProfilePage />} />
           <Route path="/impacto" element={<RequireAuth session={session} sessionReady={sessionReady}><ImpactPage /></RequireAuth>} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />

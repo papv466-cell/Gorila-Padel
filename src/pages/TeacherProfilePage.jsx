@@ -1,415 +1,326 @@
 // src/pages/TeacherProfilePage.jsx
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-import { useToast } from "../components/ToastProvider";
-import {
-  ALL_SPECIALTY_CATEGORIES,
-  getSpecialtyInfo,
-  groupSpecialtiesByCategory,
-} from "../constants/teacherSpecialties";
+import { useSport } from "../contexts/SportContext";
+import { useSession } from "../contexts/SessionContext";
 
-function isUuid(x = "") {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x));
-}
-function initials(name = "") {
-  const parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
-  if (!parts.length) return "🦍";
-  return parts.map(p => p[0].toUpperCase()).join("");
-}
+const SPECIALTIES = [
+  { key: "wheelchair", label: "Silla de ruedas", emoji: "♿" },
+  { key: "blind",      label: "Ceguera / baja visión", emoji: "🦯" },
+  { key: "down",       label: "Síndrome de Down", emoji: "💙" },
+  { key: "parkinson",  label: "Parkinson", emoji: "🤲" },
+  { key: "autism",     label: "Autismo", emoji: "🌟" },
+  { key: "senior",     label: "Mayores", emoji: "👴" },
+  { key: "kids",       label: "Niños", emoji: "👦" },
+  { key: "beginner",   label: "Iniciación", emoji: "🌱" },
+];
 
-const IS = {
-  width: "100%", padding: "10px 12px", borderRadius: 9,
-  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-  color: "#fff", fontSize: 13, boxSizing: "border-box",
-};
-const LB = {
-  fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.45)",
-  textTransform: "uppercase", letterSpacing: ".05em", display: "block", marginBottom: 6,
-};
+const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
-function SpecPill({ item, active, categoryId, onToggle }) {
-  const isInc = categoryId === "inclusion";
-  const color = item.color || "var(--sport-color)";
-  return (
-    <button type="button" onClick={onToggle}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: "5px 11px", borderRadius: 999, cursor: "pointer",
-        fontSize: 12, fontWeight: 800, border: "none", transition: "all .15s",
-        background: active ? (isInc ? `${color}22` : "rgba(var(--sport-color-rgb, 46,204,113),0.18)") : "rgba(255,255,255,0.05)",
-        color: active ? (isInc ? color : "var(--sport-color)") : "rgba(255,255,255,0.5)",
-        outline: active
-          ? `1.5px solid ${isInc ? color + "80" : "rgba(var(--sport-color-rgb, 46,204,113),0.5)"}`
-          : "1px solid rgba(255,255,255,0.08)",
-      }}>
-      <span style={{ fontSize: 14 }}>{item.emoji}</span>
-      {item.label}
-    </button>
-  );
-}
-
-function SpecCategory({ cat, selected, onChange }) {
-  const [open, setOpen] = useState(false);
-  const catSelected = selected.filter(k => cat.items.some(i => i.key === k));
-
-  function toggle(key) {
-    onChange(selected.includes(key) ? selected.filter(k => k !== key) : [...selected, key]);
+function getNextDays(n = 14) {
+  const days = [];
+  const today = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push(d);
   }
-
-  return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div onClick={() => setOpen(o => !o)}
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", cursor: "pointer", userSelect: "none" }}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: catSelected.length ? "#fff" : "rgba(255,255,255,0.6)" }}>
-          {cat.label}
-        </span>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          {catSelected.length > 0 && (
-            <span style={{ fontSize: 11, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "2px 8px", borderRadius: 999, fontWeight: 900 }}>
-              {catSelected.length} ✓
-            </span>
-          )}
-          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, fontWeight: 900 }}>{open ? "▲" : "▼"}</span>
-        </div>
-      </div>
-      {open && (
-        <div style={{ paddingBottom: 14 }}>
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-            {cat.items.map(item => (
-              <SpecPill key={item.key} item={item} categoryId={cat.id}
-                active={selected.includes(item.key)} onToggle={() => toggle(item.key)} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return days;
 }
 
 export default function TeacherProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
+  const { sportInfo } = useSport();
+  const { session } = useSession();
 
-  useEffect(() => {
-    if (id && !isUuid(id)) { toast.error("Profesor no válido"); navigate("/profesores", { replace: true }); }
-  }, [id]);
-
-  const [session, setSession] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [teacher, setTeacher] = useState(null);
+  const [availability, setAvailability] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
-  const [teacherRow, setTeacherRow] = useState(null); // fila de tabla teachers
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [bookingStep, setBookingStep] = useState(null); // null | "confirm" | "paying"
+  const [paymentOption, setPaymentOption] = useState("fee_only"); // fee_only | full
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const [favBusy, setFavBusy] = useState(false);
-  const [isFav, setIsFav] = useState(false);
-  const [notifyMorning, setNotifyMorning] = useState(true);
-  const [notifyAfternoon, setNotifyAfternoon] = useState(true);
+  const sportColor = sportInfo?.color || "#2ECC71";
+  const days = getNextDays(14);
 
-  const isMe = useMemo(() => {
-    const uid = session?.user?.id ? String(session.user.id) : "";
-    return !!(uid && id && uid === String(id));
-  }, [session?.user?.id, id]);
+  useEffect(() => { loadData(); }, [id]);
 
-  // Editor
-  const [editBio, setEditBio] = useState("");
-  const [editZone, setEditZone] = useState("");
-  const [editPriceBase, setEditPriceBase] = useState("");
-  const [editSpecialties, setEditSpecialties] = useState([]);
-  const [savingProfile, setSavingProfile] = useState(false);
+  async function loadData() {
+    setLoading(true);
+    const [{ data: t }, { data: av }, { data: bk }] = await Promise.all([
+      supabase.from("teachers").select("*").eq("id", id).single(),
+      supabase.from("teacher_availability").select("*").eq("teacher_id", id),
+      supabase.from("class_bookings").select("date, start_time, end_time, status").eq("teacher_id", id).neq("status", "cancelled"),
+    ]);
+    setTeacher(t);
+    setAvailability(av || []);
+    setBookings(bk || []);
+    setLoading(false);
+  }
 
-  useEffect(() => {
-    let alive = true;
-    supabase.auth.getSession().then(({ data }) => { if (!alive) return; setSession(data?.session ?? null); setAuthReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { if (!alive) return; if(_e==='TOKEN_REFRESHED') return; setSession(prev => prev?.user?.id === s?.user?.id && prev?.user?.id ? prev : (s ?? null)); setAuthReady(prev => prev ? prev : true); });
-    return () => { alive = false; sub?.subscription?.unsubscribe?.(); };
-  }, []);
-
-  async function loadAll() {
-    if (!id) return;
-    try {
-      setLoading(true);
-
-      // perfil público
-      const { data: prof, error: e1 } = await supabase
-        .from("profiles")
-        .select("id,name,handle,avatar_url")
-        .eq("id", id).maybeSingle();
-      if (e1) throw e1;
-
-      // datos del profe (tabla teachers, misma id)
-      const { data: tc, error: e2 } = await supabase
-        .from("teachers")
-        .select("id,is_active,bio,zone,price_base,specialties")
-        .eq("id", id).maybeSingle();
-      if (e2) throw e2;
-
-      setProfile(prof || null);
-      setTeacherRow(tc || null);
-      setEditBio(String(tc?.bio || ""));
-      setEditZone(String(tc?.zone || ""));
-      setEditPriceBase(tc?.price_base == null ? "" : String(tc.price_base));
-      setEditSpecialties(Array.isArray(tc?.specialties) ? tc.specialties : []);
-
-      // favorito
-      const uid = session?.user?.id ? String(session.user.id) : "";
-      if (uid) {
-        const { data: favRow } = await supabase
-          .from("teacher_favorites")
-          .select("user_id,notify_morning,notify_afternoon")
-          .eq("user_id", uid).eq("teacher_id", id).maybeSingle();
-        if (favRow?.user_id) {
-          setIsFav(true);
-          setNotifyMorning(favRow.notify_morning !== false);
-          setNotifyAfternoon(favRow.notify_afternoon !== false);
-        } else {
-          setIsFav(false);
+  function getSlotsForDate(date) {
+    const dow = (date.getDay() + 6) % 7; // 0=lunes
+    const dateStr = date.toISOString().slice(0, 10);
+    const slots = [];
+    for (const av of availability) {
+      if (av.recurring && av.day_of_week === dow) {
+        let start = parseInt(av.start_time.slice(0, 2));
+        const end = parseInt(av.end_time.slice(0, 2));
+        while (start < end) {
+          const startStr = `${String(start).padStart(2,"0")}:00`;
+          const endStr = `${String(start+1).padStart(2,"0")}:00`;
+          const isBooked = bookings.some(b => b.date === dateStr && b.start_time?.slice(0,5) === startStr);
+          if (!isBooked) slots.push({ start: startStr, end: endStr });
+          start++;
         }
       }
-    } catch (e) { toast.error(e?.message || "No se pudo cargar el perfil"); }
-    finally { setLoading(false); }
-  }
-
-  useEffect(() => { if (!authReady) return; loadAll(); }, [authReady, id, session?.user?.id]);
-
-  async function toggleFavorite() {
-    const uid = session?.user?.id ? String(session.user.id) : "";
-    if (!uid) return navigate("/login");
-    try {
-      setFavBusy(true);
-      if (!isFav) {
-        const { error } = await supabase.from("teacher_favorites")
-          .insert({ user_id: uid, teacher_id: id, notify_morning: true, notify_afternoon: true });
-        if (error) throw error;
-        setIsFav(true); setNotifyMorning(true); setNotifyAfternoon(true);
-        toast.success("⭐ Añadido a favoritos");
-      } else {
-        const { error } = await supabase.from("teacher_favorites")
-          .delete().eq("user_id", uid).eq("teacher_id", id);
-        if (error) throw error;
-        setIsFav(false); toast.success("Favorito eliminado");
+      if (!av.recurring && av.specific_date === dateStr) {
+        let start = parseInt(av.start_time.slice(0, 2));
+        const end = parseInt(av.end_time.slice(0, 2));
+        while (start < end) {
+          const startStr = `${String(start).padStart(2,"0")}:00`;
+          const endStr = `${String(start+1).padStart(2,"0")}:00`;
+          const isBooked = bookings.some(b => b.date === dateStr && b.start_time?.slice(0,5) === startStr);
+          if (!isBooked) slots.push({ start: startStr, end: endStr });
+          start++;
+        }
       }
-    } catch (e) { toast.error(e?.message || "Error"); }
-    finally { setFavBusy(false); }
+    }
+    return slots;
   }
 
-  async function saveFavPrefs(m, t) {
-    const uid = session?.user?.id ? String(session.user.id) : "";
-    if (!uid || !isFav) return;
+  async function confirmBooking() {
+    if (!session) { navigate("/login"); return; }
+    setSaving(true);
     try {
-      setFavBusy(true);
-      const { error } = await supabase.from("teacher_favorites")
-        .update({ notify_morning: !!m, notify_afternoon: !!t })
-        .eq("user_id", uid).eq("teacher_id", id);
+      const dateStr = selectedDate.toISOString().slice(0, 10);
+      const price = paymentOption === "full" ? teacher.price_per_hour : 0;
+      const { error } = await supabase.from("class_bookings").insert({
+        teacher_id: teacher.id,
+        student_id: session.user.id,
+        date: dateStr,
+        start_time: selectedSlot.start,
+        end_time: selectedSlot.end,
+        sport: sportInfo?.key || "padel",
+        price,
+        payment_status: paymentOption,
+        notes: notes.trim(),
+        status: "confirmed",
+      });
       if (error) throw error;
-    } catch (e) { toast.error(e?.message); }
-    finally { setFavBusy(false); }
+      setBookingStep("success");
+      await loadData();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setSaving(false);
+    }
   }
-
-  async function saveTeacherPublic() {
-    if (!isMe) return;
-    try {
-      setSavingProfile(true);
-      const n = editPriceBase === "" ? null : Number(editPriceBase);
-      // Actualizamos la tabla teachers directamente
-      const { error } = await supabase.from("teachers").update({
-        bio: String(editBio || "").trim() || null,
-        zone: String(editZone || "").trim() || null,
-        price_base: Number.isFinite(n) ? n : null,
-        specialties: editSpecialties.length ? editSpecialties : null,
-      }).eq("id", id);
-      if (error) throw error;
-      toast.success("Perfil actualizado ✅");
-      await loadAll();
-    } catch (e) { toast.error(e?.message || "No se pudo guardar"); }
-    finally { setSavingProfile(false); }
-  }
-
-  const name = (profile?.name && String(profile.name).trim())
-    || (profile?.handle && String(profile.handle).trim())
-    || `Profe ${String(id || "").slice(0, 6)}…`;
-  const avatar = profile?.avatar_url || "";
-  const specialtiesByCategory = useMemo(
-    () => groupSpecialtiesByCategory(teacherRow?.specialties || []),
-    [teacherRow?.specialties]
-  );
 
   if (loading) return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "rgba(255,255,255,0.4)" }}>Cargando…</div>
+    <div style={{ background: "#050505", minHeight: "100vh", display: "grid", placeItems: "center" }}>
+      <div style={{ textAlign: "center", color: "rgba(255,255,255,0.50)" }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>📚</div>
+        <div style={{ fontSize: 16 }}>Cargando perfil…</div>
+      </div>
+    </div>
+  );
+
+  if (!teacher) return (
+    <div style={{ background: "#050505", minHeight: "100vh", display: "grid", placeItems: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 20, color: "#ff6b6b" }}>Profesor no encontrado</div>
+        <button onClick={() => navigate("/aprende")} style={{ marginTop: 16, minHeight: 52, padding: "14px 24px", borderRadius: 14, background: sportColor, color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
+          Volver
+        </button>
+      </div>
     </div>
   );
 
   return (
-    <div className="page pageWithHeader" style={{ background: "#0a0a0a", minHeight: "100vh" }}>
-      <style>{`
-        .tpS { background:#111; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:18px; margin-bottom:10px; }
-        .tpBtn { padding:9px 16px; border-radius:9px; font-weight:900; font-size:13px; cursor:pointer; border:none; }
-        .tpPrimary { background:linear-gradient(135deg,var(--sport-color),var(--sport-color-dark)); color:#000; }
-        .tpGhost { background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15) !important; }
-        .tpFav { background:rgba(255,215,0,0.15); color:#FFD700; border:1px solid rgba(255,215,0,0.35) !important; }
-        .tpG2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        @media(max-width:480px){.tpG2{grid-template-columns:1fr;}}
-        .tpChip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.7); }
-      `}</style>
+    <div style={{ background: "#050505", minHeight: "100vh", color: "#fff" }}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "90px 16px 80px" }}>
 
-      <div className="pageWrap">
-        <div className="container" style={{ padding: "0 16px", maxWidth: 680, margin: "0 auto" }}>
-
-          {/* HEADER */}
-          <div style={{ padding: "12px 0 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate(-1)}>← Volver</button>
-            {isMe && <span style={{ fontSize: 11, color: "var(--sport-color)", fontWeight: 800 }}>🦍 Tu perfil</span>}
+        {/* Perfil header */}
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start", marginBottom: 28 }}>
+          <div style={{ width: 88, height: 88, borderRadius: 22, overflow: "hidden", flexShrink: 0, background: `${sportColor}20`, border: `2px solid ${sportColor}40`, display: "grid", placeItems: "center" }}>
+            {teacher.avatar_url
+              ? <img src={teacher.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <span style={{ fontSize: 40 }}>🎾</span>}
           </div>
-
-          {/* PERFIL PÚBLICO */}
-          <div className="tpS">
-            <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
-              {avatar
-                ? <img src={avatar} alt={name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(var(--sport-color-rgb, 46,204,113),0.4)", flexShrink: 0 }} />
-                : <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "var(--sport-color)", fontSize: 22, flexShrink: 0 }}>{initials(name)}</div>
-              }
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 900, fontSize: 20, color: "#fff" }}>{name}</div>
-                {teacherRow?.zone && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 3 }}>📍 {teacherRow.zone}</div>}
-                {teacherRow?.bio
-                  ? <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 8, lineHeight: 1.55 }}>{teacherRow.bio}</div>
-                  : <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 6, fontStyle: "italic" }}>Sin bio todavía.</div>
-                }
-                {teacherRow?.price_base != null && (
-                  <div style={{ marginTop: 8 }}>
-                    <span className="tpChip">💶 {teacherRow.price_base}€/clase</span>
-                  </div>
-                )}
-              </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>{teacher.name}</h1>
+              {teacher.verified && <span style={{ fontSize: 12, fontWeight: 900, color: sportColor, background: `${sportColor}18`, padding: "4px 10px", borderRadius: 999 }}>✓ Verificado</span>}
             </div>
+            {teacher.city && <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>📍 {teacher.city}</div>}
+            <div style={{ fontSize: 20, fontWeight: 900, color: sportColor }}>
+              {teacher.price_per_hour ? `${teacher.price_per_hour}€/hora` : "Precio a consultar"}
+            </div>
+          </div>
+        </div>
 
-            {/* Especialidades agrupadas */}
-            {Object.keys(specialtiesByCategory).length > 0 && (
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                {Object.entries(specialtiesByCategory).map(([catId, cat]) => (
-                  <div key={catId} style={{ marginBottom: 12 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 6 }}>
-                      {cat.label}
-                    </div>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {cat.items.map(item => (
-                        <span key={item.key} className="tpChip"
-                          style={catId === "inclusion" && item.color ? {
-                            background: `${item.color}20`, color: item.color, border: `1px solid ${item.color}40`
-                          } : {}}>
-                          {item.emoji} {item.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+        {/* Bio */}
+        {teacher.bio && (
+          <div style={{ background: "#111827", borderRadius: 16, padding: "16px 20px", marginBottom: 20, fontSize: 15, color: "rgba(255,255,255,0.70)", lineHeight: 1.7 }}>
+            {teacher.bio}
+          </div>
+        )}
+
+        {/* Especialidades */}
+        {(teacher.specialties || []).length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 12 }}>♿ Especialidades</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {(teacher.specialties || []).map(s => {
+                const spec = SPECIALTIES.find(x => x.key === s);
+                return spec ? (
+                  <span key={s} style={{ fontSize: 14, fontWeight: 700, padding: "8px 14px", borderRadius: 999, background: `${sportColor}15`, border: `1px solid ${sportColor}40`, color: "#fff" }}>
+                    {spec.emoji} {spec.label}
+                  </span>
+                ) : null;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Deportes */}
+        {(teacher.sports || []).length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 12 }}>🎾 Deportes</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {(teacher.sports || []).map(s => (
+                <span key={s} style={{ fontSize: 14, fontWeight: 700, padding: "8px 14px", borderRadius: 999, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", textTransform: "capitalize" }}>
+                  {s === "padel" ? "🎾 Pádel" : s === "tenis" ? "🎾 Tenis" : "🏓 Pickleball"}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Calendario */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>📅 Elige un día</div>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8 }}>
+            {days.map((d, i) => {
+              const slots = getSlotsForDate(d);
+              const isSelected = selectedDate?.toDateString() === d.toDateString();
+              const hasSlots = slots.length > 0;
+              return (
+                <button key={i} onClick={() => { setSelectedDate(d); setSelectedSlot(null); }}
+                  disabled={!hasSlots}
+                  style={{ flexShrink: 0, width: 60, minHeight: 72, borderRadius: 14, border: isSelected ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)", background: isSelected ? `${sportColor}20` : hasSlots ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)", cursor: hasSlots ? "pointer" : "not-allowed", opacity: hasSlots ? 1 : 0.35, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)" }}>{DAYS[(d.getDay() + 6) % 7]}</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: isSelected ? sportColor : "#fff" }}>{d.getDate()}</div>
+                  {hasSlots && <div style={{ fontSize: 9, fontWeight: 700, color: sportColor }}>{slots.length}h</div>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Slots del día seleccionado */}
+        {selectedDate && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 12 }}>⏰ Horas disponibles</div>
+            {getSlotsForDate(selectedDate).length === 0 ? (
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.40)", padding: "16px 0" }}>No hay horas disponibles este día</div>
+            ) : (
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {getSlotsForDate(selectedDate).map((slot, i) => (
+                  <button key={i} onClick={() => { setSelectedSlot(slot); setBookingStep("confirm"); }}
+                    style={{ minHeight: 56, padding: "12px 20px", borderRadius: 14, border: selectedSlot?.start === slot.start ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.12)", background: selectedSlot?.start === slot.start ? `${sportColor}20` : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: 800, fontSize: 16, cursor: "pointer" }}>
+                    {slot.start} – {slot.end}
+                  </button>
                 ))}
               </div>
             )}
-
-            {/* CTA alumno */}
-            {!isMe && (
-              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button className={`tpBtn ${isFav ? "tpFav" : "tpGhost"}`} onClick={toggleFavorite} disabled={favBusy}>
-                    {favBusy ? "…" : isFav ? "⭐ En favoritos" : "☆ Añadir favorito"}
-                  </button>
-                  <button className="tpBtn tpPrimary" onClick={() => navigate(`/clases?teacher=${id}`)}>
-                    Ver sus clases
-                  </button>
-                </div>
-                {isFav && (
-                  <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>Avisos cuando publique:</span>
-                    {[
-                      { label: "☀️ Mañana", val: notifyMorning, set: v => { setNotifyMorning(v); saveFavPrefs(v, notifyAfternoon); } },
-                      { label: "🌙 Tarde", val: notifyAfternoon, set: v => { setNotifyAfternoon(v); saveFavPrefs(notifyMorning, v); } },
-                    ].map(x => (
-                      <button key={x.label} onClick={() => x.set(!x.val)} disabled={favBusy}
-                        style={{ padding: "5px 11px", borderRadius: 999, cursor: "pointer", fontSize: 11, fontWeight: 800, border: "none",
-                          background: x.val ? "rgba(var(--sport-color-rgb, 46,204,113),0.15)" : "rgba(255,255,255,0.06)",
-                          color: x.val ? "var(--sport-color)" : "rgba(255,255,255,0.4)",
-                          outline: x.val ? "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.3)" : "1px solid rgba(255,255,255,0.08)" }}>
-                        {x.val ? "✅" : "○"} {x.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {!isFav && (
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
-                    Añádelo a favoritos para recibir avisos cuando publique clases.
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+        )}
 
-          {/* EDITOR — solo el profe */}
-          {isMe && (
-            <div className="tpS">
-              <div style={{ fontWeight: 900, color: "var(--sport-color)", fontSize: 15, marginBottom: 16 }}>✏️ Editar perfil público</div>
+        {/* Modal reserva */}
+        {bookingStep === "confirm" && selectedSlot && (
+          <div onClick={() => setBookingStep(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.90)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f172a", borderRadius: "24px 24px 0 0", padding: "24px 20px", paddingBottom: "max(24px,env(safe-area-inset-bottom))", border: `1px solid ${sportColor}30` }}>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={LB}>Bio corta (visible a todos)</label>
-                <textarea style={{ ...IS, minHeight: 72, resize: "vertical" }} value={editBio}
-                  onChange={e => setEditBio(e.target.value)}
-                  placeholder="Ej: Monitor FEP, 8 años de experiencia. Especialidad en técnica e iniciación infantil." />
+              <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+              <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>📅 Confirmar clase</div>
+              <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 20 }}>
+                {teacher.name} · {selectedDate?.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })} · {selectedSlot.start} – {selectedSlot.end}
               </div>
 
-              <div className="tpG2" style={{ marginBottom: 20 }}>
-                <div>
-                  <label style={LB}>Zona / Club(s)</label>
-                  <input style={IS} value={editZone} onChange={e => setEditZone(e.target.value)} placeholder="Ej: Málaga · Inacua · Vals" />
-                </div>
-                <div>
-                  <label style={LB}>Precio base (€/clase)</label>
-                  <input style={IS} type="number" value={editPriceBase} onChange={e => setEditPriceBase(e.target.value)} placeholder="Ej: 30" />
-                </div>
-              </div>
-
-              {/* Especialidades en acordeón */}
-              <div style={{ marginBottom: 4 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <span style={{ fontSize: 13, fontWeight: 900, color: "rgba(255,255,255,0.85)" }}>🎯 Especialidades</span>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    {editSpecialties.length > 0 && (
-                      <span style={{ fontSize: 11, color: "var(--sport-color)", background: "rgba(var(--sport-color-rgb, 46,204,113),0.15)", padding: "2px 9px", borderRadius: 999, fontWeight: 900 }}>
-                        {editSpecialties.length} seleccionadas
-                      </span>
-                    )}
-                    {editSpecialties.length > 0 && (
-                      <button type="button" onClick={() => setEditSpecialties([])}
-                        style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer" }}>
-                        Limpiar
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", padding: "0 14px" }}>
-                  {ALL_SPECIALTY_CATEGORIES.map(cat => (
-                    <SpecCategory key={cat.id} cat={cat} selected={editSpecialties} onChange={setEditSpecialties} />
-                  ))}
-                </div>
-
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
-                  Abre cada sección y marca lo que aplica. Los alumnos podrán filtrar por estas especialidades.
+              {/* Opciones de pago */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12 }}>💶 ¿Cómo quieres pagar?</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <button onClick={() => setPaymentOption("fee_only")}
+                    style={{ minHeight: 60, padding: "14px 18px", borderRadius: 14, border: paymentOption === "fee_only" ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)", background: paymentOption === "fee_only" ? `${sportColor}15` : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 22 }}>🔒</span>
+                    <div>
+                      <div style={{ fontWeight: 900 }}>Solo comisión GorilaGo! — 0,30€</div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.50)", marginTop: 2 }}>Pagas el resto al profesor en mano o luego</div>
+                    </div>
+                    {paymentOption === "fee_only" && <span style={{ marginLeft: "auto", color: sportColor, fontSize: 20 }}>✓</span>}
+                  </button>
+                  {teacher.price_per_hour && (
+                    <button onClick={() => setPaymentOption("full")}
+                      style={{ minHeight: 60, padding: "14px 18px", borderRadius: 14, border: paymentOption === "full" ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)", background: paymentOption === "full" ? `${sportColor}15` : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 22 }}>💳</span>
+                      <div>
+                        <div style={{ fontWeight: 900 }}>Pagar todo ahora — {teacher.price_per_hour}€ + 0,30€</div>
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.50)", marginTop: 2 }}>Clase totalmente pagada por adelantado</div>
+                      </div>
+                      {paymentOption === "full" && <span style={{ marginLeft: "auto", color: sportColor, fontSize: 20 }}>✓</span>}
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <button className="tpBtn tpPrimary" style={{ width: "100%", marginTop: 18 }} onClick={saveTeacherPublic} disabled={savingProfile}>
-                {savingProfile ? "Guardando…" : "Guardar cambios"}
+              {/* Notas */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.70)", display: "block", marginBottom: 8 }}>💬 Notas para el profesor (opcional)</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                  placeholder="Tu nivel, objetivos, necesidades especiales…"
+                  style={{ width: "100%", minHeight: 80, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: 15, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button onClick={confirmBooking} disabled={saving}
+                  style={{ width: "100%", minHeight: 56, borderRadius: 16, background: saving ? "rgba(255,255,255,0.10)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: saving ? "not-allowed" : "pointer", fontSize: 17 }}>
+                  {saving ? "⏳ Reservando…" : "✅ Confirmar reserva"}
+                </button>
+                <button onClick={() => setBookingStep(null)}
+                  style={{ width: "100%", minHeight: 52, borderRadius: 16, background: "transparent", color: "rgba(255,255,255,0.55)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", fontSize: 15 }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Éxito */}
+        {bookingStep === "success" && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 50000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#0f172a", borderRadius: 24, padding: 32, maxWidth: 400, width: "90%", textAlign: "center", border: `1px solid ${sportColor}30` }}>
+              <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: sportColor, marginBottom: 8 }}>¡Clase reservada!</div>
+              <div style={{ fontSize: 15, color: "rgba(255,255,255,0.60)", marginBottom: 24, lineHeight: 1.6 }}>
+                {teacher.name} recibirá tu solicitud. Te avisaremos cuando la confirme.
+              </div>
+              <button onClick={() => { setBookingStep(null); setSelectedSlot(null); }}
+                style={{ width: "100%", minHeight: 52, borderRadius: 14, background: `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
+                Perfecto
               </button>
             </div>
-          )}
-
-          {/* NAV */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 24 }}>
-            {!isMe && <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate(`/clases?teacher=${id}`)}>🎾 Ver sus clases</button>}
-            <button className="tpBtn tpGhost" style={{ fontSize: 12 }} onClick={() => navigate("/profesores")}>👨‍🏫 Lista de profes</button>
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ export default function Navbar({ showBack = false, onBack }) {
     { to: "/mapa",       label: "Mapa",       icon: "🗺️", key: "mapa" },
     { to: "/juega",      label: "Juega",      icon: "🎾", key: "partidos" },
     { to: "/juntos",     label: "Juntos",     icon: "♿", key: "inclusivos" },
+    { to: "/aprende",    label: "Aprende",    icon: "📚", key: "aprende" },
     { to: "/proyectos",  label: "Proyectos",  icon: "🏗️", key: "proyectos" },
   ], []);
 
