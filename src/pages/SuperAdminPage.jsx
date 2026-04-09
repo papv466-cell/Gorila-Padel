@@ -22,6 +22,8 @@ export default function SuperAdminPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState("clubs");
+  const [teachers, setTeachers] = useState([]);
+  const [teachersLoading, setTeachersLoading] = useState(false);
   const [pendingClubs, setPendingClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
@@ -63,6 +65,7 @@ export default function SuperAdminPage() {
       loadProjects();
       loadProposals();
       loadClubs();
+      loadTeachers();
     });
   }, []);
 
@@ -116,6 +119,29 @@ export default function SuperAdminPage() {
   async function loadAudits() {
     const { data } = await supabase.from("club_audits").select("*, clubs(name)").eq("active", true).order("audited_at", { ascending: false });
     setAudits(data || []);
+  }
+
+  async function loadTeachers() {
+    setTeachersLoading(true);
+    const { data } = await supabase.from("teachers").select("*").order("created_at", { ascending: false });
+    setTeachers(data || []);
+    setTeachersLoading(false);
+  }
+
+  async function verifyTeacher(id, approve) {
+    await supabase.from("teachers").update({
+      verified: approve,
+      verification_status: approve ? "verified" : "rejected",
+      is_active: approve,
+      active: approve,
+    }).eq("id", id);
+    setTeachers(prev => prev.map(t => t.id === id ? { ...t, verified: approve, verification_status: approve ? "verified" : "rejected" } : t));
+  }
+
+  async function deleteTeacher(id) {
+    if (!window.confirm("¿Eliminar este profesor?")) return;
+    await supabase.from("teachers").delete().eq("id", id);
+    setTeachers(prev => prev.filter(t => t.id !== id));
   }
 
   async function loadClubs() {
@@ -249,7 +275,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos'],['profesores','👨‍🏫 Profesores']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))' : 'rgba(255,255,255,0.08)',
@@ -686,6 +712,113 @@ export default function SuperAdminPage() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+      </div>
+
+        {tab === 'profesores' && (
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 16 }}>
+              👨‍🏫 Profesores
+              <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+                {teachers.length} total · {teachers.filter(t => t.verification_status === "pending").length} pendientes
+              </span>
+            </div>
+
+            {teachersLoading ? (
+              <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.40)" }}>Cargando…</div>
+            ) : teachers.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.40)" }}>No hay profesores registrados</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {teachers.map(t => (
+                  <div key={t.id} style={{ background: "#1a1a1a", borderRadius: 16, padding: "16px 20px", border: `1px solid ${t.verification_status === "pending" ? "rgba(255,165,0,0.35)" : t.verified ? "rgba(46,204,113,0.30)" : "rgba(220,38,38,0.25)"}` }}>
+                    
+                    {/* Header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 17, fontWeight: 900, color: "#fff", marginBottom: 4 }}>{t.name || "Sin nombre"}</div>
+                        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.50)" }}>
+                          {t.city && `📍 ${t.city} · `}
+                          {t.price_per_hour && `💶 ${t.price_per_hour}€/h · `}
+                          {t.email && `📧 ${t.email}`}
+                        </div>
+                        {t.phone && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.50)", marginTop: 2 }}>📱 {t.phone}</div>}
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 900, padding: "4px 12px", borderRadius: 999,
+                        background: t.verification_status === "pending" ? "rgba(255,165,0,0.15)" : t.verified ? "rgba(46,204,113,0.15)" : "rgba(220,38,38,0.15)",
+                        color: t.verification_status === "pending" ? "#FFA500" : t.verified ? "#2ECC71" : "#ff6b6b" }}>
+                        {t.verification_status === "pending" ? "⏳ Pendiente" : t.verified ? "✅ Verificado" : "❌ Rechazado"}
+                      </span>
+                    </div>
+
+                    {/* Bio */}
+                    {t.bio && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", marginBottom: 12, lineHeight: 1.5 }}>{t.bio.slice(0, 150)}{t.bio.length > 150 ? "…" : ""}</div>}
+
+                    {/* Deportes y especialidades */}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                      {(t.sports || []).map(s => (
+                        <span key={s} style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "#fff", fontWeight: 700 }}>
+                          {s === "padel" ? "🎾 Pádel" : s === "tenis" ? "🎾 Tenis" : "🏓 Pickle"}
+                        </span>
+                      ))}
+                      {(t.specialties || []).slice(0, 5).map(s => (
+                        <span key={s} style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: "rgba(46,204,113,0.10)", border: "1px solid rgba(46,204,113,0.25)", color: "#2ECC71", fontWeight: 700 }}>{s}</span>
+                      ))}
+                    </div>
+
+                    {/* Documentos */}
+                    <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+                      {t.dni_url && (
+                        <a href={t.dni_url} target="_blank" rel="noreferrer"
+                          style={{ fontSize: 13, padding: "6px 14px", borderRadius: 10, background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.30)", color: "#60A5FA", fontWeight: 700, textDecoration: "none" }}>
+                          🪪 Ver DNI
+                        </a>
+                      )}
+                      {t.cert_url && (
+                        <a href={t.cert_url} target="_blank" rel="noreferrer"
+                          style={{ fontSize: 13, padding: "6px 14px", borderRadius: 10, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.30)", color: "#A78BFA", fontWeight: 700, textDecoration: "none" }}>
+                          🏅 Ver certificado
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Acciones */}
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      {t.verification_status === "pending" && (
+                        <>
+                          <button onClick={() => verifyTeacher(t.id, true)}
+                            style={{ minHeight: 44, padding: "10px 20px", borderRadius: 12, background: "rgba(46,204,113,0.15)", border: "1px solid rgba(46,204,113,0.35)", color: "#2ECC71", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
+                            ✅ Verificar y aprobar
+                          </button>
+                          <button onClick={() => verifyTeacher(t.id, false)}
+                            style={{ minHeight: 44, padding: "10px 20px", borderRadius: 12, background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.30)", color: "#ff6b6b", fontWeight: 900, fontSize: 14, cursor: "pointer" }}>
+                            ❌ Rechazar
+                          </button>
+                        </>
+                      )}
+                      {t.verified && (
+                        <button onClick={() => verifyTeacher(t.id, false)}
+                          style={{ minHeight: 44, padding: "10px 20px", borderRadius: 12, background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.30)", color: "#ff6b6b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                          Suspender
+                        </button>
+                      )}
+                      {!t.verified && t.verification_status === "rejected" && (
+                        <button onClick={() => verifyTeacher(t.id, true)}
+                          style={{ minHeight: 44, padding: "10px 20px", borderRadius: 12, background: "rgba(46,204,113,0.12)", border: "1px solid rgba(46,204,113,0.30)", color: "#2ECC71", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                          Reactivar
+                        </button>
+                      )}
+                      <button onClick={() => deleteTeacher(t.id)}
+                        style={{ minHeight: 44, padding: "10px 16px", borderRadius: 12, background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.20)", color: "#ff6b6b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
