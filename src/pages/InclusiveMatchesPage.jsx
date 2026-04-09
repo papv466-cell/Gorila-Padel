@@ -107,11 +107,19 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
   /* ─── Crear ─── */
   const [openCreate, setOpenCreate] = useState(false);
+
+  function getDefaultDateTime() {
+    const now = new Date();
+    now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
+    now.setHours(now.getHours() + 1);
+    const pad = n => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
+  }
   const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
   const [clubName, setClubName] = useState("");
   const [clubId, setClubId] = useState("");
   const [city, setCity] = useState("");
-  const [startAt, setStartAt] = useState("");
+  const [startAt, setStartAt] = useState(() => getDefaultDateTime());
   const [durationMin, setDurationMin] = useState(90);
   const [level, setLevel] = useState("intermedio");
   const [notes, setNotes] = useState("");
@@ -207,7 +215,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
       setClubName(""); setClubId(""); setCity(""); setStartAt("");
       setDurationMin(90); setLevel("intermedio"); setNotes(""); setAccessibilityNotes("");
       setPricePerPlayer(""); setMaxPlayers(4);
-      setCreateNeeds(new Set(["wheelchair"])); setMixAllowed(true);
+      setCreateNeeds(new Set(["wheelchair"])); setMixAllowed(true); setStartAt(getDefaultDateTime());
       await load();
       // Abrir pasarela de pago siempre
       if (created?.id) {
@@ -565,25 +573,25 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
               {/* CLUB */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>📍 Club *</label>
+                <label style={{ color: "#fff", display: "block", marginBottom: 10, fontSize: 16, fontWeight: 800 }}>📍 ¿Dónde juegas? *</label>
                 <input value={clubName} onChange={e => { setClubName(e.target.value); setShowClubSuggest(true); }}
-                  placeholder="Buscar club..." style={IS} />
+                  placeholder="Escribe el nombre del club…" style={IS} autoComplete="off" />
                 {showClubSuggest && clubSuggestions.length > 0 && (
-                  <div style={{ background: "#1e293b", borderRadius: 12, marginTop: 6, maxHeight: 200, overflowY: "auto", border: "1px solid rgba(255,255,255,0.10)" }}>
-                    {clubSuggestions.map((c, idx) => (
-                      <div key={c.id || idx}
+                  <div style={{ background: "#1e293b", borderRadius: 14, marginTop: 6, maxHeight: 200, overflowY: "auto", border: `1px solid ${sportColorBorder}` }}>
+                    {clubSuggestions.map((club, idx) => (
+                      <div key={club.id || idx}
                         onClick={async () => {
-                          setClubName(c.name); setShowClubSuggest(false);
-                          let realId = String(c.id || "");
-                          try { const { data } = await supabase.from("clubs").select("id").ilike("name", c.name).limit(1).single(); if (data?.id) realId = data.id; } catch {}
+                          setClubName(club.name); setShowClubSuggest(false);
+                          let realId = String(club.id || "");
+                          try { const { data } = await supabase.from("clubs").select("id").ilike("name", club.name).limit(1).single(); if (data?.id) realId = data.id; } catch {}
                           setClubId(realId);
                         }}
-                        style={{ padding: "12px 16px", cursor: "pointer", color: "#fff", fontSize: 15, borderBottom: idx < clubSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
-                        {c.name}
+                        style={{ padding: "14px 16px", cursor: "pointer", color: "#fff", fontSize: 16, borderBottom: idx < clubSuggestions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none", minHeight: 52, display: "flex", alignItems: "center" }}>
+                        📍 {club.name}
                       </div>
                     ))}
                   </div>
@@ -592,57 +600,45 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
               {/* FECHA Y HORA */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>📅 Fecha y hora *</label>
-                <input type="datetime-local" value={startAt} onChange={e => setStartAt(e.target.value)} style={IS} />
-              </div>
-
-              {/* NIVEL Y DURACIÓN */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>
-                  <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>🎚️ Nivel</label>
-                  <select value={level} onChange={e => setLevel(e.target.value)} style={IS}>
-                    <option value="iniciacion" style={{ background: "#1e293b" }}>Iniciación</option>
-                    <option value="intermedio" style={{ background: "#1e293b" }}>Intermedio</option>
-                    <option value="alto" style={{ background: "#1e293b" }}>Alto</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>⏱️ Duración</label>
-                  <select value={durationMin} onChange={e => setDurationMin(e.target.value)} style={IS}>
-                    <option value={60} style={{ background: "#1e293b" }}>60 minutos</option>
-                    <option value={90} style={{ background: "#1e293b" }}>90 minutos</option>
-                    <option value={120} style={{ background: "#1e293b" }}>2 horas</option>
-                  </select>
+                <label style={{ color: "#fff", display: "block", marginBottom: 10, fontSize: 16, fontWeight: 800 }}>📅 ¿Cuándo? *</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label style={{ color: "rgba(255,255,255,0.55)", display: "block", marginBottom: 6, fontSize: 13, fontWeight: 700 }}>Día</label>
+                    <input type="date" value={startAt.slice(0,10)}
+                      onChange={e => setStartAt(e.target.value + "T" + (startAt.slice(11) || "10:00"))}
+                      style={IS} />
+                  </div>
+                  <div>
+                    <label style={{ color: "rgba(255,255,255,0.55)", display: "block", marginBottom: 6, fontSize: 13, fontWeight: 700 }}>Hora</label>
+                    <select value={startAt.slice(11,16) || "10:00"}
+                      onChange={e => setStartAt((startAt.slice(0,10) || new Date().toISOString().slice(0,10)) + "T" + e.target.value)}
+                      style={IS}>
+                      {["08:00","08:15","08:30","08:45","09:00","09:15","09:30","09:45",
+                        "10:00","10:15","10:30","10:45","11:00","11:15","11:30","11:45",
+                        "12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45",
+                        "16:00","16:15","16:30","16:45","17:00","17:15","17:30","17:45",
+                        "18:00","18:15","18:30","18:45","19:00","19:15","19:30","19:45",
+                        "20:00","20:15","20:30","20:45","21:00","21:15","21:30","21:45","22:00"
+                      ].map(t => <option key={t} value={t} style={{background:"#1e293b"}}>{t}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* TIPO DE PARTIDO */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>♿ Tipo de partido *</label>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <label style={{ color: "#fff", display: "block", marginBottom: 10, fontSize: 16, fontWeight: 800 }}>♿ ¿Para quién es el partido? *</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {NEEDS.map(n => (
                     <button key={n.key} type="button" onClick={() => toggleNeed(setCreateNeeds, createNeeds, n.key)}
-                      style={{ minHeight: 48, padding: "8px 14px", borderRadius: 12, cursor: "pointer", fontSize: 14, fontWeight: 700,
-                        background: createNeeds.has(n.key) ? `${n.color}20` : "rgba(255,255,255,0.07)",
-                        border: createNeeds.has(n.key) ? `2px solid ${n.color}` : "1px solid rgba(255,255,255,0.12)",
-                        color: "#fff", transition: "all 0.15s" }}>
-                      {n.emoji} {n.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* EXPERIENCIAS */}
-              <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>⚡ Experiencias (opcional)</label>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {EXPERIENCES.map(e => (
-                    <button key={e.key} type="button" onClick={() => toggleNeed(setCreateNeeds, createNeeds, e.key)}
-                      style={{ minHeight: 48, padding: "8px 14px", borderRadius: 12, cursor: "pointer", fontSize: 14, fontWeight: 700,
-                        background: createNeeds.has(e.key) ? "rgba(255,165,0,0.18)" : "rgba(255,255,255,0.07)",
-                        border: createNeeds.has(e.key) ? "2px solid #FFA500" : "1px solid rgba(255,255,255,0.12)",
-                        color: "#fff", transition: "all 0.15s" }}>
-                      {e.emoji} {e.label}
+                      style={{ minHeight: 56, padding: "14px 18px", borderRadius: 14, cursor: "pointer", fontSize: 15, fontWeight: 700,
+                        background: createNeeds.has(n.key) ? `${n.color}20` : "rgba(255,255,255,0.06)",
+                        border: createNeeds.has(n.key) ? `2px solid ${n.color}` : "1px solid rgba(255,255,255,0.10)",
+                        color: "#fff", transition: "all 0.15s", textAlign: "left",
+                        display: "flex", alignItems: "center", gap: 12 }}>
+                      <span style={{ fontSize: 22 }}>{n.emoji}</span>
+                      <span style={{ flex: 1 }}>{n.label}</span>
+                      {createNeeds.has(n.key) && <span style={{ fontSize: 18 }}>✓</span>}
                     </button>
                   ))}
                 </div>
@@ -650,27 +646,71 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
               {/* ABIERTO A TODOS */}
               <button type="button" onClick={() => setMixAllowed(v => !v)}
-                style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, cursor: "pointer", fontSize: 15, fontWeight: 800, textAlign: "left", transition: "all 0.15s",
-                  background: mixAllowed ? `${sportColor}18` : "rgba(255,255,255,0.07)",
-                  border: mixAllowed ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.12)", color: "#fff" }}>
-                {mixAllowed ? `✅ Abierto a todos — con y sin capacidades especiales` : `Solo personas con capacidades especiales`}
+                style={{ minHeight: 56, padding: "16px 18px", borderRadius: 14, cursor: "pointer", fontSize: 15, fontWeight: 800, textAlign: "left", transition: "all 0.2s",
+                  background: mixAllowed ? `${sportColor}15` : "rgba(255,255,255,0.06)",
+                  border: mixAllowed ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)", color: "#fff",
+                  display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>{mixAllowed ? "🤝" : "♿"}</span>
+                <span style={{ flex: 1 }}>{mixAllowed ? "Abierto a todos — con y sin capacidades especiales" : "Solo personas con capacidades especiales"}</span>
+                {mixAllowed && <span style={{ fontSize: 18 }}>✓</span>}
               </button>
+
+              {/* NIVEL */}
+              <div>
+                <label style={{ color: "#fff", display: "block", marginBottom: 10, fontSize: 16, fontWeight: 800 }}>🎚️ Nivel de juego</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  {[
+                    { val: "iniciacion", label: "Iniciación", emoji: "🌱" },
+                    { val: "intermedio", label: "Intermedio", emoji: "🎾" },
+                    { val: "alto",       label: "Avanzado",   emoji: "🏆" },
+                  ].map(l => (
+                    <button key={l.val} type="button" onClick={() => setLevel(l.val)}
+                      style={{ minHeight: 64, borderRadius: 14, cursor: "pointer", fontSize: 13, fontWeight: 800,
+                        background: level === l.val ? `${sportColor}20` : "rgba(255,255,255,0.06)",
+                        border: level === l.val ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)",
+                        color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                      <span style={{ fontSize: 22 }}>{l.emoji}</span>
+                      <span>{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {/* ACCESIBILIDAD */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>♿ Adaptaciones de la pista</label>
+                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 16, fontWeight: 800 }}>
+                  ♿ Adaptaciones de la pista <span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.40)" }}>(opcional)</span>
+                </label>
                 <input value={accessibilityNotes} onChange={e => setAccessibilityNotes(e.target.value)}
-                  placeholder="Ej: Rampa de acceso, vestuario adaptado, marcadores en braille…" style={IS} />
+                  placeholder="Ej: Rampa de acceso, vestuario adaptado…" style={IS} />
               </div>
 
               {/* PRECIO */}
               <div>
-                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 15, fontWeight: 700 }}>💶 Precio por jugador (€)</label>
+                <label style={{ color: "#fff", display: "block", marginBottom: 8, fontSize: 16, fontWeight: 800 }}>
+                  💶 Precio por jugador <span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.40)" }}>(0 = gratis)</span>
+                </label>
                 <input type="number" min="0" step="0.5" value={pricePerPlayer} onChange={e => setPricePerPlayer(e.target.value)}
-                  placeholder="0 — gratis" style={IS} />
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.40)", marginTop: 6 }}>
-                  Deja en 0 si el partido es gratuito. Se añade comisión de 0,30€ por GorilaGo!
-                </div>
+                  placeholder="0" style={IS} />
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.40)", marginTop: 6 }}>+ 0,30€ de comisión GorilaGo! siempre</div>
+              </div>
+
+              {/* BOTONES */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+                <button onClick={onCreate} disabled={creating || !clubName.trim() || !startAt || !createNeeds.size}
+                  style={{ width: "100%", minHeight: 60, borderRadius: 16,
+                    background: (creating || !clubName.trim() || !startAt || !createNeeds.size)
+                      ? "rgba(255,255,255,0.10)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`,
+                    color: (creating || !clubName.trim() || !startAt || !createNeeds.size) ? "rgba(255,255,255,0.35)" : "#000",
+                    fontWeight: 900, border: "none", cursor: creating ? "not-allowed" : "pointer", fontSize: 18 }}>
+                  {creating ? "⏳ Creando partido…" : "🤝 Crear partido"}
+                </button>
+                <button onClick={() => setOpenCreate(false)} disabled={creating}
+                  style={{ width: "100%", minHeight: 52, borderRadius: 16, background: "transparent", color: "rgba(255,255,255,0.55)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", fontSize: 16 }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
               </div>
 
               {/* NOTAS */}
