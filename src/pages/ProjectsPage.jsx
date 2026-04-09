@@ -201,7 +201,7 @@ export default function ProjectsPage() {
                   <button
                     onClick={() => { setDonatingProject(p); setDonationAmount("2"); }}
                     style={{ width: "100%", minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, transition: "filter 0.15s" }}>
-                    🍺 Donar a este proyecto
+                    Donar a este proyecto
                   </button>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function ProjectsPage() {
                   <div style={{ display: "flex", gap: 10 }}>
                     <button onClick={submitDonation} disabled={savingDonation || parseFloat(donationAmount || 0) < 0.5}
                       style={{ flex: 1, minHeight: 52, borderRadius: 14, background: "#E67E22", color: "#fff", fontWeight: 900, fontSize: 16, border: "none", cursor: "pointer", opacity: savingDonation || parseFloat(donationAmount || 0) < 0.5 ? 0.5 : 1 }}>
-                      {savingDonation ? "Procesando…" : `🍺 Donar ${parseFloat(donationAmount || 0).toFixed(2)} €`}
+                      {savingDonation ? "Procesando…" : `Donar ${parseFloat(donationAmount || 0).toFixed(2)} €`}
                     </button>
                     <button onClick={() => setDonatingProject(null)}
                       style={{ minHeight: 52, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "#fff", fontWeight: 700, cursor: "pointer" }}>
