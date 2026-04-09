@@ -56,7 +56,6 @@ import HomePage from "./pages/HomePage";
 import PlayHubPage from "./pages/PlayHubPage";
 import LearnHubPage from "./pages/LearnHubPage";
 import InclusivePage from "./pages/InclusivePage";
-import TeachersPage from "./pages/TeachersPage";
 import TeacherProfilePage from "./pages/TeacherProfilePage";
 import InclusiveMatchesPage from "./pages/InclusiveMatchesPage";
 import GorilaStack from "./pages/GorilaStack";
@@ -324,9 +323,7 @@ export default function App() {
           <Route path="/ranking" element={<RankingPage />} />
           <Route path="/proyectos" element={<ProjectsPage />} />
           <Route path="/impacto-global" element={<ImpactGlobalPage />} />
-          <Route path="/aprende" element={<TeachersPage />} />
           <Route path="/profesores/registro" element={<RequireAuth session={session} sessionReady={sessionReady}><TeacherRegisterPage /></RequireAuth>} />
-          <Route path="/profesores/:id" element={<TeacherProfilePage />} />
           <Route path="/impacto" element={<RequireAuth session={session} sessionReady={sessionReady}><ImpactPage /></RequireAuth>} />
           <Route path="/ligas" element={<LeaguePage />} />
           <Route path="/leaderboard" element={<RequireAuth session={session} sessionReady={sessionReady}><LeaderboardPage session={session} /></RequireAuth>} />
