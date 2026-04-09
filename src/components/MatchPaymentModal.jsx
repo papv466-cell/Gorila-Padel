@@ -96,18 +96,14 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     const token = currentSession?.access_token;
     // Para tenis/pickleball usar create-court-payment con comisión mínima
-    const isSportMatch = match._sport && match._sport !== "padel";
-    const endpoint = isSportMatch
-      ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-payment`
-      : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-authorization`;
-    const body = isSportMatch
-      ? JSON.stringify({ matchId: match.id, userId: session.user.id, sport: match._sport, pricePerPlayer: parseFloat(match.price_per_player || 0) })
-      : JSON.stringify({ matchId: match.id, userId: session.user.id, paymentMethodId: null });
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY },
-      body,
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-authorization`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ matchId: match.id, userId: session.user.id, paymentMethodId: null }),
+      }
+    );
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || "Error al crear autorización");
     setClientSecret(data.clientSecret);

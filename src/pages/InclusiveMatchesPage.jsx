@@ -11,6 +11,7 @@ import {
   subscribeInclusiveRealtime,
 } from "../services/inclusiveMatches";
 import { fetchClubsFromSupabase } from "../services/sheets";
+import MatchPaymentModal from "../components/MatchPaymentModal";
 
 /* ─── Tipos de diversidad ─── */
 const NEEDS = [
@@ -106,6 +107,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
 
   /* ─── Crear ─── */
   const [openCreate, setOpenCreate] = useState(false);
+  const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
   const [clubName, setClubName] = useState("");
   const [clubId, setClubId] = useState("");
   const [city, setCity] = useState("");
@@ -183,7 +185,8 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
       if (!clubName.trim()) throw new Error("Elige un club.");
       if (!startAt) throw new Error("Selecciona fecha y hora.");
       if (!createNeeds.size) throw new Error("Elige al menos un tipo de partido.");
-      await createInclusiveMatch({
+      const savedPrice = pricePerPlayer;
+      const created = await createInclusiveMatch({
         club_id: clubId || null,
         club_name: clubName.trim(),
         city: city.trim(),
@@ -198,14 +201,20 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
         accessibility_notes: accessibilityNotes.trim(),
         user_id: session?.user?.id,
         created_by_user: session?.user?.id,
+        sport: sport || "padel",
       });
       setOpenCreate(false);
       setClubName(""); setClubId(""); setCity(""); setStartAt("");
       setDurationMin(90); setLevel("intermedio"); setNotes(""); setAccessibilityNotes("");
       setPricePerPlayer(""); setMaxPlayers(4);
       setCreateNeeds(new Set(["wheelchair"])); setMixAllowed(true);
-      toast.success("¡Partido creado! 🦍");
       await load();
+      // Abrir pasarela de pago siempre
+      if (created?.id) {
+        setCreatorAuthMatch({ ...created, price_per_player: savedPrice || "0", _sport: sport || "padel" });
+      } else {
+        toast.success("¡Partido creado! 🦍");
+      }
     } catch (e) {
       setCreateErr(e?.message || "No pude crear el partido");
     } finally {
@@ -521,6 +530,20 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
       </div>
 
       {/* ══ MODAL CREAR ══ */}
+      {creatorAuthMatch && (
+        <MatchPaymentModal
+          match={creatorAuthMatch}
+          session={session}
+          isCreatorAuth={true}
+          onClose={() => setCreatorAuthMatch(null)}
+          onJoined={async () => {
+            setCreatorAuthMatch(null);
+            toast.success("¡Partido creado y pago completado! 🦍");
+            await load();
+          }}
+        />
+      )}
+
       {openCreate && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setOpenCreate(false); }}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.90)", display: "flex", alignItems: "flex-end", justifyContent: "center", zIndex: 10000, backdropFilter: "blur(4px)" }}>
