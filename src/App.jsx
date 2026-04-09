@@ -268,7 +268,7 @@ export default function App() {
 
   if (!sessionReady || !minSplashDone) return <SplashPage />;
 
-  const showBack = !isAuthShell && location.pathname !== "/";
+  const showBack = false; // Quitado — navegación por navbar
   const onBack = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate("/");
