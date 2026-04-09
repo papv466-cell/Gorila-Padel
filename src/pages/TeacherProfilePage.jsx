@@ -58,6 +58,9 @@ export default function TeacherProfilePage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [savingReview, setSavingReview] = useState(false);
@@ -135,6 +138,25 @@ export default function TeacherProfilePage() {
     finally { setSaving(false); }
   }
 
+  async function saveEdit() {
+    setSavingEdit(true);
+    try {
+      await supabase.from("teachers").update({
+        name: editForm.name,
+        bio: editForm.bio,
+        city: editForm.city,
+        price_per_hour: editForm.price_per_hour ? parseFloat(editForm.price_per_hour) : null,
+        phone: editForm.phone,
+        email: editForm.email,
+        sports: editForm.sports,
+        specialties: editForm.specialties,
+      }).eq("id", teacher.id);
+      setShowEditModal(false);
+      await loadData();
+    } catch (e) { alert(e.message); }
+    finally { setSavingEdit(false); }
+  }
+
   async function submitReview() {
     if (!session) return;
     setSavingReview(true);
@@ -182,7 +204,20 @@ export default function TeacherProfilePage() {
         {/* Aviso dueño */}
         {isOwner && (
           <div style={{ padding: "12px 16px", borderRadius: 14, background: `${sportColor}15`, border: `1px solid ${sportColor}40`, fontSize: 14, fontWeight: 700, color: sportColor, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
-            ✏️ Estás viendo tu perfil — pulsa las horas del calendario para añadir o quitar disponibilidad
+            <div style={{ flex: 1 }}>✏️ Estás viendo tu perfil — pulsa las horas del calendario para añadir o quitar disponibilidad</div>
+            <button onClick={() => setEditForm({
+              name: teacher.name || "",
+              bio: teacher.bio || "",
+              city: teacher.city || "",
+              price_per_hour: teacher.price_per_hour || "",
+              phone: teacher.phone || "",
+              email: teacher.email || "",
+              sports: teacher.sports || [],
+              specialties: teacher.specialties || [],
+            }) || setShowEditModal(true)}
+              style={{ minHeight: 40, padding: "8px 16px", borderRadius: 10, background: sportColor, color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>
+              Editar perfil
+            </button>
           </div>
         )}
 
@@ -428,6 +463,64 @@ export default function TeacherProfilePage() {
               style={{ width: "100%", minHeight: 52, borderRadius: 14, background: `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
               Perfecto
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal editar perfil */}
+      {showEditModal && (
+        <div onClick={() => setShowEditModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.90)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f172a", borderRadius: "24px 24px 0 0", padding: "24px 20px", paddingBottom: "max(24px,env(safe-area-inset-bottom))", border: `1px solid ${sportColor}30`, maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 20 }}>✏️ Editar perfil</div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                ["name", "Nombre", "text"],
+                ["city", "Ciudad", "text"],
+                ["price_per_hour", "Precio por hora (€)", "number"],
+                ["phone", "Teléfono", "tel"],
+                ["email", "Email", "email"],
+              ].map(([field, label, type]) => (
+                <div key={field}>
+                  <label style={{ display: "block", fontSize: 14, fontWeight: 700, marginBottom: 6, color: "rgba(255,255,255,0.70)" }}>{label}</label>
+                  <input type={type} value={editForm[field] || ""} onChange={e => setEditForm(p => ({...p, [field]: e.target.value}))}
+                    style={{ width: "100%", minHeight: 52, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: 16, boxSizing: "border-box" }} />
+                </div>
+              ))}
+
+              <div>
+                <label style={{ display: "block", fontSize: 14, fontWeight: 700, marginBottom: 6, color: "rgba(255,255,255,0.70)" }}>Sobre ti</label>
+                <textarea value={editForm.bio || ""} onChange={e => setEditForm(p => ({...p, bio: e.target.value}))}
+                  style={{ width: "100%", minHeight: 90, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: 15, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }} />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: 14, fontWeight: 700, marginBottom: 10, color: "rgba(255,255,255,0.70)" }}>Deportes</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[{key:"padel",label:"Pádel",emoji:"🎾"},{key:"tenis",label:"Tenis",emoji:"🎾"},{key:"pickleball",label:"Pickleball",emoji:"🏓"}].map(s => {
+                    const active = (editForm.sports || []).includes(s.key);
+                    return (
+                      <button key={s.key} type="button" onClick={() => setEditForm(p => ({...p, sports: active ? p.sports.filter(x => x !== s.key) : [...(p.sports||[]), s.key]}))}
+                        style={{ flex: 1, minHeight: 52, borderRadius: 12, border: active ? `2px solid ${sportColor}` : "1px solid rgba(255,255,255,0.10)", background: active ? `${sportColor}20` : "rgba(255,255,255,0.06)", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>
+                        {s.emoji} {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <button onClick={saveEdit} disabled={savingEdit}
+                  style={{ flex: 1, minHeight: 52, borderRadius: 14, background: savingEdit ? "rgba(255,255,255,0.10)" : `linear-gradient(135deg,${sportColor},${sportInfo?.colorDark || "#27AE60"})`, color: "#000", fontWeight: 900, border: "none", cursor: "pointer", fontSize: 16 }}>
+                  {savingEdit ? "⏳ Guardando…" : "✅ Guardar cambios"}
+                </button>
+                <button onClick={() => setShowEditModal(false)}
+                  style={{ minHeight: 52, padding: "14px 20px", borderRadius: 14, background: "transparent", color: "rgba(255,255,255,0.55)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer" }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
