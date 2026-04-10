@@ -73,7 +73,7 @@ export default function ProjectsPage() {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-donation-payment`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY },
           body: JSON.stringify({ projectId: donatingProject.id, amount, userId: session?.user?.id }),
         }
       );
