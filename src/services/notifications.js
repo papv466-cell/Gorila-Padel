@@ -58,3 +58,16 @@ export async function notifyMatchPlayers({ match, type, title, body, excludeUser
   const playerIds = (match.player_ids || []).filter(id => id !== excludeUserId);
   await sendNotificationToMany({ userIds: playerIds, type, title, body, data: { match_id: match.id } });
 }
+
+// Aliases para compatibilidad con matches.js
+export async function notifyMatchApproved({ userId, matchId, clubName }) {
+  await sendNotification({ userId, type: "match_joined", title: "✅ Solicitud aceptada", body: `Ya estás dentro del partido en ${clubName}`, data: { match_id: matchId } });
+}
+
+export async function notifyMatchRejected({ userId, matchId, clubName }) {
+  await sendNotification({ userId, type: "request_rejected", title: "❌ Solicitud rechazada", body: `No pudieron aceptarte en el partido de ${clubName}`, data: { match_id: matchId } });
+}
+
+export async function notifyMatchRequest({ userId, matchId, clubName, requesterName }) {
+  await sendNotification({ userId, type: "inclusive_request", title: "♿ Nueva solicitud", body: `${requesterName} quiere unirse a tu partido en ${clubName}`, data: { match_id: matchId } });
+}
