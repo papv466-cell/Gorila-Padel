@@ -601,18 +601,3 @@ export async function notifyMatchPlayers({ match, type, title, body, excludeUser
   const playerIds = (match.player_ids || []).filter(id => id !== excludeUserId);
   await sendNotificationToMany({ userIds: playerIds, type, title, body, data: { match_id: match.id } });
 }
-
-export const NOTIFICATION_TYPES = {
-  MATCH_JOINED: "match_joined",
-  MATCH_FULL: "match_full",
-  MATCH_REMINDER_1H: "match_reminder_1h",
-  MATCH_REMINDER_24H: "match_reminder_24h",
-  INCLUSIVE_REQUEST: "inclusive_request",
-  REQUEST_APPROVED: "request_approved",
-  REQUEST_REJECTED: "request_rejected",
-  CLASS_BOOKED: "class_booked",
-  CLASS_REMINDER: "class_reminder",
-  TEACHER_NEW_SLOT: "teacher_new_slot",
-  PAYMENT_SUCCESS: "payment_success",
-};
-// ok
