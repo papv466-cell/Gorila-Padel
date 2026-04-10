@@ -247,7 +247,11 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
                 </a>
               </div>
             </div>
-            <button onClick={onClose} style={{ width: "100%", marginTop: 14, padding: "11px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
+            <button onClick={() => handleMoodSelect("gorila")}
+              style={{ width: "100%", marginTop: 14, padding: "15px", borderRadius: 12, border: "none", background: "linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))", color: "#000", fontWeight: 900, fontSize: 16, cursor: "pointer" }}>
+              🦍 Continuar y pagar
+            </button>
+            <button onClick={onClose} style={{ width: "100%", marginTop: 8, padding: "11px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>
               Cancelar
             </button>
           </>
