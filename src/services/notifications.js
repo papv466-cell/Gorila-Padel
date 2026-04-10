@@ -615,3 +615,4 @@ export const NOTIFICATION_TYPES = {
   TEACHER_NEW_SLOT: "teacher_new_slot",
   PAYMENT_SUCCESS: "payment_success",
 };
+// ok
