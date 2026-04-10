@@ -91,3 +91,5 @@ export async function notifySocialLike({ userId, postId, likerName }) {
 export async function notifySocialComment({ userId, postId, commenterName, comment }) {
   await sendNotification({ userId, type: "social_comment", title: `💬 ${commenterName} ha comentado`, body: comment?.slice(0, 80), data: { post_id: postId } });
 }
+
+export const createNotification = sendNotification;
