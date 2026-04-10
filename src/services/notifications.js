@@ -590,14 +590,6 @@ export async function notifyClubBroadcast({ clubName, title, body, userIds }) {
   }
 }
 
-// Nuevas funciones añadidas
-export async function sendNotification({ userId, type, title, body, data = {} }) {
-  if (!userId) return;
-  try {
-    await supabase.from("notifications").insert({ user_id: userId, type, title, body, data });
-  } catch (e) { console.error("Error sending notification:", e); }
-}
-
 export async function sendNotificationToMany({ userIds, type, title, body, data = {} }) {
   if (!userIds?.length) return;
   const rows = userIds.map(user_id => ({ user_id, type, title, body, data }));
@@ -610,24 +602,16 @@ export async function notifyMatchPlayers({ match, type, title, body, excludeUser
   await sendNotificationToMany({ userIds: playerIds, type, title, body, data: { match_id: match.id } });
 }
 
-export const createNotification = sendNotification;
-
 export const NOTIFICATION_TYPES = {
   MATCH_JOINED: "match_joined",
   MATCH_FULL: "match_full",
   MATCH_REMINDER_1H: "match_reminder_1h",
   MATCH_REMINDER_24H: "match_reminder_24h",
-  MATCH_CANCELLED: "match_cancelled",
   INCLUSIVE_REQUEST: "inclusive_request",
   REQUEST_APPROVED: "request_approved",
   REQUEST_REJECTED: "request_rejected",
   CLASS_BOOKED: "class_booked",
   CLASS_REMINDER: "class_reminder",
-  CLASS_CANCELLED: "class_cancelled",
-  CLASS_CONFIRMED: "class_confirmed",
   TEACHER_NEW_SLOT: "teacher_new_slot",
-  TEACHER_VERIFIED: "teacher_verified",
   PAYMENT_SUCCESS: "payment_success",
-  DONATION_THANKS: "donation_thanks",
-  BOOKING_CONFIRMED: "booking_confirmed",
 };
