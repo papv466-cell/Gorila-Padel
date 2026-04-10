@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { supabase } from "../services/supabaseClient";
-import { sendNotification, sendNotificationToMany } from "../services/notifications";
+import { createNotification as sendNotification } from "../services/notifications";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const LEVEL_COLORS = { iniciacion: "#2ECC71", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
@@ -177,13 +177,15 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
             // Notificar si el partido está completo
             const newPlayerIds = [...playerIds, session.user.id];
             if (match.max_players && newPlayerIds.length >= match.max_players) {
-              await sendNotificationToMany({
-                userIds: newPlayerIds,
-                type: "match_full",
-                title: "✅ ¡Partido completo!",
-                body: `El partido en ${match.club_name} ya tiene todos los jugadores`,
-                data: { match_id: match.id },
-              });
+              for (const uid of newPlayerIds) {
+                await sendNotification({
+                  userId: uid,
+                  type: "match_full",
+                  title: "✅ ¡Partido completo!",
+                  body: `El partido en ${match.club_name} ya tiene todos los jugadores`,
+                  data: { match_id: match.id },
+                });
+              }
             }
           }
         }
