@@ -101,7 +101,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ matchId: match.id, userId: session.user.id, paymentMethodId: null }),
+        body: JSON.stringify({ matchId: match.id, userId: currentSession?.user?.id || session?.user?.id, paymentMethodId: null }),
       }
     );
     const data = await res.json();
@@ -129,7 +129,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
         {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify({ matchId: match.id, userId: session.user.id }),
+          body: JSON.stringify({ matchId: match.id, userId: currentSession?.user?.id || session?.user?.id }),
         }
       );
       const data = await res.json();
