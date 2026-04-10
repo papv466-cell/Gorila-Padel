@@ -1655,7 +1655,8 @@ img { max-width: 100%; height: auto; }
 @media (max-width: 768px){
   /* Solo en la página del mapa: dejamos espacio para el panel fijo */
   .gpMapPage .pageWrap{
-    padding-bottom: 240px; /* evita que el panel tape contenido */
+    padding: 0;
+    padding-bottom: 240px;
   }
 
   /* El mapa gana altura real (tu CSS ya lo esperaba con gpMapMapWrap) */
