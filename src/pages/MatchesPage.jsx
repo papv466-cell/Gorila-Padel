@@ -145,7 +145,7 @@ export default function MatchesPage({ session: sessionProp }) {
   const [rosterProfilesById, setRosterProfilesById] = useState({});
 
   /* ─── UI ─── */
-  const [viewMode, setViewMode] = useState("mine");
+  const [viewMode, setViewMode] = useState("all");
   const [selectedDay, setSelectedDay] = useState(todayISO);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterLevel, setFilterLevel] = useState("");

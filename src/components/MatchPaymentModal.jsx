@@ -105,10 +105,13 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       }
     );
     const data = await res.json();
+    console.log("Payment response:", res.status, JSON.stringify(data));
     if (!res.ok || data.error) throw new Error(data.error || "Error al crear autorización");
+    if (!data.clientSecret) throw new Error("No se recibió clientSecret: " + JSON.stringify(data));
     setClientSecret(data.clientSecret);
     setPaymentData(data);
   } catch (e) {
+    console.error("Payment error:", e.message);
     setError(e.message);
   } finally {
     setLoading(false);
