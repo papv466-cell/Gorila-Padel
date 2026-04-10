@@ -83,3 +83,11 @@ export async function notifyMatchTransferReceived({ userId, matchId, clubName })
 export async function notifyMatchChat({ userId, matchId, senderName, message }) {
   await sendNotification({ userId, type: "match_chat", title: `💬 ${senderName}`, body: message?.slice(0, 80), data: { match_id: matchId } });
 }
+
+export async function notifySocialLike({ userId, postId, likerName }) {
+  await sendNotification({ userId, type: "social_like", title: `❤️ A ${likerName} le gusta tu publicación`, body: "", data: { post_id: postId } });
+}
+
+export async function notifySocialComment({ userId, postId, commenterName, comment }) {
+  await sendNotification({ userId, type: "social_comment", title: `💬 ${commenterName} ha comentado`, body: comment?.slice(0, 80), data: { post_id: postId } });
+}
