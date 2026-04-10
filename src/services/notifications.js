@@ -71,3 +71,15 @@ export async function notifyMatchRejected({ userId, matchId, clubName }) {
 export async function notifyMatchRequest({ userId, matchId, clubName, requesterName }) {
   await sendNotification({ userId, type: "inclusive_request", title: "♿ Nueva solicitud", body: `${requesterName} quiere unirse a tu partido en ${clubName}`, data: { match_id: matchId } });
 }
+
+export async function notifyMatchInvite({ userId, matchId, clubName, inviterName }) {
+  await sendNotification({ userId, type: "match_invite", title: "🎾 Te han invitado a un partido", body: `${inviterName} te invita a jugar en ${clubName}`, data: { match_id: matchId } });
+}
+
+export async function notifyMatchTransferReceived({ userId, matchId, clubName }) {
+  await sendNotification({ userId, type: "match_transfer", title: "💸 Has recibido una transferencia", body: `Pago recibido para el partido en ${clubName}`, data: { match_id: matchId } });
+}
+
+export async function notifyMatchChat({ userId, matchId, senderName, message }) {
+  await sendNotification({ userId, type: "match_chat", title: `💬 ${senderName}`, body: message?.slice(0, 80), data: { match_id: matchId } });
+}
