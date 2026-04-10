@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 import { useSession } from "../contexts/SessionContext";
 
@@ -13,6 +13,48 @@ const CATEGORY_CONFIG = {
   eventos:         { icon: "🏆", color: "#9B59B6" },
   inclusivo:       { icon: "♿", color: "#2ECC71" },
 };
+
+function DonationPayForm({ clientSecret, amount, projectId, onSuccess, onCancel }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [err, setErr] = useState(null);
+
+  async function handlePay() {
+    if (!stripe || !elements) return;
+    setPaying(true);
+    setErr(null);
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: window.location.href },
+      redirect: "if_required",
+    });
+    if (error) {
+      setErr(error.message);
+      setPaying(false);
+    } else {
+      onSuccess();
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 4 }}>💳 Pagar donación</div>
+      <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>Donando {parseFloat(amount).toFixed(2)}€ al proyecto</div>
+      <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 16 }}>
+        <PaymentElement />
+      </div>
+      {err && <div style={{ color: "#ff6b6b", fontSize: 13, fontWeight: 700 }}>⚠️ {err}</div>}
+      <button onClick={handlePay} disabled={paying || !stripe}
+        style={{ width: "100%", minHeight: 52, borderRadius: 14, background: paying ? "rgba(255,255,255,0.10)" : "#E67E22", color: "#fff", fontWeight: 900, fontSize: 16, border: "none", cursor: paying ? "not-allowed" : "pointer" }}>
+        {paying ? "⏳ Procesando…" : `💛 Donar ${parseFloat(amount).toFixed(2)}€`}
+      </button>
+      <button onClick={onCancel} style={{ width: "100%", minHeight: 44, borderRadius: 14, background: "transparent", color: "rgba(255,255,255,0.50)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer" }}>
+        Cancelar
+      </button>
+    </div>
+  );
+}
 
 export default function ProjectsPage() {
   const { session } = useSession();
@@ -244,12 +286,30 @@ export default function ProjectsPage() {
           <div onClick={() => !savingDonation && setDonatingProject(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
             <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f1117", border: "1px solid rgba(255,255,255,0.10)", borderRadius: "24px 24px 0 0", padding: 24, paddingBottom: "max(24px,env(safe-area-inset-bottom))" }}>
               
-              {donationSent ? (
+              {donationSent && !donationClientSecret ? (
                 <div style={{ textAlign: "center", padding: "20px 0" }}>
                   <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
                   <div style={{ fontSize: 22, fontWeight: 900, color: "#2ECC71", marginBottom: 8 }}>¡Gracias!</div>
                   <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)" }}>Tu donación está ayudando a alguien a jugar.</div>
                 </div>
+              ) : donationClientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret: donationClientSecret, appearance: { theme: "night" } }}>
+                  <DonationPayForm
+                    clientSecret={donationClientSecret}
+                    amount={donationAmount}
+                    projectId={donatingProject.id}
+                    onSuccess={async () => {
+                      setDonationClientSecret(null);
+                      setDonationSent(true);
+                      // Actualizar proyecto en BD
+                      const amount = parseFloat(donationAmount);
+                      const { data: proj } = await supabase.from("projects").select("current_amount").eq("id", donatingProject.id).single();
+                      await supabase.from("projects").update({ current_amount: (proj?.current_amount || 0) + amount }).eq("id", donatingProject.id);
+                      setProjects(prev => prev.map(p => p.id === donatingProject.id ? { ...p, current_amount: (p.current_amount || 0) + amount } : p));
+                    }}
+                    onCancel={() => { setDonationClientSecret(null); setSavingDonation(false); }}
+                  />
+                </Elements>
               ) : (
                 <>
                   <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
