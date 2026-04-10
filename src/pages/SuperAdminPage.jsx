@@ -138,6 +138,20 @@ export default function SuperAdminPage() {
     setTeachers(prev => prev.map(t => t.id === id ? { ...t, verified: approve, verification_status: approve ? "verified" : "rejected" } : t));
   }
 
+  async function getSignedUrl(url) {
+    if (!url) return null;
+    // Extraer el path del storage desde la URL
+    const path = url.split("/teacher-docs/")[1];
+    if (!path) return url;
+    const { data } = await supabase.storage.from("teacher-docs").createSignedUrl(path, 60);
+    return data?.signedUrl || url;
+  }
+
+  async function openDoc(url) {
+    const signed = await getSignedUrl(url);
+    if (signed) window.open(signed, "_blank");
+  }
+
   async function deleteTeacher(id) {
     if (!window.confirm("¿Eliminar este profesor?")) return;
     await supabase.from("teachers").delete().eq("id", id);
@@ -824,13 +838,13 @@ export default function SuperAdminPage() {
                     {/* Documentos */}
                     <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
                       {t.dni_url && (
-                        <a href={t.dni_url} target="_blank" rel="noreferrer"
+                        <a href="#" onClick={e => { e.preventDefault(); openDoc(t.dni_url); }}
                           style={{ fontSize: 13, padding: "6px 14px", borderRadius: 10, background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.30)", color: "#60A5FA", fontWeight: 700, textDecoration: "none" }}>
                           🪪 Ver DNI
                         </a>
                       )}
                       {t.cert_url && (
-                        <a href={t.cert_url} target="_blank" rel="noreferrer"
+                        <a href="#" onClick={e => { e.preventDefault(); openDoc(t.cert_url); }}
                           style={{ fontSize: 13, padding: "6px 14px", borderRadius: 10, background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.30)", color: "#A78BFA", fontWeight: 700, textDecoration: "none" }}>
                           🏅 Ver certificado
                         </a>
