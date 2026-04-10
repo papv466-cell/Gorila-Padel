@@ -142,7 +142,34 @@ serve(async (req) => {
 
   if (event.type === "payment_intent.payment_failed") {
     const pi = event.data.object;
-    await supabase.from("court_slots").update({ status: "available" }).eq("id", pi.metadata.slotId);
+    if (pi.metadata.slotId) {
+      await supabase.from("court_slots").update({ status: "available" }).eq("id", pi.metadata.slotId);
+    }
+  }
+
+  // Donaciones directas a proyectos
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object;
+    if (pi.metadata.source === "donation" && pi.metadata.projectId) {
+      const { projectId, userId } = pi.metadata;
+      const amount = pi.amount / 100;
+      try {
+        const { data: proj } = await supabase.from("projects").select("current_amount").eq("id", projectId).single();
+        await supabase.from("projects").update({
+          current_amount: (proj?.current_amount || 0) + amount,
+          updated_at: new Date().toISOString(),
+        }).eq("id", projectId);
+        await supabase.from("donations").insert({
+          user_id: userId !== "anonymous" ? userId : null,
+          project_id: projectId,
+          amount,
+          source: "stripe_donation",
+        });
+        console.log("Donación registrada:", amount, "€ al proyecto", projectId);
+      } catch (e) {
+        console.error("Error registrando donación:", e.message);
+      }
+    }
   }
 
   return new Response(JSON.stringify({ ok: true }), { status: 200 });

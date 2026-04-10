@@ -2,6 +2,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 import { useSession } from "../contexts/SessionContext";
 
 const CATEGORY_CONFIG = {
@@ -26,6 +29,7 @@ export default function ProjectsPage() {
   const [donationAmount, setDonationAmount] = useState("2");
   const [savingDonation, setSavingDonation] = useState(false);
   const [donationSent, setDonationSent] = useState(false);
+  const [donationClientSecret, setDonationClientSecret] = useState(null);
 
   useEffect(() => { loadData(); }, []);
 
@@ -62,24 +66,20 @@ export default function ProjectsPage() {
     if (!amount || amount < 0.5) return;
     setSavingDonation(true);
     try {
-      const { data: proj } = await supabase.from("projects").select("current_amount").eq("id", donatingProject.id).single();
-      await supabase.from("projects").update({
-        current_amount: (proj?.current_amount || 0) + amount,
-        updated_at: new Date().toISOString()
-      }).eq("id", donatingProject.id);
-      if (session?.user?.id) {
-        await supabase.from("donations").insert({
-          user_id: session.user.id,
-          project_id: donatingProject.id,
-          amount,
-          source: "manual",
-        });
-      }
-      setProjects(prev => prev.map(p => p.id === donatingProject.id
-        ? { ...p, current_amount: (p.current_amount || 0) + amount }
-        : p
-      ));
-      setTotalDonated(prev => prev + amount);
+      // Crear PaymentIntent en Stripe
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-donation-payment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ projectId: donatingProject.id, amount, userId: session?.user?.id }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Error al procesar donación");
+      setDonationClientSecret(data.clientSecret);
       setDonationSent(true);
       setTimeout(() => {
         setDonatingProject(null);
