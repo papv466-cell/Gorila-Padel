@@ -128,11 +128,11 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-payment`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-match-authorization`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify({ matchId: match.id, userId: currentSession?.user?.id || session?.user?.id }),
+          body: JSON.stringify({ matchId: match.id, userId: currentSession?.user?.id || session?.user?.id, paymentMethodId: null }),
         }
       );
       const data = await res.json();
