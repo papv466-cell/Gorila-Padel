@@ -79,7 +79,7 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
   // Lanzar autorización automáticamente al abrir
   useEffect(() => {
     if (isCreatorAuth) handleCreatorAuth();
-    else { setLoading(false); setStep("paying"); }
+    else { setLoading(false); setStep("mood"); }
   }, []);
 
   const isPrivateCourt = String(match.club_id || "").startsWith("private:");
