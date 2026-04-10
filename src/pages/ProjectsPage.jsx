@@ -42,7 +42,10 @@ function DonationPayForm({ clientSecret, amount, projectId, onSuccess, onCancel 
       <div style={{ fontSize: 18, fontWeight: 900, marginBottom: 4 }}>💳 Pagar donación</div>
       <div style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>Donando {parseFloat(amount).toFixed(2)}€ al proyecto</div>
       <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 16 }}>
-        <PaymentElement />
+        <PaymentElement options={{
+        wallets: { applePay: "auto", googlePay: "auto" },
+        paymentMethodOrder: ["card", "apple_pay", "google_pay"],
+      }} />
       </div>
       {err && <div style={{ color: "#ff6b6b", fontSize: 13, fontWeight: 700 }}>⚠️ {err}</div>}
       <button onClick={handlePay} disabled={paying || !stripe}

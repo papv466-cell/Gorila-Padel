@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { supabase } from "../services/supabaseClient";
+import { sendNotification, sendNotificationToMany } from "../services/notifications";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 const LEVEL_COLORS = { iniciacion: "#2ECC71", medio: "#f59e0b", avanzado: "#ef4444", competicion: "#8b5cf6" };
@@ -43,6 +44,7 @@ function PayForm({ totalCents, pricePerPlayerCents, matchData, onSuccess, extraP
       <PaymentElement options={{
         layout: { type: "tabs", defaultCollapsed: false },
         wallets: { applePay: "auto", googlePay: "auto" },
+        paymentMethodOrder: ["card", "apple_pay", "google_pay"],
       }} />
 
       {error && (
@@ -150,13 +152,9 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
     setStep("success");
     try {
       if (!isCreatorAuth && session?.user?.id && match?.id) {
-        // Determinar tabla según deporte
         const sport = match._sport || "padel";
         const table = sport === "tenis" ? "tennis_matches" : sport === "pickleball" ? "pickleball_matches" : "matches";
-        
-        // Añadir jugador al partido
-        const { data: currentMatch } = await supabase.from(table).select("player_ids, reserved_spots").eq("id", match.id).single();
-        
+        const { data: currentMatch } = await supabase.from(table).select("player_ids, reserved_spots, created_by_user").eq("id", match.id).single();
         if (currentMatch) {
           const playerIds = currentMatch.player_ids || [];
           if (!playerIds.includes(session.user.id)) {
@@ -164,6 +162,29 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
               player_ids: [...playerIds, session.user.id],
               reserved_spots: (currentMatch.reserved_spots || 0) + 1,
             }).eq("id", match.id);
+            // Notificar al creador
+            if (currentMatch.created_by_user && currentMatch.created_by_user !== session.user.id) {
+              const { data: profile } = await supabase.from("profiles").select("name, handle").eq("id", session.user.id).single();
+              const userName = profile?.name || profile?.handle || "Alguien";
+              await sendNotification({
+                userId: currentMatch.created_by_user,
+                type: "match_joined",
+                title: "🎾 Nuevo jugador en tu partido",
+                body: `${userName} se ha unido a tu partido en ${match.club_name || "tu pista"}`,
+                data: { match_id: match.id },
+              });
+            }
+            // Notificar si el partido está completo
+            const newPlayerIds = [...playerIds, session.user.id];
+            if (match.max_players && newPlayerIds.length >= match.max_players) {
+              await sendNotificationToMany({
+                userIds: newPlayerIds,
+                type: "match_full",
+                title: "✅ ¡Partido completo!",
+                body: `El partido en ${match.club_name} ya tiene todos los jugadores`,
+                data: { match_id: match.id },
+              });
+            }
           }
         }
       }
