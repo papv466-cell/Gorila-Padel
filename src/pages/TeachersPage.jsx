@@ -34,6 +34,7 @@ export default function TeachersPage() {
       .from("teachers")
       .select("*")
       .eq("active", true)
+      .eq("verified", true)
       .contains("sports", [sport]);
     setTeachers(data || []);
     setLoading(false);

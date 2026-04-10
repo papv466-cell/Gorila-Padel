@@ -144,6 +144,17 @@ export default function SuperAdminPage() {
     setTeachers(prev => prev.filter(t => t.id !== id));
   }
 
+  async function deleteClub(id) {
+    if (!window.confirm("¿Eliminar este club permanentemente? Esta acción no se puede deshacer.")) return;
+    await supabase.from("clubs").delete().eq("id", id);
+    setClubs(prev => prev.filter(c => c.id !== id));
+  }
+
+  async function toggleClubActive(id, active) {
+    await supabase.from("clubs").update({ is_active: !active }).eq("id", id);
+    setClubs(prev => prev.map(c => c.id === id ? {...c, is_active: !active} : c));
+  }
+
   async function loadClubs() {
     const { data } = await supabase.from("clubs").select("id, name").eq("status", "approved").order("name");
     setClubs(data || []);
@@ -377,6 +388,49 @@ export default function SuperAdminPage() {
             </div>
           ))}
         </div>
+
+        {/* Clubs activos */}
+        {clubs.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", marginBottom: 12 }}>
+              ✅ Clubs activos
+              <span style={{ marginLeft: 8, fontSize: 12, color: "rgba(255,255,255,0.45)", fontWeight: 400 }}>{clubs.length} clubs</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {clubs.map(club => (
+                <div key={club.id} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: "#fff", marginBottom: 4 }}>{club.name}</div>
+                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
+                      {club.city && `📍 ${club.city} · `}
+                      {club.email && `✉️ ${club.email} · `}
+                      {club.phone && `📞 ${club.phone}`}
+                    </div>
+                    {club.accessibility_level && (
+                      <div style={{ fontSize: 12, marginTop: 4 }}>
+                        {club.accessibility_level === "oro" ? "🥇" : club.accessibility_level === "plata" ? "🥈" : "🥉"} Auditoría {club.accessibility_level}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <a href={`/club/${club.id}`} target="_blank" rel="noreferrer"
+                      style={{ minHeight: 40, padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center" }}>
+                      👁️ Ver
+                    </a>
+                    <button onClick={() => toggleClubActive(club.id, club.is_active !== false)}
+                      style={{ minHeight: 40, padding: "8px 14px", borderRadius: 10, background: club.is_active !== false ? "rgba(220,38,38,0.10)" : "rgba(46,204,113,0.10)", border: `1px solid ${club.is_active !== false ? "rgba(220,38,38,0.25)" : "rgba(46,204,113,0.25)"}`, color: club.is_active !== false ? "#ff6b6b" : "#2ECC71", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      {club.is_active !== false ? "Desactivar" : "Activar"}
+                    </button>
+                    <button onClick={() => deleteClub(club.id)}
+                      style={{ minHeight: 40, padding: "8px 14px", borderRadius: 10, background: "rgba(220,38,38,0.10)", border: "1px solid rgba(220,38,38,0.25)", color: "#ff6b6b", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         </div>}
 
         {tab === 'foundations' && (
