@@ -91,6 +91,57 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
     if (session?.user?.id) loadMyRequests();
   }, [session?.user?.id]);
 
+  async function loadRequests(matchId) {
+    setLoadingRequests(true);
+    const { data } = await supabase
+      .from("inclusive_match_requests")
+      .select("*, profiles(name, avatar_url)")
+      .eq("match_id", matchId)
+      .order("created_at", { ascending: false });
+    setMatchRequests(data || []);
+    setLoadingRequests(false);
+  }
+
+  async function handleRequest(requestId, matchId, userId, approve) {
+    try {
+      await supabase.from("inclusive_match_requests")
+        .update({ status: approve ? "approved" : "rejected" })
+        .eq("id", requestId);
+      if (approve) {
+        // Añadir jugador al partido
+        const { data: match } = await supabase.from("inclusive_matches").select("player_ids").eq("id", matchId).single();
+        const playerIds = match?.player_ids || [];
+        if (!playerIds.includes(userId)) {
+          await supabase.from("inclusive_matches").update({
+            player_ids: [...playerIds, userId],
+          }).eq("id", matchId);
+        }
+        // Notificar al usuario
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          type: "request_approved",
+          title: "✅ ¡Solicitud aceptada!",
+          body: "El organizador ha aceptado tu solicitud. Ya estás dentro del partido.",
+          data: { match_id: matchId },
+        });
+        toast.success("Solicitud aceptada — jugador añadido al partido");
+      } else {
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          type: "request_rejected",
+          title: "❌ Solicitud rechazada",
+          body: "Lo sentimos, el organizador no ha podido aceptar tu solicitud.",
+          data: { match_id: matchId },
+        });
+        toast.success("Solicitud rechazada");
+      }
+      await loadRequests(matchId);
+      await load();
+    } catch(e) {
+      toast.error(e?.message || "Error al procesar solicitud");
+    }
+  }
+
   async function loadMyRequests() {
     const { data } = await supabase.from("inclusive_match_requests").select("match_id, status").eq("user_id", session.user.id);
     if (data) {
@@ -116,6 +167,10 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
     return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:00`;
   }
   const [creatorAuthMatch, setCreatorAuthMatch] = useState(null);
+  const [joinPayMatch, setJoinPayMatch] = useState(null);
+  const [requestsModal, setRequestsModal] = useState(null); // match object
+  const [matchRequests, setMatchRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const [clubName, setClubName] = useState("");
   const [clubId, setClubId] = useState("");
   const [city, setCity] = useState("");
@@ -463,7 +518,7 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                   {session && isCreator && (
                     <>
                       <button className="juntos-btn-icon" title="Ver solicitudes"
-                        onClick={() => toast.success("Solicitudes próximamente")}>📥</button>
+                        onClick={() => { setRequestsModal(m); loadRequests(m.id); }}>📥</button>
                       <button className="juntos-btn-icon" title="Chat del partido"
                         onClick={() => toast.success("Chat próximamente")}>💬</button>
                       <button className="juntos-btn-icon" title="Compartir"
@@ -503,25 +558,8 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
                     <button
                       onClick={async () => {
                         try {
-                          const { error } = await supabase.from("inclusive_match_requests").insert({
-                            match_id: m.id,
-                            user_id: session.user.id,
-                            status: "pending",
-                          });
-                          if (error) throw error;
-                          try {
-                            const { data: profile } = await supabase.from("profiles").select("name, handle").eq("id", session.user.id).single();
-                            const userName = profile?.name || profile?.handle || "Alguien";
-                            await supabase.from("notifications").insert({
-                              user_id: m.created_by_user,
-                              type: "inclusive_request",
-                              title: "♿ Nueva solicitud",
-                              body: `${userName} quiere unirse a tu partido en ${m.club_name || "tu pista"}.`,
-                              data: { match_id: m.id },
-                            });
-                          } catch {}
-                          toast.success("¡Solicitud enviada! Te avisaremos 🦍");
-                          setMyReqStatus(prev => ({ ...prev, [m.id]: "pending" }));
+                          // Abrir pasarela de pago primero
+                          setJoinPayMatch(m);
                         } catch (e) {
                           toast.error(e?.message || "Error al solicitar");
                         }
@@ -547,6 +585,102 @@ export default function InclusiveMatchesPage({ session: sessionProp }) {
           onJoined={async () => {
             setCreatorAuthMatch(null);
             toast.success("¡Partido creado y pago completado! 🦍");
+            await load();
+          }}
+        />
+      )}
+
+      {/* Modal solicitudes */}
+      {requestsModal && (
+        <div onClick={() => setRequestsModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.90)", zIndex: 50000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "min(640px,100%)", background: "#0f172a", borderRadius: "24px 24px 0 0", padding: "24px 20px", paddingBottom: "max(24px,env(safe-area-inset-bottom))", maxHeight: "80vh", overflowY: "auto" }}>
+            <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 999, margin: "0 auto 20px" }} />
+            <div style={{ fontSize: 20, fontWeight: 900, marginBottom: 4 }}>📥 Solicitudes</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.50)", marginBottom: 20 }}>{requestsModal.club_name}</div>
+
+            {loadingRequests ? (
+              <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.40)" }}>Cargando…</div>
+            ) : matchRequests.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.40)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                No hay solicitudes pendientes
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {matchRequests.map(req => (
+                  <div key={req.id} style={{ background: "#1e293b", borderRadius: 16, padding: "14px 16px", border: `1px solid ${req.status === "pending" ? "rgba(245,158,11,0.30)" : req.status === "approved" ? "rgba(46,204,113,0.25)" : "rgba(220,38,38,0.25)"}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 999, background: "rgba(255,255,255,0.10)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 900 }}>
+                          {req.profiles?.name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>{req.profiles?.name || "Usuario"}</div>
+                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
+                            {new Date(req.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 900, padding: "4px 12px", borderRadius: 999,
+                        background: req.status === "pending" ? "rgba(245,158,11,0.15)" : req.status === "approved" ? "rgba(46,204,113,0.15)" : "rgba(220,38,38,0.15)",
+                        color: req.status === "pending" ? "#F59E0B" : req.status === "approved" ? "#2ECC71" : "#ff6b6b" }}>
+                        {req.status === "pending" ? "⏳ Pendiente" : req.status === "approved" ? "✅ Aceptado" : "❌ Rechazado"}
+                      </span>
+                    </div>
+                    {req.status === "pending" && (
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button onClick={() => handleRequest(req.id, requestsModal.id, req.user_id, true)}
+                          style={{ flex: 1, minHeight: 48, borderRadius: 12, background: "rgba(46,204,113,0.15)", border: "1px solid rgba(46,204,113,0.35)", color: "#2ECC71", fontWeight: 900, fontSize: 15, cursor: "pointer" }}>
+                          ✅ Aceptar
+                        </button>
+                        <button onClick={() => handleRequest(req.id, requestsModal.id, req.user_id, false)}
+                          style={{ flex: 1, minHeight: 48, borderRadius: 12, background: "rgba(220,38,38,0.10)", border: "1px solid rgba(220,38,38,0.25)", color: "#ff6b6b", fontWeight: 900, fontSize: 15, cursor: "pointer" }}>
+                          ❌ Rechazar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button onClick={() => setRequestsModal(null)}
+              style={{ width: "100%", minHeight: 52, borderRadius: 16, background: "transparent", color: "rgba(255,255,255,0.55)", fontWeight: 700, border: "1px solid rgba(255,255,255,0.10)", cursor: "pointer", fontSize: 15, marginTop: 16 }}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {joinPayMatch && (
+        <MatchPaymentModal
+          match={{ ...joinPayMatch, _sport: "padel" }}
+          session={session}
+          isCreatorAuth={false}
+          onClose={() => setJoinPayMatch(null)}
+          onJoined={async () => {
+            try {
+              const { error } = await supabase.from("inclusive_match_requests").insert({
+                match_id: joinPayMatch.id,
+                user_id: session.user.id,
+                status: "pending",
+              });
+              if (error) throw error;
+              const { data: profile } = await supabase.from("profiles").select("name, handle").eq("id", session.user.id).single();
+              const userName = profile?.name || profile?.handle || "Alguien";
+              await supabase.from("notifications").insert({
+                user_id: joinPayMatch.created_by_user,
+                type: "inclusive_request",
+                title: "♿ Nueva solicitud de unión",
+                body: `${userName} quiere unirse a tu partido en ${joinPayMatch.club_name || "tu pista"}. Acepta o rechaza en la app.`,
+                data: { match_id: joinPayMatch.id },
+              });
+              toast.success("¡Solicitud enviada! El creador te confirmará 🦍");
+              setMyReqStatus(prev => ({ ...prev, [joinPayMatch.id]: "pending" }));
+            } catch(e) {
+              toast.error(e?.message || "Error al enviar solicitud");
+            }
+            setJoinPayMatch(null);
             await load();
           }}
         />

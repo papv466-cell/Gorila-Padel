@@ -145,6 +145,28 @@ export default function MatchPaymentModal({ match, session, onClose, onJoined, i
 
   async function handlePaySuccess() {
     setStep("success");
+    try {
+      if (!isCreatorAuth && session?.user?.id && match?.id) {
+        // Determinar tabla según deporte
+        const sport = match._sport || "padel";
+        const table = sport === "tenis" ? "tennis_matches" : sport === "pickleball" ? "pickleball_matches" : "matches";
+        
+        // Añadir jugador al partido
+        const { data: currentMatch } = await supabase.from(table).select("player_ids, reserved_spots").eq("id", match.id).single();
+        
+        if (currentMatch) {
+          const playerIds = currentMatch.player_ids || [];
+          if (!playerIds.includes(session.user.id)) {
+            await supabase.from(table).update({
+              player_ids: [...playerIds, session.user.id],
+              reserved_spots: (currentMatch.reserved_spots || 0) + 1,
+            }).eq("id", match.id);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error añadiendo jugador:", e);
+    }
     setTimeout(() => { onJoined?.(); onClose?.(); }, 2000);
   }
 
