@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import MatchPaymentModal from "../components/MatchPaymentModal";
 import { useToast } from "../components/ToastProvider";
 
 const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", alto: "#ef4444", competicion: "#8b5cf6" };
@@ -47,6 +48,7 @@ export default function PullsPage({ session }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [joiners, setJoiners] = useState({});
+  const [pullPayModal, setPullPayModal] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [waitlist, setWaitlist] = useState(new Set());
   const [profiles, setProfiles] = useState({});
@@ -230,8 +232,32 @@ export default function PullsPage({ session }) {
     finally { setSaving(false); }
   }
 
+  async function joinAfterPayment(pull) {
+    try {
+      const { error } = await supabase.from("pull_joiners").insert({
+        pull_id: pull.id, user_id: uid, status: "approved", paid: pull.price_per_spot > 0 ? false : true, mood: "fun",
+      });
+      if (error) throw error;
+      const newFilled = pull.filled_spots + 1;
+      const update = { filled_spots: newFilled };
+      if (newFilled >= pull.total_spots) update.status = "full";
+      await supabase.from("pulls").update(update).eq("id", pull.id);
+      await supabase.from("notifications").insert({
+        user_id: pull.created_by_user, type: "pull_joined",
+        title: "🎯 Nuevo participante",
+        body: "Alguien se ha unido a tu pull",
+        data: { pullId: pull.id },
+      });
+      setPullPayModal(null);
+      await load();
+    } catch(e) { alert(e.message); }
+  }
+
   async function handleJoin(pull) {
     if (!uid) return navigate("/login");
+    // Siempre abrir pasarela de pago (comisión 0,30€ mínima)
+    setPullPayModal({ ...pull, _type: "pull" });
+    return;
     try {
       const { error } = await supabase.from("pull_joiners").insert({
         pull_id: pull.id, user_id: uid, status: "approved", paid: true, mood: "fun",
@@ -704,5 +730,23 @@ export default function PullsPage({ session }) {
         </div>
       )}
     </div>
+    {pullPayModal && (
+      <MatchPaymentModal
+        match={{
+          ...pullPayModal,
+          id: pullPayModal.id,
+          club_name: pullPayModal.clubName || pullPayModal.club_name || pullPayModal.location,
+          start_at: pullPayModal.date ? `${pullPayModal.date}T${pullPayModal.time||"19:00"}:00` : null,
+          level: pullPayModal.level,
+          price_per_player: pullPayModal.price_per_spot || 0,
+          _sport: "padel",
+          _table: "pulls",
+        }}
+        session={{ user: { id: uid } }}
+        isCreatorAuth={false}
+        onClose={() => setPullPayModal(null)}
+        onJoined={async () => { await joinAfterPayment(pullPayModal); }}
+      />
+    )}
   );
 }

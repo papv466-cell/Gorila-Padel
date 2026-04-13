@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
+import MatchPaymentModal from "../components/MatchPaymentModal";
 import { useToast } from "../components/ToastProvider";
 
 const LEVEL_COLORS = { iniciacion: "var(--sport-color)", medio: "#f59e0b", alto: "#ef4444", competicion: "#8b5cf6" };
@@ -47,6 +48,8 @@ export default function TrainingsPage({ session }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [joiners, setJoiners] = useState({});
+  const [trainingPayModal, setTrainingPayModal] = useState(null);
+  const [pendingHand, setPendingHand] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
   const [waitlist, setWaitlist] = useState(new Set());
   const [profiles, setProfiles] = useState({});
@@ -235,8 +238,33 @@ export default function TrainingsPage({ session }) {
     finally { setSaving(false); }
   }
 
+  async function joinAfterPayment(training, hand) {
+    try {
+      const { error } = await supabase.from("training_joiners").insert({
+        training_id: training.id, user_id: uid, hand,
+        status: "approved", paid: training.price_per_spot > 0 ? false : true,
+      });
+      if (error) throw error;
+      const update = hand === "right" ? { filled_right: training.filled_right + 1 } : { filled_left: training.filled_left + 1 };
+      const totalFilled = training.filled_right + training.filled_left + 1;
+      if (totalFilled >= training.total_spots) update.status = "full";
+      await supabase.from("trainings").update(update).eq("id", training.id);
+      await supabase.from("notifications").insert({
+        user_id: training.created_by_user, type: "training_joined",
+        title: "💪 Nuevo participante",
+        body: "Alguien se apuntó a tu entrenamiento",
+        data: { trainingId: training.id },
+      });
+      setTrainingPayModal(null); setPendingHand(null);
+      await load();
+    } catch(e) { alert(e.message); }
+  }
+
   async function handleJoin(training, hand) {
     if (!uid) return navigate("/login");
+    setPendingHand(hand);
+    setTrainingPayModal(training);
+    return;
     try {
       const { error } = await supabase.from("training_joiners").insert({
         training_id: training.id, user_id: uid, hand,
@@ -771,5 +799,23 @@ export default function TrainingsPage({ session }) {
         </div>
       )}
     </div>
+    {trainingPayModal && (
+      <MatchPaymentModal
+        match={{
+          ...trainingPayModal,
+          id: trainingPayModal.id,
+          club_name: trainingPayModal.clubName || trainingPayModal.club_name || trainingPayModal.location,
+          start_at: trainingPayModal.date ? `${trainingPayModal.date}T${trainingPayModal.time||"19:00"}:00` : null,
+          level: trainingPayModal.level,
+          price_per_player: trainingPayModal.price_per_spot || 0,
+          _sport: "padel",
+          _table: "trainings",
+        }}
+        session={{ user: { id: uid } }}
+        isCreatorAuth={false}
+        onClose={() => { setTrainingPayModal(null); setPendingHand(null); }}
+        onJoined={async () => { await joinAfterPayment(trainingPayModal, pendingHand); }}
+      />
+    )}
   );
 }
