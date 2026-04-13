@@ -189,7 +189,7 @@ export default function HomePage({ session: sessionProp }) {
       `}</style>
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "0 20px 60px", textAlign: "center" }}>
         <div style={{ paddingTop: 80, paddingBottom: 40, animation: "ghHeroIn .6s ease" }}>
-          <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 90, height: 90, borderRadius: 22, objectFit: "contain", background: "rgba(var(--sport-color-rgb, 46,204,113),0.1)", padding: 12, border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
+          <img src="/imglogog.png" alt="GorilaGo!" style={{ width: 100, height: 100, borderRadius: 22, objectFit: "contain", objectPosition: "center", background: "#f0f0f0", padding: 8, border: "1px solid rgba(var(--sport-color-rgb, 46,204,113),0.2)", marginBottom: 24, display: "block", margin: "0 auto 24px", animation: "ghPulse 3s ease infinite" }} />
           <h1 style={{ fontSize: 34, fontWeight: 900, color: "#fff", margin: "0 0 10px", letterSpacing: -1, lineHeight: 1.15 }}>
             Gorila<span style={{ color: "#2ECC71" }}>Go!</span>
           </h1>
@@ -215,7 +215,7 @@ export default function HomePage({ session: sessionProp }) {
             { icon: "🏓", title: "Partidos", desc: "Crea o únete" },
             { icon: "🗺️", title: "Mapa", desc: "Clubs cerca" },
             { icon: "📚", title: "Clases", desc: "Mejora tu nivel" },
-            { icon: "🛍️", title: "Tienda", desc: "Equipamiento" },
+            { icon: "🛍️", title: "Entrena", desc: "Juega+ y más" },
           ].map(f => (
             <div key={f.title} style={{ padding: "14px 12px", borderRadius: 12, background: "#111", border: "1px solid rgba(255,255,255,0.07)", textAlign: "left" }}>
               <div style={{ fontSize: 22, marginBottom: 4 }}>{f.icon}</div>
@@ -464,7 +464,7 @@ const media = post.media_url || post.media_urls?.[0] || post.media?.[0];        
             {[
               { icon: "🗺️", label: "Mapa",    path: "/mapa" },
               { icon: "📚", label: "Clases",  path: "/clases" },
-              { icon: "🛍️", label: "Tienda",  path: "/tienda" },
+              { icon: "🛍️", label: "Entrena",  path: "/tienda" },
               { icon: "🏆", label: "Ranking", path: "/leaderboard" },
             ].map(q => (
               <button key={q.label} className="ghQuickBtn"
