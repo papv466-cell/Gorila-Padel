@@ -236,7 +236,7 @@ export default function MapPage({ session: sessionProp }) {
       }
       return String(a?.name||"").localeCompare(String(b?.name||""), "es");
     });
-  }, [clubsWithCoords, activeFilter, userPos, favIds]);
+  }, [clubsWithCoords, activeFilter, userPos, favIds, sport]);
 
   const defaultCenter = useMemo(() => {
     const c = filteredList[0] || clubsWithCoords[0];
