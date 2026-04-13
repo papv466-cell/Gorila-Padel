@@ -23,6 +23,11 @@ export default function SuperAdminPage() {
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState("clubs");
   const [teachers, setTeachers] = useState([]);
+  const [leagues, setLeagues] = useState([]);
+  const [leaguesLoading, setLeaguesLoading] = useState(false);
+  const [expandedLeague, setExpandedLeague] = useState(null);
+  const [leaguePairs, setLeaguePairs] = useState({});
+  const [leagueMatches, setLeagueMatches] = useState({});
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [pendingClubs, setPendingClubs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +71,7 @@ export default function SuperAdminPage() {
       loadProposals();
       loadClubs();
       loadTeachers();
+      loadLeaguesAdmin();
     });
   }, []);
 
@@ -119,6 +125,54 @@ export default function SuperAdminPage() {
   async function loadAudits() {
     const { data } = await supabase.from("club_audits").select("*, clubs(name)").eq("active", true).order("audited_at", { ascending: false });
     setAudits(data || []);
+  }
+
+  async function loadLeaguesAdmin() {
+    setLeaguesLoading(true);
+    const { data } = await supabase.from("leagues").select("*").order("created_at", { ascending: false });
+    setLeagues(data || []);
+    setLeaguesLoading(false);
+  }
+
+  async function loadLeagueDetail(leagueId) {
+    const [{ data: pairs }, { data: matches }] = await Promise.all([
+      supabase.from("league_pairs").select("*, p1:profiles!league_pairs_player1_id_fkey(name), p2:profiles!league_pairs_player2_id_fkey(name)").eq("league_id", leagueId),
+      supabase.from("league_matches").select("*").eq("league_id", leagueId).order("jornada"),
+    ]);
+    setLeaguePairs(prev => ({ ...prev, [leagueId]: pairs || [] }));
+    setLeagueMatches(prev => ({ ...prev, [leagueId]: matches || [] }));
+  }
+
+  async function deleteLeague(id) {
+    if (!window.confirm("¿Eliminar esta liga y todos sus datos?")) return;
+    await supabase.from("league_matches").delete().eq("league_id", id);
+    await supabase.from("league_pairs").delete().eq("league_id", id);
+    await supabase.from("leagues").delete().eq("id", id);
+    setLeagues(prev => prev.filter(l => l.id !== id));
+  }
+
+  async function deleteLeaguePair(pairId, leagueId) {
+    if (!window.confirm("¿Eliminar esta pareja?")) return;
+    await supabase.from("league_pairs").delete().eq("id", pairId);
+    await loadLeagueDetail(leagueId);
+  }
+
+  async function deleteLeagueMatch(matchId, leagueId) {
+    if (!window.confirm("¿Eliminar este partido?")) return;
+    await supabase.from("league_matches").delete().eq("id", matchId);
+    await loadLeagueDetail(leagueId);
+  }
+
+  async function resetLeaguePairStats(pairId, leagueId) {
+    if (!window.confirm("¿Resetear puntos de esta pareja a 0?")) return;
+    await supabase.from("league_pairs").update({ pts:0, pg:0, pp:0, pj:0, sets_favor:0, sets_contra:0, elo:1000 }).eq("id", pairId);
+    await loadLeagueDetail(leagueId);
+  }
+
+  async function toggleLeagueStatus(id, current) {
+    const newStatus = current === "active" ? "finished" : "active";
+    await supabase.from("leagues").update({ status: newStatus }).eq("id", id);
+    setLeagues(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l));
   }
 
   async function loadTeachers() {
@@ -300,7 +354,7 @@ export default function SuperAdminPage() {
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "120px 16px 80px" }}>
         {/* Tabs */}
         <div style={{display:'flex', gap:8, marginBottom:20}}>
-          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos'],['profesores','📚 Profesores']].map(([t,label])=>(
+          {[['clubs','🏟️ Clubs'],['foundations','💚 Asociaciones'],['app','📱 App'],['auditorias','🏅 Auditorías'],['proyectos','🏗️ Proyectos'],['profesores','📚 Profesores'],['ligas','🏆 Ligas']].map(([t,label])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{padding:'8px 16px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:800, fontSize:13,
                 background: tab===t ? 'linear-gradient(135deg,var(--sport-color),var(--sport-color-dark))' : 'rgba(255,255,255,0.08)',
