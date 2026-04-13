@@ -445,7 +445,7 @@ export default function MapPage({ session: sessionProp }) {
                     />
                   );
                 })}
-              {privateCourts.filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)).map(c=>(
+              {privateCourts.filter(c=>Number.isFinite(c.lat)&&Number.isFinite(c.lng)&&(!sport||sport==='all'||(c.sport||'padel')===sport)).map(c=>(
                 <Marker key={`court:${c.id}`} position={[c.lat,c.lng]}
                   icon={makeCourtIcon(selectedCourt&&selectedCourt.id===c.id)}
                   eventHandlers={{click:()=>{setSelectedCourt(c);setSelectedClub(null);}}}
@@ -744,6 +744,21 @@ export default function MapPage({ session: sessionProp }) {
                 </div>
               )}
 
+              {/* Selector deporte */}
+              <div>
+                <div style={{fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.50)",marginBottom:6}}>Deporte</div>
+                <div style={{display:"flex",gap:8}}>
+                  {[{k:"padel",e:"🎾",l:"Pádel"},{k:"tenis",e:"🎾",l:"Tenis"},{k:"pickleball",e:"🏓",l:"Pickleball"}].map(sp=>(
+                    <button key={sp.k} type="button" onClick={()=>setCourtForm(p=>({...p,sport:sp.k}))}
+                      style={{flex:1,minHeight:44,borderRadius:12,border:(courtForm.sport||"padel")===sp.k?"2px solid var(--sport-color)":"1px solid rgba(255,255,255,0.12)",
+                        background:(courtForm.sport||"padel")===sp.k?"rgba(var(--sport-color-rgb,46,204,113),0.15)":"rgba(255,255,255,0.05)",
+                        color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer"}}>
+                      {sp.e} {sp.l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea placeholder="Descripción opcional (instrucciones de acceso, número de pista…)" value={courtForm.description||""}
                 onChange={e=>setCourtForm(p=>({...p,description:e.target.value}))}
                 rows={2}
@@ -760,12 +775,13 @@ export default function MapPage({ session: sessionProp }) {
                       lng: courtForm.lng,
                       is_public: true,
                       owner_id: session?.user?.id,
+                      sport: courtForm.sport || "padel",
                     }).select().single();
                     if(error) throw error;
                     setPrivateCourts(prev=>[...prev,data]);
                     setShowCreateCourt(false);
                     setSelectedCourt(data);
-                    setCourtForm({name:"",description:"",addressQuery:"",lat:null,lng:null,geoResults:[],addressLabel:""});
+                    setCourtForm({name:"",description:"",addressQuery:"",lat:null,lng:null,geoResults:[],addressLabel:"",sport:"padel"});
                   }catch(e){ alert(e?.message||"Error al crear pista"); }
                   finally{ setCourtSaving(false); }
                 }}
