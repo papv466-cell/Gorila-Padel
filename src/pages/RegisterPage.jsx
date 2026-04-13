@@ -156,7 +156,7 @@ export default function RegisterPage() {
             height: 200,
             flexShrink: 0,
             overflow: "hidden",
-            background: "#050505",
+            background: "#f0f0f0",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
