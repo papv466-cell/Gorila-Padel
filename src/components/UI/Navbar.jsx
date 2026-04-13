@@ -23,6 +23,7 @@ export default function Navbar({ showBack = false, onBack }) {
     { to: "/juega",      label: "Juega",      icon: "🎾", key: "partidos" },
     { to: "/juntos",     label: "Juntos",     icon: "♿", key: "inclusivos" },
     { to: "/aprende",    label: "Aprende",    icon: "📚", key: "aprende" },
+    { to: "/juega-plus",  label: "Juega+",     icon: "⚡", key: "juega-plus" },
     { to: "/proyectos",  label: "Proyectos",  icon: "🏗️", key: "proyectos" },
   ], []);
 
