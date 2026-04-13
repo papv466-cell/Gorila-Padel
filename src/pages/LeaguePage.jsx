@@ -535,7 +535,7 @@ export default function LeaguePage() {
                       </div>
                       <div style={{textAlign:"center"}}>
                         {m.sets?.length ? (
-                          <div style={{display:"flex",gap:4",flexDirection:"column",alignItems:"center"}}>
+                          <div style={{display:"flex",gap:4,flexDirection:"column",alignItems:"center"}}>
                             {m.sets.map((s,i)=><span key={i} style={{fontSize:16,fontWeight:900,color:"#fff"}}>{s.a}–{s.b}</span>)}
                           </div>
                         ) : <span style={{fontSize:18,color:"rgba(255,255,255,0.25)",fontWeight:900}}>vs</span>}
