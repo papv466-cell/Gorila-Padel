@@ -729,24 +729,25 @@ export default function PullsPage({ session }) {
           </div>
         </div>
       )}
+
+      {pullPayModal && (
+        <MatchPaymentModal
+          match={{
+            ...pullPayModal,
+            id: pullPayModal.id,
+            club_name: pullPayModal.clubName || pullPayModal.club_name || pullPayModal.location,
+            start_at: pullPayModal.date ? `${pullPayModal.date}T${pullPayModal.time||"19:00"}:00` : null,
+            level: pullPayModal.level,
+            price_per_player: pullPayModal.price_per_spot || 0,
+            _sport: "padel",
+            _table: "pulls",
+          }}
+          session={{ user: { id: uid } }}
+          isCreatorAuth={false}
+          onClose={() => setPullPayModal(null)}
+          onJoined={async () => { await joinAfterPayment(pullPayModal); }}
+        />
+      )}
     </div>
-    {pullPayModal && (
-      <MatchPaymentModal
-        match={{
-          ...pullPayModal,
-          id: pullPayModal.id,
-          club_name: pullPayModal.clubName || pullPayModal.club_name || pullPayModal.location,
-          start_at: pullPayModal.date ? `${pullPayModal.date}T${pullPayModal.time||"19:00"}:00` : null,
-          level: pullPayModal.level,
-          price_per_player: pullPayModal.price_per_spot || 0,
-          _sport: "padel",
-          _table: "pulls",
-        }}
-        session={{ user: { id: uid } }}
-        isCreatorAuth={false}
-        onClose={() => setPullPayModal(null)}
-        onJoined={async () => { await joinAfterPayment(pullPayModal); }}
-      />
-    )}
   );
 }

@@ -798,24 +798,25 @@ export default function TrainingsPage({ session }) {
           </div>
         </div>
       )}
+
+      {trainingPayModal && (
+        <MatchPaymentModal
+          match={{
+            ...trainingPayModal,
+            id: trainingPayModal.id,
+            club_name: trainingPayModal.clubName || trainingPayModal.club_name || trainingPayModal.location,
+            start_at: trainingPayModal.date ? `${trainingPayModal.date}T${trainingPayModal.time||"19:00"}:00` : null,
+            level: trainingPayModal.level,
+            price_per_player: trainingPayModal.price_per_spot || 0,
+            _sport: "padel",
+            _table: "trainings",
+          }}
+          session={{ user: { id: uid } }}
+          isCreatorAuth={false}
+          onClose={() => { setTrainingPayModal(null); setPendingHand(null); }}
+          onJoined={async () => { await joinAfterPayment(trainingPayModal, pendingHand); }}
+        />
+      )}
     </div>
-    {trainingPayModal && (
-      <MatchPaymentModal
-        match={{
-          ...trainingPayModal,
-          id: trainingPayModal.id,
-          club_name: trainingPayModal.clubName || trainingPayModal.club_name || trainingPayModal.location,
-          start_at: trainingPayModal.date ? `${trainingPayModal.date}T${trainingPayModal.time||"19:00"}:00` : null,
-          level: trainingPayModal.level,
-          price_per_player: trainingPayModal.price_per_spot || 0,
-          _sport: "padel",
-          _table: "trainings",
-        }}
-        session={{ user: { id: uid } }}
-        isCreatorAuth={false}
-        onClose={() => { setTrainingPayModal(null); setPendingHand(null); }}
-        onJoined={async () => { await joinAfterPayment(trainingPayModal, pendingHand); }}
-      />
-    )}
   );
 }
