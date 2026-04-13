@@ -135,11 +135,6 @@ export default function RegisterPage() {
           marginBottom: 12,
           flexShrink: 0
         }}>
-          <img
-            src="/imglogog.png"
-            alt="GorilaGo!"
-            style={{ height: 48, width: "auto", display: "block" }}
-          />
         </div>
 
         {/* CARD CON SCROLL */}
@@ -167,7 +162,10 @@ export default function RegisterPage() {
               style={{
                 position: "absolute",
                 inset: 0,
+                width: "100%",
                 height: "100%",
+                objectFit: "contain",
+                objectPosition: "center",
                 width: "100%",
                 objectFit: "contain",
                 objectPosition: "center",
