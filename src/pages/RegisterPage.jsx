@@ -153,10 +153,10 @@ export default function RegisterPage() {
           {/* HERO FIJO */}
           <div style={{ 
             position: "relative", 
-            height: 160,
+            height: 200,
             flexShrink: 0,
             overflow: "hidden",
-            background: "linear-gradient(135deg,#0a1a0a,#0d2a0d)",
+            background: "#050505",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -165,14 +165,11 @@ export default function RegisterPage() {
               src="/brand/register-gorila.png"
               alt="Gorila"
               style={{
-                position: "relative",
-                height: "140px",
-                width: "auto",
-                objectFit: "contain",
-                width: "100%",
+                height: "190px",
+                width: "190px",
                 objectFit: "contain",
                 objectPosition: "center",
-                transform: "translateY(10px)",
+                borderRadius: 20,
               }}
             />
 
