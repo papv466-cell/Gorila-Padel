@@ -32,6 +32,9 @@ export default function LeaguePage() {
   const [inviteResults, setInviteResults] = useState([]);
   const [invitedUsers, setInvitedUsers] = useState([]);
   const [resultModal, setResultModal] = useState(null);
+  const [scheduleModal, setScheduleModal] = useState(null);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("19:00");
   const [sets, setSets] = useState([{a:"",b:""}]);
 
   useEffect(() => {
@@ -93,6 +96,14 @@ export default function LeaguePage() {
     const {data} = await supabase.from("profiles_public").select("id,name,handle,avatar_url")
       .or(`name.ilike.%${q}%,handle.ilike.%${q}%`).limit(8);
     setInviteResults((data||[]).filter(p=>p.id!==session.user.id && !invitedUsers.find(u=>u.id===p.id)));
+  }
+
+  async function saveSchedule() {
+    if (!scheduleModal || !scheduleDate) return;
+    const dt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+    await supabase.from("league_matches").update({ scheduled_at: dt }).eq("id", scheduleModal.id);
+    setScheduleModal(null);
+    await loadLeagueDetail(selectedLeague);
   }
 
   async function saveResult() {
@@ -200,23 +211,59 @@ export default function LeaguePage() {
               <div key={jornada} style={{marginBottom:14}}>
                 <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Jornada {jornada}</div>
                 {matches.map(m=>(
-                  <div key={m.id} style={{...S.card, padding:"12px 14px"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:12,fontWeight:800,color:"#fff"}}>
-                        <span style={{color:m.winner_side==="a"?"var(--sport-color)":"#fff"}}>{playerName(m.player_a1)} / {playerName(m.player_a2)}</span>
-                        <span style={{color:"rgba(255,255,255,0.3)",margin:"0 6px"}}>vs</span>
-                        <span style={{color:m.winner_side==="b"?"var(--sport-color)":"#fff"}}>{playerName(m.player_b1)} / {playerName(m.player_b2)}</span>
-                      </div>
-                    </div>
-                    {m.sets?.length ? (
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {m.sets.map((s,i)=><div key={i} style={{padding:"3px 10px",borderRadius:6,background:"rgba(255,255,255,0.08)",fontSize:13,fontWeight:900,color:"#fff"}}>{s.a}–{s.b}</div>)}
-                        <div style={{padding:"3px 10px",borderRadius:6,background:"rgba(var(--sport-color-rgb, 46,204,113),0.15)",fontSize:11,fontWeight:900,color:"var(--sport-color)"}}>
-                          Gana {m.winner_side==="a"?`${playerName(m.player_a1)}/${playerName(m.player_a2)}`:`${playerName(m.player_b1)}/${playerName(m.player_b2)}`} 🏆
+                  <div key={m.id} style={{...S.card, padding:"14px 16px"}}>
+                    {/* Equipos */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:900,color:m.winner_side==="a"?"var(--sport-color)":"#fff",marginBottom:2}}>
+                          🟢 {playerName(m.player_a1)} / {playerName(m.player_a2)}
+                        </div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",margin:"4px 0"}}>vs</div>
+                        <div style={{fontSize:13,fontWeight:900,color:m.winner_side==="b"?"var(--sport-color)":"#fff"}}>
+                          🔵 {playerName(m.player_b1)} / {playerName(m.player_b2)}
                         </div>
                       </div>
-                    ) : (
-                      <button onClick={()=>{setResultModal(m);setSets([{a:"",b:""}]);}} style={{...S.btn("ghost"),fontSize:11,padding:"7px"}}>📝 Añadir resultado</button>
+                      {/* Estado */}
+                      <div style={{flexShrink:0,textAlign:"right"}}>
+                        {m.winner_side ? (
+                          <span style={{fontSize:11,fontWeight:900,padding:"4px 10px",borderRadius:999,background:"rgba(46,204,113,0.15)",color:"var(--sport-color)"}}>✅ Jugado</span>
+                        ) : m.scheduled_at ? (
+                          <span style={{fontSize:11,fontWeight:900,padding:"4px 10px",borderRadius:999,background:"rgba(245,158,11,0.15)",color:"#F59E0B"}}>📅 Acordado</span>
+                        ) : (
+                          <span style={{fontSize:11,fontWeight:900,padding:"4px 10px",borderRadius:999,background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.50)"}}>⏳ Pendiente</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Fecha acordada */}
+                    {m.scheduled_at && !m.winner_side && (
+                      <div style={{fontSize:12,color:"#F59E0B",marginBottom:10,padding:"8px 10px",borderRadius:10,background:"rgba(245,158,11,0.08)"}}>
+                        📅 {new Date(m.scheduled_at).toLocaleDateString("es-ES",{weekday:"long",day:"numeric",month:"long"})} · {new Date(m.scheduled_at).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})}
+                      </div>
+                    )}
+
+                    {/* Resultado */}
+                    {m.sets?.length ? (
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                        {m.sets.map((s,i)=><div key={i} style={{padding:"4px 12px",borderRadius:8,background:"rgba(255,255,255,0.08)",fontSize:15,fontWeight:900,color:"#fff"}}>{s.a}–{s.b}</div>)}
+                        <div style={{padding:"4px 12px",borderRadius:8,background:"rgba(46,204,113,0.15)",fontSize:12,fontWeight:900,color:"var(--sport-color)"}}>
+                          🏆 {m.winner_side==="a"?`${playerName(m.player_a1)}/${playerName(m.player_a2)}`:`${playerName(m.player_b1)}/${playerName(m.player_b2)}`}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Acciones según estado */}
+                    {!m.winner_side && (
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                        {!m.scheduled_at && (
+                          <button onClick={()=>setScheduleModal(m)} style={{...S.btn("ghost"),fontSize:12,padding:"8px 12px",width:"auto"}}>
+                            📅 Acordar fecha
+                          </button>
+                        )}
+                        <button onClick={()=>{setResultModal(m);setSets([{a:"",b:""}]);}} style={{...S.btn("ghost"),fontSize:12,padding:"8px 12px",width:"auto"}}>
+                          📝 Poner resultado
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -230,6 +277,41 @@ export default function LeaguePage() {
           <NewMatchForm league={selectedLeague} players={leaguePlayers} session={session} onSaved={()=>{ loadLeagueDetail(selectedLeague); setLeagueTab("jornadas"); }} jornadasGroup={jornadasGroup} />
         )}
       </div>
+
+      {/* MODAL ACORDAR FECHA */}
+      {scheduleModal && (
+        <div onClick={()=>setScheduleModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:99999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"min(480px,100%)",background:"#111",borderRadius:"20px 20px 0 0",border:"1px solid rgba(245,158,11,0.3)",padding:24,paddingBottom:"max(24px,env(safe-area-inset-bottom))"}}>
+            <div style={{fontSize:16,fontWeight:900,color:"#F59E0B",marginBottom:4}}>📅 Acordar fecha</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:16}}>
+              {playerName(scheduleModal.player_a1)}/{playerName(scheduleModal.player_a2)} vs {playerName(scheduleModal.player_b1)}/{playerName(scheduleModal.player_b2)}
+            </div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.55)",marginBottom:16,lineHeight:1.6,padding:"10px 14px",borderRadius:10,background:"rgba(255,255,255,0.04)"}}>
+              💡 Queda con tu rival, id al club, jugad el partido y después ponéis el resultado aquí. El pago de la pista lo arregláis en el club.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+              <div>
+                <label style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.5)",display:"block",marginBottom:5}}>Día</label>
+                <input type="date" value={scheduleDate} onChange={e=>setScheduleDate(e.target.value)}
+                  style={{...S.input,fontSize:14}} />
+              </div>
+              <div>
+                <label style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.5)",display:"block",marginBottom:5}}>Hora</label>
+                <select value={scheduleTime} onChange={e=>setScheduleTime(e.target.value)}
+                  style={{...S.input,fontSize:14}}>
+                  {["09:00","10:00","11:00","12:00","13:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00"].map(t=>(
+                    <option key={t} value={t} style={{background:"#1a1a1a"}}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={saveSchedule} disabled={!scheduleDate} style={{...S.btn("green"),opacity:!scheduleDate?0.5:1}}>✅ Confirmar fecha</button>
+              <button onClick={()=>setScheduleModal(null)} style={{...S.btn("ghost"),width:"auto",padding:"11px 16px"}}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL RESULTADO */}
       {resultModal && (
@@ -283,9 +365,17 @@ export default function LeaguePage() {
           : leagues.length===0 ? (
             <div style={{textAlign:"center",padding:40}}>
               <div style={{fontSize:48,marginBottom:12}}>🏆</div>
-              <div style={{fontWeight:900,color:"#fff",fontSize:16,marginBottom:6}}>Sin ligas todavía</div>
-              <div style={{color:"rgba(255,255,255,0.4)",fontSize:13,marginBottom:20}}>Crea una liga con tus amigos</div>
-              <button onClick={()=>setTab("crear")} style={{...S.btn("green"),width:"auto",padding:"11px 20px"}}>➕ Crear liga</button>
+              <div style={{fontWeight:900,color:"#fff",fontSize:18,marginBottom:8}}>Sin ligas todavía</div>
+              <div style={{color:"rgba(255,255,255,0.5)",fontSize:14,marginBottom:20,lineHeight:1.7}}>
+                Crea una liga, invita a tus rivales y competid durante la temporada.
+              </div>
+              <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:"16px 20px",marginBottom:20,textAlign:"left"}}>
+                <div style={{fontSize:13,fontWeight:900,color:"var(--sport-color)",marginBottom:10}}>¿Cómo funciona?</div>
+                {["1️⃣ Crea la liga e invita a los jugadores","2️⃣ Se generan los partidos por jornadas","3️⃣ Quedáis con vuestro rival y jugáis en el club","4️⃣ Ponéis el resultado en la app","5️⃣ La clasificación se actualiza sola 🎉"].map(s=>(
+                  <div key={s} style={{fontSize:13,color:"rgba(255,255,255,0.65)",marginBottom:6}}>{s}</div>
+                ))}
+              </div>
+              <button onClick={()=>setTab("crear")} style={{...S.btn("green"),width:"auto",padding:"11px 20px"}}>➕ Crear mi primera liga</button>
             </div>
           ) : leagues.map(l=>(
             <div key={l.id} onClick={()=>loadLeagueDetail(l)} style={{...S.card, cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
