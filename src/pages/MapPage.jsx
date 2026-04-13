@@ -1,5 +1,6 @@
 // src/pages/MapPage.jsx
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useSport } from "../contexts/SportContext";
 import { useNavigate } from "react-router-dom";
 import { fetchClubsFromSupabase } from "../services/sheets";
 import { supabase } from "../services/supabaseClient";
@@ -197,6 +198,8 @@ export default function MapPage({ session: sessionProp }) {
     return () => { alive = false; };
   }, []);
 
+  const { sport } = useSport();
+
   const clubsWithCoords = useMemo(() =>
     (clubs||[]).map(c => ({...c, lng: c.lng ?? c.lon ?? c.longitude}))
               .filter(c => Number.isFinite(c?.lat) && Number.isFinite(c?.lng))
@@ -210,6 +213,13 @@ export default function MapPage({ session: sessionProp }) {
 
   const filteredList = useMemo(() => {
     let list = clubsWithCoords;
+    // Filtrar por deporte seleccionado
+    if (sport && sport !== "all") {
+      list = list.filter(c => {
+        const sports = c.sports || ["padel"]; // por defecto padel
+        return sports.includes(sport);
+      });
+    }
     if (activeFilter === "cerca" && userPos)
       list = list.filter(c => haversineKm(userPos, { lat: c.lat, lng: c.lng }) <= 20);
     else if (activeFilter === "favoritos")

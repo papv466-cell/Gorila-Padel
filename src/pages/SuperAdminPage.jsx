@@ -485,6 +485,22 @@ export default function SuperAdminPage() {
                       style={{ minHeight: 40, padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontWeight: 700, fontSize: 13, textDecoration: "none", display: "flex", alignItems: "center" }}>
                       👁️ Ver
                     </a>
+                    {/* Deportes del club */}
+                    {[{k:"padel",e:"🎾",l:"Pádel"},{k:"tenis",e:"🎾",l:"Tenis"},{k:"pickleball",e:"🏓",l:"Pickle"}].map(sp => {
+                      const hasSport = (club.sports||["padel"]).includes(sp.k);
+                      return (
+                        <button key={sp.k} onClick={async () => {
+                          const current = club.sports || ["padel"];
+                          const next = hasSport ? current.filter(s=>s!==sp.k) : [...current, sp.k];
+                          if (next.length === 0) return;
+                          await supabase.from("clubs").update({ sports: next }).eq("id", club.id);
+                          setClubs(prev => prev.map(cl => cl.id===club.id ? {...cl, sports: next} : cl));
+                        }}
+                          style={{ minHeight: 40, padding: "6px 12px", borderRadius: 10, background: hasSport ? "rgba(46,204,113,0.15)" : "rgba(255,255,255,0.05)", border: hasSport ? "1px solid rgba(46,204,113,0.35)" : "1px solid rgba(255,255,255,0.10)", color: hasSport ? "#2ECC71" : "rgba(255,255,255,0.40)", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+                          {sp.e} {sp.l}
+                        </button>
+                      );
+                    })}
                     <button onClick={() => toggleClubActive(club.id, club.is_active !== false)}
                       style={{ minHeight: 40, padding: "8px 14px", borderRadius: 10, background: club.is_active !== false ? "rgba(220,38,38,0.10)" : "rgba(46,204,113,0.10)", border: `1px solid ${club.is_active !== false ? "rgba(220,38,38,0.25)" : "rgba(46,204,113,0.25)"}`, color: club.is_active !== false ? "#ff6b6b" : "#2ECC71", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                       {club.is_active !== false ? "Desactivar" : "Activar"}
