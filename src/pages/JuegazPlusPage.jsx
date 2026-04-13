@@ -12,13 +12,7 @@ export default function JuegazPlusPage({ session }) {
       desc: "Compite en ligas locales y sube en el ranking",
       color: "#f59e0b",
     },
-    {
-      to: "/retos",
-      icon: "⚔️",
-      title: "Retos",
-      desc: "Reta a una pareja y demuestra quién es mejor",
-      color: "#ef4444",
-    },
+
     {
       to: "/pulls",
       icon: "🎯",
